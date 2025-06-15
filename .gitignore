@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+*.sqlite3
+*.log
+*.bak
+# Logs e Dados Temporários
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.pyc
+*.sqlite3
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports/Exports
+ferreira_ops_exports/
+ferreira_ops_reports/
+
+# Dependências de Pacotes
+# Crie e gerencie sua venv adequadamente, mas garanta que o pip install -r requirements.txt seja usado para ambiente de produção.
+# Pipenv
+.pipenv/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Arquivos de dados gerados
+data/
+
+# Ignorar todos os plugins, exceto admin_finder.py
+plugins/*
+!plugins/admin_finder.py
+
+# Outros arquivos específicos do ambiente ou gerados
+*.sqlite3
+/local_settings.py
