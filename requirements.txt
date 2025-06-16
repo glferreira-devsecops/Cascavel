@@ -1,5 +1,15 @@
-colorama==0.4.6
-termcolor==3.1.0
-requests==2.32.3
-PyMySQL>=1.0.2,<2.0
-redis>=6.2.0
+colorama
+termcolor
+requests
+beautifulsoup4
+dnspython
+python-nmap
+scapy
+python-wappalyzer
+yara-python
+paramiko
+impacket  # Nota: impacket pode exigir compilação específica ou dependências de sistema, dependendo do SO. Consulte a documentação oficial para detalhes de instalação.
+boto3
+azure-mgmt  # Este é um meta-pacote; para serviços Azure específicos, considere instalar sub-pacotes como azure-mgmt-compute.
+pyOpenSSL
+netifaces
