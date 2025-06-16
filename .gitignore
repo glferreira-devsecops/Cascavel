@@ -40,9 +40,6 @@ htmlcov/
 # Arquivos de dados gerados
 data/
 
-# Ignorar todos os plugins, exceto admin_finder.py
-plugins/*
-!plugins/admin_finder.py
 
 # Outros arquivos específicos do ambiente ou gerados
 *.sqlite3
