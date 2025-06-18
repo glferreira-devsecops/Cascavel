@@ -1,0 +1,6 @@
+Contact: https://www.linkedin.com/in/DevFerreiraG
+Expires: 2026-01-01T00:00:00Z
+Preferred-Languages: en, pt-BR
+Canonical: https://futurodevjunior.github.io/Cascavel/.well-known/security.txt
+Policy: https://futurodevjunior.github.io/Cascavel/SECURITY.md
+Acknowledgments: https://github.com/FuturoDevJunior/Cascavel#hall-of-thanks
