@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-O Cascavel utiliza **44 plugins** baseados em **funções Python puras**. Cada plugin é um `.py` em `plugins/` com `run()` padronizado.
+O Cascavel utiliza **60 plugins** baseados em **funções Python puras**. Cada plugin é um `.py` em `plugins/` com `run()` padronizado.
 
 ### Assinatura
 
@@ -12,18 +12,11 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
     return {"plugin": "nome", "resultados": {...}}
 ```
 
-| Parâmetro | Tipo | Descrição |
-|-----------|------|-----------|
-| `target` | `str` | Hostname ou IP do alvo |
-| `ip` | `str` | IP resolvido |
-| `open_ports` | `List[int]` | Portas abertas (Naabu) |
-| `banners` | `Dict[int, str]` | Banners por porta |
-
 ---
 
-## 🔍 Plugins por Categoria (44)
+## 🔍 Plugins por Categoria (60)
 
-### 🛡️ Rede
+### 🛡️ Rede (4)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `admin_finder` | Painéis administrativos | requests |
@@ -31,7 +24,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `nmap_advanc` | Nmap avançado (XML parse) | nmap |
 | `domain_transf` | Zone transfer DNS AXFR | dig |
 
-### 🌐 Web
+### 🌐 Web (7)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `wps_scanmini` | Scanner WordPress + REST API | requests |
@@ -42,7 +35,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `katana_crawler` | Web crawler moderno | katana |
 | `http_methods` | Auditoria PUT/DELETE/TRACE | requests |
 
-### 🔓 OWASP Top 10
+### 🔓 OWASP Top 10 (8)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `xss_scanner` | XSS Refletido + SSTI | requests |
@@ -51,15 +44,47 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `js_analyzer` | Segredos e endpoints em JS | requests |
 | `crlf_scanner` | CRLF injection + response splitting | requests |
 | `ssrf_scanner` | SSRF + cloud metadata (AWS/GCP/Azure) | requests |
-| `idor_scanner` | IDOR em APIs (Broken Access Control) | requests |
+| `idor_scanner` | IDOR/Broken Access Control | requests |
 | `prototype_pollution` | Prototype Pollution (Node.js) | requests |
 
-### 🔌 API Security
+### 💀 Red Team — Injection (5)
+| Plugin | Descrição | Deps |
+|--------|-----------|------|
+| `lfi_scanner` | LFI/Path Traversal (16 params × 8 payloads) | requests |
+| `rce_scanner` | RCE/Command Injection time-based + output | requests |
+| `xxe_scanner` | XXE file read, SSRF, Content-Type switch | requests |
+| `nosql_scanner` | NoSQL injection ($ne, $gt, $regex) | requests |
+| `ssti_scanner` | SSTI multi-engine (Jinja2/Twig/ERB/Smarty) | requests |
+
+### 💀 Red Team — Recon (4)
+| Plugin | Descrição | Deps |
+|--------|-----------|------|
+| `param_miner` | Hidden parameter discovery (50 params) | requests |
+| `api_enum` | API enumeration (Swagger/Actuator/Redoc) | requests |
+| `info_disclosure` | Sensitive files (.env, .git, backups, keys) | requests |
+| `dns_rebinding` | DNS security (wildcard, DNSSEC, SPF/DMARC) | dig |
+
+### 💀 Red Team — Defense Bypass (5)
+| Plugin | Descrição | Deps |
+|--------|-----------|------|
+| `csrf_detector` | CSRF token analysis em forms | requests |
+| `clickjacking_check` | X-Frame-Options + CSP frame-ancestors | requests |
+| `rate_limit_check` | Rate limiting em endpoints de auth | requests |
+| `host_header_injection` | Host/XFF injection + IP bypass | requests |
+| `web_cache_poison` | Cache poisoning via unkeyed headers | requests |
+
+### 💀 Red Team — Auth (2)
+| Plugin | Descrição | Deps |
+|--------|-----------|------|
+| `jwt_analyzer` | JWT alg:none, HS256 weak, sensitive data | requests |
+| `deserialization_scan` | Insecure deserialization (Java/PHP/Python/.NET) | requests |
+
+### 🔌 API Security (1)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `graphql_probe` | GraphQL introspection, batch, alias DoS | requests |
 
-### 🔐 Autenticação
+### 🔐 Autenticação (4)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `ssh_brute` | Brute force SSH | paramiko |
@@ -67,15 +92,15 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `smb_ad` | Enumeração SMB | smbclient |
 | `smpt_enum` | Enumeração SMTP (VRFY) | smtplib |
 
-### ☁️ Cloud Security
+### ☁️ Cloud Security (4)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `s3_bucket` | Buckets S3 públicos | requests |
 | `cloud_enum` | Identificação de provedor cloud | socket |
-| `cloud_metadata` | Cloud metadata exposure (5 providers) | requests |
+| `cloud_metadata` | Cloud metadata (AWS/GCP/Azure/DO/Oracle) | requests |
 | `aws_keyhunter` | [DEPRECATED] → secrets_scraper | importlib |
 
-### 🔍 OSINT
+### 🔍 OSINT (6)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `shodan_recon` | Reconnaissance via Shodan | shodan |
@@ -85,7 +110,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `subdomain_hunter` | Enum massiva subdomínios | subfinder, amass, httpx |
 | `email_harvester` | Coleta emails do domínio | requests, dig |
 
-### 📊 Análise
+### 📊 Análise (5)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `profiler_bundpent` | Profiler + MITRE ATT&CK | nmap, whatweb |
@@ -94,7 +119,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `secrets_scraper` | Segredos (AWS/Stripe/GitHub/Slack) | requests |
 | `subdomain_takeou` | Subdomain takeover | requests |
 
-### 🔓 Vulnerability Scanning
+### 🔓 Vulnerability Scanning (5)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `auto_exploit` | CVEs via API pública | requests |
@@ -102,7 +127,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | `nuclei_scanner` | Nuclei por severidade (JSONL) | nuclei |
 | `fast_webshell` | [PoC] Detecção PUT upload | requests |
 
-### 📡 Wireless
+### 📡 Wireless (1)
 | Plugin | Descrição | Deps |
 |--------|-----------|------|
 | `wifi_attac` | Recon Wi-Fi (macOS/Linux) | root, iw/airport |

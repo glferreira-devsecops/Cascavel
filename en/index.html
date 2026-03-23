@@ -3,46 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CASCAVEL - Quantum Security Framework</title>
-  <meta name="description" content="Modular offensive security framework for Red Teams and pentesters.">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin" />
+  <title>CASCAVEL — Quantum Security Framework</title>
+  <meta name="description" content="Modular offensive security framework with 60 plugins for Red Teams and pentesters." />
+  <meta name="author" content="DevFerreiraG" />
+  <meta property="og:title" content="CASCAVEL — Quantum Security Framework" />
+  <meta property="og:description" content="Automate your security assessments with 60 plugins and advanced OSINT integrations." />
+  <meta property="og:image" content="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/cascavel_logo.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/cascavel_logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
   <style>
-    body { background-color: #0c0c0c; color: #f0f0f0; font-family: 'Orbitron', sans-serif; }
-    h1, h2, h3 { color: #00ffee; }
-    nav a, footer a { color: #00ffee; }
-    img { max-width: 100%; border-radius: 10px; margin-top: 1rem; }
+    :root { --primary: #00ffee; --bg: #0c0c0c; --text: #e0e0e0; }
+    body { background-color: var(--bg); color: var(--text); font-family: 'Orbitron', sans-serif; }
+    h1, h2, h3 { color: var(--primary); }
+    nav a, footer a { color: var(--primary); }
+    img { max-width: 100%; border-radius: 10px; margin-top: 1rem; box-shadow: 0 0 25px rgba(0,255,238,0.1); }
     footer { margin-top: 3rem; border-top: 1px solid #333; padding-top: 1rem; text-align: center; }
+    .terminal { background: #111; color: #0f0; padding: 1rem; font-family: monospace; font-size: 0.9rem; border-radius: 8px; }
+    .lang-switcher { font-size: 1.2rem; }
   </style>
 </head>
 <body>
-  <nav class="container-fluid">
-    <ul><li><strong>CASCAVEL</strong></li></ul>
+  <nav class="container-fluid" aria-label="Main navigation">
+    <ul><li><strong>🐍 CASCAVEL</strong></li></ul>
     <ul>
-      <li><a href="/">🇧🇷</a></li>
-      <li><a href="/en/">🇺🇸</a></li>
+      <li class="lang-switcher"><a href="../" title="Português">🇧🇷</a></li>
+      <li class="lang-switcher"><a href="./" aria-current="page" title="English">🇺🇸</a></li>
+      <li><a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </nav>
   <main class="container">
     <h2>Quantum Security Framework</h2>
-    <h3>Developed for Red Teams and advanced pentesting</h3>
+    <h3>Built for Red Teams and advanced pentesting</h3>
     <p>
-      Cascavel is a modular and extensible offensive security framework designed to automate high-complexity pentesting workflows. With plugin-based architecture and native integrations, it enhances productivity and clarity in security assessments.
+      Cascavel is a modular and extensible offensive security framework with <strong>60 plugins</strong> designed to automate high-complexity pentesting workflows. Plugin-based architecture with native OSINT integrations (Shodan, Katana, Nuclei) and automated Markdown reporting.
     </p>
-    <img src="https://raw.githubusercontent.com/FuturoDevJunior/Cascavel/refs/heads/main/cascavel_logo.png" alt="Cascavel Logo" loading="lazy" />
+    <img src="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/cascavel_logo.png" alt="Cascavel Logo" loading="lazy" />
+
+    <h3>Quick Start</h3>
+    <div class="terminal">
+      git clone https://github.com/glferreira-devsecops/Cascavel.git<br />
+      cd Cascavel && python3 -m venv venv && source venv/bin/activate<br />
+      pip install -r requirements.txt<br />
+      python3 cascavel.py -t target.com
+    </div>
+
     <h3>Features</h3>
     <ul>
-      <li>🔌 Plugin-based architecture</li>
-      <li>⚙️ Integration with Subfinder, Amass, Nmap, Naabu, etc.</li>
-      <li>📁 Built-in wordlists and vulnerability templates</li>
-      <li>📝 Automatic Markdown reporting</li>
+      <li>🔌 30 security plugins (network, web, cloud, OSINT, auth, wireless)</li>
+      <li>⚙️ Integration with Nmap, Subfinder, Amass, Katana, Shodan and more</li>
+      <li>📁 Built-in wordlists and Nuclei vulnerability templates</li>
+      <li>📝 Automatic Markdown reporting with timestamps</li>
+      <li>🖥️ Full CLI with argparse (interactive + batch modes)</li>
     </ul>
   </main>
   <footer class="container">
     <small>
-      <a href="https://github.com/FuturoDevJunior/Cascavel" target="_blank" rel="noopener">GitHub</a> •
-      <a href="/.well-known/security.txt">security.txt</a> •
-      <a href="/SECURITY.md">Security Policy</a>
+      <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">GitHub</a> •
+      <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> •
+      <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/SECURITY.md" target="_blank" rel="noopener">Security Policy</a> •
+      Built by <a href="https://www.linkedin.com/in/DevFerreiraG" target="_blank" rel="noopener">DevFerreiraG</a>
     </small>
   </footer>
 </body>

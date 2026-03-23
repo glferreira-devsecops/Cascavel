@@ -1,8 +1,8 @@
-# Código de Conduta para o Ferreira OPS 2077
+# Código de Conduta — Cascavel
 
 ## Nosso Compromisso
 
-Como colaboradores e mantenedores do projeto **Ferreira OPS 77**, nos comprometemos a criar e manter um ambiente acolhedor e inclusivo para todos, independentemente de idade, tamanho corporal, deficiência visível ou invisível, etnia, características sexuais, identidade e expressão de gênero, nível de experiência, educação, status socioeconômico, nacionalidade, aparência pessoal, raça, religião ou orientação e identidade sexual. Estamos dedicados a proporcionar uma experiência livre de assédio para todos os participantes.
+Como colaboradores e mantenedores do projeto **Cascavel — Quantum Security Framework**, nos comprometemos a criar e manter um ambiente acolhedor e inclusivo para todos, independentemente de idade, tamanho corporal, deficiência visível ou invisível, etnia, características sexuais, identidade e expressão de gênero, nível de experiência, educação, status socioeconômico, nacionalidade, aparência pessoal, raça, religião ou orientação e identidade sexual. Estamos dedicados a proporcionar uma experiência livre de assédio para todos os participantes.
 
 ## Padrões de Conduta Esperados
 
@@ -18,37 +18,30 @@ Esperamos que todos os participantes adiram aos seguintes padrões de conduta:
 
 Os seguintes comportamentos são considerados uma violação deste Código de Conduta:
 
-* **Assédio**: Comentários ofensivos, difamatórios ou hostis relacionados a idade, identidade de gênero, deficiência, etnia, raça, religião, aparência, orientação sexual ou qualquer outra característica pessoal.
-* **Discriminação**: Qualquer forma de preconceito ou tratamento injusto baseado em características pessoais.
-* **Bullying/Trolling**: Insultos, provocações, intimidações, ou qualquer comportamento que vise perturbar ou provocar outros.
+* **Assédio**: Comentários ofensivos, difamatórios ou hostis relacionados a características pessoais.
+* **Discriminação**: Qualquer forma de preconceito ou tratamento injusto.
+* **Bullying/Trolling**: Insultos, provocações, intimidações ou comportamento disruptivo.
 * **Ameaças**: Ameaças de violência, retaliação ou difamação.
-* **Intimidação**: Tentativas de silenciar ou desencorajar a participação de outros.
-* **Exposição Indevida**: Compartilhamento não autorizado de informações privadas ou pessoais de outros.
-* **Conduta Não Profissional**: Qualquer comportamento que seja geralmente considerado inadequado em um ambiente profissional ou acadêmico.
+* **Exposição Indevida**: Compartilhamento não autorizado de informações privadas.
 
 ## Processo de Denúncia
 
-Se você testemunhar ou for alvo de comportamento que viole este Código de Conduta, por favor, denuncie imediatamente. Todas as denúncias serão tratadas com confidencialidade e seriedade.
+Se você testemunhar ou for alvo de comportamento que viole este Código de Conduta, por favor, denuncie:
 
-Para fazer uma denúncia, você pode:
+* Abra uma [Issue no GitHub](https://github.com/glferreira-devsecops/Cascavel/issues) com o título "Denúncia de Código de Conduta".
+* Ou entre em contato via [LinkedIn](https://linkedin.com/in/DevFerreiraG).
 
-* Abrir uma [Issue no GitHub](https://github.com/futurodevjunior/ferreira_ops_xtreme_2077/issues) com o título "Denúncia de Código de Conduta". 
+Todas as denúncias serão tratadas com confidencialidade e seriedade.
 
 ## Consequências das Violações
 
-Os mantenedores do projeto revisarão todas as denúncias e determinarão as ações apropriadas, que podem incluir, mas não se limitam a:
-
-* Aviso formal.
-* Exclusão temporária ou permanente do repositório ou da comunidade.
-* Banimento de futuras interações com o projeto.
-
-Nosso objetivo é resolver conflitos de forma justa e construtiva, promovendo um ambiente seguro e respeitoso para todos.
+Os mantenedores revisarão todas as denúncias e determinarão ações apropriadas, que podem incluir aviso formal, exclusão temporária/permanente ou banimento de interações com o projeto.
 
 ## Atribuição
 
-Este Código de Conduta é adaptado do [Contributor Covenant](https://www.contributor-covenant.org/), versão 2.0, disponível em [https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](https://www.contributor-covenant.org/version/2/0/code_of_conduct.html).
+Este Código de Conduta é adaptado do [Contributor Covenant](https://www.contributor-covenant.org/), versão 2.0.
 
 ---
 
 > Powered by **DevFerreiraG**
-> [github.com/futurodevjunior](https://github.com/futurodevjunior) | [linkedin.com/in/DevFerreiraG](https://linkedin.com/in/DevFerreiraG)
+> [github.com/glferreira-devsecops](https://github.com/glferreira-devsecops) | [linkedin.com/in/DevFerreiraG](https://linkedin.com/in/DevFerreiraG)
