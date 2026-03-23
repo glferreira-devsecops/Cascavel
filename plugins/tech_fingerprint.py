@@ -1,40 +1,102 @@
 # plugins/tech_fingerprint.py
 def run(target, ip, open_ports, banners):
     """
-    Realiza fingerprint tecnológico básico via headers HTTP.
-    Captura informações sobre servidor, tecnologias e headers de segurança expostos.
+    Fingerprinting de tecnologias e security headers audit.
+    2026 Intel: OWASP 2025 A02 (Security Misconfiguration #2),
+    Supply chain risk headers, Permissions-Policy, COEP, COOP.
     """
     import requests
 
-    resultado = {}
+    resultado = {"tecnologias": {}, "headers_seguranca": {}, "vulns": []}
+
     try:
-        resposta = requests.get(f"http://{target}", timeout=7, allow_redirects=True)
-        headers = resposta.headers
+        resp = requests.get(f"http://{target}/", timeout=8)
+        headers = resp.headers
 
-        resultado["server"] = headers.get("server", "desconhecido")
-        resultado["x-powered-by"] = headers.get("x-powered-by", "desconhecido")
+        # Tech detection
+        server = headers.get("Server", "")
+        powered = headers.get("X-Powered-By", "")
+        via = headers.get("Via", "")
 
-        # Headers de segurança
-        security_headers = {
-            "x-frame-options": headers.get("x-frame-options"),
-            "x-content-type-options": headers.get("x-content-type-options"),
-            "strict-transport-security": headers.get("strict-transport-security"),
-            "content-security-policy": headers.get("content-security-policy"),
-            "x-xss-protection": headers.get("x-xss-protection"),
-            "referrer-policy": headers.get("referrer-policy"),
+        if server:
+            resultado["tecnologias"]["server"] = server
+        if powered:
+            resultado["tecnologias"]["x_powered_by"] = powered
+            resultado["vulns"].append({
+                "tipo": "INFO_DISCLOSURE_HEADER", "header": "X-Powered-By",
+                "valor": powered, "severidade": "BAIXO",
+                "descricao": "X-Powered-By expõe stack — remover em produção"
+            })
+        if via:
+            resultado["tecnologias"]["via"] = via
+
+        # Framework detection from response
+        tech_signatures = {
+            "ASP.NET": ["__VIEWSTATE", "__EVENTVALIDATION", "asp.net"],
+            "PHP": ["PHPSESSID", "X-Powered-By: PHP"],
+            "Django": ["csrfmiddlewaretoken", "django"],
+            "Rails": ["_rails_session", "X-Runtime"],
+            "Spring": ["JSESSIONID", "X-Application-Context"],
+            "Express": ["connect.sid", "X-Powered-By: Express"],
+            "Next.js": ["__next", "_next/static", "__NEXT_DATA__"],
+            "Laravel": ["laravel_session", "XSRF-TOKEN"],
+            "Flask": ["session=", "Werkzeug"],
+            "WordPress": ["wp-content", "wp-json", "wp-includes"],
+            "React": ["_reactRoot", "data-reactroot", "__NEXT"],
+            "Angular": ["ng-app", "ng-controller", "angular"],
+            "Vue.js": ["data-v-", "__vue__", "vue-router"],
         }
-        resultado["security_headers"] = {k: v for k, v in security_headers.items() if v}
-        resultado["security_headers_ausentes"] = [k for k, v in security_headers.items() if not v]
+        for tech, indicators in tech_signatures.items():
+            for ind in indicators:
+                if ind.lower() in resp.text.lower() or ind.lower() in str(headers).lower():
+                    resultado["tecnologias"][tech] = True
+                    break
 
-        # Extras
-        x_asp = headers.get("x-aspnet-version")
-        if x_asp:
-            resultado["x-aspnet-version"] = x_asp
+        # Security Headers Audit (2026 best practices)
+        sec_headers = {
+            "Strict-Transport-Security": ("HSTS", "ALTO"),
+            "Content-Security-Policy": ("CSP", "ALTO"),
+            "X-Content-Type-Options": ("XCTO", "MEDIO"),
+            "X-Frame-Options": ("XFO", "MEDIO"),
+            "X-XSS-Protection": ("X-XSS", "BAIXO"),
+            "Referrer-Policy": ("REFERRER", "BAIXO"),
+            "Permissions-Policy": ("PERMISSIONS", "MEDIO"),
+            "Cross-Origin-Embedder-Policy": ("COEP", "BAIXO"),
+            "Cross-Origin-Opener-Policy": ("COOP", "BAIXO"),
+            "Cross-Origin-Resource-Policy": ("CORP", "BAIXO"),
+            "Cache-Control": ("CACHE", "BAIXO"),
+        }
 
-        resultado["cookies"] = [
-            {"name": c.name, "secure": c.secure, "httponly": "httponly" in str(c._rest).lower()}
-            for c in resposta.cookies
-        ]
+        ausentes = []
+        for header, (label, sev) in sec_headers.items():
+            val = headers.get(header, "")
+            if val:
+                resultado["headers_seguranca"][label] = val[:100]
+            else:
+                ausentes.append(label)
+                if sev in ["ALTO", "MEDIO"]:
+                    resultado["vulns"].append({
+                        "tipo": "HEADER_AUSENTE", "header": header,
+                        "label": label, "severidade": sev,
+                    })
+
+        resultado["headers_seguranca"]["ausentes"] = ausentes
+
+        # Cookie security
+        cookies = resp.headers.get("Set-Cookie", "")
+        if cookies:
+            if "httponly" not in cookies.lower():
+                resultado["vulns"].append({
+                    "tipo": "COOKIE_SEM_HTTPONLY", "severidade": "ALTO",
+                })
+            if "secure" not in cookies.lower():
+                resultado["vulns"].append({
+                    "tipo": "COOKIE_SEM_SECURE", "severidade": "MEDIO",
+                })
+            if "samesite" not in cookies.lower():
+                resultado["vulns"].append({
+                    "tipo": "COOKIE_SEM_SAMESITE", "severidade": "MEDIO",
+                })
 
     except Exception as e:
         resultado["erro"] = str(e)

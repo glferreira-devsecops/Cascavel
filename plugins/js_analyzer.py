@@ -1,91 +1,101 @@
 # plugins/js_analyzer.py
 def run(target, ip, open_ports, banners):
     """
-    Analisa arquivos JavaScript do alvo para extrair segredos, endpoints e API keys.
-    Faz crawl da página principal, identifica JS, baixa e analisa cada um.
+    Análise de JavaScript para segredos, endpoints, e supply chain risks.
+    2026 Intel: OWASP A03 (Supply Chain Failures), client-side supply chain,
+    SRI checks, inline secrets, API key patterns, source maps.
     """
     import requests
     import re
 
-    resultado = {"js_files": [], "segredos": [], "endpoints": [], "total_js": 0}
+    resultado = {"segredos": [], "endpoints": [], "vulns": []}
 
-    # 1. Buscar JS files da página principal
-    js_urls = set()
+    # Buscar JS files
     try:
-        resp = requests.get(f"http://{target}", timeout=8)
-        # Extrair src de tags script
-        scripts = re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', resp.text, re.IGNORECASE)
-        for src in scripts:
-            if src.startswith("//"):
-                src = "http:" + src
-            elif src.startswith("/"):
-                src = f"http://{target}{src}"
-            elif not src.startswith("http"):
-                src = f"http://{target}/{src}"
-            js_urls.add(src)
-    except Exception as e:
-        resultado["erro_crawl"] = str(e)
+        resp = requests.get(f"http://{target}/", timeout=8)
+        js_files = re.findall(r'(?:src|href)=["\']([^"\']*\.js[^"\']*)', resp.text)
+        js_files = list(set(js_files))[:20]
+    except Exception:
+        return {"plugin": "js_analyzer", "resultados": "Erro ao buscar página principal"}
 
-    # Adicionar JS comuns que podem existir
-    js_comuns = [
-        f"http://{target}/app.js", f"http://{target}/main.js",
-        f"http://{target}/bundle.js", f"http://{target}/config.js",
-        f"http://{target}/env.js", f"http://{target}/settings.js",
-    ]
-    js_urls.update(js_comuns)
+    # Padrões de segredos (2026 expanded)
+    secret_patterns = {
+        "AWS_ACCESS_KEY": r'AKIA[0-9A-Z]{16}',
+        "AWS_SECRET": r'(?:aws_secret|secret_key)["\s:=]+[A-Za-z0-9/+=]{40}',
+        "GITHUB_TOKEN": r'gh[ps]_[A-Za-z0-9_]{36,}',
+        "GITHUB_FINE_GRAINED": r'github_pat_[A-Za-z0-9_]{82}',
+        "GOOGLE_API_KEY": r'AIza[0-9A-Za-z\-_]{35}',
+        "STRIPE_SECRET": r'sk_live_[A-Za-z0-9]{24,}',
+        "STRIPE_PUBLISHABLE": r'pk_live_[A-Za-z0-9]{24,}',
+        "SLACK_TOKEN": r'xox[bpors]-[0-9]{10,}-[A-Za-z0-9]{10,}',
+        "SLACK_WEBHOOK": r'hooks\.slack\.com/services/T[A-Z0-9]{8}/B[A-Z0-9]{8}/[A-Za-z0-9]{24}',
+        "FIREBASE_API": r'AIza[0-9A-Za-z\-_]{35}',
+        "PRIVATE_KEY": r'-----BEGIN (?:RSA |EC )?PRIVATE KEY-----',
+        "JWT_SECRET": r'(?:jwt_secret|JWT_SECRET|jwt\.secret)["\s:=]+[A-Za-z0-9]{8,}',
+        "HEROKU_API": r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
+        "TWILIO_SID": r'AC[a-f0-9]{32}',
+        "SENDGRID_KEY": r'SG\.[A-Za-z0-9\-_]{22}\.[A-Za-z0-9\-_]{43}',
+        "DISCORD_TOKEN": r'[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27,}',
+        "OPENAI_KEY": r'sk-[A-Za-z0-9]{48}',
+        "SUPABASE_KEY": r'eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+',
+    }
 
-    resultado["total_js"] = len(js_urls)
-
-    # Padrões de segredos em JS
-    secret_patterns = [
-        (r"(?:api[_-]?key|apikey)['\"\s]*[:=]\s*['\"]([a-zA-Z0-9_\-]{20,})['\"]", "API_KEY"),
-        (r"(?:secret|token|password|passwd|pwd)['\"\s]*[:=]\s*['\"]([^\s'\"]{8,})['\"]", "SECRET/TOKEN"),
-        (r"AKIA[0-9A-Z]{16}", "AWS_KEY"),
-        (r"(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,}", "GITHUB_TOKEN"),
-        (r"AIza[0-9A-Za-z\-_]{35}", "GOOGLE_API_KEY"),
-        (r"sk[-_](?:live|test)[-_][0-9a-zA-Z]{24,}", "STRIPE_KEY"),
-        (r"xox[bporas]-[0-9A-Za-z\-]{10,}", "SLACK_TOKEN"),
-        (r"eyJ[A-Za-z0-9-_]+\.eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+", "JWT_TOKEN"),
-        (r"(?:firebase|supabase)['\"\s]*[:=]\s*['\"]([^\s'\"]{20,})['\"]", "FIREBASE/SUPABASE"),
-    ]
-
-    # Padrões de endpoints
+    # API endpoint patterns
     endpoint_patterns = [
-        r'(?:fetch|axios|XMLHttpRequest|ajax)\s*\(\s*[\'"]([^\'"]+)[\'"]',
-        r'(?:url|endpoint|href|api)[\'"\s]*[:=]\s*[\'"](/[^\'"]+)[\'"]',
-        r'https?://[^\s\'"<>]+/api/[^\s\'"<>]+',
+        r'(?:fetch|axios|XMLHttpRequest|\.ajax)\s*\(\s*["\']([^"\']+)',
+        r'(?:api_url|apiUrl|API_URL|baseURL|endpoint)\s*[:=]\s*["\']([^"\']+)',
+        r'https?://[a-zA-Z0-9\-\.]+/api/[^\s"\'<>]+',
     ]
 
-    # 2. Analisar cada JS
-    for js_url in list(js_urls)[:15]:  # Limitar a 15 JS files
-        try:
-            js_resp = requests.get(js_url, timeout=8)
-            if js_resp.status_code != 200 or len(js_resp.text) < 50:
-                continue
+    for js_url in js_files:
+        if js_url.startswith("//"):
+            js_url = f"http:{js_url}"
+        elif js_url.startswith("/"):
+            js_url = f"http://{target}{js_url}"
+        elif not js_url.startswith("http"):
+            js_url = f"http://{target}/{js_url}"
 
-            resultado["js_files"].append(js_url)
+        try:
+            resp = requests.get(js_url, timeout=8)
+            content = resp.text
 
             # Buscar segredos
-            for pattern, label in secret_patterns:
-                matches = re.findall(pattern, js_resp.text)
+            for secret_name, pattern in secret_patterns.items():
+                matches = re.findall(pattern, content)
                 for match in matches[:3]:
                     resultado["segredos"].append({
-                        "arquivo": js_url.split("/")[-1],
-                        "tipo": label,
-                        "amostra": match[:40] + "..." if len(match) > 40 else match,
+                        "tipo": secret_name, "arquivo": js_url.split("/")[-1],
+                        "valor_parcial": match[:15] + "...",
+                        "severidade": "CRITICO" if "SECRET" in secret_name or "PRIVATE" in secret_name else "ALTO",
                     })
 
             # Buscar endpoints
             for pattern in endpoint_patterns:
-                matches = re.findall(pattern, js_resp.text)
-                for match in matches[:10]:
-                    if len(match) > 5 and match not in resultado["endpoints"]:
-                        resultado["endpoints"].append(match)
+                endpoints = re.findall(pattern, content)
+                for ep in endpoints[:5]:
+                    if ep.startswith("http") or ep.startswith("/api"):
+                        resultado["endpoints"].append({"endpoint": ep[:100], "arquivo": js_url.split("/")[-1]})
+
+            # Source map check
+            if "//# sourceMappingURL=" in content:
+                map_url = re.search(r'sourceMappingURL=(\S+)', content)
+                if map_url:
+                    resultado["vulns"].append({
+                        "tipo": "SOURCE_MAP_EXPOSED", "arquivo": js_url.split("/")[-1],
+                        "map_url": map_url.group(1), "severidade": "MEDIO",
+                        "descricao": "Source map exposto — código fonte original acessível!"
+                    })
+
+            # SRI check (Supply Chain 2026)
+            if "integrity=" not in resp.text and "cdn" in js_url.lower():
+                resultado["vulns"].append({
+                    "tipo": "SEM_SRI", "arquivo": js_url.split("/")[-1],
+                    "severidade": "MEDIO",
+                    "descricao": "CDN JS sem Subresource Integrity — supply chain attack risk!"
+                })
 
         except Exception:
             continue
 
-    resultado["endpoints"] = resultado["endpoints"][:30]
-    resultado["segredos"] = resultado["segredos"][:20]
-
+    resultado["endpoints"] = resultado["endpoints"][:20]
     return {"plugin": "js_analyzer", "resultados": resultado}
