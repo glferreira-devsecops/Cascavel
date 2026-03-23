@@ -1,18 +1,28 @@
-# plugins/smb_enum.py
-def run(target, results):
+# plugins/smb_ad.py
+def run(target, ip, open_ports, banners):
     """
     Enumera compartilhamentos SMB abertos no alvo usando smbclient.
     Retorna lista de shares ou erro no formato estruturado.
     """
-    import subprocess, re
+    import subprocess
+    import re
+    import shutil
+
+    if not shutil.which("smbclient"):
+        return {"plugin": "smb_ad", "resultados": {"erro": "smbclient não encontrado no PATH"}}
+
     resultado = {}
     try:
         cmd = f"smbclient -L //{target} -N"
-        proc = subprocess.run(cmd, shell=True, capture_output=True, timeout=20)
-        saida = proc.stdout.decode(errors="ignore")
-        # Captura apenas os nomes dos compartilhamentos (Disk)
+        proc = subprocess.run(cmd, shell=True, capture_output=True, timeout=20, encoding="utf-8")
+        saida = proc.stdout
         compartilhamentos = re.findall(r'^\s*([A-Za-z0-9\$\-_]+)\s+Disk', saida, re.MULTILINE)
         resultado["compartilhamentos"] = compartilhamentos if compartilhamentos else "Nenhum compartilhamento encontrado"
+        if proc.stderr:
+            resultado["stderr"] = proc.stderr[:500]
+    except subprocess.TimeoutExpired:
+        resultado["erro"] = "Timeout ao enumerar SMB"
     except Exception as e:
         resultado["erro"] = str(e)
-    results["smb_enum"] = resultado
+
+    return {"plugin": "smb_ad", "resultados": resultado}

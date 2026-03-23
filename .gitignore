@@ -3,33 +3,30 @@ __pycache__/
 *.py[cod]
 venv/
 .env
-*.sqlite3
-*.log
 *.bak
+
 # Logs e Dados Temporários
 *.log
 *.tmp
 *.temp
 *.swp
 *.swo
-*.pyc
-*.sqlite3
 
 # IDEs
 .vscode/
 .idea/
+.gemini/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Reports/Exports
-ferreira_ops_exports/
-ferreira_ops_reports/
+# Cascavel — Outputs
+exports/
+reports/
+nuclei-templates/
 
-# Dependências de Pacotes
-# Crie e gerencie sua venv adequadamente, mas garanta que o pip install -r requirements.txt seja usado para ambiente de produção.
-# Pipenv
+# Dependências
 .pipenv/
 
 # pytest
@@ -37,10 +34,5 @@ ferreira_ops_reports/
 .coverage
 htmlcov/
 
-# Arquivos de dados gerados
+# Dados gerados
 data/
-
-
-# Outros arquivos específicos do ambiente ou gerados
-*.sqlite3
-/local_settings.py

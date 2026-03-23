@@ -1,50 +1,78 @@
-# plugins/profiler.py
-def run(target, results):
-    import subprocess, platform, os
+# plugins/profiler_bundpent.py
+def run(target, ip, open_ports, banners):
+    """
+    Profiler completo: info do host local, OS detection via nmap,
+    fingerprint via whatweb (se disponível), SSL scan e mapeamento MITRE ATT&CK.
+    """
+    import subprocess
+    import platform
+    import shutil
 
     profile = {}
 
-    # Informações do host (máquina local)
+    # 1. Informações do host local
     try:
         uname = platform.uname()
-        profile['info_host_local'] = {
-            'sistema': uname.system,
-            'nome': uname.node,
-            'release': uname.release,
-            'versao': uname.version,
-            'arquitetura': uname.machine,
-            'processador': uname.processor
+        profile["info_host_local"] = {
+            "sistema": uname.system,
+            "nome": uname.node,
+            "release": uname.release,
+            "versao": uname.version,
+            "arquitetura": uname.machine,
+            "processador": uname.processor,
         }
     except Exception as e:
-        profile['info_host_local'] = {'erro': str(e)}
+        profile["info_host_local"] = {"erro": str(e)}
 
-    # Nmap: Detecção de SO do alvo
-    try:
-        nmap_out = subprocess.getoutput(f"nmap -O -T4 {target} | head -30")
-        profile['nmap_os_detect'] = nmap_out
-    except Exception as e:
-        profile['nmap_os_detect'] = f"Erro nmap: {e}"
+    # 2. Nmap: Detecção de SO do alvo
+    if shutil.which("nmap"):
+        try:
+            proc = subprocess.run(
+                f"nmap -O -T4 {target}",
+                shell=True, capture_output=True, timeout=60, encoding="utf-8"
+            )
+            profile["nmap_os_detect"] = proc.stdout[:2000]
+        except subprocess.TimeoutExpired:
+            profile["nmap_os_detect"] = "Timeout na detecção de OS"
+        except Exception as e:
+            profile["nmap_os_detect"] = f"Erro nmap: {e}"
+    else:
+        profile["nmap_os_detect"] = "nmap não encontrado no PATH"
 
-    # WhatWeb: Fingerprint de tecnologias
-    try:
-        # Caminho para o whatweb deve estar certo
-        whatweb_path = os.path.expanduser("~/WhatWeb/whatweb")
-        whatweb_out = subprocess.getoutput(f"{whatweb_path} {target} | head -20")
-        profile['whatweb'] = whatweb_out
-    except Exception as e:
-        profile['whatweb'] = f"Erro whatweb: {e}"
+    # 3. WhatWeb: Fingerprint de tecnologias (detecção automática do path)
+    whatweb_bin = shutil.which("whatweb")
+    if whatweb_bin:
+        try:
+            proc = subprocess.run(
+                f"{whatweb_bin} {target}",
+                shell=True, capture_output=True, timeout=30, encoding="utf-8"
+            )
+            profile["whatweb"] = proc.stdout[:2000]
+        except subprocess.TimeoutExpired:
+            profile["whatweb"] = "Timeout no WhatWeb"
+        except Exception as e:
+            profile["whatweb"] = f"Erro whatweb: {e}"
+    else:
+        profile["whatweb"] = "whatweb não encontrado no PATH"
 
-    # SSL Scan
-    try:
-        sslscan = subprocess.getoutput(f"nmap --script ssl-cert,ssl-enum-ciphers -p 443 {target} | head -40")
-        profile['sslscan'] = sslscan
-    except Exception as e:
-        profile['sslscan'] = f"Erro sslscan: {e}"
+    # 4. SSL Scan
+    if shutil.which("nmap"):
+        try:
+            proc = subprocess.run(
+                f"nmap --script ssl-cert,ssl-enum-ciphers -p 443 {target}",
+                shell=True, capture_output=True, timeout=30, encoding="utf-8"
+            )
+            profile["sslscan"] = proc.stdout[:2000]
+        except subprocess.TimeoutExpired:
+            profile["sslscan"] = "Timeout no SSL scan"
+        except Exception as e:
+            profile["sslscan"] = f"Erro sslscan: {e}"
 
-    # MITRE ATT&CK Mapping rápido (exemplo)
-    profile['mitre_quickmap'] = [
+    # 5. MITRE ATT&CK Mapping
+    profile["mitre_quickmap"] = [
         "Reconhecimento (TA0043): Varredura de portas, descoberta de serviços",
-        "Acesso inicial (TA0001): Força bruta, exploração de aplicação pública"
+        "Acesso inicial (TA0001): Força bruta, exploração de aplicação pública",
+        "Descoberta (TA0007): Detecção de SO, fingerprint de tecnologias",
     ]
 
-    results['profiler'] = profile
+    return {"plugin": "profiler_bundpent", "resultados": profile}

@@ -1,47 +1,75 @@
-# Contribuindo com o Ferreira OPS 2077
+# Contribuindo com o Cascavel
 
-Sua colaboração é fundamental para o sucesso e a evolução do **Ferreira OPS 77**! Agradecemos imensamente seu interesse em contribuir. Para garantir um processo fluido e eficiente, por favor, siga as diretrizes abaixo:
+Sua colaboração é fundamental para o crescimento do **Cascavel — Quantum Security Framework**! Agradecemos seu interesse em contribuir.
 
 ## 🤝 Como Contribuir
 
-1. **Fork do Repositório**: Comece criando um fork do repositório principal do projeto no GitHub.
-2. **Clone Local**: Clone seu fork para o seu ambiente de desenvolvimento local:
-   ```sh
-   git clone https://github.com/SEU_USUARIO/ferreira_ops_xtreme_2077.git
-   cd ferreira_ops_xtreme_2077
+1. **Fork** o repositório principal no GitHub.
+2. **Clone** seu fork:
+   ```bash
+   git clone https://github.com/SEU_USUARIO/Cascavel.git
+   cd Cascavel
    ```
-3. **Crie um Novo Branch**: Para cada nova funcionalidade, correção de bug ou melhoria, crie um branch dedicado com um nome descritivo (ex: `feature/nova-funcionalidade`, `fix/erro-autenticacao`, `docs/melhoria-readme`):
-   ```sh
-   git checkout -b meu-novo-branch
+3. **Crie um branch** para sua contribuição:
+   ```bash
+   git checkout -b feature/minha-feature
    ```
-4. **Desenvolva suas Alterações**: Implemente suas contribuições. Lembre-se de seguir as diretrizes de código e estilo (veja a seção "Diretrizes").
-5. **Commit das Alterações**: Faça commits atômicos e com mensagens claras, descrevendo o que foi alterado e por quê. Utilize o padrão Conventional Commits (ex: `feat: adiciona módulo de scan X`, `fix: corrige falha no brute-force de FTP`):
-   ```sh
-   git commit -m 'feat: minha nova funcionalidade'
+4. **Desenvolva** suas alterações seguindo as diretrizes abaixo.
+5. **Commit** com mensagens claras (Conventional Commits):
+   ```bash
+   git commit -m "feat: adiciona plugin de scan X"
+   git commit -m "fix: corrige assinatura do plugin Y"
    ```
-6. **Push para o GitHub**: Envie seu branch para o seu fork no GitHub:
-   ```sh
-   git push origin meu-novo-branch
+6. **Push** para seu fork:
+   ```bash
+   git push origin feature/minha-feature
    ```
-7. **Abra um Pull Request (PR)**: No GitHub, navegue até o seu fork e abra um Pull Request para o branch `main` do repositório original. Certifique-se de preencher o template de PR (se houver) e descrever suas alterações detalhadamente.
+7. **Abra um Pull Request** para a branch `main` do repositório original.
 
-## 📝 Diretrizes de Contribuição
+## 🔌 Criando Plugins
 
-Para manter a qualidade e a consistência do projeto, por favor, siga estas diretrizes:
+Todos os plugins são funções Python puras no diretório `plugins/`. A assinatura obrigatória é:
 
-* **Qualidade de Código**: Escreva código limpo, legível, eficiente e bem comentado. Priorize a manutenibilidade e a escalabilidade.
-* **Testes**: Se aplicável, inclua testes unitários ou de integração para suas alterações.
-* **Documentação**: Atualize a documentação relevante (docstrings, README, etc.) para refletir suas mudanças.
-* **Padrões de Código**: Adira aos padrões de código Python e às convenções já presentes no projeto.
-* **Código de Conduta**: Respeite o `CODE_OF_CONDUCT.md` para garantir um ambiente de colaboração positivo e inclusivo.
-* **Plugins**: Se sua contribuição for um novo plugin, envie-o para o diretório `~/ferreira_ops_plugins/`. Certifique-se de que ele siga a estrutura esperada para plugins (função `run(target, context)`).
+```python
+def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
+    """
+    Docstring descrevendo o que o plugin faz.
+    """
+    resultado = {}
+    # ... sua lógica aqui ...
+    return {"plugin": "nome_do_plugin", "resultados": resultado}
+```
 
-## 🐞 Relatando Bugs e Sugerindo Melhorias
+### Regras para Plugins
 
-Se você encontrar um bug ou tiver uma sugestão de melhoria, por favor, abra uma [Issue no GitHub](https://github.com/futurodevjunior/ferreira_ops_xtreme_2077/issues). Ao criar uma issue, forneça o máximo de detalhes possível para nos ajudar a entender e resolver o problema rapidamente.
+- **Assinatura**: `run(target, ip, open_ports, banners)` — exatamente 4 argumentos posicionais
+- **Retorno**: Deve retornar um `dict` com chaves `"plugin"` (str) e `"resultados"` (dict/list/str)
+- **Ferramentas externas**: Use `shutil.which()` para verificar disponibilidade antes de executar
+- **Timeouts**: Sempre use timeouts em `subprocess.run()` e `requests.get()`
+- **Erros**: Capture exceções e retorne `{"plugin": "nome", "resultados": {"erro": str(e)}}`
+- **Arquivo**: Salve como `plugins/nome_do_plugin.py`
+
+## 📝 Diretrizes de Código
+
+- **Python 3.8+** compatível
+- **Type hints** em funções públicas
+- **Docstrings** descritivas em todas as funções `run()`
+- **Imports**: Dentro da função `run()` para evitar erros de importação em massa
+- **snake_case** para funções e variáveis
+- **Sem dependências ocultas**: Documente dependências extras no docstring
+- **Conventional Commits** para mensagens de commit
+
+## 🐞 Relatando Bugs
+
+Abra uma [Issue no GitHub](https://github.com/glferreira-devsecops/Cascavel/issues) com:
+
+- Descrição detalhada do problema
+- Passos para reproduzir
+- Saída do terminal com o erro
+- Versão do Python e OS
 
 ## ❓ Dúvidas?
 
-Não hesite em perguntar! Se tiver qualquer dúvida sobre como contribuir ou sobre o projeto, sinta-se à vontade para abrir uma issue ou entrar em contato com os mantenedores.
+Abra uma issue ou entre em contato com os mantenedores.
 
 **Agradecemos sua contribuição!**
