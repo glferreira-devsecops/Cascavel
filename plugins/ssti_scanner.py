@@ -14,7 +14,7 @@ def run(target, ip, open_ports, banners):
         ("#{7*7}", "49", "RUBY_ERB"),
         ("<%= 7*7 %>", "49", "ERB/JSP"),
         ("{{7*'7'}}", "7777777", "JINJA2_CONFIRM"),
-        ("${7*7}", "49", "VELOCITY"),
+        ("#set($x=7*7)${x}", "49", "VELOCITY"),
         ("{php}echo 7*7;{/php}", "49", "SMARTY"),
         ("{{config}}", "SECRET_KEY", "JINJA2_CONFIG_LEAK"),
         ("{{self.__init__.__globals__}}", "os", "JINJA2_RCE_PROBE"),
@@ -27,8 +27,10 @@ def run(target, ip, open_ports, banners):
             try:
                 resp = requests.get(url, timeout=6)
                 if resp.status_code == 200 and indicator in resp.text:
-                    # Confirmar que não é reflexão literal
-                    if payload not in resp.text:
+                    # Confirmar: indicador presente E payload não refletido literalmente
+                    # (se o template engine avaliou, o payload bruto não deveria estar exatamente)
+                    is_literal_reflection = (resp.text.count(payload) > 0 and resp.text.count(indicator) == resp.text.count(payload))
+                    if not is_literal_reflection:
                         vuln = {
                             "tipo": "SSTI",
                             "engine": engine,

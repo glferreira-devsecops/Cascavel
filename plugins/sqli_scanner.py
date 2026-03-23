@@ -42,6 +42,8 @@ def run(target, ip, open_ports, banners):
     vulns = []
 
     for param in params:
+        bool_true_len = 0
+        bool_false_len = 0
         for payload, method in payloads:
             url = f"http://{target}/?{param}={payload}"
             try:
@@ -70,7 +72,7 @@ def run(target, ip, open_ports, banners):
                 # Boolean-based differential
                 if method == "BOOL_TRUE":
                     bool_true_len = len(resp.text)
-                elif method == "BOOL_FALSE":
+                elif method == "BOOL_FALSE" and bool_true_len > 0:
                     bool_false_len = len(resp.text)
                     if abs(bool_true_len - bool_false_len) > 50:
                         vulns.append({
