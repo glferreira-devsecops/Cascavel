@@ -31,7 +31,7 @@ def run(target, ip, open_ports, banners):
                     "csp_frame_ancestors": "AUSENTE",
                     "descricao": "Página pode ser carregada em iframe — possível clickjacking",
                 })
-            elif xfo == "ALLOWFROM":
+            elif "ALLOW-FROM" in xfo:
                 vulns.append({
                     "tipo": "CLICKJACKING_ALLOW_FROM",
                     "pagina": page,

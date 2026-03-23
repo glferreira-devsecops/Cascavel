@@ -20,6 +20,7 @@ import json
 import shutil
 import re
 import argparse
+import shlex
 from typing import List, Dict, Any, Optional
 
 __version__ = "2.0.0"
@@ -204,21 +205,22 @@ def enum_tools(
 ) -> Dict[str, Any]:
     """Executa ferramentas de enumeração, pulando as não disponíveis."""
     results = {}
+    safe_target = shlex.quote(target)
     tools = {
-        "subfinder": f"subfinder -silent -d {target}",
-        "amass": f"amass enum -d {target} -timeout 2",
-        "httpx": f"echo {target} | httpx -silent -title -tech-detect -ip",
-        "nmap": f"nmap -Pn -A {target}",
+        "subfinder": f"subfinder -silent -d {safe_target}",
+        "amass": f"amass enum -d {safe_target} -timeout 2",
+        "httpx": f"echo {safe_target} | httpx -silent -title -tech-detect -ip",
+        "nmap": f"nmap -Pn -A {safe_target}",
         "ffuf": f"ffuf -u http://{target}/FUZZ -w {wordlist} -mc 200,204,301,302,307,401,403 -t 40" if wordlist else "",
         "gobuster": f"gobuster dir -u http://{target} -w {wordlist} -q" if wordlist else "",
-        "naabu": f"echo {target} | naabu -silent",
-        "nuclei": f"echo {target} | nuclei -silent -t {nuclei_templates}" if nuclei_templates else "",
+        "naabu": f"echo {safe_target} | naabu -silent",
+        "nuclei": f"echo {safe_target} | nuclei -silent -t {nuclei_templates}" if nuclei_templates else "",
         "curl": f"curl -sI http://{target}",
         "katana": f"echo http://{target} | katana -silent -d 2 -jc -ct 30",
-        "gau": f"echo {target} | gau --threads 3 --blacklist png,jpg,gif,css,woff",
-        "dnsx": f"echo {target} | dnsx -silent -a -aaaa -mx -ns -cname -resp",
+        "gau": f"echo {safe_target} | gau --threads 3 --blacklist png,jpg,gif,css,woff",
+        "dnsx": f"echo {safe_target} | dnsx -silent -a -aaaa -mx -ns -cname -resp",
         "nikto": f"nikto -h http://{target} -maxtime 60s -nointeractive",
-        "wafw00f": f"wafw00f {target}",
+        "wafw00f": f"wafw00f {safe_target}",
     }
 
     for name, cmd in tools.items():
@@ -362,7 +364,9 @@ def run_feroxbuster(target: str, wordlist: str, available: Dict[str, bool]) -> L
         return [{"aviso": "wordlist não configurada"}]
 
     output_path = os.path.join(EXPORTS_PATH, f"ferox_{target.replace('.', '_')}.json")
-    cmd = f"feroxbuster --url http://{target} --wordlist {wordlist} --json --silent --output {output_path}"
+    safe_target = shlex.quote(target)
+    safe_wordlist = shlex.quote(wordlist)
+    cmd = f"feroxbuster --url http://{target} --wordlist {safe_wordlist} --json --silent --output {output_path}"
     log("⚡ Executando: feroxbuster", "yellow")
     run(cmd, timeout=90)
     if os.path.isfile(output_path):

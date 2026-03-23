@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.8%2B-blue.svg" alt="Python 3.8+" /></a>
   <img src="https://img.shields.io/badge/tool-CLI-orange.svg" alt="CLI Tool" />
-  <img src="https://img.shields.io/badge/plugins-44-purple.svg" alt="60 Plugins" />
+  <img src="https://img.shields.io/badge/plugins-60-purple.svg" alt="60 Plugins" />
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg" alt="Platform" />
 </p>
 
@@ -177,7 +177,7 @@ O Cascavel inclui **60 plugins** cobrindo diversas áreas de segurança. Consult
 │   ├── shodan_recon.py   # Shodan OSINT
 │   ├── katana_crawler.py # Web crawler
 │   ├── dns_deep.py       # DNS profundo
-│   └── ...               # +25 plugins adicionais
+│   └── ...               # +55 plugins adicionais
 ├── wordlists/            # Wordlists para enumeração
 ├── nuclei-templates/     # Templates de vulnerabilidade
 ├── exports/              # Saídas de ferramentas
