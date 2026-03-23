@@ -1,15 +1,26 @@
+# Core
 colorama
 termcolor
 requests
+
+# Plugins — Web/Analysis
 beautifulsoup4
 dnspython
 python-nmap
-scapy
-python-wappalyzer
-yara-python
-paramiko
-impacket  # Nota: impacket pode exigir compilação específica ou dependências de sistema, dependendo do SO. Consulte a documentação oficial para detalhes de instalação.
-boto3
-azure-mgmt  # Este é um meta-pacote; para serviços Azure específicos, considere instalar sub-pacotes como azure-mgmt-compute.
 pyOpenSSL
-netifaces
+
+# Plugins — Authentication
+paramiko
+
+# Plugins — Cloud
+boto3
+
+# Plugins — OSINT (opcionais, mas recomendados)
+shodan
+censys
+
+# Plugins — Advanced (podem exigir compilação específica)
+# scapy           # Uncomment se precisar de packet crafting
+# impacket        # Uncomment para testes SMB/AD avançados
+# yara-python     # Uncomment para detecção de malware
+# netifaces       # Uncomment para enumeração de interfaces de rede

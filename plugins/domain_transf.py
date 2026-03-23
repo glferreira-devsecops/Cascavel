@@ -1,17 +1,23 @@
-# plugins/domain_transfers.py
-def run(target, results):
+# plugins/domain_transf.py
+def run(target, ip, open_ports, banners):
     """
     Tenta realizar transferência de zona DNS AXFR (zone transfer) no domínio alvo.
+    Retorna resultado estruturado para o core do Cascavel.
     """
     import subprocess
 
+    resultado = {}
     cmd = f"dig axfr {target} @{target}"
     try:
         output = subprocess.check_output(cmd, shell=True, timeout=20)
         decoded = output.decode()
         if "Transfer failed" not in decoded and "connection timed out" not in decoded:
-            results["domain_transfers"] = decoded
+            resultado["transferencia"] = decoded
         else:
-            results["domain_transfers"] = "Zone transfer não permitido ou falhou."
+            resultado["transferencia"] = "Zone transfer não permitido ou falhou."
+    except subprocess.TimeoutExpired:
+        resultado["erro"] = "Timeout ao tentar zone transfer"
     except Exception as e:
-        results["domain_transfers"] = {"error": str(e)}
+        resultado["erro"] = str(e)
+
+    return {"plugin": "domain_transf", "resultados": resultado}
