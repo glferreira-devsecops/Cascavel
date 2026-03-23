@@ -1,50 +1,75 @@
 # plugins/open_redirect.py
 def run(target, ip, open_ports, banners):
     """
-    Scanner de Open Redirect: detecta redirecionamentos abertos.
-    Testa parâmetros comuns com URLs externas para verificar se o servidor redireciona.
+    Scanner Open Redirect.
+    2026 Intel: header + JS redirect, parser differential bypass,
+    protocol-relative, unicode bypass, data: URI, javascript: URI.
     """
     import requests
 
-    params = ["url", "redirect", "next", "redir", "return", "returnTo", "goto", "link",
-              "out", "view", "to", "ref", "continue", "dest", "destination", "target"]
-    evil_urls = ["https://evil.com", "//evil.com", "https://evil.com%00.legitimate.com"]
-
+    params = ["url", "redirect", "next", "return", "goto", "dest", "continue",
+              "forward", "return_url", "redirect_uri", "callback", "rurl",
+              "target", "out", "redir", "link", "ref"]
+    payloads = [
+        ("https://evil.com", "DIRECT"),
+        ("//evil.com", "PROTOCOL_RELATIVE"),
+        ("https://evil.com%2F%2F", "DOUBLE_ENCODE"),
+        ("/\\evil.com", "BACKSLASH"),
+        ("https://evil.com%00.trusted.com", "NULL_BYTE"),
+        ("https://trusted.com@evil.com", "AUTHORITY_BYPASS"),
+        ("https://evil.com#trusted.com", "FRAGMENT"),
+        ("https://evil.com?.trusted.com", "QUERY_BYPASS"),
+        (f"https://{target}.evil.com", "SUBDOMAIN_MATCH"),
+        ("javascript:alert(1)", "JAVASCRIPT_URI"),
+        ("data:text/html,<h1>Redirect</h1>", "DATA_URI"),
+        ("https://evil.com/%2e%2e/", "DOT_ENCODED"),
+        ("https:\\\\evil.com", "DOUBLE_BACKSLASH"),
+        ("https:evil.com", "SCHEME_COLON"),
+    ]
     vulns = []
 
     for param in params:
-        for evil in evil_urls:
-            url = f"http://{target}/?{param}={evil}"
+        for payload, method in payloads:
+            url = f"http://{target}/?{param}={payload}"
             try:
+                # Seguir redirect mas capturar cada hop
                 resp = requests.get(url, timeout=6, allow_redirects=False)
-                location = resp.headers.get("Location", "")
 
                 if resp.status_code in [301, 302, 303, 307, 308]:
-                    if "evil.com" in location:
+                    location = resp.headers.get("Location", "")
+                    if "evil.com" in location or location.startswith("javascript:"):
+                        sev = "ALTO"
+                        if "javascript:" in location:
+                            sev = "CRITICO"
                         vulns.append({
-                            "tipo": "OPEN_REDIRECT",
-                            "parametro": param,
-                            "payload": evil,
-                            "location_header": location,
-                            "status_http": resp.status_code,
-                            "severidade": "ALTO",
+                            "tipo": "OPEN_REDIRECT", "metodo": method,
+                            "parametro": param, "severidade": sev,
+                            "location": location[:100],
                         })
-                # Verificar meta refresh ou JS redirect
-                elif resp.status_code == 200 and "evil.com" in resp.text:
-                    if any(x in resp.text.lower() for x in ["meta http-equiv", "window.location", "document.location"]):
+                        break
+
+                # JS redirect detection
+                if resp.status_code == 200:
+                    if any(pattern in resp.text for pattern in
+                           ["window.location", "location.href", "location.replace",
+                            "document.location", "window.open"]):
+                        if "evil.com" in resp.text:
+                            vulns.append({
+                                "tipo": "OPEN_REDIRECT_JS", "metodo": method,
+                                "parametro": param, "severidade": "ALTO",
+                            })
+                            break
+
+                # Meta refresh
+                if resp.status_code == 200 and "evil.com" in resp.text:
+                    if 'http-equiv="refresh"' in resp.text.lower():
                         vulns.append({
-                            "tipo": "OPEN_REDIRECT_JS",
-                            "parametro": param,
-                            "payload": evil,
-                            "status_http": resp.status_code,
-                            "severidade": "MEDIO",
+                            "tipo": "META_REFRESH_REDIRECT", "metodo": method,
+                            "parametro": param, "severidade": "MEDIO",
                         })
-            except requests.Timeout:
-                continue
+                        break
+
             except Exception:
                 continue
 
-    return {
-        "plugin": "open_redirect",
-        "resultados": vulns if vulns else "Nenhum open redirect detectado"
-    }
+    return {"plugin": "open_redirect", "resultados": vulns if vulns else "Nenhum open redirect detectado"}
