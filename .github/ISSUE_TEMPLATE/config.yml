@@ -1,0 +1,17 @@
+# Issue Template Chooser
+# Cascavel Security Framework | RET Tecnologia
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md
+    about: Check the plugin documentation before reporting issues
+
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/glferreira-devsecops/Cascavel/blob/main/SECURITY.md
+    about: Report security vulnerabilities privately (do NOT open a public issue)
+
+  - name: 💬 Questions & Support
+    url: https://github.com/glferreira-devsecops/Cascavel/blob/main/SUPPORT.md
+    about: Get help with Cascavel configuration and usage

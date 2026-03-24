@@ -1,0 +1,36 @@
+# Stale Issues — Auto-close inactive issues
+# Cascavel Security Framework | RET Tecnologia
+
+name: Stale Issues
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  stale:
+    name: 🧹 Close Stale Issues
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 90
+          days-before-close: 14
+          stale-issue-label: 'stale'
+          exempt-issue-labels: 'security,bug,enhancement,pinned,good first issue,help wanted,in-progress,wip'
+          stale-issue-message: >
+            This issue has been automatically marked as **stale** because it has not had
+            recent activity (90 days). It will be closed in 14 days if no further activity
+            occurs. If this issue is still relevant, please leave a comment or remove the
+            `stale` label.
+
+            Thank you for your contributions to Cascavel! 🐍
+            — *[RET Tecnologia](https://rettecnologia.org)*
+          close-issue-message: >
+            This issue has been automatically closed due to inactivity.
+            Feel free to reopen it if the issue persists or becomes relevant again.
+          operations-per-run: 30
