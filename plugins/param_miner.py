@@ -1,11 +1,19 @@
 # plugins/param_miner.py
+import requests
+
+
+DEBUG_PARAMS = {"debug", "trace", "verbose", "dev", "internal"}
+SENSITIVE_PARAMS = {"admin", "role", "secret", "token", "key", "api_key"}
+INJECTION_PARAMS = {"file", "path", "include", "template"}
+
+
 def run(target, ip, open_ports, banners):
     """
     Parameter Mining / Hidden Parameter Discovery.
     Descobre parâmetros GET ocultos que podem revelar funcionalidades escondidas.
     Baseado em Param Miner (PortSwigger).
     """
-    import requests
+    _ = (ip, open_ports, banners)
 
     hidden_params = [
         "debug", "test", "admin", "internal", "dev", "staging", "verbose",
@@ -21,7 +29,6 @@ def run(target, ip, open_ports, banners):
     resultado = {"params_descobertos": []}
 
     for page in pages:
-        # Baseline
         baseline_url = f"http://{target}{page}"
         try:
             baseline = requests.get(baseline_url, timeout=5)
@@ -36,29 +43,14 @@ def run(target, ip, open_ports, banners):
                 resp = requests.get(url, timeout=4)
                 diff = abs(len(resp.text) - baseline_len)
 
-                # Parâmetro causa mudança significativa
                 if diff > 50 or resp.status_code != baseline_status:
                     entry = {
-                        "pagina": page,
-                        "parametro": param,
+                        "pagina": page, "parametro": param,
                         "diff_tamanho": diff,
                         "status_baseline": baseline_status,
                         "status_param": resp.status_code,
                     }
-
-                    if param in ["debug", "trace", "verbose", "dev", "internal"]:
-                        entry["severidade"] = "ALTO"
-                        entry["tipo"] = "DEBUG_PARAM"
-                    elif param in ["admin", "role", "secret", "token", "key", "api_key"]:
-                        entry["severidade"] = "ALTO"
-                        entry["tipo"] = "SENSITIVE_PARAM"
-                    elif param in ["file", "path", "include", "template"]:
-                        entry["severidade"] = "MEDIO"
-                        entry["tipo"] = "INJECTION_SURFACE"
-                    else:
-                        entry["severidade"] = "BAIXO"
-                        entry["tipo"] = "HIDDEN_PARAM"
-
+                    entry["severidade"], entry["tipo"] = _classify_param(param)
                     resultado["params_descobertos"].append(entry)
             except Exception:
                 continue
@@ -66,5 +58,16 @@ def run(target, ip, open_ports, banners):
     total = len(resultado["params_descobertos"])
     return {
         "plugin": "param_miner",
-        "resultados": resultado if total > 0 else "Nenhum parâmetro oculto descoberto"
+        "resultados": resultado if total > 0 else "Nenhum parâmetro oculto descoberto",
     }
+
+
+def _classify_param(param):
+    """Classifica severidade e tipo do parâmetro descoberto."""
+    if param in DEBUG_PARAMS:
+        return "ALTO", "DEBUG_PARAM"
+    if param in SENSITIVE_PARAMS:
+        return "ALTO", "SENSITIVE_PARAM"
+    if param in INJECTION_PARAMS:
+        return "MEDIO", "INJECTION_SURFACE"
+    return "BAIXO", "HIDDEN_PARAM"

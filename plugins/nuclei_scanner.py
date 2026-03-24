@@ -1,26 +1,31 @@
 # plugins/nuclei_scanner.py
+import subprocess
+import shutil
+import shlex
+import json
+
+
 def run(target, ip, open_ports, banners):
     """
     Scanner de vulnerabilidades via ProjectDiscovery Nuclei com templates.
     Executa varredura categorizada por severidade (critical, high, medium).
     Requer: nuclei instalado no PATH.
     """
-    import subprocess
-    import shutil
-    import json
+    _ = (ip, open_ports, banners)
 
     if not shutil.which("nuclei"):
         return {"plugin": "nuclei_scanner", "resultados": {"erro": "nuclei não encontrado no PATH"}}
 
+    safe_target = shlex.quote(target)
     resultado = {}
     severidades = ["critical", "high", "medium"]
 
     for sev in severidades:
         try:
-            cmd = f"echo http://{target} | nuclei -silent -severity {sev} -jsonl -rate-limit 50 -timeout 5 -retries 1"
+            cmd = f"echo http://{safe_target} | nuclei -silent -severity {sev} -jsonl -rate-limit 50 -timeout 5 -retries 1"
             proc = subprocess.run(
                 cmd, shell=True, capture_output=True,
-                timeout=180, encoding="utf-8"
+                timeout=180, encoding="utf-8",
             )
             achados = []
             for line in proc.stdout.splitlines():
@@ -39,7 +44,7 @@ def run(target, ip, open_ports, banners):
                         continue
             resultado[sev] = achados if achados else f"Nenhuma vuln {sev} detectada"
         except subprocess.TimeoutExpired:
-            resultado[sev] = f"Timeout (180s)"
+            resultado[sev] = "Timeout (180s)"
         except Exception as e:
             resultado[sev] = f"Erro: {e}"
 

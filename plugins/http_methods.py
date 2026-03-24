@@ -1,10 +1,13 @@
 # plugins/http_methods.py
+import requests
+
+
 def run(target, ip, open_ports, banners):
     """
     Audita métodos HTTP disponíveis no servidor.
     Detecta métodos perigosos: PUT, DELETE, TRACE, CONNECT, PATCH.
     """
-    import requests
+    _ = (ip, open_ports, banners)
 
     metodos = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "TRACE", "HEAD", "CONNECT"]
     perigosos = {"PUT", "DELETE", "TRACE", "CONNECT"}
@@ -15,7 +18,6 @@ def run(target, ip, open_ports, banners):
         url = f"http://{target}{path}"
         metodos_aceitos = []
 
-        # Método 1: OPTIONS
         try:
             resp = requests.options(url, timeout=5)
             allow = resp.headers.get("Allow", "")
@@ -24,7 +26,6 @@ def run(target, ip, open_ports, banners):
         except Exception:
             pass
 
-        # Método 2: Teste manual de cada método
         if not metodos_aceitos:
             for metodo in metodos:
                 try:
@@ -45,5 +46,5 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "http_methods",
-        "resultados": resultados if resultados else "Nenhum método HTTP perigoso detectado"
+        "resultados": resultados if resultados else "Nenhum método HTTP perigoso detectado",
     }

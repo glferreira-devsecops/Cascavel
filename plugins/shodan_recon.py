@@ -1,27 +1,34 @@
 # plugins/shodan_recon.py
+import os
+
+try:
+    import shodan as _shodan
+    _HAS_SHODAN = True
+except ImportError:
+    _HAS_SHODAN = False
+
+
 def run(target, ip, open_ports, banners):
     """
     Reconnaissance via Shodan API.
     Busca informações públicas sobre o IP do alvo: portas, serviços, vulns, geo.
     Requer: pip install shodan + SHODAN_API_KEY no ambiente.
     """
-    import os
+    _ = (open_ports, banners)
 
-    try:
-        import shodan
-    except ImportError:
+    if not _HAS_SHODAN:
         return {"plugin": "shodan_recon", "resultados": {"erro": "shodan não instalado (pip install shodan)"}}
 
     api_key = os.environ.get("SHODAN_API_KEY", "")
     if not api_key:
         return {
             "plugin": "shodan_recon",
-            "resultados": {"aviso": "SHODAN_API_KEY não definida no ambiente. Defina com: export SHODAN_API_KEY=sua_chave"}
+            "resultados": {"aviso": "SHODAN_API_KEY não definida no ambiente. Defina com: export SHODAN_API_KEY=sua_chave"},
         }
 
     resultado = {}
     try:
-        api = shodan.Shodan(api_key)
+        api = _shodan.Shodan(api_key)
         host_ip = ip if ip and ip != "?" else target
 
         host = api.host(host_ip)
@@ -35,7 +42,6 @@ def run(target, ip, open_ports, banners):
         resultado["vulns"] = host.get("vulns", [])
         resultado["hostnames"] = host.get("hostnames", [])
 
-        # Serviços detalhados (top 10)
         servicos = []
         for item in host.get("data", [])[:10]:
             servicos.append({
@@ -47,8 +53,6 @@ def run(target, ip, open_ports, banners):
             })
         resultado["servicos"] = servicos
 
-    except shodan.APIError as e:
-        resultado["erro"] = f"Shodan API: {str(e)}"
     except Exception as e:
         resultado["erro"] = str(e)
 

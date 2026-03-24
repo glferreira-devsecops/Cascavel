@@ -1,26 +1,46 @@
-# Core
-colorama
-termcolor
-requests
+# ──────────────────────────────────────────────────
+# Cascavel — Quantum Security Framework
+# Core Dependencies
+# ──────────────────────────────────────────────────
 
-# Plugins — Web/Analysis
+# Core (required)
+requests
+rich
+pyfiglet
+reportlab
+
+# Notifications (optional but recommended)
+notify-py
+
+# ──────────────────────────────────────────────────
+# Plugins — Web Analysis
+# ──────────────────────────────────────────────────
 beautifulsoup4
 dnspython
 python-nmap
 pyOpenSSL
 
-# Plugins — Authentication
+# ──────────────────────────────────────────────────
+# Plugins — Authentication & Crypto
+# ──────────────────────────────────────────────────
 paramiko
+pyjwt
 
-# Plugins — Cloud
+# ──────────────────────────────────────────────────
+# Plugins — Cloud Reconnaissance
+# ──────────────────────────────────────────────────
 boto3
 
-# Plugins — OSINT (opcionais, mas recomendados)
+# ──────────────────────────────────────────────────
+# Plugins — OSINT (optional but recommended)
+# ──────────────────────────────────────────────────
 shodan
 censys
 
-# Plugins — Advanced (podem exigir compilação específica)
-# scapy           # Uncomment se precisar de packet crafting
-# impacket        # Uncomment para testes SMB/AD avançados
-# yara-python     # Uncomment para detecção de malware
-# netifaces       # Uncomment para enumeração de interfaces de rede
+# ──────────────────────────────────────────────────
+# Advanced (uncomment as needed)
+# ──────────────────────────────────────────────────
+# scapy           # Packet crafting
+# impacket        # SMB/AD advanced
+# yara-python     # Malware detection
+# netifaces       # Network interface enumeration

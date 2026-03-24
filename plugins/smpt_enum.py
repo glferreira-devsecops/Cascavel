@@ -1,15 +1,17 @@
 # plugins/smpt_enum.py
+import smtplib
+
+
 def run(target, ip, open_ports, banners):
     """
     Enumera usuários SMTP comuns via comando VRFY.
     Verifica porta 25 antes de tentar conexão.
     """
-    import smtplib
+    _ = (ip, banners)
 
     usuarios = ["admin", "root", "user", "contact", "info", "postmaster", "webmaster"]
     encontrados = []
 
-    # Verificar se porta SMTP está aberta
     smtp_ports = [p for p in open_ports if p in [25, 587, 465]] or [25]
 
     for smtp_port in smtp_ports:
@@ -33,5 +35,5 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "smpt_enum",
-        "resultados": encontrados if encontrados else "Nenhum usuário SMTP encontrado"
+        "resultados": encontrados if encontrados else "Nenhum usuário SMTP encontrado",
     }

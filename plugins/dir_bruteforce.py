@@ -1,16 +1,18 @@
 # plugins/dir_bruteforce.py
 import os
+import subprocess
+import json
+import shutil
+import shlex
+
 
 def run(target, ip, open_ports, banners):
     """
     Faz brute-force de diretórios usando feroxbuster, salva resultados em JSON.
     Usa wordlist do framework (não mais hardcoded).
     """
-    import subprocess
-    import json
-    import shutil
+    _ = (ip, open_ports, banners)
 
-    # Usar wordlist do framework
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     wordlist_candidates = [
         os.path.join(base_path, "wordlists", "common.txt"),
@@ -28,17 +30,19 @@ def run(target, ip, open_ports, banners):
     if not shutil.which("feroxbuster"):
         return {"plugin": "dir_bruteforce", "resultados": {"erro": "feroxbuster não encontrado no PATH"}}
 
-    ferox_cmd = f"feroxbuster -u http://{target} -w {wordlist} --depth 1 --json -q"
+    safe_target = shlex.quote(target)
+    safe_wordlist = shlex.quote(wordlist)
+    ferox_cmd = f"feroxbuster -u http://{safe_target} -w {safe_wordlist} --depth 1 --json -q"
     resultado = []
     try:
         proc = subprocess.run(
             ferox_cmd, shell=True, capture_output=True,
-            timeout=60, encoding="utf-8"
+            timeout=60, encoding="utf-8",
         )
-        lines = [l for l in proc.stdout.split("\n") if l.strip()]
-        for l in lines:
+        lines = [line for line in proc.stdout.split("\n") if line.strip()]
+        for line in lines:
             try:
-                obj = json.loads(l)
+                obj = json.loads(line)
                 if "url" in obj:
                     resultado.append({"url": obj.get("url"), "status": obj.get("status")})
             except Exception:
@@ -50,5 +54,5 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "dir_bruteforce",
-        "resultados": resultado if resultado else "Nenhum diretório encontrado"
+        "resultados": resultado if resultado else "Nenhum diretório encontrado",
     }

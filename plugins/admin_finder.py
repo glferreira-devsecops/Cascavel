@@ -1,18 +1,19 @@
 # plugins/admin_finder.py
+import requests
+
 
 def run(target, ip, open_ports, banners):
     """
     Busca páginas administrativas comuns no alvo.
     Retorna uma lista de caminhos encontrados com seus status HTTP.
     """
-    import requests
+    _ = (ip, open_ports, banners)
 
     caminhos = [
         "/admin", "/login", "/administrator", "/adm",
         "/admin.php", "/cpanel", "/admin/login", "/painel",
-        "/admin1", "/admin2", "/adminarea", "/backend"
+        "/admin1", "/admin2", "/adminarea", "/backend",
     ]
-
     encontrados = []
 
     for caminho in caminhos:
@@ -24,15 +25,12 @@ def run(target, ip, open_ports, banners):
                     encontrados.append({
                         "url": url,
                         "status": r.status_code,
-                        "headers": dict(r.headers)
+                        "headers": dict(r.headers),
                     })
             except requests.RequestException:
                 continue
 
     return {
         "plugin": "admin_finder",
-        "target": target,
-        "resultados": (
-            encontrados if encontrados else "Nenhuma página admin encontrada"
-        )
+        "resultados": encontrados if encontrados else "Nenhuma página admin encontrada",
     }

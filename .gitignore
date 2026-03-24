@@ -1,9 +1,15 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 venv/
+.venv/
 .env
 *.bak
+*.egg-info/
+dist/
+build/
+.eggs/
 
 # Logs e Dados Temporários
 *.log
@@ -21,10 +27,13 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Cascavel — Outputs
+# Cascavel — Runtime Outputs (auto-generated)
 exports/
 reports/
 nuclei-templates/
+
+# Wordlists (downloaded at runtime)
+wordlists/*.txt
 
 # Dependências
 .pipenv/
