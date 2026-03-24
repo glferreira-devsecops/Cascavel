@@ -21,7 +21,7 @@ jobs:
     name: "🔍 Syntax & Import Check"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -40,7 +40,7 @@ jobs:
     name: "🛡️ Bandit SAST"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -70,7 +70,7 @@ jobs:
     container:
       image: semgrep/semgrep:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Run Semgrep scan
         run: |
           semgrep scan \
@@ -97,7 +97,7 @@ jobs:
     name: "📦 Dependency CVE Audit"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -142,7 +142,7 @@ jobs:
     name: "🔑 Secret Detection"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for comprehensive scan
       - uses: gitleaks/gitleaks-action@v2
