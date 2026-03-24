@@ -1,0 +1,100 @@
+name: 🐛 Bug Report
+description: Reporte um bug no Cascavel
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees:
+  - glferreira-devsecops
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Obrigado por reportar!
+        Quanto mais detalhes, mais rápido podemos resolver. 🐍
+        **Cascavel** — Quantum Security Framework by [RET Tecnologia](https://rettecnologia.org)
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do Bug
+      description: O que aconteceu? O que você esperava?
+      placeholder: "Descreva o bug de forma clara e detalhada..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para Reproduzir
+      description: Como podemos reproduzir o problema?
+      placeholder: |
+        1. Execute `python3 cascavel.py -t target.com`
+        2. Aguarde o scan completar
+        3. Observe o erro no terminal
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento Esperado
+      description: O que deveria ter acontecido?
+    validations:
+      required: true
+
+  - type: textarea
+    id: terminal-output
+    attributes:
+      label: Saída do Terminal
+      description: Cole a saída de erro completa
+      render: shell
+
+  - type: input
+    id: os
+    attributes:
+      label: Sistema Operacional
+      placeholder: "macOS 15.3 / Ubuntu 24.04 / WSL2"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Versão do Python
+      placeholder: "3.12.3"
+    validations:
+      required: true
+
+  - type: input
+    id: cascavel-version
+    attributes:
+      label: Versão do Cascavel
+      placeholder: "2.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: check-tools
+    attributes:
+      label: Saída de --check-tools
+      description: "Execute `python3 cascavel.py --check-tools` e cole aqui"
+      render: shell
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      options:
+        - 🔴 Crash / Data Loss
+        - 🟠 Funcionalidade quebrada
+        - 🟡 Bug menor / cosmético
+        - 🟢 Sugestão de melhoria
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmações
+      options:
+        - label: Pesquisei issues existentes e este bug não foi reportado
+          required: true
+        - label: Estou usando a versão mais recente do Cascavel
+          required: true

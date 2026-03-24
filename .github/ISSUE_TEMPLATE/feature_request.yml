@@ -1,0 +1,67 @@
+name: 💡 Feature Request
+description: Sugira uma nova funcionalidade para o Cascavel
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+assignees:
+  - glferreira-devsecops
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Queremos ouvir sua ideia!
+        **Cascavel** — Quantum Security Framework by [RET Tecnologia](https://rettecnologia.org)
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema ou Necessidade
+      description: Qual problema esta feature resolveria?
+      placeholder: "Eu sempre preciso de X quando faço Y, mas o Cascavel não suporta..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solução Proposta
+      description: Como você gostaria que funcionasse?
+      placeholder: "Seria ideal se o Cascavel pudesse..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas Consideradas
+      description: Você já tentou contornar o problema? Como?
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Categoria
+      options:
+        - 🔌 Novo Plugin
+        - 🛠 Core Engine
+        - 📊 Relatórios
+        - 🎨 UX/Terminal
+        - 📦 Integração com Ferramenta Externa
+        - 📚 Documentação
+        - 🔧 DevOps/CI
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade (sua perspectiva)
+      options:
+        - 🔴 Crítica — bloqueia meu workflow
+        - 🟠 Alta — muito útil
+        - 🟡 Média — nice to have
+        - 🟢 Baixa — ideia para o futuro
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Disposição para Contribuir
+      options:
+        - label: Estou disposto a implementar esta feature via Pull Request
+        - label: Posso ajudar com testes e/ou documentação

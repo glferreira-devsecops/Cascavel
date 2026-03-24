@@ -1,0 +1,29 @@
+# Cascavel — Code Ownership
+# Maintained by RET Tecnologia (rettecnologia.org)
+#
+# These owners will be automatically requested for review
+# when someone opens a pull request that modifies code they own.
+
+# ─── Core Engine ──────────────────────────────────────────
+cascavel.py                    @glferreira-devsecops
+report_generator.py            @glferreira-devsecops
+install.sh                     @glferreira-devsecops
+
+# ─── Plugins ─────────────────────────────────────────────
+plugins/                       @glferreira-devsecops
+
+# ─── CI/CD & GitHub Config ───────────────────────────────
+.github/                       @glferreira-devsecops
+pyproject.toml                 @glferreira-devsecops
+requirements.txt               @glferreira-devsecops
+
+# ─── Documentation ───────────────────────────────────────
+README.md                      @glferreira-devsecops
+CONTRIBUTING.md                @glferreira-devsecops
+SECURITY.md                    @glferreira-devsecops
+PLUGINS.md                     @glferreira-devsecops
+docs/                          @glferreira-devsecops
+
+# ─── Templates & Wordlists ──────────────────────────────
+nuclei-templates/              @glferreira-devsecops
+wordlists/                     @glferreira-devsecops

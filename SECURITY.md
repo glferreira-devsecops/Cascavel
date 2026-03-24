@@ -1,5 +1,14 @@
 # Security Policy
 
+<div align="center">
+
+**Cascavel** — Quantum Security Framework
+<br>Maintained by [RET Tecnologia](https://rettecnologia.org)
+
+</div>
+
+---
+
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in the Cascavel framework, we appreciate your help in disclosing it responsibly.
@@ -44,3 +53,11 @@ This security policy covers:
 ## Ethical Use
 
 Cascavel is designed for **authorized security testing only**. Using this tool against systems without proper authorization is illegal and unethical. The maintainers are not responsible for any misuse.
+
+---
+
+<div align="center">
+
+**Cascavel** is maintained by [RET Tecnologia](https://rettecnologia.org) · MIT License
+
+</div>

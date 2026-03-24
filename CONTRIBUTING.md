@@ -1,5 +1,14 @@
 # Contribuindo com o Cascavel
 
+<div align="center">
+
+**Cascavel** — Quantum Security Framework
+<br>Open Source by [RET Tecnologia](https://rettecnologia.org)
+
+</div>
+
+---
+
 Sua colaboração é fundamental para o crescimento do **Cascavel — Quantum Security Framework**! Agradecemos seu interesse em contribuir.
 
 ## 🤝 Como Contribuir
@@ -150,4 +159,11 @@ Abra uma [Issue no GitHub](https://github.com/glferreira-devsecops/Cascavel/issu
 
 Abra uma issue ou entre em contato com os mantenedores.
 
-**Agradecemos sua contribuição!**
+---
+
+<div align="center">
+
+**Cascavel** — Mantido por [RET Tecnologia](https://rettecnologia.org) · MIT License
+<br>[GitHub](https://github.com/glferreira-devsecops) · [LinkedIn](https://linkedin.com/in/DevFerreiraG) · [Website](https://rettecnologia.org)
+
+</div>
