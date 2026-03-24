@@ -276,8 +276,20 @@ def _boot_line(tag: str, msg: str, delay: float = 0.08) -> None:
     sys.stdout.flush()
 
 
+def _get_terminal_height() -> int:
+    """Retorna altura do terminal com fallback seguro."""
+    try:
+        return os.get_terminal_size().lines
+    except (AttributeError, ValueError, OSError):
+        return 24  # Padrão POSIX
+
+
 def _fade_in_logo() -> None:
-    """Fade-in da logo: cobra slide-up + CASCAVEL text opacity transition."""
+    """Fade-in da logo: cobra slide-up + CASCAVEL text opacity transition.
+
+    SEGURANÇA UX: Detecta terminal height antes de cursor manipulation
+    para evitar crash em terminais pequenos ou pipes.
+    """
     if not IS_TTY:
         # Fallback sem animação
         for line in COBRA_ART:
@@ -286,57 +298,96 @@ def _fade_in_logo() -> None:
             console.print(f"[bold bright_green]{line}[/]")
         return
 
-    # Phase 1: Cobra art — cada linha aparece com cor progressiva (escuro → verde)
-    for i, line in enumerate(COBRA_ART):
-        brightness = int(22 + (i / max(len(COBRA_ART) - 1, 1)) * 10)  # 22-32
-        color = f"\033[38;5;{brightness}m"
-        sys.stdout.write(f"{color}{line}\033[0m\n")
-        sys.stdout.flush()
-        time.sleep(0.05)
-
-    time.sleep(0.2)
-
-    # Phase 2: Logo text — 4 estágios de fade (dim gray → dim green → green → bold green)
-    fade_codes = [
-        "\033[2;90m",   # dim gray
-        "\033[0;90m",   # gray
-        "\033[0;32m",   # green
-        "\033[1;32m",   # bold green
-        "\033[1;92m",   # bold bright green
-    ]
-
+    term_height = _get_terminal_height()
     logo_count = len(CASCAVEL_LOGO_ASCII)
+    cobra_count = len(COBRA_ART)
+    total_needed = cobra_count + logo_count + 3  # +3 spacing/subtitle
 
-    for stage_idx, ansi in enumerate(fade_codes):
-        if stage_idx > 0:
-            sys.stdout.write(f"\033[{logo_count}A")  # Move up
+    # Se terminal é muito pequeno, pula animação de cursor movement
+    use_cursor_movement = term_height >= total_needed + 4
 
+    try:
+        # Phase 1: Cobra art — cada linha aparece com cor progressiva (escuro → verde)
+        for i, line in enumerate(COBRA_ART):
+            brightness = int(22 + (i / max(cobra_count - 1, 1)) * 10)  # 22-32
+            color = f"\033[38;5;{brightness}m"
+            sys.stdout.write(f"{color}{line}\033[0m\n")
+            sys.stdout.flush()
+            time.sleep(0.05)
+
+        time.sleep(0.2)
+
+        # Phase 2: Logo text — 4 estágios de fade (dim gray → bold bright green)
+        fade_codes = [
+            "\033[2;90m",   # dim gray
+            "\033[0;90m",   # gray
+            "\033[0;32m",   # green
+            "\033[1;32m",   # bold green
+            "\033[1;92m",   # bold bright green
+        ]
+
+        for stage_idx, ansi in enumerate(fade_codes):
+            if stage_idx > 0 and use_cursor_movement:
+                sys.stdout.write(f"\033[{logo_count}A")  # Move up
+            elif stage_idx > 0:
+                # Terminal pequeno — sem cursor movement, só imprime o último
+                continue
+
+            for line in CASCAVEL_LOGO_ASCII:
+                sys.stdout.write(f"  {ansi}{line}\033[0m\n")
+            sys.stdout.flush()
+            time.sleep(0.10)
+
+        # Phase 3: Subtitle materializa
+        time.sleep(0.2)
+        subtitle = f"  Quantum Security Framework v{__version__} — Red Team Intelligence"
+        console.print()
+        console.print(f"  [bold bright_cyan]{subtitle}[/]")
+        time.sleep(0.4)
+
+    except (OSError, IOError):
+        # Fallback completo se CSI falhar (ex: terminal incompatível)
         for line in CASCAVEL_LOGO_ASCII:
-            sys.stdout.write(f"  {ansi}{line}\033[0m\n")
-        sys.stdout.flush()
-        time.sleep(0.12)
-
-    # Phase 3: Subtitle materializa com typewriter
-    time.sleep(0.3)
-    subtitle = f"  Quantum Security Framework v{__version__} — Red Team Intelligence"
-    console.print()
-    console.print(f"  [bold bright_cyan]{subtitle}[/]")
-    time.sleep(0.5)
+            console.print(f"[bold bright_green]{line}[/]")
 
 
 def _clear_block(num_lines: int) -> None:
-    """Limpa um bloco de linhas acima do cursor."""
+    """Limpa um bloco de linhas acima do cursor.
+
+    SEGURANÇA UX: Limita movimento de cursor ao tamanho real do terminal
+    para evitar artifacts visuais e crashes em terminais pequenos.
+    """
     if not IS_TTY:
         return
-    sys.stdout.write(f"\033[{num_lines}A")
-    for _ in range(num_lines):
-        sys.stdout.write("\033[2K\n")
-    sys.stdout.write(f"\033[{num_lines}A")
-    sys.stdout.flush()
+    try:
+        term_h = _get_terminal_height()
+        # Nunca mover mais linhas que o terminal tem (safety clamp)
+        safe_lines = min(num_lines, max(term_h - 2, 1))
+        sys.stdout.write(f"\033[{safe_lines}A")
+        for _ in range(safe_lines):
+            sys.stdout.write("\033[2K\n")
+        sys.stdout.write(f"\033[{safe_lines}A")
+        sys.stdout.flush()
+    except (OSError, IOError):
+        pass  # Silencia erros em terminais incompatíveis
 
 
 def run_preloader(plugin_count: int, tools_count: int) -> None:
-    """Preloader cinematográfico Awwwards-level com logo fade."""
+    """Preloader cinematográfico Awwwards-level com logo fade.
+
+    SEGURANÇA UX: Todo o preloader é wrapped em try/except para que
+    terminais incompatíveis (dumb, pipe, CI) recebam fallback graceful.
+    """
+    try:
+        _run_preloader_impl(plugin_count, tools_count)
+    except (OSError, IOError, Exception) as e:
+        # Fallback: terminal incompatível — imprime versão estática
+        console.print(f"\n  [bold bright_green]🐍 CASCAVEL v{__version__} — ONLINE[/]")
+        console.print(f"  [dim]Preloader desativado: {type(e).__name__}[/]\n")
+
+
+def _run_preloader_impl(plugin_count: int, tools_count: int) -> None:
+    """Implementação interna do preloader — isolada para try/except."""
     os_name = f"{platform.system()} {platform.release()}"
     py_ver = f"{sys.version.split()[0]}"
 
@@ -344,7 +395,7 @@ def run_preloader(plugin_count: int, tools_count: int) -> None:
 
     # === PHASE 1: Logo Fade-In ===
     _fade_in_logo()
-    time.sleep(0.6)
+    time.sleep(0.5)
 
     # === PHASE 2: Fade-Out (limpa para boot) ===
     total_logo_lines = len(COBRA_ART) + len(CASCAVEL_LOGO_ASCII) + 3  # +3 spacing/subtitle
@@ -370,23 +421,30 @@ def run_preloader(plugin_count: int, tools_count: int) -> None:
         for key, val in replacements.items():
             msg = msg.replace(key, val)
         _boot_line(tag, msg)
-        time.sleep(random.uniform(0.05, 0.15))
+        time.sleep(random.uniform(0.06, 0.18))
 
     console.print()
 
-    # === PHASE 4: Loading bar ===
+    # === PHASE 4: Loading bar — 2s para leitura confortável ===
     with Progress(
         SpinnerColumn("dots2"),
         TextColumn("[bold green]Armando sistema...[/]"),
         BarColumn(bar_width=40, complete_style="bright_green"),
         TextColumn("[bold]{task.percentage:>3.0f}%[/]"),
+        TimeElapsedColumn(),
         console=console,
         transient=True,
     ) as progress:
         task = progress.add_task("boot", total=100)
-        for _ in range(100):
+        for step in range(100):
             progress.advance(task)
-            time.sleep(0.01)
+            # Velocidade variável: começa rápido, desacelera no meio, acelera no final
+            if step < 30:
+                time.sleep(0.015)
+            elif step < 70:
+                time.sleep(0.025)  # Pausa para leitura do boot sequence
+            else:
+                time.sleep(0.012)
 
     console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — ONLINE[/]\n")
 
@@ -944,7 +1002,10 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
     next_tag, next_tip = SECURITY_INTEL[(intel_idx + 1) % len(SECURITY_INTEL)]
     next_text = Text()
     next_text.append(f"\n  NEXT: {next_tag}\n", style="dim bright_cyan")
-    next_text.append(f"  {next_tip[:60]}...\n", style="dim")
+    # Trunca com boundary seguro para evitar cortar emoji no meio
+    safe_len = min(55, len(next_tip))
+    truncated = next_tip[:safe_len].rsplit(' ', 1)[0] if len(next_tip) > safe_len else next_tip
+    next_text.append(f"  {truncated}...\n", style="dim")
 
     from rich.console import Group
     content = Group(
@@ -1035,57 +1096,58 @@ def run_plugins(
     table_rows: list = []
 
     try:
-      with Live(
-        _build_layout(table_rows, 1, valid[0][1] if valid else "", 0),
-        console=console,
-        refresh_per_second=4,
-    ) as live:
+        with Live(
+            _build_layout(table_rows, 1, valid[0][1] if valid else "", 0),
+            console=console,
+            refresh_per_second=4,
+        ) as live:
 
-        for idx, (file_path, name) in enumerate(valid, 1):
-            t0 = time.time()
+            for idx, (file_path, name) in enumerate(valid, 1):
+                t0 = time.time()
 
-            try:
-                result = _exec_plugin(file_path, name, target, ip, ports, banners)
-            except Exception as e:
-                result = {"plugin": name, "erro": f"Crash: {e}"}
-            results.append(result)
+                try:
+                    result = _exec_plugin(file_path, name, target, ip, ports, banners)
+                except Exception as e:
+                    result = {"plugin": name, "erro": f"Crash: {e}"}
+                results.append(result)
 
-            elapsed = time.time() - t0
-            cls, style, icon = _classify(result)
+                elapsed = time.time() - t0
+                cls, style, icon = _classify(result)
 
-            if cls == "erro":
-                desc = f"[red]{str(result.get('erro', '?'))[:30]}[/]"
-                sev_str = ""
-                scan_stats["err"] += 1
-            elif cls == "vuln":
-                sevs = _count_sev(result.get("resultados", ""))
-                parts = []
-                for sn, sc in sevs.items():
-                    if sc > 0:
-                        si = SEV_MAP.get(sn, (S_DIM, "○"))
-                        parts.append(f"[{si[0]}]{si[1]}{sc}[/]")
-                        scan_stats[sn] = scan_stats.get(sn, 0) + sc
-                sev_str = " ".join(parts)
-                total_v = sum(sevs.values())
-                desc = f"[{S_RED}]{total_v} vulns[/]"
-                scan_stats["vuln"] += 1
-            else:
-                r = result.get("resultados", "")
-                desc = f"[green]{str(r)[:30]}[/]" if isinstance(r, str) else "[green]Limpo[/]"
-                sev_str = "[green]—[/]"
-                scan_stats["ok"] += 1
+                if cls == "erro":
+                    desc = f"[red]{str(result.get('erro', '?'))[:30]}[/]"
+                    sev_str = ""
+                    scan_stats["err"] += 1
+                elif cls == "vuln":
+                    sevs = _count_sev(result.get("resultados", ""))
+                    parts = []
+                    for sn, sc in sevs.items():
+                        if sc > 0:
+                            si = SEV_MAP.get(sn, (S_DIM, "○"))
+                            parts.append(f"[{si[0]}]{si[1]}{sc}[/]")
+                            scan_stats[sn] = scan_stats.get(sn, 0) + sc
+                    sev_str = " ".join(parts)
+                    total_v = sum(sevs.values())
+                    desc = f"[{S_RED}]{total_v} vulns[/]"
+                    scan_stats["vuln"] += 1
+                else:
+                    r = result.get("resultados", "")
+                    desc = f"[green]{str(r)[:30]}[/]" if isinstance(r, str) else "[green]Limpo[/]"
+                    sev_str = "[green]—[/]"
+                    scan_stats["ok"] += 1
 
-            table_rows.append((
-                str(idx), name, f"[{style}]{icon}[/]",
-                desc, sev_str or "[green]—[/]", f"{elapsed:.1f}s",
-            ))
+                table_rows.append((
+                    str(idx), name, f"[{style}]{icon}[/]",
+                    desc, sev_str or "[green]—[/]", f"{elapsed:.1f}s",
+                ))
 
-            # Rotate intel every 2 plugins
-            if idx % 2 == 0:
-                intel_idx += 1
+                # Rotate intel every 2 plugins
+                if idx % 2 == 0:
+                    intel_idx += 1
 
-            next_name = valid[idx][1] if idx < total else "Concluindo..."
-            live.update(_build_layout(table_rows, idx + 1, next_name, intel_idx))
+                # SEGURANÇA UX: Bounds check para evitar IndexError quando idx == total
+                next_name = valid[idx][1] if idx < len(valid) else "Concluindo..."
+                live.update(_build_layout(table_rows, min(idx + 1, total), next_name, intel_idx))
     except Exception as layout_err:
         # Fallback para terminais estreitos ou sem suporte a Live Layout
         console.print(f"  [dim]Live display falhou ({layout_err}), executando sem UI...[/]")
