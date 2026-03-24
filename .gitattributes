@@ -1,0 +1,48 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Python
+*.py text diff=python linguist-language=Python
+*.pyi text diff=python linguist-language=Python
+*.pyx text linguist-language=Python
+
+# Shell
+*.sh text eol=lf linguist-language=Shell
+install.sh text eol=lf linguist-language=Shell
+
+# Documentation — exclude from language stats
+*.md text linguist-documentation
+*.txt text linguist-documentation
+docs/** linguist-documentation
+LICENSE text linguist-documentation
+
+# Data / Config
+*.yml text linguist-language=YAML
+*.yaml text linguist-language=YAML
+*.toml text
+*.json text
+*.cfg text
+*.ini text
+*.csv text
+
+# HTML (GitHub Pages)
+*.html text linguist-documentation
+*.css text linguist-documentation
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Archives
+*.gz binary
+*.zip binary
+*.tar binary
+
+# Prevent large binary diffs
+*.whl binary
+*.egg binary
+*.pyc binary

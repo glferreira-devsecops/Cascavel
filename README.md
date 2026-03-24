@@ -24,6 +24,8 @@
   <a href="https://rettecnologia.org"><img src="https://img.shields.io/badge/RET%20Tecnologia-Open%20Source-00D4FF.svg?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNS0xMC01LTEwIDV6TTIgMTJsMTAgNSAxMC01LTEwLTUtMTAgNXoiLz48L3N2Zz4=" /></a>
   <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/security.yml?style=flat-square&label=CI%20Security&logo=github" /></a>
   <a href="https://github.com/glferreira-devsecops/Cascavel/issues"><img src="https://img.shields.io/github/issues/glferreira-devsecops/Cascavel?style=flat-square&color=yellow" /></a>
+  <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/ci.yml?style=flat-square&label=CI&logo=github" /></a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/glferreira-devsecops/Cascavel"><img src="https://img.shields.io/ossf-scorecard/github.com/glferreira-devsecops/Cascavel?style=flat-square&label=OpenSSF%20Scorecard" /></a>
 </p>
 
 <p align="center">
