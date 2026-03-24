@@ -348,6 +348,36 @@ Cascavel/
 
 ---
 
+## 🔄 CI/CD Security Pipeline
+
+Cascavel ships with a [GitHub Actions workflow](.github/workflows/security.yml) that enforces security on every push and PR:
+
+| Job | Tool | Output |
+|:----|:-----|:-------|
+| **Syntax Check** | `py_compile` | Validates all `.py` files |
+| **SAST (Bandit)** | [Bandit](https://github.com/PyCQA/bandit) | SARIF → GitHub Security Tab |
+| **SAST (Semgrep)** | [Semgrep](https://semgrep.dev) | Rules: `auto` + `python` + `owasp-top-ten` |
+| **CVE Audit** | `pip-audit` | Enforces PyJWT/ReportLab/Requests minimums |
+| **Secret Detection** | [Gitleaks](https://github.com/gitleaks/gitleaks) | Full commit history scan |
+
+> [!TIP]
+> SARIF results appear directly in the **Security** tab of your GitHub repo — no extra dashboard needed.
+
+---
+
+## ⚡ Signal Handling
+
+Cascavel handles Unix signals for robust operation in all environments:
+
+| Signal | Behavior | Use Case |
+|:-------|:---------|:---------|
+| `SIGINT` (Ctrl+C) | Async-signal-safe shutdown via `os.write()` → exit 130 | Interactive terminal |
+| `SIGTERM` | Same handler → exit 143 | Docker/K8s graceful shutdown |
+| `SIGPIPE` | Restored to `SIG_DFL` | Clean pipe termination (`\| head`) |
+| `BrokenPipeError` | Caught + `os._exit(141)` | Fallback for SIGPIPE edge cases |
+
+---
+
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
