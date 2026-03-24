@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ╔═══════════════════════════════════════════════════════════════╗
-║  CASCAVEL — Quantum Security Framework v2.1.0                ║
+║  CASCAVEL — Quantum Security Framework v2.2.0                ║
 ║  Por DevFerreiraG | github.com/glferreira-devsecops          ║
 ║  Framework de automação pentest plugável, multi-plataforma   ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -253,24 +253,37 @@ BOOT_SEQUENCE = [
 
 
 def _typewriter(text: str, speed: float = 0.02) -> None:
-    """Efeito typewriter cinematográfico. Fallback direto se não for TTY."""
+    """Efeito typewriter cinematográfico.
+
+    Fallback direto se não for TTY. Captura KeyboardInterrupt
+    para não deixar texto parcial sem newline.
+    """
     if not IS_TTY:
         sys.stdout.write(text)
         sys.stdout.flush()
         return
-    for char in text:
-        sys.stdout.write(char)
+    try:
+        for char in text:
+            sys.stdout.write(char)
+            sys.stdout.flush()
+            time.sleep(speed)
+    except KeyboardInterrupt:
+        # Garante newline antes de propagar SIGINT
+        sys.stdout.write('\n')
         sys.stdout.flush()
-        time.sleep(speed)
+        raise
 
 
 def _boot_line(tag: str, msg: str, delay: float = 0.08) -> None:
-    """Linha de boot estilo sistema militar."""
+    """Linha de boot estilo sistema militar.
+
+    Usa sys.stdout unified para evitar race condition entre
+    Rich console buffer e stdout direto no typewriter.
+    """
     ts_str = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    console.print(
-        f"  [dim]{ts_str}[/] [bold green][{tag}][/] ",
-        end="",
-    )
+    # Unificado: tudo via sys.stdout para evitar buffer mismatch
+    sys.stdout.write(f"  \033[2m{ts_str}\033[0m \033[1;32m[{tag}]\033[0m ")
+    sys.stdout.flush()
     _typewriter(msg, speed=delay)
     sys.stdout.write("\n")
     sys.stdout.flush()
@@ -309,7 +322,7 @@ def _fade_in_logo() -> None:
     try:
         # Phase 1: Cobra art — cada linha aparece com cor progressiva (escuro → verde)
         for i, line in enumerate(COBRA_ART):
-            brightness = int(22 + (i / max(cobra_count - 1, 1)) * 10)  # 22-32
+            brightness = int(22 + (i / max(cobra_count - 1, 1)) * 6)  # 22-28 (verde no 256-color)
             color = f"\033[38;5;{brightness}m"
             sys.stdout.write(f"{color}{line}\033[0m\n")
             sys.stdout.flush()
@@ -363,6 +376,8 @@ def _clear_block(num_lines: int) -> None:
         term_h = _get_terminal_height()
         # Nunca mover mais linhas que o terminal tem (safety clamp)
         safe_lines = min(num_lines, max(term_h - 2, 1))
+        # Save/restore cursor position para robustez
+        sys.stdout.write("\033[s")  # Save cursor
         sys.stdout.write(f"\033[{safe_lines}A")
         for _ in range(safe_lines):
             sys.stdout.write("\033[2K\n")
@@ -979,7 +994,13 @@ def _count_sev(resultados: Any) -> Dict[str, int]:
 
 
 def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: float) -> Panel:
-    """Constrói painel lateral de Security Intel para retenção de atenção."""
+    """Constrói painel lateral de Security Intel para retenção de atenção.
+
+    Protege contra lista vazia e índices fora de range.
+    """
+    if not SECURITY_INTEL:
+        return Panel("[dim]Sem intel disponível[/]", border_style="dim")
+
     # Current intel tip
     tag, tip = SECURITY_INTEL[intel_idx % len(SECURITY_INTEL)]
     intel_text = Text()
@@ -1007,7 +1028,7 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
     truncated = next_tip[:safe_len].rsplit(' ', 1)[0] if len(next_tip) > safe_len else next_tip
     next_text.append(f"  {truncated}...\n", style="dim")
 
-    from rich.console import Group
+    from rich.console import Group  # noqa: E402 — import local para evitar circular em testes
     content = Group(
         Panel(intel_text, border_style="bright_yellow", title="[bold yellow]🧠 SECURITY INTEL[/]", box=box.ROUNDED),
         Panel(stats, border_style="bright_green", title="[bold green]📊 LIVE STATS[/]", box=box.ROUNDED),
@@ -1045,7 +1066,7 @@ def run_plugins(
         rows: list, current_idx: int, current_name: str,
     ) -> Table:
         """Constrói a tabela de resultados que atualiza em Live."""
-        pct = int((current_idx / total) * 100) if total else 100
+        pct = min(int((current_idx / total) * 100), 100) if total else 100
         bar_filled = int(pct / 5)
         bar_str = f"{'█' * bar_filled}{'░' * (20 - bar_filled)} {pct}%"
 
@@ -1158,7 +1179,16 @@ def run_plugins(
                 result = {"plugin": name, "erro": f"Crash: {e}"}
             results.append(result)
             cls, style, icon = _classify(result)
-            console.print(f"  [{style}]{icon}[/] {name}")
+            # Track stats no fallback também para dashboard preciso
+            if cls == "erro":
+                scan_stats["err"] += 1
+            elif cls == "vuln":
+                scan_stats["vuln"] += 1
+                for sn, sc in _count_sev(result.get("resultados", "")).items():
+                    scan_stats[sn] = scan_stats.get(sn, 0) + sc
+            else:
+                scan_stats["ok"] += 1
+            console.print(f"  [{style}]{icon}[/] {name} [dim]({idx}/{total})[/]")
 
     console.print()
 
