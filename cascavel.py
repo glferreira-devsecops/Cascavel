@@ -75,24 +75,36 @@ def _sanitize_output(data: Any) -> Any:
 REQUIRED_LIBS = {"rich": "rich", "requests": "requests"}
 IS_TTY = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
-# Graceful shutdown on CTRL+C
+# Graceful shutdown on CTRL+C / SIGTERM
 _shutdown_requested = False
 
 
 def _signal_handler(sig, frame):
-    """Graceful shutdown handler — signal-safe (no print/logging to avoid deadlock)."""
+    """Graceful shutdown handler — signal-safe (no print/logging to avoid deadlock).
+
+    SEGURANÇA 2026: os.write() é async-signal-safe. console.print()/logging NÃO são.
+    Usar print/logging em signal handler causa deadlock por reentrância de locks internos.
+    Suporta SIGINT (Ctrl+C) e SIGTERM (container/K8s graceful shutdown).
+    """
     global _shutdown_requested
     _shutdown_requested = True
-    # SEGURANÇA: os.write() é async-signal-safe. console.print()/logging NÃO são.
-    # Usar print/logging em signal handler causa deadlock por reentrância de locks.
+    sig_name = "SIGTERM" if sig == signal.SIGTERM else "SIGINT"
+    exit_code = 128 + sig  # 130 para SIGINT, 143 para SIGTERM (padrão Unix)
     try:
-        os.write(sys.stderr.fileno(), b"\n  \x1b[91m\xe2\x9c\x97 SIGINT recebido \xe2\x80\x94 encerrando...\x1b[0m\n")
+        os.write(sys.stderr.fileno(), f"\n  \x1b[91m✗ {sig_name} recebido — encerrando...\x1b[0m\n".encode())
     except OSError:
         pass
-    os._exit(130)  # 128 + SIGINT(2) = exit code padrão Unix
+    os._exit(exit_code)
 
 
 signal.signal(signal.SIGINT, _signal_handler)
+signal.signal(signal.SIGTERM, _signal_handler)
+
+# SIGPIPE: Previne BrokenPipeError quando saída é piped para head/less/grep.
+# Python ignora SIGPIPE por padrão, causando exceções em write() para pipes fechados.
+# Restaurar SIG_DFL faz o processo terminar silenciosamente como ferramentas Unix padrão.
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 def _check_deps() -> None:
@@ -1715,6 +1727,18 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         console.print(f"\n  [{S_RED}]✗ Interrompido.[/]\n")
         sys.exit(0)
+    except BrokenPipeError:
+        # Pipe fechado (e.g., python3 cascavel.py --list-plugins | head -5)
+        # Flush e fechar stderr para suprimir mensagem Python padrão
+        try:
+            sys.stdout.close()
+        except Exception:
+            pass
+        try:
+            sys.stderr.close()
+        except Exception:
+            pass
+        os._exit(141)  # 128 + SIGPIPE(13) = exit code padrão Unix
     except Exception as e:
         console.print(f"\n  [{S_RED}]💀 ERRO FATAL: {e}[/]\n")
         sys.exit(1)

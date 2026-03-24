@@ -1,0 +1,150 @@
+name: "🐍 Cascavel Security CI"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly deep scan — catches new CVEs in dependencies
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write  # Required for SARIF upload
+
+jobs:
+  # ═══════════════════════════════════════════════════
+  # Syntax + Import Validation
+  # ═══════════════════════════════════════════════════
+  lint:
+    name: "🔍 Syntax & Import Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: Compile check (all .py files)
+        run: |
+          python -m py_compile cascavel.py
+          find plugins/ -name "*.py" -exec python -m py_compile {} \;
+          echo "✓ All files compiled successfully"
+
+  # ═══════════════════════════════════════════════════
+  # Bandit — Python SAST (SARIF → GitHub Security Tab)
+  # ═══════════════════════════════════════════════════
+  bandit:
+    name: "🛡️ Bandit SAST"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install bandit[sarif]
+      - name: Run Bandit scan
+        run: |
+          bandit -r cascavel.py plugins/ \
+            -f sarif \
+            -o bandit-results.sarif \
+            --severity-level medium \
+            --confidence-level medium \
+            -x "**/test_*" \
+            || true  # Don't fail CI — upload results for review
+      - name: Upload Bandit SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+  # ═══════════════════════════════════════════════════
+  # Semgrep — Advanced Pattern Matching (SARIF)
+  # ═══════════════════════════════════════════════════
+  semgrep:
+    name: "🔬 Semgrep SAST"
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep scan
+        run: |
+          semgrep scan \
+            --config auto \
+            --config p/python \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --sarif \
+            --output semgrep-results.sarif \
+            --exclude "test_*" \
+            --exclude "*.md" \
+            || true
+      - name: Upload Semgrep SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+  # ═══════════════════════════════════════════════════
+  # Dependency Audit — CVE Check on pip packages
+  # ═══════════════════════════════════════════════════
+  dependency-audit:
+    name: "📦 Dependency CVE Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: pip-audit (CVE check)
+        run: |
+          pip install pip-audit
+          pip-audit --format json --output audit-results.json || true
+          pip-audit --desc || true
+      - name: Check critical CVEs
+        run: |
+          # Enforce minimum versions from install.sh
+          python3 -c "
+          import importlib.metadata as meta
+          checks = {
+              'PyJWT': ('2.12.0', 'CVE-2022-29217'),
+              'reportlab': ('3.6.13', 'CVE-2023-33733'),
+              'requests': ('2.31.0', 'CVE-2023-32681'),
+          }
+          failed = False
+          for pkg, (min_ver, cve) in checks.items():
+              try:
+                  ver = meta.version(pkg)
+                  parts_cur = [int(x) for x in ver.split('.')]
+                  parts_min = [int(x) for x in min_ver.split('.')]
+                  if parts_cur < parts_min:
+                      print(f'FAIL: {pkg} {ver} < {min_ver} ({cve})')
+                      failed = True
+                  else:
+                      print(f'  OK: {pkg} {ver} >= {min_ver}')
+              except meta.PackageNotFoundError:
+                  print(f'SKIP: {pkg} not installed')
+          if failed:
+              raise SystemExit(1)
+          "
+
+  # ═══════════════════════════════════════════════════
+  # Secret Detection — Gitleaks
+  # ═══════════════════════════════════════════════════
+  secrets:
+    name: "🔑 Secret Detection"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive scan
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
