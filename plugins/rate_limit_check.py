@@ -1,6 +1,7 @@
 # plugins/rate_limit_check.py
-import requests
 import time
+
+import requests
 
 
 def run(target, ip, open_ports, banners):
@@ -11,8 +12,13 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
 
     endpoints = [
-        "/login", "/api/login", "/api/auth", "/register",
-        "/api/v1/login", "/forgot-password", "/api/reset-password",
+        "/login",
+        "/api/login",
+        "/api/auth",
+        "/register",
+        "/api/v1/login",
+        "/forgot-password",
+        "/api/reset-password",
     ]
     resultado = {}
 
@@ -26,7 +32,9 @@ def run(target, ip, open_ports, banners):
             try:
                 start = time.time()
                 resp = requests.post(
-                    url, json={"username": f"test{i}", "password": "test"}, timeout=5,
+                    url,
+                    json={"username": f"test{i}", "password": "test"},
+                    timeout=5,
                 )
                 elapsed = time.time() - start
                 statuses.append(resp.status_code)

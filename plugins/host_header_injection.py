@@ -1,10 +1,8 @@
 # plugins/host_header_injection.py — Cascavel 2026 Intelligence
+
 import requests
-import time
 
-
-PAGES = ["/", "/login", "/forgot-password", "/reset-password",
-         "/api/", "/admin/", "/register", "/signup", "/contact"]
+PAGES = ["/", "/login", "/forgot-password", "/reset-password", "/api/", "/admin/", "/register", "/signup", "/contact"]
 
 
 def _test_host_reflection(target, page):
@@ -17,11 +15,14 @@ def _test_host_reflection(target, page):
     try:
         resp = requests.get(url, headers={"Host": test_host}, timeout=5)
         if test_host in resp.text:
-            vulns.append({
-                "tipo": "HOST_HEADER_REFLECTED", "pagina": page,
-                "severidade": "ALTO",
-                "descricao": "Host injetado refletido na resposta — password reset poisoning!",
-            })
+            vulns.append(
+                {
+                    "tipo": "HOST_HEADER_REFLECTED",
+                    "pagina": page,
+                    "severidade": "ALTO",
+                    "descricao": "Host injetado refletido na resposta — password reset poisoning!",
+                }
+            )
     except Exception:
         pass
 
@@ -29,11 +30,14 @@ def _test_host_reflection(target, page):
     try:
         resp = requests.get(url, headers={"X-Forwarded-Host": test_host}, timeout=5)
         if test_host in resp.text:
-            vulns.append({
-                "tipo": "XFH_REFLECTED", "pagina": page,
-                "severidade": "ALTO",
-                "descricao": "X-Forwarded-Host refletido — password reset poisoning via proxy!",
-            })
+            vulns.append(
+                {
+                    "tipo": "XFH_REFLECTED",
+                    "pagina": page,
+                    "severidade": "ALTO",
+                    "descricao": "X-Forwarded-Host refletido — password reset poisoning via proxy!",
+                }
+            )
     except Exception:
         pass
 
@@ -62,14 +66,19 @@ def _test_host_routing_bypass(target, page):
             try:
                 resp_bypass = requests.get(
                     f"http://{target}{page}",
-                    headers={header_name: header_val}, timeout=5,
+                    headers={header_name: header_val},
+                    timeout=5,
                 )
                 if resp_bypass.status_code == 200:
-                    vulns.append({
-                        "tipo": "ACCESS_CONTROL_BYPASS", "pagina": page,
-                        "header": header_name, "severidade": "CRITICO",
-                        "descricao": f"Access control bypass via {header_name}: 127.0.0.1!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "ACCESS_CONTROL_BYPASS",
+                            "pagina": page,
+                            "header": header_name,
+                            "severidade": "CRITICO",
+                            "descricao": f"Access control bypass via {header_name}: 127.0.0.1!",
+                        }
+                    )
                     break
             except Exception:
                 continue
@@ -88,7 +97,8 @@ def _test_host_crlf(target, page):
         )
         if "X-Injected" in str(resp.headers) or "cascavel-test" in str(resp.headers):
             return {
-                "tipo": "HOST_HEADER_CRLF", "pagina": page,
+                "tipo": "HOST_HEADER_CRLF",
+                "pagina": page,
                 "severidade": "CRITICO",
                 "descricao": "CRLF injection via Host header — header injection!",
             }
@@ -108,7 +118,8 @@ def _test_absolute_url(target, page):
         location = resp.headers.get("Location", "")
         if "evil.com" in location:
             return {
-                "tipo": "HOST_REDIRECT_INJECTION", "pagina": page,
+                "tipo": "HOST_REDIRECT_INJECTION",
+                "pagina": page,
                 "location": location[:100],
                 "severidade": "ALTO",
                 "descricao": "Host header alterou Location redirect — open redirect via host!",
@@ -129,7 +140,8 @@ def _test_duplicate_host(target, page):
         )
         if "evil.com" in resp.text:
             return {
-                "tipo": "DUPLICATE_HOST_BYPASS", "pagina": page,
+                "tipo": "DUPLICATE_HOST_BYPASS",
+                "pagina": page,
                 "severidade": "ALTO",
                 "descricao": "Duplicate Host header — servidor usa XFH sobre Host!",
             }
@@ -141,8 +153,7 @@ def _test_duplicate_host(target, page):
 def _test_password_reset_poisoning(target):
     """Testa password reset poisoning via Host header."""
     vulns = []
-    reset_paths = ["/forgot-password", "/reset-password", "/api/auth/forgot",
-                   "/users/password/new", "/account/recover"]
+    reset_paths = ["/forgot-password", "/reset-password", "/api/auth/forgot", "/users/password/new", "/account/recover"]
     for path in reset_paths:
         try:
             resp = requests.post(
@@ -153,11 +164,14 @@ def _test_password_reset_poisoning(target):
             )
             if resp.status_code in [200, 302]:
                 if "evil.com" in resp.text or "evil.com" in resp.headers.get("Location", ""):
-                    vulns.append({
-                        "tipo": "PASSWORD_RESET_POISONING", "path": path,
-                        "severidade": "CRITICO",
-                        "descricao": "Password reset link contém Host injetado — account takeover!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "PASSWORD_RESET_POISONING",
+                            "path": path,
+                            "severidade": "CRITICO",
+                            "descricao": "Password reset link contém Host injetado — account takeover!",
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -196,8 +210,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "host_header_injection",
         "versao": "2026.1",
-        "tecnicas": ["host_reflection", "xfh_injection", "ip_bypass",
-                      "host_crlf", "absolute_url", "duplicate_host",
-                      "password_reset_poisoning", "redirect_hijack"],
+        "tecnicas": [
+            "host_reflection",
+            "xfh_injection",
+            "ip_bypass",
+            "host_crlf",
+            "absolute_url",
+            "duplicate_host",
+            "password_reset_poisoning",
+            "redirect_hijack",
+        ],
         "resultados": vulns if vulns else "Nenhum Host Header Injection detectado",
     }

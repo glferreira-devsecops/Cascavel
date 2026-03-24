@@ -1,6 +1,7 @@
 # plugins/s3_bucket.py — Cascavel 2026 Intelligence
-import requests
 import re
+
+import requests
 
 
 def run(target, ip, open_ports, banners):
@@ -17,12 +18,23 @@ def run(target, ip, open_ports, banners):
     domain = target.replace("www.", "")
 
     prefixes = [
-        domain.replace(".", "-"), base,
-        f"files-{base}", f"cdn-{base}", f"static-{base}",
-        f"media-{base}", f"backup-{base}", f"assets-{base}",
-        f"data-{base}", f"uploads-{base}", f"dev-{base}",
-        f"staging-{base}", f"prod-{base}", f"logs-{base}",
-        f"img-{base}", f"docs-{base}", f"public-{base}",
+        domain.replace(".", "-"),
+        base,
+        f"files-{base}",
+        f"cdn-{base}",
+        f"static-{base}",
+        f"media-{base}",
+        f"backup-{base}",
+        f"assets-{base}",
+        f"data-{base}",
+        f"uploads-{base}",
+        f"dev-{base}",
+        f"staging-{base}",
+        f"prod-{base}",
+        f"logs-{base}",
+        f"img-{base}",
+        f"docs-{base}",
+        f"public-{base}",
     ]
 
     vulns = []
@@ -34,7 +46,9 @@ def run(target, ip, open_ports, banners):
             resp = requests.get(url, timeout=5)
             if resp.status_code == 200 and "ListBucketResult" in resp.text:
                 vuln = {
-                    "tipo": "S3_BUCKET_OPEN", "bucket": bucket, "url": url,
+                    "tipo": "S3_BUCKET_OPEN",
+                    "bucket": bucket,
+                    "url": url,
                     "severidade": "CRITICO",
                     "descricao": "S3 bucket com listing público!",
                 }
@@ -43,28 +57,49 @@ def run(target, ip, open_ports, banners):
                 vuln["arquivos_amostra"] = keys[:10]
                 vuln["total_visible"] = len(keys)
                 # Check for sensitive files
-                sensitive = [k for k in keys if any(s in k.lower()
-                             for s in [".env", "backup", ".sql", ".dump", "password",
-                                       "credentials", ".pem", ".key", "secret"])]
+                sensitive = [
+                    k
+                    for k in keys
+                    if any(
+                        s in k.lower()
+                        for s in [
+                            ".env",
+                            "backup",
+                            ".sql",
+                            ".dump",
+                            "password",
+                            "credentials",
+                            ".pem",
+                            ".key",
+                            "secret",
+                        ]
+                    )
+                ]
                 if sensitive:
                     vuln["arquivos_sensiveis"] = sensitive[:10]
                 vulns.append(vuln)
             elif resp.status_code == 403:
-                vulns.append({
-                    "tipo": "S3_BUCKET_EXISTS", "bucket": bucket,
-                    "severidade": "BAIXO",
-                    "descricao": "S3 bucket existe mas é privado",
-                })
+                vulns.append(
+                    {
+                        "tipo": "S3_BUCKET_EXISTS",
+                        "bucket": bucket,
+                        "severidade": "BAIXO",
+                        "descricao": "S3 bucket existe mas é privado",
+                    }
+                )
 
             # ACL check
             try:
                 acl_resp = requests.get(f"{url}?acl", timeout=5)
                 if acl_resp.status_code == 200 and "AllUsers" in acl_resp.text:
-                    vulns.append({
-                        "tipo": "S3_ACL_PUBLIC", "bucket": bucket,
-                        "severidade": "CRITICO",
-                        "descricao": "S3 ACL concede acesso a AllUsers!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "S3_ACL_PUBLIC",
+                            "bucket": bucket,
+                            "severidade": "CRITICO",
+                            "descricao": "S3 ACL concede acesso a AllUsers!",
+                        }
+                    )
             except Exception:
                 pass
 
@@ -77,11 +112,15 @@ def run(target, ip, open_ports, banners):
         try:
             resp = requests.get(url, timeout=5)
             if resp.status_code == 200 and ("ListBucketResult" in resp.text or "<Contents>" in resp.text):
-                vulns.append({
-                    "tipo": "GCS_BUCKET_OPEN", "bucket": bucket, "url": url,
-                    "severidade": "CRITICO",
-                    "descricao": "GCS bucket com listing público!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "GCS_BUCKET_OPEN",
+                        "bucket": bucket,
+                        "url": url,
+                        "severidade": "CRITICO",
+                        "descricao": "GCS bucket com listing público!",
+                    }
+                )
         except Exception:
             continue
 
@@ -91,11 +130,15 @@ def run(target, ip, open_ports, banners):
         try:
             resp = requests.get(url, timeout=5)
             if resp.status_code == 200 and "EnumerationResults" in resp.text:
-                vulns.append({
-                    "tipo": "AZURE_BLOB_OPEN", "container": bucket, "url": url,
-                    "severidade": "CRITICO",
-                    "descricao": "Azure Blob container com listing público!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "AZURE_BLOB_OPEN",
+                        "container": bucket,
+                        "url": url,
+                        "severidade": "CRITICO",
+                        "descricao": "Azure Blob container com listing público!",
+                    }
+                )
         except Exception:
             continue
 
@@ -107,17 +150,28 @@ def run(target, ip, open_ports, banners):
             try:
                 resp = requests.get(url, timeout=5)
                 if resp.status_code == 200 and "ListBucketResult" in resp.text:
-                    vulns.append({
-                        "tipo": "DO_SPACE_OPEN", "bucket": bucket,
-                        "regiao": region, "severidade": "CRITICO",
-                        "descricao": "DigitalOcean Space com listing público!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "DO_SPACE_OPEN",
+                            "bucket": bucket,
+                            "regiao": region,
+                            "severidade": "CRITICO",
+                            "descricao": "DigitalOcean Space com listing público!",
+                        }
+                    )
             except Exception:
                 continue
 
     return {
-        "plugin": "s3_bucket", "versao": "2026.1",
-        "tecnicas": ["s3_enum", "gcs_enum", "azure_blob_enum",
-                      "do_spaces_enum", "acl_check", "sensitive_file_detection"],
+        "plugin": "s3_bucket",
+        "versao": "2026.1",
+        "tecnicas": [
+            "s3_enum",
+            "gcs_enum",
+            "azure_blob_enum",
+            "do_spaces_enum",
+            "acl_check",
+            "sensitive_file_detection",
+        ],
         "resultados": vulns if vulns else "Nenhum cloud storage público encontrado",
     }

@@ -1,7 +1,7 @@
 # plugins/cloud_metadata.py — Cascavel 2026 Intelligence
-import requests
 import time
 
+import requests
 
 AWS_PATHS = [
     ("/latest/meta-data/instance-id", "INSTANCE_ID"),
@@ -36,7 +36,10 @@ GCP_PATHS = [
 
 AZURE_PATHS = [
     ("/metadata/instance?api-version=2021-02-01", "INSTANCE"),
-    ("/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/", "MANAGED_ID_TOKEN"),
+    (
+        "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
+        "MANAGED_ID_TOKEN",
+    ),
     ("/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net", "KEYVAULT_TOKEN"),
     ("/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/", "STORAGE_TOKEN"),
     ("/metadata/instance/compute/userData?api-version=2021-01-01&format=text", "USER_DATA"),
@@ -88,15 +91,21 @@ def _scan_aws(resultado):
                 if label == "IAM_ROLES":
                     _extract_aws_creds(resp.text, resultado)
                 if label == "USER_DATA":
-                    resultado["vulns"].append({
-                        "tipo": "AWS_USER_DATA_EXPOSED", "severidade": "ALTO",
-                        "descricao": "User-data exposto — pode conter secrets de bootstrap!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": "AWS_USER_DATA_EXPOSED",
+                            "severidade": "ALTO",
+                            "descricao": "User-data exposto — pode conter secrets de bootstrap!",
+                        }
+                    )
                 if label == "SECURITY_GROUPS":
-                    resultado["vulns"].append({
-                        "tipo": "AWS_SG_EXPOSED", "severidade": "MEDIO",
-                        "descricao": "Security groups enumeráveis via metadata!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": "AWS_SG_EXPOSED",
+                            "severidade": "MEDIO",
+                            "descricao": "Security groups enumeráveis via metadata!",
+                        }
+                    )
                 if not _has_provider(resultado, "AWS"):
                     resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v1"})
         except Exception:
@@ -111,11 +120,14 @@ def _extract_aws_creds(text, resultado):
             timeout=3,
         )
         if "AccessKeyId" in creds.text:
-            resultado["vulns"].append({
-                "tipo": "AWS_CREDENTIALS_EXPOSED", "role": role_name,
-                "severidade": "CRITICO",
-                "descricao": "AWS IAM credentials via IMDSv1 — full account compromise!",
-            })
+            resultado["vulns"].append(
+                {
+                    "tipo": "AWS_CREDENTIALS_EXPOSED",
+                    "role": role_name,
+                    "severidade": "CRITICO",
+                    "descricao": "AWS IAM credentials via IMDSv1 — full account compromise!",
+                }
+            )
     except Exception:
         pass
 
@@ -124,25 +136,33 @@ def _scan_aws_v2(resultado):
     try:
         token_resp = requests.put(
             "http://169.254.169.254/latest/api/token",
-            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}, timeout=3,
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
+            timeout=3,
         )
         if token_resp.status_code == 200:
             v2_resp = requests.get(
                 "http://169.254.169.254/latest/meta-data/instance-id",
-                headers={"X-aws-ec2-metadata-token": token_resp.text}, timeout=3,
+                headers={"X-aws-ec2-metadata-token": token_resp.text},
+                timeout=3,
             )
             if v2_resp.status_code == 200:
                 if not _has_provider(resultado, "AWS"):
                     resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v2"})
-                resultado["vulns"].append({
-                    "tipo": "AWS_IMDSv2_ATIVO", "severidade": "INFO",
-                    "descricao": "IMDSv2 ativo — proteção contra SSRF simples",
-                })
+                resultado["vulns"].append(
+                    {
+                        "tipo": "AWS_IMDSv2_ATIVO",
+                        "severidade": "INFO",
+                        "descricao": "IMDSv2 ativo — proteção contra SSRF simples",
+                    }
+                )
         elif token_resp.status_code == 403:
-            resultado["vulns"].append({
-                "tipo": "AWS_IMDSv2_ENFORCED", "severidade": "INFO",
-                "descricao": "IMDSv2 enforced — v1 desabilitado (excelente config)",
-            })
+            resultado["vulns"].append(
+                {
+                    "tipo": "AWS_IMDSv2_ENFORCED",
+                    "severidade": "INFO",
+                    "descricao": "IMDSv2 enforced — v1 desabilitado (excelente config)",
+                }
+            )
     except Exception:
         pass
 
@@ -152,25 +172,35 @@ def _scan_gcp(resultado):
         try:
             resp = requests.get(
                 f"http://metadata.google.internal{path}",
-                headers={"Metadata-Flavor": "Google"}, timeout=3,
+                headers={"Metadata-Flavor": "Google"},
+                timeout=3,
             )
             if resp.status_code == 200:
                 resultado["metadados"][f"gcp_{label}"] = resp.text[:200]
                 if label == "SA_TOKEN":
-                    resultado["vulns"].append({
-                        "tipo": "GCP_TOKEN_EXPOSED", "severidade": "CRITICO",
-                        "descricao": "GCP SA OAuth token — cloud takeover possível!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": "GCP_TOKEN_EXPOSED",
+                            "severidade": "CRITICO",
+                            "descricao": "GCP SA OAuth token — cloud takeover possível!",
+                        }
+                    )
                 elif label == "SSH_KEYS":
-                    resultado["vulns"].append({
-                        "tipo": "GCP_SSH_KEYS_EXPOSED", "severidade": "CRITICO",
-                        "descricao": "SSH keys via metadata — privilege escalation!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": "GCP_SSH_KEYS_EXPOSED",
+                            "severidade": "CRITICO",
+                            "descricao": "SSH keys via metadata — privilege escalation!",
+                        }
+                    )
                 elif label == "KUBE_ENV":
-                    resultado["vulns"].append({
-                        "tipo": "GCP_KUBE_ENV_EXPOSED", "severidade": "CRITICO",
-                        "descricao": "Kube-env exposto — K8s service account bootstrap token!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": "GCP_KUBE_ENV_EXPOSED",
+                            "severidade": "CRITICO",
+                            "descricao": "Kube-env exposto — K8s service account bootstrap token!",
+                        }
+                    )
                 if not _has_provider(resultado, "GCP"):
                     resultado["providers_detectados"].append({"provider": "GCP"})
         except Exception:
@@ -182,15 +212,19 @@ def _scan_azure(resultado):
         try:
             resp = requests.get(
                 f"http://169.254.169.254{path}",
-                headers={"Metadata": "true"}, timeout=3,
+                headers={"Metadata": "true"},
+                timeout=3,
             )
             if resp.status_code == 200:
                 resultado["metadados"][f"azure_{label}"] = resp.text[:200]
                 if "TOKEN" in label and "access_token" in resp.text:
-                    resultado["vulns"].append({
-                        "tipo": f"AZURE_{label}", "severidade": "CRITICO",
-                        "descricao": f"Azure {label} extraído — cloud compromise!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": f"AZURE_{label}",
+                            "severidade": "CRITICO",
+                            "descricao": f"Azure {label} extraído — cloud compromise!",
+                        }
+                    )
                 if not _has_provider(resultado, "AZURE"):
                     resultado["providers_detectados"].append({"provider": "AZURE"})
         except Exception:
@@ -201,7 +235,8 @@ def _scan_oracle(resultado):
     try:
         resp = requests.get(
             f"http://169.254.169.254{ORACLE_PATH}",
-            headers={"Authorization": "Bearer Oracle"}, timeout=3,
+            headers={"Authorization": "Bearer Oracle"},
+            timeout=3,
         )
         if resp.status_code == 200 and len(resp.text) > 10:
             resultado["providers_detectados"].append({"provider": "ORACLE"})
@@ -229,9 +264,12 @@ def _scan_alibaba(resultado):
                     resultado["providers_detectados"].append({"provider": "ALIBABA"})
                 resultado["metadados"][f"alibaba_{label}"] = resp.text[:200]
                 if label == "RAM_ROLES":
-                    resultado["vulns"].append({
-                        "tipo": "ALIBABA_RAM_ROLES_EXPOSED", "severidade": "CRITICO",
-                        "descricao": "Alibaba Cloud RAM roles — credential extraction!",
-                    })
+                    resultado["vulns"].append(
+                        {
+                            "tipo": "ALIBABA_RAM_ROLES_EXPOSED",
+                            "severidade": "CRITICO",
+                            "descricao": "Alibaba Cloud RAM roles — credential extraction!",
+                        }
+                    )
         except Exception:
             continue

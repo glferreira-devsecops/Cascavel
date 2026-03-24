@@ -1,18 +1,37 @@
 # plugins/cloud_enum.py — Cascavel 2026 Intelligence
 import socket
-import requests
-import re
 
+import requests
 
 CLOUD_PATTERNS = {
-    "AWS": [".amazonaws.com", ".cloudfront.net", ".elasticbeanstalk.com",
-            ".elb.amazonaws.com", ".s3.amazonaws.com", ".execute-api."],
-    "Azure": [".cloudapp.net", ".windows.net", ".azurewebsites.net",
-              ".azurecontainer.io", ".azure-api.net", ".trafficmanager.net",
-              ".blob.core.windows.net", ".azureedge.net"],
-    "Google": [".googleusercontent.com", ".cloudfunctions.net",
-               ".appspot.com", ".run.app", ".googleapis.com",
-               ".firebaseio.com", ".firebaseapp.com", ".web.app"],
+    "AWS": [
+        ".amazonaws.com",
+        ".cloudfront.net",
+        ".elasticbeanstalk.com",
+        ".elb.amazonaws.com",
+        ".s3.amazonaws.com",
+        ".execute-api.",
+    ],
+    "Azure": [
+        ".cloudapp.net",
+        ".windows.net",
+        ".azurewebsites.net",
+        ".azurecontainer.io",
+        ".azure-api.net",
+        ".trafficmanager.net",
+        ".blob.core.windows.net",
+        ".azureedge.net",
+    ],
+    "Google": [
+        ".googleusercontent.com",
+        ".cloudfunctions.net",
+        ".appspot.com",
+        ".run.app",
+        ".googleapis.com",
+        ".firebaseio.com",
+        ".firebaseapp.com",
+        ".web.app",
+    ],
     "DigitalOcean": [".digitaloceanspaces.com", ".ondigitalocean.app"],
     "Cloudflare": [".cdn.cloudflare.net", ".workers.dev", ".pages.dev"],
     "Heroku": [".herokuapp.com"],
@@ -121,7 +140,8 @@ def run(target, ip, open_ports, banners):
             unique.append(p)
 
     return {
-        "plugin": "cloud_enum", "versao": "2026.1",
+        "plugin": "cloud_enum",
+        "versao": "2026.1",
         "tecnicas": ["domain_pattern", "http_headers", "reverse_dns", "ip_range"],
         "resultados": unique if unique else {"provider": "Desconhecido"},
     }

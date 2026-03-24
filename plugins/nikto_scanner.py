@@ -1,7 +1,7 @@
 # plugins/nikto_scanner.py
-import subprocess
-import shutil
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -24,16 +24,21 @@ def run(target, ip, open_ports, banners):
         cmd = f"nikto -h {scheme}://{safe_target}:{port} -Tuning 1234567890abc -maxtime 120s -nointeractive"
         try:
             proc = subprocess.run(
-                cmd, shell=True, capture_output=True,
-                timeout=150, encoding="utf-8",
+                cmd,
+                shell=True,
+                capture_output=True,
+                timeout=150,
+                encoding="utf-8",
             )
             vulns = [line.strip() for line in proc.stdout.splitlines() if line.strip().startswith("+")]
-            resultados.append({
-                "porta": port,
-                "scheme": scheme,
-                "vulnerabilidades": vulns[:50] if vulns else "Nenhuma vulnerabilidade detectada",
-                "total_achados": len(vulns),
-            })
+            resultados.append(
+                {
+                    "porta": port,
+                    "scheme": scheme,
+                    "vulnerabilidades": vulns[:50] if vulns else "Nenhuma vulnerabilidade detectada",
+                    "total_achados": len(vulns),
+                }
+            )
         except subprocess.TimeoutExpired:
             resultados.append({"porta": port, "erro": "Timeout (limite: 150s)"})
         except Exception as e:

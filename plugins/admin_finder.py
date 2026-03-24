@@ -10,9 +10,18 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
 
     caminhos = [
-        "/admin", "/login", "/administrator", "/adm",
-        "/admin.php", "/cpanel", "/admin/login", "/painel",
-        "/admin1", "/admin2", "/adminarea", "/backend",
+        "/admin",
+        "/login",
+        "/administrator",
+        "/adm",
+        "/admin.php",
+        "/cpanel",
+        "/admin/login",
+        "/painel",
+        "/admin1",
+        "/admin2",
+        "/adminarea",
+        "/backend",
     ]
     encontrados = []
 
@@ -22,11 +31,13 @@ def run(target, ip, open_ports, banners):
             try:
                 r = requests.get(url, timeout=7, allow_redirects=False)
                 if r.status_code in [200, 301, 302, 403]:
-                    encontrados.append({
-                        "url": url,
-                        "status": r.status_code,
-                        "headers": dict(r.headers),
-                    })
+                    encontrados.append(
+                        {
+                            "url": url,
+                            "status": r.status_code,
+                            "headers": dict(r.headers),
+                        }
+                    )
             except requests.RequestException:
                 continue
 

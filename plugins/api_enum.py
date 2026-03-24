@@ -1,27 +1,62 @@
 # plugins/api_enum.py — Cascavel 2026 Intelligence
-import requests
-import json
-import re
 
+import requests
 
 DOC_PATHS = [
-    "/swagger.json", "/swagger/v1/swagger.json", "/swagger/v2/swagger.json",
-    "/api-docs", "/openapi.json", "/openapi.yaml", "/v2/api-docs", "/v3/api-docs",
-    "/swagger-ui.html", "/swagger-ui/", "/redoc", "/docs", "/api/docs",
-    "/api/swagger", "/graphql/schema", "/.well-known/openapi.json",
-    "/api/v1/docs", "/api/v2/docs", "/api/v3/docs",
-    "/actuator", "/actuator/env", "/actuator/health", "/actuator/info",
-    "/actuator/mappings", "/actuator/beans", "/actuator/configprops",
-    "/actuator/heapdump", "/actuator/threaddump",
-    "/env", "/health", "/info", "/metrics", "/prometheus",
-    "/_cat/indices", "/_cluster/health",
+    "/swagger.json",
+    "/swagger/v1/swagger.json",
+    "/swagger/v2/swagger.json",
+    "/api-docs",
+    "/openapi.json",
+    "/openapi.yaml",
+    "/v2/api-docs",
+    "/v3/api-docs",
+    "/swagger-ui.html",
+    "/swagger-ui/",
+    "/redoc",
+    "/docs",
+    "/api/docs",
+    "/api/swagger",
+    "/graphql/schema",
+    "/.well-known/openapi.json",
+    "/api/v1/docs",
+    "/api/v2/docs",
+    "/api/v3/docs",
+    "/actuator",
+    "/actuator/env",
+    "/actuator/health",
+    "/actuator/info",
+    "/actuator/mappings",
+    "/actuator/beans",
+    "/actuator/configprops",
+    "/actuator/heapdump",
+    "/actuator/threaddump",
+    "/env",
+    "/health",
+    "/info",
+    "/metrics",
+    "/prometheus",
+    "/_cat/indices",
+    "/_cluster/health",
 ]
 
 API_ENDPOINTS = [
-    "/api/", "/api/v1/", "/api/v2/", "/api/v3/", "/api/v4/",
-    "/api/v0/", "/api/beta/", "/api/alpha/", "/api/internal/",
-    "/api/legacy/", "/api/dev/", "/api/staging/", "/api/test/",
-    "/api/admin/", "/api/private/", "/api/protected/",
+    "/api/",
+    "/api/v1/",
+    "/api/v2/",
+    "/api/v3/",
+    "/api/v4/",
+    "/api/v0/",
+    "/api/beta/",
+    "/api/alpha/",
+    "/api/internal/",
+    "/api/legacy/",
+    "/api/dev/",
+    "/api/staging/",
+    "/api/test/",
+    "/api/admin/",
+    "/api/private/",
+    "/api/protected/",
 ]
 
 HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
@@ -87,8 +122,10 @@ def _test_method_override(target, prefix):
     """Testa HTTP method override."""
     vulns = []
     override_headers = [
-        "X-HTTP-Method-Override", "X-Method-Override",
-        "X-HTTP-Method", "_method",
+        "X-HTTP-Method-Override",
+        "X-Method-Override",
+        "X-HTTP-Method",
+        "_method",
     ]
     for header in override_headers:
         try:
@@ -98,11 +135,15 @@ def _test_method_override(target, prefix):
                 timeout=5,
             )
             if resp.status_code in [200, 204]:
-                vulns.append({
-                    "tipo": "METHOD_OVERRIDE_ACCEPTED", "endpoint": prefix,
-                    "header": header, "severidade": "ALTO",
-                    "descricao": f"HTTP method override via {header} — DELETE simulado!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "METHOD_OVERRIDE_ACCEPTED",
+                        "endpoint": prefix,
+                        "header": header,
+                        "severidade": "ALTO",
+                        "descricao": f"HTTP method override via {header} — DELETE simulado!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -151,7 +192,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "api_enum",
         "versao": "2026.1",
-        "tecnicas": ["doc_scanning", "actuator_probe", "elasticsearch_probe",
-                      "prometheus_probe", "method_enumeration", "method_override"],
+        "tecnicas": [
+            "doc_scanning",
+            "actuator_probe",
+            "elasticsearch_probe",
+            "prometheus_probe",
+            "method_enumeration",
+            "method_override",
+        ],
         "resultados": resultado,
     }

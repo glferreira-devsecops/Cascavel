@@ -1,8 +1,7 @@
 # plugins/race_condition.py — Cascavel 2026 Intelligence
-import requests
 import threading
-import time
 
+import requests
 
 # ──────────── RACE ENDPOINTS (2026 Expanded) ────────────
 RACE_ENDPOINTS = [
@@ -35,7 +34,8 @@ def _send_request(url, method, payload, results, idx, session):
         else:
             resp = session.get(url, timeout=8)
         results[idx] = {
-            "status": resp.status_code, "length": len(resp.text),
+            "status": resp.status_code,
+            "length": len(resp.text),
             "body_preview": resp.text[:100],
         }
     except Exception as e:
@@ -76,9 +76,11 @@ def _analyze_race(results, endpoint, method):
         lengths = set(r.get("length", 0) for r in success)
         bodies = set(r.get("body_preview", "") for r in success)
         return {
-            "tipo": "RACE_CONDITION_TOCTOU", "endpoint": endpoint,
+            "tipo": "RACE_CONDITION_TOCTOU",
+            "endpoint": endpoint,
             "metodo": method,
-            "requisicoes_sucesso": len(success), "total": len(results),
+            "requisicoes_sucesso": len(success),
+            "total": len(results),
             "respostas_diferentes": len(lengths) > 1 or len(bodies) > 1,
             "severidade": "CRITICO",
             "descricao": "Múltiplas requisições aceitas — possível double-spend/TOCTOU!",
@@ -98,12 +100,15 @@ def _test_limit_overrun(target):
         rate_limited = [r for r in results if r.get("status") == 429]
         success = [r for r in results if r.get("status") in [200, 401, 403]]
         if len(success) >= 15 and len(rate_limited) == 0:
-            vulns.append({
-                "tipo": "RATE_LIMIT_BYPASS_RACE", "endpoint": ep,
-                "requisicoes_aceitas": len(success),
-                "severidade": "ALTO",
-                "descricao": "20 requisições aceitas sem rate limiting — brute force possível!",
-            })
+            vulns.append(
+                {
+                    "tipo": "RATE_LIMIT_BYPASS_RACE",
+                    "endpoint": ep,
+                    "requisicoes_aceitas": len(success),
+                    "severidade": "ALTO",
+                    "descricao": "20 requisições aceitas sem rate limiting — brute force possível!",
+                }
+            )
     return vulns
 
 
@@ -132,7 +137,6 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "race_condition",
         "versao": "2026.1",
-        "tecnicas": ["toctou", "barrier_sync", "connection_pool",
-                      "limit_overrun", "response_diversity"],
+        "tecnicas": ["toctou", "barrier_sync", "connection_pool", "limit_overrun", "response_diversity"],
         "resultados": vulns if vulns else "Nenhuma race condition detectada",
     }

@@ -1,8 +1,9 @@
 # plugins/waf_detec.py
-import requests
+import shlex
 import shutil
 import subprocess
-import shlex
+
+import requests
 
 
 def run(target, ip, open_ports, banners):
@@ -21,9 +22,20 @@ def run(target, ip, open_ports, banners):
         f"http://{target}/../../etc/passwd",
     ]
     indicativos = [
-        "access denied", "waf", "request blocked", "firewall", "malicious",
-        "blocked", "forbidden", "cloudflare", "akamai", "incapsula",
-        "sucuri", "f5 big-ip", "mod_security", "request rejected",
+        "access denied",
+        "waf",
+        "request blocked",
+        "firewall",
+        "malicious",
+        "blocked",
+        "forbidden",
+        "cloudflare",
+        "akamai",
+        "incapsula",
+        "sucuri",
+        "f5 big-ip",
+        "mod_security",
+        "request rejected",
     ]
 
     deteccoes = []
@@ -46,8 +58,11 @@ def run(target, ip, open_ports, banners):
         safe_target = shlex.quote(target)
         try:
             proc = subprocess.run(
-                f"wafw00f {safe_target}", shell=True, capture_output=True,
-                timeout=20, encoding="utf-8",
+                f"wafw00f {safe_target}",
+                shell=True,
+                capture_output=True,
+                timeout=20,
+                encoding="utf-8",
             )
             resultado["wafw00f"] = proc.stdout[:1500]
         except Exception as e:

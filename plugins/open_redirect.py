@@ -1,14 +1,32 @@
 # plugins/open_redirect.py — Cascavel 2026 Intelligence
-import requests
-import re
 
+import requests
 
 PARAMS = [
-    "url", "redirect", "next", "return", "goto", "dest", "continue",
-    "forward", "return_url", "redirect_uri", "callback", "rurl",
-    "target", "out", "redir", "link", "ref", "return_to", "checkout_url",
-    "success_url", "failure_url", "logout_redirect",
+    "url",
+    "redirect",
+    "next",
+    "return",
+    "goto",
+    "dest",
+    "continue",
+    "forward",
+    "return_url",
+    "redirect_uri",
+    "callback",
+    "rurl",
+    "target",
+    "out",
+    "redir",
+    "link",
+    "ref",
+    "return_to",
+    "checkout_url",
+    "success_url",
+    "failure_url",
+    "logout_redirect",
 ]
+
 
 # ──────────── REDIRECT PAYLOADS ────────────
 def _get_payloads(target):
@@ -41,8 +59,12 @@ def _get_payloads(target):
 
 
 JS_REDIRECT_PATTERNS = [
-    "window.location", "location.href", "location.replace",
-    "document.location", "window.open", "location.assign",
+    "window.location",
+    "location.href",
+    "location.replace",
+    "document.location",
+    "window.open",
+    "location.assign",
 ]
 
 
@@ -58,8 +80,10 @@ def _test_get_redirect(target, param, payload, method):
             if "evil.com" in location or location.startswith("javascript:"):
                 sev = "CRITICO" if "javascript:" in location else "ALTO"
                 return {
-                    "tipo": "OPEN_REDIRECT", "metodo": method,
-                    "parametro": param, "severidade": sev,
+                    "tipo": "OPEN_REDIRECT",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": sev,
                     "location": location[:100],
                     "descricao": f"Open redirect via {method}!",
                 }
@@ -68,16 +92,20 @@ def _test_get_redirect(target, param, payload, method):
         if resp.status_code == 200:
             if any(p in resp.text for p in JS_REDIRECT_PATTERNS) and "evil.com" in resp.text:
                 return {
-                    "tipo": "OPEN_REDIRECT_JS", "metodo": method,
-                    "parametro": param, "severidade": "ALTO",
+                    "tipo": "OPEN_REDIRECT_JS",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": "ALTO",
                     "descricao": "JavaScript-based redirect com payload refletido!",
                 }
 
             # Meta refresh
             if 'http-equiv="refresh"' in resp.text.lower() and "evil.com" in resp.text:
                 return {
-                    "tipo": "META_REFRESH_REDIRECT", "metodo": method,
-                    "parametro": param, "severidade": "MEDIO",
+                    "tipo": "META_REFRESH_REDIRECT",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": "MEDIO",
                 }
     except Exception:
         pass
@@ -93,16 +121,20 @@ def _test_post_redirect(target):
             resp = requests.post(
                 f"http://{target}{path}",
                 data={"username": "test", "password": "test", "next": "https://evil.com"},
-                timeout=5, allow_redirects=False,
+                timeout=5,
+                allow_redirects=False,
             )
             if resp.status_code in [301, 302, 303, 307]:
                 location = resp.headers.get("Location", "")
                 if "evil.com" in location:
-                    vulns.append({
-                        "tipo": "OPEN_REDIRECT_POST", "path": path,
-                        "severidade": "ALTO",
-                        "descricao": "Open redirect via POST body redirect parameter!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "OPEN_REDIRECT_POST",
+                            "path": path,
+                            "severidade": "ALTO",
+                            "descricao": "Open redirect via POST body redirect parameter!",
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -115,16 +147,19 @@ def _test_header_redirect(target):
         resp = requests.get(
             f"http://{target}/logout",
             headers={"Referer": "https://evil.com"},
-            timeout=5, allow_redirects=False,
+            timeout=5,
+            allow_redirects=False,
         )
         if resp.status_code in [301, 302, 303, 307]:
             location = resp.headers.get("Location", "")
             if "evil.com" in location:
-                vulns.append({
-                    "tipo": "OPEN_REDIRECT_REFERER",
-                    "severidade": "MEDIO",
-                    "descricao": "Open redirect via Referer header!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "OPEN_REDIRECT_REFERER",
+                        "severidade": "MEDIO",
+                        "descricao": "Open redirect via Referer header!",
+                    }
+                )
     except Exception:
         pass
     return vulns
@@ -144,11 +179,14 @@ def _test_path_redirect(target):
             if resp.status_code in [301, 302, 303, 307]:
                 location = resp.headers.get("Location", "")
                 if "evil.com" in location:
-                    vulns.append({
-                        "tipo": "OPEN_REDIRECT_PATH",
-                        "url": url[:80], "severidade": "ALTO",
-                        "descricao": "Open redirect via URL path!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "OPEN_REDIRECT_PATH",
+                            "url": url[:80],
+                            "severidade": "ALTO",
+                            "descricao": "Open redirect via URL path!",
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -185,8 +223,16 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "open_redirect",
         "versao": "2026.1",
-        "tecnicas": ["get_param", "post_body", "referer_header",
-                      "path_redirect", "js_redirect", "meta_refresh",
-                      "protocol_relative", "unicode_bypass", "crlf_redirect"],
+        "tecnicas": [
+            "get_param",
+            "post_body",
+            "referer_header",
+            "path_redirect",
+            "js_redirect",
+            "meta_refresh",
+            "protocol_relative",
+            "unicode_bypass",
+            "crlf_redirect",
+        ],
         "resultados": vulns if vulns else "Nenhum open redirect detectado",
     }

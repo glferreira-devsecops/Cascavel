@@ -1,8 +1,6 @@
 # plugins/email_spoof_check.py
-import socket
-import subprocess
 import shlex
-
+import subprocess
 
 DMARC_POLICIES = {"none": "CRITICO", "quarantine": "MEDIO", "reject": "BAIXO"}
 
@@ -14,7 +12,9 @@ def _query_dns_txt(domain, prefix=""):
     try:
         result = subprocess.run(
             ["dig", "+short", "TXT", safe_full],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         return result.stdout.strip()
     except Exception:
@@ -26,20 +26,29 @@ def _check_spf(domain):
     vulns = []
     txt = _query_dns_txt(domain)
     if "v=spf1" not in txt:
-        vulns.append({
-            "tipo": "SPF_AUSENTE", "severidade": "CRITICO",
-            "descricao": "SPF ausente — email spoofing trivial!",
-        })
+        vulns.append(
+            {
+                "tipo": "SPF_AUSENTE",
+                "severidade": "CRITICO",
+                "descricao": "SPF ausente — email spoofing trivial!",
+            }
+        )
     elif "+all" in txt:
-        vulns.append({
-            "tipo": "SPF_PERMISSIVE", "severidade": "CRITICO",
-            "descricao": "SPF com +all — qualquer servidor pode enviar!",
-        })
+        vulns.append(
+            {
+                "tipo": "SPF_PERMISSIVE",
+                "severidade": "CRITICO",
+                "descricao": "SPF com +all — qualquer servidor pode enviar!",
+            }
+        )
     elif "~all" in txt:
-        vulns.append({
-            "tipo": "SPF_SOFTFAIL", "severidade": "MEDIO",
-            "descricao": "SPF com ~all (softfail) — spoofing possível em alguns MTAs",
-        })
+        vulns.append(
+            {
+                "tipo": "SPF_SOFTFAIL",
+                "severidade": "MEDIO",
+                "descricao": "SPF com ~all (softfail) — spoofing possível em alguns MTAs",
+            }
+        )
     return vulns
 
 
@@ -48,18 +57,24 @@ def _check_dmarc(domain):
     vulns = []
     txt = _query_dns_txt(domain, prefix="_dmarc.")
     if "v=DMARC1" not in txt:
-        vulns.append({
-            "tipo": "DMARC_AUSENTE", "severidade": "CRITICO",
-            "descricao": "DMARC ausente — sem enforcement de email authentication!",
-        })
+        vulns.append(
+            {
+                "tipo": "DMARC_AUSENTE",
+                "severidade": "CRITICO",
+                "descricao": "DMARC ausente — sem enforcement de email authentication!",
+            }
+        )
     else:
         for policy, sev in DMARC_POLICIES.items():
             if f"p={policy}" in txt:
                 if policy == "none":
-                    vulns.append({
-                        "tipo": "DMARC_NONE", "severidade": sev,
-                        "descricao": "DMARC p=none — monitoring only, sem enforcement!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "DMARC_NONE",
+                            "severidade": sev,
+                            "descricao": "DMARC p=none — monitoring only, sem enforcement!",
+                        }
+                    )
                 break
     return vulns
 
@@ -75,10 +90,13 @@ def _check_dkim_selector(domain):
             found = True
             break
     if not found:
-        vulns.append({
-            "tipo": "DKIM_NAO_DETECTADO", "severidade": "ALTO",
-            "descricao": "Nenhum seletor DKIM comum encontrado — verificar manualmente",
-        })
+        vulns.append(
+            {
+                "tipo": "DKIM_NAO_DETECTADO",
+                "severidade": "ALTO",
+                "descricao": "Nenhum seletor DKIM comum encontrado — verificar manualmente",
+            }
+        )
     return vulns
 
 
@@ -94,4 +112,7 @@ def run(target, ip, open_ports, banners):
     vulns.extend(_check_dmarc(target))
     vulns.extend(_check_dkim_selector(target))
 
-    return {"plugin": "email_spoof_check", "resultados": vulns if vulns else "Email authentication configurada corretamente"}
+    return {
+        "plugin": "email_spoof_check",
+        "resultados": vulns if vulns else "Email authentication configurada corretamente",
+    }

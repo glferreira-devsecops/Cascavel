@@ -1,20 +1,47 @@
 # plugins/secrets_scraper.py — Cascavel 2026 Intelligence
-import requests
-import re
 import math
+import re
 
+import requests
 
 PATHS = [
-    "/.env", "/.env.production", "/.env.local", "/.env.staging", "/.env.backup",
-    "/.git/config", "/.htpasswd", "/.htaccess", "/.npmrc", "/.yarnrc",
-    "/config.php", "/wp-config.php", "/settings.py", "/config.json", "/config.yaml",
-    "/.docker/config.json", "/api/config", "/docker-compose.yml",
-    "/composer.json", "/package.json", "/.env.local", "/.env.development",
-    "/application.properties", "/application.yml", "/.aws/credentials",
-    "/credentials.json", "/.gcloud/credentials", "/firebase.json",
-    "/.travis.yml", "/.gitlab-ci.yml", "/Jenkinsfile",
-    "/swagger.json", "/openapi.json", "/api-docs",
-    "/robots.txt", "/sitemap.xml", "/.well-known/security.txt",
+    "/.env",
+    "/.env.production",
+    "/.env.local",
+    "/.env.staging",
+    "/.env.backup",
+    "/.git/config",
+    "/.htpasswd",
+    "/.htaccess",
+    "/.npmrc",
+    "/.yarnrc",
+    "/config.php",
+    "/wp-config.php",
+    "/settings.py",
+    "/config.json",
+    "/config.yaml",
+    "/.docker/config.json",
+    "/api/config",
+    "/docker-compose.yml",
+    "/composer.json",
+    "/package.json",
+    "/.env.local",
+    "/.env.development",
+    "/application.properties",
+    "/application.yml",
+    "/.aws/credentials",
+    "/credentials.json",
+    "/.gcloud/credentials",
+    "/firebase.json",
+    "/.travis.yml",
+    "/.gitlab-ci.yml",
+    "/Jenkinsfile",
+    "/swagger.json",
+    "/openapi.json",
+    "/api-docs",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/.well-known/security.txt",
 ]
 
 # ──────────── SECRET PATTERNS (50+) ────────────
@@ -64,7 +91,10 @@ KEY_PATTERNS = [
     (r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "JWT/Supabase Key"),
     # Generic
     (r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", "Private Key (PEM)"),
-    (r"(?:password|passwd|pwd|secret|token|api_key|apikey|access_key)\s*[:=]\s*['\"]([^'\"]{8,})['\"]", "Generic Secret"),
+    (
+        r"(?:password|passwd|pwd|secret|token|api_key|apikey|access_key)\s*[:=]\s*['\"]([^'\"]{8,})['\"]",
+        "Generic Secret",
+    ),
     (r"Basic\s+[A-Za-z0-9+/=]{20,}", "HTTP Basic Auth Credentials"),
     (r"Bearer\s+[A-Za-z0-9\-._~+/]+=*", "Bearer Token"),
     # Database
@@ -97,12 +127,15 @@ def _scan_for_high_entropy(text, min_length=20, min_entropy=4.0):
     for candidate in candidates[:20]:
         entropy = _calculate_entropy(candidate)
         if entropy >= min_entropy and len(candidate) >= min_length:
-            findings.append({
-                "tipo": "HIGH_ENTROPY_STRING",
-                "entropia": entropy, "tamanho": len(candidate),
-                "amostra": candidate[:20] + "...",
-                "severidade": "ALTO" if entropy > 4.5 else "MEDIO",
-            })
+            findings.append(
+                {
+                    "tipo": "HIGH_ENTROPY_STRING",
+                    "entropia": entropy,
+                    "tamanho": len(candidate),
+                    "amostra": candidate[:20] + "...",
+                    "severidade": "ALTO" if entropy > 4.5 else "MEDIO",
+                }
+            )
     return findings
 
 
@@ -129,12 +162,15 @@ def run(target, ip, open_ports, banners):
             for pattern, label in KEY_PATTERNS:
                 found = re.findall(pattern, r.text, re.DOTALL)
                 if found:
-                    secrets.append({
-                        "caminho": path, "tipo": label,
-                        "quantidade": len(found),
-                        "amostra": str(found[0])[:30] + "...",
-                        "severidade": "CRITICO",
-                    })
+                    secrets.append(
+                        {
+                            "caminho": path,
+                            "tipo": label,
+                            "quantidade": len(found),
+                            "amostra": str(found[0])[:30] + "...",
+                            "severidade": "CRITICO",
+                        }
+                    )
 
             # Entropy scan
             entropy_findings = _scan_for_high_entropy(r.text)
@@ -148,7 +184,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "secrets_scraper",
         "versao": "2026.1",
-        "tecnicas": ["regex_36_patterns", "entropy_analysis", "30_sensitive_paths",
-                      "generic_secret_detection", "connection_strings", "pem_keys"],
+        "tecnicas": [
+            "regex_36_patterns",
+            "entropy_analysis",
+            "30_sensitive_paths",
+            "generic_secret_detection",
+            "connection_strings",
+            "pem_keys",
+        ],
         "resultados": secrets if secrets else "Nenhum segredo encontrado",
     }

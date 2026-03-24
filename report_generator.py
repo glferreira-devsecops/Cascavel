@@ -14,31 +14,29 @@ and RET Tecnologia branding.
 © 2026 RET Tecnologia. All rights reserved.
 """
 
-import os
 import datetime
-import hashlib
 import html as html_mod
+import os
 from typing import Any
 
+from reportlab.graphics.shapes import Drawing, Rect, String
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_RIGHT
+from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    HRFlowable,
+    Image,
+    KeepTogether,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
-    Image,
-    HRFlowable,
-    KeepTogether,
 )
-from reportlab.pdfgen import canvas
-from reportlab.graphics.shapes import Drawing, Rect, String
-from reportlab.graphics import renderPDF
 
 # ═══════════════════════════════════════════════════════════════════════
 # DESIGN SYSTEM — 2026 Premium Palette
@@ -64,11 +62,15 @@ SEV_LOW = colors.HexColor("#0DCAF0")
 SEV_INFO = colors.HexColor("#6C757D")
 
 SEVERITY_MAP = {
-    "CRITICO": (SEV_CRITICAL, "9.0 – 10.0", "Comprometimento total. Exfiltração de dados, RCE, ou bypass de autenticação."),
-    "ALTO":    (SEV_HIGH,     "7.0 – 8.9",  "Acesso não autorizado, escalação de privilégios, ou exposição massiva."),
-    "MEDIO":   (SEV_MEDIUM,   "4.0 – 6.9",  "Information disclosure, bypass parcial, ou configuração insegura."),
-    "BAIXO":   (SEV_LOW,      "0.1 – 3.9",  "Configuração subótima, risco mitigado por controles existentes."),
-    "INFO":    (SEV_INFO,     "0.0",         "Achado informacional sem impacto direto na segurança."),
+    "CRITICO": (
+        SEV_CRITICAL,
+        "9.0 – 10.0",
+        "Comprometimento total. Exfiltração de dados, RCE, ou bypass de autenticação.",
+    ),
+    "ALTO": (SEV_HIGH, "7.0 – 8.9", "Acesso não autorizado, escalação de privilégios, ou exposição massiva."),
+    "MEDIO": (SEV_MEDIUM, "4.0 – 6.9", "Information disclosure, bypass parcial, ou configuração insegura."),
+    "BAIXO": (SEV_LOW, "0.1 – 3.9", "Configuração subótima, risco mitigado por controles existentes."),
+    "INFO": (SEV_INFO, "0.0", "Achado informacional sem impacto direto na segurança."),
 }
 
 # Typography
@@ -95,6 +97,7 @@ def _sanitize_html(text: str) -> str:
     # Truncar para evitar PDFs gigantes com output malicioso
     return safe[:5000]
 
+
 # ═══════════════════════════════════════════════════════════════════════
 # COMPANY BRANDING
 # ═══════════════════════════════════════════════════════════════════════
@@ -111,6 +114,7 @@ FOUNDER_TITLE = "Fundador & DevSecOps Lead"
 # CUSTOM STYLES
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _build_styles():
     """Build premium paragraph styles aligned with 2026 design standards."""
     s = getSampleStyleSheet()
@@ -121,41 +125,76 @@ def _build_styles():
         s.add(ParagraphStyle(name, **kw))
 
     # Cover
-    _add("CoverTitle", fontName=FONT_BOLD, fontSize=32, textColor=NAVY,
-         alignment=TA_CENTER, spaceAfter=6, leading=38)
-    _add("CoverSub", fontName=FONT_REG, fontSize=14, textColor=STEEL,
-         alignment=TA_CENTER, spaceAfter=4, leading=18)
-    _add("CoverMeta", fontName=FONT_REG, fontSize=10, textColor=ICE_BLUE,
-         alignment=TA_CENTER, spaceAfter=3)
+    _add("CoverTitle", fontName=FONT_BOLD, fontSize=32, textColor=NAVY, alignment=TA_CENTER, spaceAfter=6, leading=38)
+    _add("CoverSub", fontName=FONT_REG, fontSize=14, textColor=STEEL, alignment=TA_CENTER, spaceAfter=4, leading=18)
+    _add("CoverMeta", fontName=FONT_REG, fontSize=10, textColor=ICE_BLUE, alignment=TA_CENTER, spaceAfter=3)
 
     # Section titles
-    _add("SectionH1", fontName=FONT_BOLD, fontSize=16, textColor=NAVY,
-         spaceBefore=18, spaceAfter=10, leading=20,
-         borderWidth=0, borderPadding=0)
-    _add("SectionH2", fontName=FONT_BOLD, fontSize=12, textColor=STEEL,
-         spaceBefore=12, spaceAfter=6, leading=16)
+    _add(
+        "SectionH1",
+        fontName=FONT_BOLD,
+        fontSize=16,
+        textColor=NAVY,
+        spaceBefore=18,
+        spaceAfter=10,
+        leading=20,
+        borderWidth=0,
+        borderPadding=0,
+    )
+    _add("SectionH2", fontName=FONT_BOLD, fontSize=12, textColor=STEEL, spaceBefore=12, spaceAfter=6, leading=16)
 
     # Body
-    _add("Body", fontName=FONT_REG, fontSize=9.5, textColor=colors.black,
-         alignment=TA_JUSTIFY, spaceBefore=3, spaceAfter=3, leading=13)
-    _add("BodySmall", fontName=FONT_REG, fontSize=8, textColor=colors.black,
-         alignment=TA_JUSTIFY, spaceBefore=2, spaceAfter=2, leading=11)
+    _add(
+        "Body",
+        fontName=FONT_REG,
+        fontSize=9.5,
+        textColor=colors.black,
+        alignment=TA_JUSTIFY,
+        spaceBefore=3,
+        spaceAfter=3,
+        leading=13,
+    )
+    _add(
+        "BodySmall",
+        fontName=FONT_REG,
+        fontSize=8,
+        textColor=colors.black,
+        alignment=TA_JUSTIFY,
+        spaceBefore=2,
+        spaceAfter=2,
+        leading=11,
+    )
 
     # Legal
-    _add("Legal", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE,
-         alignment=TA_JUSTIFY, spaceBefore=1, spaceAfter=1, leading=9.5)
-    _add("LegalTitle", fontName=FONT_BOLD, fontSize=8, textColor=NAVY,
-         spaceBefore=6, spaceAfter=2, leading=10)
+    _add(
+        "Legal",
+        fontName=FONT_REG,
+        fontSize=7,
+        textColor=ICE_BLUE,
+        alignment=TA_JUSTIFY,
+        spaceBefore=1,
+        spaceAfter=1,
+        leading=9.5,
+    )
+    _add("LegalTitle", fontName=FONT_BOLD, fontSize=8, textColor=NAVY, spaceBefore=6, spaceAfter=2, leading=10)
 
     # Code
-    _add("Code", fontName=FONT_MONO, fontSize=7.5, textColor=colors.black,
-         backColor=colors.HexColor("#F6F8FA"), borderWidth=0.5,
-         borderColor=colors.HexColor("#D0D7DE"), borderPadding=6,
-         spaceBefore=4, spaceAfter=4, leading=10)
+    _add(
+        "Code",
+        fontName=FONT_MONO,
+        fontSize=7.5,
+        textColor=colors.black,
+        backColor=colors.HexColor("#F6F8FA"),
+        borderWidth=0.5,
+        borderColor=colors.HexColor("#D0D7DE"),
+        borderPadding=6,
+        spaceBefore=4,
+        spaceAfter=4,
+        leading=10,
+    )
 
     # Footer
-    _add("Footer", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE,
-         alignment=TA_CENTER)
+    _add("Footer", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE, alignment=TA_CENTER)
 
     return s
 
@@ -163,6 +202,7 @@ def _build_styles():
 # ═══════════════════════════════════════════════════════════════════════
 # PAGE TEMPLATE — Premium Header/Footer
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class _PremiumPageTemplate:
     """Custom header/footer rendering for every page (except cover)."""
@@ -214,9 +254,11 @@ class _PremiumPageTemplate:
 
         c.setFillColor(ICE_BLUE)
         c.setFont(FONT_REG, 6)
-        c.drawString(12 * mm, 8 * mm,
-                     f"© {datetime.datetime.now().year} {COMPANY_NAME} — {COMPANY_SITE} — "
-                     f"Documento {self.classification}")
+        c.drawString(
+            12 * mm,
+            8 * mm,
+            f"© {datetime.datetime.now().year} {COMPANY_NAME} — {COMPANY_SITE} — Documento {self.classification}",
+        )
         c.drawRightString(w - 12 * mm, 8 * mm, f"Página {doc.page}")
 
         c.restoreState()
@@ -226,13 +268,13 @@ class _PremiumPageTemplate:
 # RISK MATRIX DRAWING
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _build_risk_matrix_drawing(sev_counts: dict) -> Drawing:
     """Build a visual risk matrix (Likelihood x Impact) as a reportlab Drawing."""
     d = Drawing(250, 120)
 
     # Background
-    d.add(Rect(0, 0, 250, 120, fillColor=colors.HexColor("#F6F8FA"),
-               strokeColor=None))
+    d.add(Rect(0, 0, 250, 120, fillColor=colors.HexColor("#F6F8FA"), strokeColor=None))
 
     # Grid cells (5x1 horizontal bar chart style)
     severities = ["INFO", "BAIXO", "MEDIO", "ALTO", "CRITICO"]
@@ -249,23 +291,32 @@ def _build_risk_matrix_drawing(sev_counts: dict) -> Drawing:
         bar_h = max(4, (count / max_count) * 70)
 
         # Bar
-        d.add(Rect(x, 25, bar_width, bar_h, fillColor=sev_colors[i],
-                    strokeColor=None, rx=3, ry=3))
+        d.add(Rect(x, 25, bar_width, bar_h, fillColor=sev_colors[i], strokeColor=None, rx=3, ry=3))
 
         # Count label
-        d.add(String(x + bar_width / 2, 27 + bar_h, str(count),
-                     fontName=FONT_BOLD, fontSize=8, textAnchor="middle",
-                     fillColor=NAVY))
+        d.add(
+            String(
+                x + bar_width / 2,
+                27 + bar_h,
+                str(count),
+                fontName=FONT_BOLD,
+                fontSize=8,
+                textAnchor="middle",
+                fillColor=NAVY,
+            )
+        )
 
         # Severity label
-        d.add(String(x + bar_width / 2, 10, sev[:4],
-                     fontName=FONT_BOLD, fontSize=6, textAnchor="middle",
-                     fillColor=STEEL))
+        d.add(
+            String(x + bar_width / 2, 10, sev[:4], fontName=FONT_BOLD, fontSize=6, textAnchor="middle", fillColor=STEEL)
+        )
 
     # Title
-    d.add(String(125, 107, "DISTRIBUIÇÃO DE SEVERIDADE",
-                 fontName=FONT_BOLD, fontSize=7, textAnchor="middle",
-                 fillColor=NAVY))
+    d.add(
+        String(
+            125, 107, "DISTRIBUIÇÃO DE SEVERIDADE", fontName=FONT_BOLD, fontSize=7, textAnchor="middle", fillColor=NAVY
+        )
+    )
 
     return d
 
@@ -273,6 +324,7 @@ def _build_risk_matrix_drawing(sev_counts: dict) -> Drawing:
 # ═══════════════════════════════════════════════════════════════════════
 # LEGAL DISCLAIMERS — 12 Cláusulas
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def _build_disclaimers(company: str, now: datetime.datetime) -> list:
     """Return list of (title, text) tuples for 12 legal disclaimer clauses."""
@@ -284,26 +336,26 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"e do destinatário autorizado (doravante 'Cliente'). A reprodução, distribuição, "
             f"transmissão ou divulgação total ou parcial deste relatório, por qualquer meio, sem "
             f"autorização prévia por escrito, é estritamente proibida e constitui violação de "
-            f"acordo de confidencialidade (NDA) e da legislação aplicável."
+            f"acordo de confidencialidade (NDA) e da legislação aplicável.",
         ),
         (
             "2. Escopo e Limitações da Avaliação",
-            f"Os testes foram conduzidos exclusivamente dentro do escopo previamente acordado "
-            f"entre as partes via Statement of Work (SOW). Este relatório reflete a postura "
-            f"de segurança dos sistemas avaliados no momento específico da análise e não "
-            f"constitui garantia de segurança futura. Vulnerabilidades não detectadas não "
-            f"implicam inexistência das mesmas. Ameaças de segurança são dinâmicas e novas "
-            f"vulnerabilidades podem emergir após a data desta avaliação."
+            "Os testes foram conduzidos exclusivamente dentro do escopo previamente acordado "
+            "entre as partes via Statement of Work (SOW). Este relatório reflete a postura "
+            "de segurança dos sistemas avaliados no momento específico da análise e não "
+            "constitui garantia de segurança futura. Vulnerabilidades não detectadas não "
+            "implicam inexistência das mesmas. Ameaças de segurança são dinâmicas e novas "
+            "vulnerabilidades podem emergir após a data desta avaliação.",
         ),
         (
             "3. Autorização Formal e Base Legal",
-            f"Todos os testes foram realizados com autorização explícita, formal e documentada "
-            f"do proprietário do sistema ou de pessoa com poderes legais para tal. Os testes "
-            f"foram conduzidos em estrita conformidade com a legislação brasileira vigente, "
-            f"incluindo: Marco Civil da Internet (Lei nº 12.965/2014), Lei Geral de Proteção "
-            f"de Dados — LGPD (Lei nº 13.709/2018), Código Penal Brasileiro (Art. 154-A — "
-            f"Invasão de dispositivo informático), e o Projeto de Lei nº 4752/2025 "
-            f"(Framework Nacional de Cibersegurança — ANC)."
+            "Todos os testes foram realizados com autorização explícita, formal e documentada "
+            "do proprietário do sistema ou de pessoa com poderes legais para tal. Os testes "
+            "foram conduzidos em estrita conformidade com a legislação brasileira vigente, "
+            "incluindo: Marco Civil da Internet (Lei nº 12.965/2014), Lei Geral de Proteção "
+            "de Dados — LGPD (Lei nº 13.709/2018), Código Penal Brasileiro (Art. 154-A — "
+            "Invasão de dispositivo informático), e o Projeto de Lei nº 4752/2025 "
+            "(Framework Nacional de Cibersegurança — ANC).",
         ),
         (
             "4. Limitação de Responsabilidade",
@@ -313,7 +365,7 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"fundo de comércio, uso, dados ou outras perdas intangíveis, resultantes dos "
             f"serviços de teste de penetração ou do uso das informações contidas neste relatório. "
             f"A responsabilidade total de {company} não excederá o valor pago pelo Cliente "
-            f"pelos serviços específicos prestados sob o contrato vigente."
+            f"pelos serviços específicos prestados sob o contrato vigente.",
         ),
         (
             "5. Ausência de Garantias",
@@ -322,7 +374,7 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"certifica que os sistemas testados estejam 100% seguros, livres de todos os "
             f"defeitos, ou em conformidade com quaisquer padrões da indústria após a remediação "
             f"das vulnerabilidades identificadas. Nenhum teste de penetração pode garantir "
-            f"segurança absoluta."
+            f"segurança absoluta.",
         ),
         (
             "6. Responsabilidade de Remediação do Cliente",
@@ -330,7 +382,7 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"remediação das vulnerabilidades identificadas é de sua exclusiva responsabilidade. "
             f"{company} não é responsável pela falha do Cliente em implementar as medidas de "
             f"remediação sugeridas ou por quaisquer incidentes de segurança subsequentes que "
-            f"possam decorrer de vulnerabilidades não remediadas."
+            f"possam decorrer de vulnerabilidades não remediadas.",
         ),
         (
             "7. Reconhecimento de Riscos Inerentes",
@@ -339,7 +391,7 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"incluindo potencial instabilidade de sistemas, indisponibilidade temporária, ou "
             f"corrupção não intencional de dados. O Cliente concorda em assumir esses riscos "
             f"e eximir {company} de qualquer responsabilidade por danos resultantes da execução "
-            f"dos serviços dentro do escopo e metodologia acordados."
+            f"dos serviços dentro do escopo e metodologia acordados.",
         ),
         (
             "8. Conformidade Regulatória e Frameworks",
@@ -349,7 +401,7 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"NIST SP 800-115 (Technical Guide to Information Security Testing), "
             f"ISO/IEC 27001:2022 (Information Security Management), "
             f"ISO/IEC 27005:2022 (Information Security Risk Management), "
-            f"PCI DSS v4.0 (quando aplicável), e CVSS v4.0 (Common Vulnerability Scoring System)."
+            f"PCI DSS v4.0 (quando aplicável), e CVSS v4.0 (Common Vulnerability Scoring System).",
         ),
         (
             "9. Proteção de Dados Pessoais (LGPD)",
@@ -358,15 +410,15 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"compromete-se a: (i) não armazenar dados pessoais além do estritamente necessário "
             f"para a elaboração deste relatório; (ii) eliminar dados residuais em até 30 dias "
             f"após a entrega; (iii) notificar imediatamente o Cliente e a ANPD em caso de "
-            f"incidente de segurança envolvendo dados pessoais, conforme Art. 48 da LGPD."
+            f"incidente de segurança envolvendo dados pessoais, conforme Art. 48 da LGPD.",
         ),
         (
             "10. Retenção e Destruição de Evidências",
-            f"Este relatório e suas evidências associadas devem ser armazenados em ambiente "
-            f"seguro com controles de acesso adequados (criptografia AES-256, MFA, least "
-            f"privilege). Recomenda-se a destruição segura (NIST SP 800-88 Rev.1) deste "
-            f"documento e de todas as cópias após a remediação completa das vulnerabilidades "
-            f"ou após o período de retenção acordado contratualmente, o que ocorrer primeiro."
+            "Este relatório e suas evidências associadas devem ser armazenados em ambiente "
+            "seguro com controles de acesso adequados (criptografia AES-256, MFA, least "
+            "privilege). Recomenda-se a destruição segura (NIST SP 800-88 Rev.1) deste "
+            "documento e de todas as cópias após a remediação completa das vulnerabilidades "
+            "ou após o período de retenção acordado contratualmente, o que ocorrer primeiro.",
         ),
         (
             "11. Propriedade Intelectual",
@@ -374,15 +426,15 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
             f"condução dos testes constituem propriedade intelectual de {company} — protegidas "
             f"pela Lei de Propriedade Industrial (Lei nº 9.279/1996) e Lei de Direito Autoral "
             f"(Lei nº 9.610/1998). O Cliente não adquire direitos sobre tais ativos pelo "
-            f"recebimento deste relatório."
+            f"recebimento deste relatório.",
         ),
         (
             "12. Aviso Jurídico Final",
-            f"Este relatório e seus disclaimers são fornecidos para fins informativos "
-            f"e técnicos, não constituindo aconselhamento jurídico. Recomenda-se que o Cliente "
-            f"consulte assessoria jurídica própria para questões legais específicas. A jurisdição "
-            f"para resolução de quaisquer disputas é o Foro da Comarca da cidade do contratante, "
-            f"com renúncia a qualquer outro, por mais privilegiado que seja."
+            "Este relatório e seus disclaimers são fornecidos para fins informativos "
+            "e técnicos, não constituindo aconselhamento jurídico. Recomenda-se que o Cliente "
+            "consulte assessoria jurídica própria para questões legais específicas. A jurisdição "
+            "para resolução de quaisquer disputas é o Foro da Comarca da cidade do contratante, "
+            "com renúncia a qualquer outro, por mais privilegiado que seja.",
         ),
     ]
 
@@ -407,6 +459,7 @@ COMPLIANCE_FRAMEWORKS = [
 # ═══════════════════════════════════════════════════════════════════════
 # REPORT BUILDER
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_pdf_report(
     target: str,
@@ -442,10 +495,7 @@ def generate_pdf_report(
     if output_path is None:
         reports_dir = os.path.join(BASE_PATH, "reports")
         os.makedirs(reports_dir, exist_ok=True)
-        output_path = os.path.join(
-            reports_dir,
-            f"cascavel_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
+        output_path = os.path.join(reports_dir, f"cascavel_{now.strftime('%Y%m%d_%H%M%S')}.pdf")
 
     doc = SimpleDocTemplate(
         output_path,
@@ -495,8 +545,7 @@ def generate_pdf_report(
     story.append(Paragraph("Quantum Security Framework", styles["CoverSub"]))
     story.append(Spacer(1, 5 * mm))
 
-    story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON,
-                            spaceAfter=8, hAlign="CENTER"))
+    story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON, spaceAfter=8, hAlign="CENTER"))
 
     story.append(Paragraph("RELATÓRIO DE ANÁLISE DE SEGURANÇA", styles["CoverSub"]))
     story.append(Spacer(1, 12 * mm))
@@ -515,19 +564,23 @@ def generate_pdf_report(
         ["Duração do Scan", f"{round(duration, 1)}s"],
     ]
     cover_table = Table(cover_rows, colWidths=[50 * mm, 115 * mm])
-    cover_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (0, -1), FONT_BOLD),
-        ("FONTNAME", (1, 0), (1, -1), FONT_REG),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("TEXTCOLOR", (0, 0), (0, -1), NAVY),
-        ("TEXTCOLOR", (1, 0), (1, -1), colors.black),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("LINEBELOW", (0, 0), (-1, -2), 0.3, ICE_BLUE),
-        ("LINEBELOW", (0, -1), (-1, -1), 1, CYAN_NEON),
-        ("ALIGN", (0, 0), (0, -1), "RIGHT"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
+    cover_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (0, -1), FONT_BOLD),
+                ("FONTNAME", (1, 0), (1, -1), FONT_REG),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("TEXTCOLOR", (0, 0), (0, -1), NAVY),
+                ("TEXTCOLOR", (1, 0), (1, -1), colors.black),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("LINEBELOW", (0, 0), (-1, -2), 0.3, ICE_BLUE),
+                ("LINEBELOW", (0, -1), (-1, -1), 1, CYAN_NEON),
+                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
     cover_table.hAlign = "CENTER"
     story.append(cover_table)
 
@@ -568,11 +621,13 @@ def generate_pdf_report(
 
     story.append(Spacer(1, 6 * mm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=ICE_BLUE, spaceAfter=4))
-    story.append(Paragraph(
-        f"<i>© {now.year} {company}. Todos os direitos reservados. "
-        f"Gerado por Cascavel v{VERSION} — {COMPANY_SITE}.</i>",
-        styles["Legal"],
-    ))
+    story.append(
+        Paragraph(
+            f"<i>© {now.year} {company}. Todos os direitos reservados. "
+            f"Gerado por Cascavel v{VERSION} — {COMPANY_SITE}.</i>",
+            styles["Legal"],
+        )
+    )
 
     story.append(PageBreak())
 
@@ -602,15 +657,19 @@ def generate_pdf_report(
     # Posture badge
     posture_data = [[f"POSTURA DE SEGURANÇA: {posture}"]]
     posture_badge = Table(posture_data, colWidths=[170 * mm])
-    posture_badge.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, 0), posture_color),
-        ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
-        ("FONTNAME", (0, 0), (0, 0), FONT_BOLD),
-        ("FONTSIZE", (0, 0), (0, 0), 10),
-        ("ALIGN", (0, 0), (0, 0), "CENTER"),
-        ("TOPPADDING", (0, 0), (0, 0), 8),
-        ("BOTTOMPADDING", (0, 0), (0, 0), 8),
-    ]))
+    posture_badge.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), posture_color),
+                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("FONTNAME", (0, 0), (0, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (0, 0), 10),
+                ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                ("TOPPADDING", (0, 0), (0, 0), 8),
+                ("BOTTOMPADDING", (0, 0), (0, 0), 8),
+            ]
+        )
+    )
     posture_badge.hAlign = "CENTER"
     story.append(posture_badge)
     story.append(Spacer(1, 6 * mm))
@@ -707,20 +766,24 @@ def generate_pdf_report(
             # Title with severity badge
             title_data = [[f"#{idx}", name, f"{severity} (CVSS {cvss_range})"]]
             title_table = Table(title_data, colWidths=[12 * mm, 115 * mm, 55 * mm])
-            title_table.setStyle(TableStyle([
-                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
-                ("FONTSIZE", (0, 0), (1, 0), 9),
-                ("FONTSIZE", (2, 0), (2, 0), 8),
-                ("TEXTCOLOR", (0, 0), (0, 0), NAVY),
-                ("TEXTCOLOR", (1, 0), (1, 0), NAVY),
-                ("BACKGROUND", (2, 0), (2, 0), sev_color),
-                ("TEXTCOLOR", (2, 0), (2, 0), colors.white),
-                ("ALIGN", (2, 0), (2, 0), "CENTER"),
-                ("TOPPADDING", (0, 0), (-1, 0), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
-                ("LINEBELOW", (0, 0), (-1, 0), 1, sev_color),
-                ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),
-            ]))
+            title_table.setStyle(
+                TableStyle(
+                    [
+                        ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                        ("FONTSIZE", (0, 0), (1, 0), 9),
+                        ("FONTSIZE", (2, 0), (2, 0), 8),
+                        ("TEXTCOLOR", (0, 0), (0, 0), NAVY),
+                        ("TEXTCOLOR", (1, 0), (1, 0), NAVY),
+                        ("BACKGROUND", (2, 0), (2, 0), sev_color),
+                        ("TEXTCOLOR", (2, 0), (2, 0), colors.white),
+                        ("ALIGN", (2, 0), (2, 0), "CENTER"),
+                        ("TOPPADDING", (0, 0), (-1, 0), 4),
+                        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+                        ("LINEBELOW", (0, 0), (-1, 0), 1, sev_color),
+                        ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),
+                    ]
+                )
+            )
             card.append(title_table)
 
             if owasp_cat:
@@ -742,18 +805,22 @@ def generate_pdf_report(
                 card.append(Paragraph("<b>Referências:</b>", styles["BodySmall"]))
                 for ref in refs[:5]:
                     safe_ref = _sanitize_html(str(ref))
-                    card.append(Paragraph(
-                        f'• <a href="{safe_ref}" color="#0066CC">{safe_ref}</a>',
-                        styles["Legal"],
-                    ))
+                    card.append(
+                        Paragraph(
+                            f'• <a href="{safe_ref}" color="#0066CC">{safe_ref}</a>',
+                            styles["Legal"],
+                        )
+                    )
 
             card.append(Spacer(1, 5 * mm))
             story.append(KeepTogether(card))
     else:
-        story.append(Paragraph(
-            "✓ Nenhuma vulnerabilidade identificada durante esta avaliação.",
-            styles["Body"],
-        ))
+        story.append(
+            Paragraph(
+                "✓ Nenhuma vulnerabilidade identificada durante esta avaliação.",
+                styles["Body"],
+            )
+        )
 
     story.append(PageBreak())
 
@@ -768,17 +835,21 @@ def generate_pdf_report(
         comp_data.append([fw, ref, app])
 
     comp_table = Table(comp_data, colWidths=[40 * mm, 42 * mm, 100 * mm])
-    comp_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
+    comp_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
     story.append(comp_table)
 
     story.append(PageBreak())
@@ -790,31 +861,46 @@ def generate_pdf_report(
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     phases = [
-        ("Fase 1 — Reconhecimento", (
-            "Coleta passiva e ativa: DNS enumeration, subdomain discovery (subfinder), WHOIS, "
-            "fingerprinting de tecnologias (httpx/wappalyzer), port scanning (nmap/naabu), "
-            "banner grabbing, OSINT e coleta de surface area."
-        )),
-        ("Fase 2 — Enumeração", (
-            "Identificação de serviços expostos, endpoints web, APIs, versões de software, "
-            "configurações de segurança (headers, CORS, CSP, HSTS), e vetores de ataque "
-            "potenciais via 84 plugins especializados."
-        )),
-        ("Fase 3 — Análise de Vulnerabilidades", (
-            "Teste automatizado contra CVEs conhecidas (nuclei templates), misconfigurations, "
-            "injection vectors (SQLi, XSS, SSRF, XXE, RCE, SSTI, LFI/RFI), "
-            "problemas criptográficos (TLS/SSL), e falhas de autenticação/autorização."
-        )),
-        ("Fase 4 — Exploração Controlada", (
-            "Validação de vulnerabilidades com técnicas de baixo impacto — detecção passiva, "
-            "sem payload destrutivo, garantindo zero falso positivo e zero dano à infraestrutura "
-            "do Cliente. Todos os testes seguem o princípio do mínimo privilégio necessário."
-        )),
-        ("Fase 5 — Relatório e Entrega", (
-            "Geração automatizada de relatório profissional em PDF com CVSS scoring, "
-            "compliance mapping, evidências técnicas sanitizadas, recomendações de remediação "
-            "priorizadas, e disclaimers legais completos."
-        )),
+        (
+            "Fase 1 — Reconhecimento",
+            (
+                "Coleta passiva e ativa: DNS enumeration, subdomain discovery (subfinder), WHOIS, "
+                "fingerprinting de tecnologias (httpx/wappalyzer), port scanning (nmap/naabu), "
+                "banner grabbing, OSINT e coleta de surface area."
+            ),
+        ),
+        (
+            "Fase 2 — Enumeração",
+            (
+                "Identificação de serviços expostos, endpoints web, APIs, versões de software, "
+                "configurações de segurança (headers, CORS, CSP, HSTS), e vetores de ataque "
+                "potenciais via 84 plugins especializados."
+            ),
+        ),
+        (
+            "Fase 3 — Análise de Vulnerabilidades",
+            (
+                "Teste automatizado contra CVEs conhecidas (nuclei templates), misconfigurations, "
+                "injection vectors (SQLi, XSS, SSRF, XXE, RCE, SSTI, LFI/RFI), "
+                "problemas criptográficos (TLS/SSL), e falhas de autenticação/autorização."
+            ),
+        ),
+        (
+            "Fase 4 — Exploração Controlada",
+            (
+                "Validação de vulnerabilidades com técnicas de baixo impacto — detecção passiva, "
+                "sem payload destrutivo, garantindo zero falso positivo e zero dano à infraestrutura "
+                "do Cliente. Todos os testes seguem o princípio do mínimo privilégio necessário."
+            ),
+        ),
+        (
+            "Fase 5 — Relatório e Entrega",
+            (
+                "Geração automatizada de relatório profissional em PDF com CVSS scoring, "
+                "compliance mapping, evidências técnicas sanitizadas, recomendações de remediação "
+                "priorizadas, e disclaimers legais completos."
+            ),
+        ),
     ]
 
     for title, desc in phases:
@@ -847,17 +933,21 @@ def generate_pdf_report(
         tools_rows.append(list(t))
 
     tools_table = Table(tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm])
-    tools_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
+    tools_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
     story.append(tools_table)
 
     story.append(PageBreak())
@@ -884,18 +974,22 @@ def generate_pdf_report(
     ]
 
     sig_table = Table(sig_rows, colWidths=[50 * mm, 132 * mm])
-    sig_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
-        ("ALIGN", (0, 0), (0, -1), "RIGHT"),
-        ("FONTNAME", (0, 1), (0, -1), FONT_BOLD),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
+    sig_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
+                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                ("FONTNAME", (0, 1), (0, -1), FONT_BOLD),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
     story.append(sig_table)
 
     story.append(Spacer(1, 20 * mm))
@@ -920,25 +1014,29 @@ def generate_pdf_report(
 
     # Final legal block
     story.append(HRFlowable(width="100%", thickness=1.5, color=NAVY, spaceAfter=4))
-    story.append(Paragraph(
-        f"<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel "
-        f"Quantum Security Framework v{VERSION}, produto de {company} ({COMPANY_SITE}). "
-        f"As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente "
-        f"ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada "
-        f"é proibida nos termos da legislação vigente. Caso tenha recebido este documento por "
-        f"engano, notifique imediatamente o remetente e destrua todas as cópias.",
-        styles["Legal"],
-    ))
+    story.append(
+        Paragraph(
+            f"<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel "
+            f"Quantum Security Framework v{VERSION}, produto de {company} ({COMPANY_SITE}). "
+            f"As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente "
+            f"ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada "
+            f"é proibida nos termos da legislação vigente. Caso tenha recebido este documento por "
+            f"engano, notifique imediatamente o remetente e destrua todas as cópias.",
+            styles["Legal"],
+        )
+    )
     story.append(Spacer(1, 3 * mm))
-    story.append(Paragraph(
-        f"© {now.year} {company}. Todos os direitos reservados. "
-        f"MÉTODO CASCAVEL™ é marca registrada de RET Tecnologia. "
-        f"Cascavel Framework é licenciado sob MIT para uso não-comercial. "
-        f"O uso desta ferramenta para atividades ilegais ou não autorizadas é expressa "
-        f"e irrevogavelmente proibido. Qualquer uso em desacordo com a legislação vigente "
-        f"é de responsabilidade exclusiva do executor.",
-        styles["Legal"],
-    ))
+    story.append(
+        Paragraph(
+            f"© {now.year} {company}. Todos os direitos reservados. "
+            f"MÉTODO CASCAVEL™ é marca registrada de RET Tecnologia. "
+            f"Cascavel Framework é licenciado sob MIT para uso não-comercial. "
+            f"O uso desta ferramenta para atividades ilegais ou não autorizadas é expressa "
+            f"e irrevogavelmente proibido. Qualquer uso em desacordo com a legislação vigente "
+            f"é de responsabilidade exclusiva do executor.",
+            styles["Legal"],
+        )
+    )
 
     # ═══════════════════════════════════════════════════════════════════
     # BUILD PDF
@@ -962,9 +1060,19 @@ if __name__ == "__main__":
             {
                 "plugin": "xss_scanner",
                 "severity": "ALTO",
-                "details": "Reflected XSS identificado no parâmetro de busca. Input do usuário é refletido na resposta sem sanitização adequada.",
-                "evidence": "GET /search?q=<script>alert(1)</script> → 200 OK\nResponse body contains: <script>alert(1)</script>",
-                "remediation": "Implementar sanitização de input (escaping HTML). Adicionar headers Content-Security-Policy. Utilizar frameworks com auto-escaping (React, Vue).",
+                "details": (
+                    "Reflected XSS identificado no parâmetro de busca."
+                    " Input do usuário é refletido na resposta sem sanitização adequada."
+                ),
+                "evidence": (
+                    "GET /search?q=<script>alert(1)</script> → 200 OK\n"
+                    "Response body contains: <script>alert(1)</script>"
+                ),
+                "remediation": (
+                    "Implementar sanitização de input (escaping HTML)."
+                    " Adicionar headers Content-Security-Policy."
+                    " Utilizar frameworks com auto-escaping (React, Vue)."
+                ),
                 "references": [
                     "https://owasp.org/www-community/attacks/xss/",
                     "https://cwe.mitre.org/data/definitions/79.html",
@@ -974,18 +1082,29 @@ if __name__ == "__main__":
             {
                 "plugin": "ssl_analyzer",
                 "severity": "MEDIO",
-                "details": "TLS 1.0 ainda habilitado no servidor. Protocolo considerado inseguro desde 2018 (PCI DSS 3.2.1).",
-                "evidence": "TLSv1.0 handshake successful\nCipher: TLS_RSA_WITH_AES_128_CBC_SHA",
-                "remediation": "Desabilitar TLS 1.0 e 1.1. Configurar servidor para aceitar apenas TLS 1.2+ com cipher suites modernas.",
+                "details": (
+                    "TLS 1.0 ainda habilitado no servidor. Protocolo considerado inseguro desde 2018 (PCI DSS 3.2.1)."
+                ),
+                "evidence": ("TLSv1.0 handshake successful\nCipher: TLS_RSA_WITH_AES_128_CBC_SHA"),
+                "remediation": (
+                    "Desabilitar TLS 1.0 e 1.1. Configurar servidor"
+                    " para aceitar apenas TLS 1.2+ com cipher suites modernas."
+                ),
                 "references": ["https://nvd.nist.gov/vuln/detail/CVE-2011-3389"],
                 "owasp": "A02:2021 — Cryptographic Failures",
             },
             {
                 "plugin": "cors_checker",
                 "severity": "ALTO",
-                "details": "Política CORS wildcard detectada (Access-Control-Allow-Origin: *). Permite que qualquer domínio faça requisições cross-origin.",
-                "evidence": "Response header: Access-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true",
-                "remediation": "Restringir CORS para origens confiáveis específicas. Nunca combinar wildcard com Allow-Credentials.",
+                "details": (
+                    "Política CORS wildcard detectada (Access-Control-Allow-Origin: *)."
+                    " Permite que qualquer domínio faça requisições cross-origin."
+                ),
+                "evidence": ("Response header: Access-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true"),
+                "remediation": (
+                    "Restringir CORS para origens confiáveis específicas."
+                    " Nunca combinar wildcard com Allow-Credentials."
+                ),
                 "references": ["https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"],
                 "owasp": "A05:2021 — Security Misconfiguration",
             },
@@ -993,7 +1112,9 @@ if __name__ == "__main__":
                 "plugin": "header_audit",
                 "severity": "BAIXO",
                 "details": "Header X-Frame-Options ausente. O servidor não envia proteção contra clickjacking.",
-                "evidence": "Response headers:\nServer: nginx/1.24.0\nContent-Type: text/html\n(X-Frame-Options: ABSENT)",
+                "evidence": (
+                    "Response headers:\nServer: nginx/1.24.0\nContent-Type: text/html\n(X-Frame-Options: ABSENT)"
+                ),
                 "remediation": "Adicionar X-Frame-Options: DENY ou SAMEORIGIN. Considerar também CSP frame-ancestors.",
                 "references": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"],
                 "owasp": "A05:2021 — Security Misconfiguration",

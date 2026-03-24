@@ -1,8 +1,8 @@
 # plugins/nuclei_scanner.py
-import subprocess
-import shutil
-import shlex
 import json
+import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -22,24 +22,32 @@ def run(target, ip, open_ports, banners):
 
     for sev in severidades:
         try:
-            cmd = f"echo http://{safe_target} | nuclei -silent -severity {sev} -jsonl -rate-limit 50 -timeout 5 -retries 1"
+            cmd = (
+                f"echo http://{safe_target}"
+                f" | nuclei -silent -severity {sev} -jsonl -rate-limit 50 -timeout 5 -retries 1"
+            )
             proc = subprocess.run(
-                cmd, shell=True, capture_output=True,
-                timeout=180, encoding="utf-8",
+                cmd,
+                shell=True,
+                capture_output=True,
+                timeout=180,
+                encoding="utf-8",
             )
             achados = []
             for line in proc.stdout.splitlines():
                 if line.strip():
                     try:
                         obj = json.loads(line)
-                        achados.append({
-                            "template_id": obj.get("template-id", ""),
-                            "nome": obj.get("info", {}).get("name", ""),
-                            "severidade": obj.get("info", {}).get("severity", sev),
-                            "matched_at": obj.get("matched-at", ""),
-                            "tipo": obj.get("type", ""),
-                            "descricao": obj.get("info", {}).get("description", "")[:200],
-                        })
+                        achados.append(
+                            {
+                                "template_id": obj.get("template-id", ""),
+                                "nome": obj.get("info", {}).get("name", ""),
+                                "severidade": obj.get("info", {}).get("severity", sev),
+                                "matched_at": obj.get("matched-at", ""),
+                                "tipo": obj.get("type", ""),
+                                "descricao": obj.get("info", {}).get("description", "")[:200],
+                            }
+                        )
                     except json.JSONDecodeError:
                         continue
             resultado[sev] = achados if achados else f"Nenhuma vuln {sev} detectada"

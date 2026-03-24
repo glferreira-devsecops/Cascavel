@@ -1,7 +1,7 @@
 # plugins/mongodb_unauth.py — Cascavel 2026 Intelligence
 import socket
-import requests
 
+import requests
 
 MONGO_PORTS = [27017, 27018, 27019, 27020]
 
@@ -43,11 +43,14 @@ def _check_mongo_http(target, port):
         try:
             resp = requests.get(f"http://{target}:{hp}/", timeout=5)
             if resp.status_code == 200 and "mongodb" in resp.text.lower():
-                vulns.append({
-                    "tipo": "MONGODB_HTTP_INTERFACE", "porta": hp,
-                    "severidade": "CRITICO",
-                    "descricao": f"MongoDB HTTP interface exposta em :{hp}!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "MONGODB_HTTP_INTERFACE",
+                        "porta": hp,
+                        "severidade": "CRITICO",
+                        "descricao": f"MongoDB HTTP interface exposta em :{hp}!",
+                    }
+                )
         except Exception:
             pass
     return vulns
@@ -59,13 +62,17 @@ def _check_mongo_express(target):
     for port in [8081, 8082, 8888]:
         try:
             resp = requests.get(f"http://{target}:{port}/", timeout=5)
-            if resp.status_code == 200 and any(k in resp.text.lower()
-                                                for k in ["mongo express", "mongo-express", "databases"]):
-                vulns.append({
-                    "tipo": "MONGO_EXPRESS_UNAUTH", "porta": port,
-                    "severidade": "CRITICO",
-                    "descricao": f"Mongo Express (web admin) sem auth em :{port}!",
-                })
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["mongo express", "mongo-express", "databases"]
+            ):
+                vulns.append(
+                    {
+                        "tipo": "MONGO_EXPRESS_UNAUTH",
+                        "porta": port,
+                        "severidade": "CRITICO",
+                        "descricao": f"Mongo Express (web admin) sem auth em :{port}!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -80,16 +87,17 @@ def _analyze_mongo_response(response, port):
     indicators = ["ismaster", "maxBsonObjectSize", "maxMessageSizeBytes", "ok"]
     if any(ind in response for ind in indicators):
         vuln = {
-            "tipo": "MONGODB_UNAUTH", "porta": port,
+            "tipo": "MONGODB_UNAUTH",
+            "porta": port,
             "severidade": "CRITICO",
             "descricao": f"MongoDB sem auth em :{port} — dump de dados possível!",
         }
         if "version" in response:
             start = response.find("version")
-            vuln["version_leak"] = response[start:start + 30]
+            vuln["version_leak"] = response[start : start + 30]
         if "setName" in response:
             start = response.find("setName")
-            vuln["replica_set"] = response[start:start + 40]
+            vuln["replica_set"] = response[start : start + 40]
             vuln["descricao"] += " (Replica Set detectado)"
         vulns.append(vuln)
 
@@ -107,7 +115,8 @@ def _check_mongos(target):
         sock.close()
         if "mongos" in response.lower() or "isdbgrid" in response.lower():
             return {
-                "tipo": "MONGOS_EXPOSED", "porta": 27017,
+                "tipo": "MONGOS_EXPOSED",
+                "porta": 27017,
                 "severidade": "CRITICO",
                 "descricao": "Mongos router exposto — acesso a sharded cluster inteiro!",
             }
@@ -138,8 +147,15 @@ def run(target, ip, open_ports, banners):
         vulns.append(mongos)
 
     return {
-        "plugin": "mongodb_unauth", "versao": "2026.1",
-        "tecnicas": ["ismaster_probe", "http_interface", "mongo_express",
-                      "version_disclosure", "replica_set", "mongos_detection"],
+        "plugin": "mongodb_unauth",
+        "versao": "2026.1",
+        "tecnicas": [
+            "ismaster_probe",
+            "http_interface",
+            "mongo_express",
+            "version_disclosure",
+            "replica_set",
+            "mongos_detection",
+        ],
         "resultados": vulns if vulns else "Nenhum MongoDB exposto",
     }

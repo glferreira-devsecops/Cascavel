@@ -7,30 +7,43 @@ registrar/abuse extraction, nameserver enumeration, domain age analysis,
 DNSSEC detection, privacy/proxy WHOIS detection, IP WHOIS (network range/ASN),
 creation/expiry date extraction, registrant org/country mapping.
 """
-import subprocess
+
+import datetime
+import re
 import shlex
 import shutil
-import re
-import json
-import datetime
-import socket
-import requests
+import subprocess
 
+import requests
 
 RDAP_BOOTSTRAP = "https://rdap.org/domain/"
 IP_RDAP_BOOTSTRAP = "https://rdap.org/ip/"
 
 PRIVACY_INDICATORS = [
-    "whoisguard", "privacyguard", "domains by proxy", "privacy protect",
-    "contact privacy", "whois privacy", "redacted for privacy",
-    "data protected", "withheld for privacy", "identity protect",
-    "private registration", "perfect privacy", "domainsbyproxy",
+    "whoisguard",
+    "privacyguard",
+    "domains by proxy",
+    "privacy protect",
+    "contact privacy",
+    "whois privacy",
+    "redacted for privacy",
+    "data protected",
+    "withheld for privacy",
+    "identity protect",
+    "private registration",
+    "perfect privacy",
+    "domainsbyproxy",
 ]
 
 REGISTRAR_RISK = {
-    "namecheap": "MEDIO", "godaddy": "BAIXO", "porkbun": "MEDIO",
-    "epik": "ALTO", "njalla": "CRITICO", "tucows": "BAIXO",
-    "cloudflare": "BAIXO", "gandi": "BAIXO",
+    "namecheap": "MEDIO",
+    "godaddy": "BAIXO",
+    "porkbun": "MEDIO",
+    "epik": "ALTO",
+    "njalla": "CRITICO",
+    "tucows": "BAIXO",
+    "cloudflare": "BAIXO",
+    "gandi": "BAIXO",
 }
 
 
@@ -41,7 +54,10 @@ def _whois_native(target):
     try:
         proc = subprocess.run(
             ["whois", shlex.quote(target).strip("'")],
-            capture_output=True, timeout=15, encoding="utf-8", errors="ignore",
+            capture_output=True,
+            timeout=15,
+            encoding="utf-8",
+            errors="ignore",
         )
         return proc.stdout if proc.returncode == 0 else None
     except Exception:
@@ -98,8 +114,7 @@ def _parse_whois(raw):
 def _rdap_lookup(target):
     """RDAP JSON lookup — structured data."""
     try:
-        resp = requests.get(f"{RDAP_BOOTSTRAP}{target}", timeout=10,
-                            headers={"Accept": "application/rdap+json"})
+        resp = requests.get(f"{RDAP_BOOTSTRAP}{target}", timeout=10, headers={"Accept": "application/rdap+json"})
         if resp.status_code == 200:
             return resp.json()
     except Exception:
@@ -110,8 +125,7 @@ def _rdap_lookup(target):
 def _rdap_ip_lookup(ip):
     """RDAP IP lookup — network/ASN info."""
     try:
-        resp = requests.get(f"{IP_RDAP_BOOTSTRAP}{ip}", timeout=10,
-                            headers={"Accept": "application/rdap+json"})
+        resp = requests.get(f"{IP_RDAP_BOOTSTRAP}{ip}", timeout=10, headers={"Accept": "application/rdap+json"})
         if resp.status_code == 200:
             return resp.json()
     except Exception:
@@ -172,18 +186,24 @@ def _analyze_domain_age(creation_date_str):
         # Try ISO format
         for fmt in ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"]:
             try:
-                created = datetime.datetime.strptime(creation_date_str[:19], fmt[:len(creation_date_str[:19])])
+                created = datetime.datetime.strptime(creation_date_str[:19], fmt[: len(creation_date_str[:19])])
                 age_days = (datetime.datetime.now() - created).days
                 return {
                     "created": creation_date_str,
                     "age_days": age_days,
                     "age_years": round(age_days / 365.25, 1),
-                    "risk": "CRITICO" if age_days < 30 else
-                            "ALTO" if age_days < 180 else
-                            "MEDIO" if age_days < 365 else "BAIXO",
-                    "nota": "Domínio muito recente — possível phishing!" if age_days < 30
-                            else "Domínio jovem" if age_days < 365
-                            else "Domínio estabelecido",
+                    "risk": "CRITICO"
+                    if age_days < 30
+                    else "ALTO"
+                    if age_days < 180
+                    else "MEDIO"
+                    if age_days < 365
+                    else "BAIXO",
+                    "nota": "Domínio muito recente — possível phishing!"
+                    if age_days < 30
+                    else "Domínio jovem"
+                    if age_days < 365
+                    else "Domínio estabelecido",
                 }
             except ValueError:
                 continue
@@ -227,17 +247,23 @@ def _check_expiry(expiry_str):
     try:
         for fmt in ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d"]:
             try:
-                expiry = datetime.datetime.strptime(expiry_str[:19], fmt[:len(expiry_str[:19])])
+                expiry = datetime.datetime.strptime(expiry_str[:19], fmt[: len(expiry_str[:19])])
                 days_left = (expiry - datetime.datetime.now()).days
                 return {
                     "expiry_date": expiry_str,
                     "days_remaining": days_left,
-                    "risk": "CRITICO" if days_left < 0 else
-                            "ALTO" if days_left < 30 else
-                            "MEDIO" if days_left < 90 else "BAIXO",
-                    "nota": "DOMÍNIO EXPIRADO!" if days_left < 0
-                            else f"Expira em {days_left} dias" if days_left < 90
-                            else "OK",
+                    "risk": "CRITICO"
+                    if days_left < 0
+                    else "ALTO"
+                    if days_left < 30
+                    else "MEDIO"
+                    if days_left < 90
+                    else "BAIXO",
+                    "nota": "DOMÍNIO EXPIRADO!"
+                    if days_left < 0
+                    else f"Expira em {days_left} dias"
+                    if days_left < 90
+                    else "OK",
                 }
             except ValueError:
                 continue
@@ -298,11 +324,14 @@ def run(target, ip, open_ports, banners):
     if age_info:
         resultado["intel"]["domain_age"] = age_info
         if age_info.get("risk") in ("CRITICO", "ALTO"):
-            resultado["vulns"].append({
-                "tipo": "DOMAIN_AGE_SUSPICIOUS", "severidade": age_info["risk"],
-                "descricao": age_info.get("nota", "Domínio recente"),
-                "age_days": age_info.get("age_days"),
-            })
+            resultado["vulns"].append(
+                {
+                    "tipo": "DOMAIN_AGE_SUSPICIOUS",
+                    "severidade": age_info["risk"],
+                    "descricao": age_info.get("nota", "Domínio recente"),
+                    "age_days": age_info.get("age_days"),
+                }
+            )
 
     # 5. Privacy Detection
     privacy = _detect_privacy(whois_fields, raw_whois)
@@ -316,11 +345,14 @@ def run(target, ip, open_ports, banners):
     if reg_risk:
         resultado["intel"]["registrar_risk"] = reg_risk
         if reg_risk.get("risk") in ("CRITICO", "ALTO"):
-            resultado["vulns"].append({
-                "tipo": "HIGH_RISK_REGISTRAR", "severidade": reg_risk["risk"],
-                "registrar": registrar,
-                "descricao": f"Registrar de alto risco: {registrar}",
-            })
+            resultado["vulns"].append(
+                {
+                    "tipo": "HIGH_RISK_REGISTRAR",
+                    "severidade": reg_risk["risk"],
+                    "registrar": registrar,
+                    "descricao": f"Registrar de alto risco: {registrar}",
+                }
+            )
 
     # 7. Expiry Check
     expiry = whois_fields.get("expiry_date")
@@ -330,19 +362,25 @@ def run(target, ip, open_ports, banners):
     if exp_info:
         resultado["intel"]["expiry"] = exp_info
         if exp_info.get("risk") in ("CRITICO", "ALTO"):
-            resultado["vulns"].append({
-                "tipo": "DOMAIN_EXPIRY_RISK", "severidade": exp_info["risk"],
-                "descricao": exp_info.get("nota", ""),
-                "days_remaining": exp_info.get("days_remaining"),
-            })
+            resultado["vulns"].append(
+                {
+                    "tipo": "DOMAIN_EXPIRY_RISK",
+                    "severidade": exp_info["risk"],
+                    "descricao": exp_info.get("nota", ""),
+                    "days_remaining": exp_info.get("days_remaining"),
+                }
+            )
 
     # 8. DNSSEC
     dnssec = whois_fields.get("dnssec", "")
     if isinstance(dnssec, str) and dnssec.lower() in ("unsigned", "no"):
-        resultado["vulns"].append({
-            "tipo": "DNSSEC_NOT_SIGNED", "severidade": "MEDIO",
-            "descricao": "DNSSEC não habilitado — vulnerável a DNS spoofing!",
-        })
+        resultado["vulns"].append(
+            {
+                "tipo": "DNSSEC_NOT_SIGNED",
+                "severidade": "MEDIO",
+                "descricao": "DNSSEC não habilitado — vulnerável a DNS spoofing!",
+            }
+        )
 
     # 9. Nameserver Analysis
     ns_list = whois_fields.get("nameservers", [])
@@ -350,15 +388,28 @@ def run(target, ip, open_ports, banners):
         resultado["intel"]["nameservers"] = ns_list
         # Single NS = SPOF
         if len(ns_list) == 1:
-            resultado["vulns"].append({
-                "tipo": "SINGLE_NAMESERVER", "severidade": "MEDIO",
-                "descricao": "Apenas 1 nameserver — single point of failure!",
-            })
+            resultado["vulns"].append(
+                {
+                    "tipo": "SINGLE_NAMESERVER",
+                    "severidade": "MEDIO",
+                    "descricao": "Apenas 1 nameserver — single point of failure!",
+                }
+            )
 
     return {
-        "plugin": "whois_recon", "versao": "2026.1",
-        "tecnicas": ["whois_native", "rdap_json", "ip_whois", "domain_age",
-                      "privacy_detection", "registrar_risk", "expiry_check",
-                      "dnssec", "nameserver_analysis", "abuse_extraction"],
+        "plugin": "whois_recon",
+        "versao": "2026.1",
+        "tecnicas": [
+            "whois_native",
+            "rdap_json",
+            "ip_whois",
+            "domain_age",
+            "privacy_detection",
+            "registrar_risk",
+            "expiry_check",
+            "dnssec",
+            "nameserver_analysis",
+            "abuse_extraction",
+        ],
         "resultados": resultado,
     }

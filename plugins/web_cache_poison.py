@@ -1,13 +1,23 @@
 # plugins/web_cache_poison.py — Cascavel 2026 Intelligence
-import requests
 import random
 import string
 import time
 
+import requests
 
 CANARY = "cascavel-cache-" + "".join(random.choices(string.ascii_lowercase, k=6))
-PAGES = ["/", "/index.html", "/about", "/home", "/login", "/api/",
-         "/static/", "/assets/", "/js/app.js", "/css/style.css"]
+PAGES = [
+    "/",
+    "/index.html",
+    "/about",
+    "/home",
+    "/login",
+    "/api/",
+    "/static/",
+    "/assets/",
+    "/js/app.js",
+    "/css/style.css",
+]
 
 # ──────────── UNKEYED HEADERS ────────────
 UNKEYED_HEADERS = [
@@ -45,19 +55,27 @@ def _test_unkeyed_reflection(target, page):
                 time.sleep(0.5)
                 resp2 = requests.get(url, timeout=5)
                 if CANARY in resp2.text or CANARY in str(resp2.headers):
-                    vulns.append({
-                        "tipo": "WEB_CACHE_POISONING_CONFIRMADO",
-                        "pagina": page, "header": header_name,
-                        "metodo": method, "severidade": "CRITICO",
-                        "descricao": "Cache envenenado — payload persistiu em request sem header!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "WEB_CACHE_POISONING_CONFIRMADO",
+                            "pagina": page,
+                            "header": header_name,
+                            "metodo": method,
+                            "severidade": "CRITICO",
+                            "descricao": "Cache envenenado — payload persistiu em request sem header!",
+                        }
+                    )
                 else:
-                    vulns.append({
-                        "tipo": "UNKEYED_HEADER_REFLECTED",
-                        "pagina": page, "header": header_name,
-                        "metodo": method, "severidade": "ALTO",
-                        "descricao": f"Header {header_name} refletido — cache poisoning possível",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "UNKEYED_HEADER_REFLECTED",
+                            "pagina": page,
+                            "header": header_name,
+                            "metodo": method,
+                            "severidade": "ALTO",
+                            "descricao": f"Header {header_name} refletido — cache poisoning possível",
+                        }
+                    )
                 break
         except Exception:
             continue
@@ -82,14 +100,18 @@ def _test_cache_deception(target):
             x_cache = resp.headers.get("X-Cache", "")
 
             if resp.status_code == 200:
-                if ("HIT" in x_cache.upper() or age or
-                        "public" in cache_control or "max-age" in cache_control):
-                    vulns.append({
-                        "tipo": "WEB_CACHE_DECEPTION", "path": path,
-                        "severidade": "CRITICO", "cache_control": cache_control[:80],
-                        "x_cache": x_cache, "age": age,
-                        "descricao": "Dynamic content cacheado com extensão estática — WCD!",
-                    })
+                if "HIT" in x_cache.upper() or age or "public" in cache_control or "max-age" in cache_control:
+                    vulns.append(
+                        {
+                            "tipo": "WEB_CACHE_DECEPTION",
+                            "path": path,
+                            "severidade": "CRITICO",
+                            "cache_control": cache_control[:80],
+                            "x_cache": x_cache,
+                            "age": age,
+                            "descricao": "Dynamic content cacheado com extensão estática — WCD!",
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -106,7 +128,8 @@ def _test_fat_get(target, page):
         )
         if CANARY in resp.text:
             return {
-                "tipo": "FAT_GET_CACHE_POISON", "pagina": page,
+                "tipo": "FAT_GET_CACHE_POISON",
+                "pagina": page,
                 "severidade": "ALTO",
                 "descricao": "GET com body é processado — Fat GET cache poisoning possível!",
             }
@@ -122,7 +145,8 @@ def _test_parameter_cloaking(target, page):
         resp = requests.get(f"http://{target}{page}?cb=1;evil={CANARY}", timeout=5)
         if CANARY in resp.text:
             return {
-                "tipo": "PARAMETER_CLOAKING", "pagina": page,
+                "tipo": "PARAMETER_CLOAKING",
+                "pagina": page,
                 "severidade": "ALTO",
                 "descricao": "Cache ignorou parâmetro após semicolon — parameter cloaking!",
             }
@@ -137,37 +161,47 @@ def _analyze_cache_headers(target, page):
     try:
         resp = requests.get(f"http://{target}{page}", timeout=5)
         cache_control = resp.headers.get("Cache-Control", "")
-        pragma = resp.headers.get("Pragma", "")
+        resp.headers.get("Pragma", "")
         vary = resp.headers.get("Vary", "")
         x_cache = resp.headers.get("X-Cache", "")
         cf_cache = resp.headers.get("CF-Cache-Status", "")
-        surrogate_control = resp.headers.get("Surrogate-Control", "")
+        resp.headers.get("Surrogate-Control", "")
 
         # Public cache without Vary
         if "public" in cache_control and not vary:
-            vulns.append({
-                "tipo": "CACHE_PUBLIC_NO_VARY", "pagina": page,
-                "severidade": "MEDIO",
-                "descricao": "Cache-Control: public sem Vary — diferentes user responses cacheadas juntas!",
-            })
+            vulns.append(
+                {
+                    "tipo": "CACHE_PUBLIC_NO_VARY",
+                    "pagina": page,
+                    "severidade": "MEDIO",
+                    "descricao": "Cache-Control: public sem Vary — diferentes user responses cacheadas juntas!",
+                }
+            )
 
         # S-maxage (CDN/proxy cache)
         if "s-maxage" in cache_control:
-            vulns.append({
-                "tipo": "CACHE_CDN_DETECTED", "pagina": page,
-                "cache_control": cache_control[:80],
-                "severidade": "INFO",
-                "descricao": "CDN/proxy cache detected via s-maxage",
-            })
+            vulns.append(
+                {
+                    "tipo": "CACHE_CDN_DETECTED",
+                    "pagina": page,
+                    "cache_control": cache_control[:80],
+                    "severidade": "INFO",
+                    "descricao": "CDN/proxy cache detected via s-maxage",
+                }
+            )
 
         # CDN detection
         if x_cache or cf_cache:
-            vulns.append({
-                "tipo": "CDN_CACHE_DETECTED", "pagina": page,
-                "x_cache": x_cache, "cf_cache": cf_cache,
-                "severidade": "INFO",
-                "descricao": f"CDN cache detected: X-Cache={x_cache}, CF-Cache={cf_cache}",
-            })
+            vulns.append(
+                {
+                    "tipo": "CDN_CACHE_DETECTED",
+                    "pagina": page,
+                    "x_cache": x_cache,
+                    "cf_cache": cf_cache,
+                    "severidade": "INFO",
+                    "descricao": f"CDN cache detected: X-Cache={x_cache}, CF-Cache={cf_cache}",
+                }
+            )
     except Exception:
         pass
     return vulns
@@ -204,7 +238,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "web_cache_poison",
         "versao": "2026.1",
-        "tecnicas": ["unkeyed_headers", "cache_deception", "fat_get",
-                      "parameter_cloaking", "cache_analysis", "cdn_detection"],
+        "tecnicas": [
+            "unkeyed_headers",
+            "cache_deception",
+            "fat_get",
+            "parameter_cloaking",
+            "cache_analysis",
+            "cdn_detection",
+        ],
         "resultados": vulns if vulns else "Nenhum cache poisoning detectado",
     }

@@ -1,31 +1,66 @@
 # plugins/email_harvester.py — Cascavel 2026 Intelligence
-import requests
 import re
-import subprocess
 import shlex
+import subprocess
 
+import requests
 
 PAGES = [
-    "/", "/contact", "/about", "/team", "/impressum", "/privacy",
-    "/legal", "/humans.txt", "/security.txt", "/.well-known/security.txt",
-    "/staff", "/careers", "/jobs", "/support", "/help",
+    "/",
+    "/contact",
+    "/about",
+    "/team",
+    "/impressum",
+    "/privacy",
+    "/legal",
+    "/humans.txt",
+    "/security.txt",
+    "/.well-known/security.txt",
+    "/staff",
+    "/careers",
+    "/jobs",
+    "/support",
+    "/help",
 ]
 
 IMG_EXTS = (".png", ".jpg", ".gif", ".css", ".js", ".ico", ".svg", ".woff")
 
 # ──────────── COMMON EMAIL PREFIXES ────────────
 COMMON_PREFIXES = [
-    "admin", "info", "contact", "support", "security", "abuse",
-    "postmaster", "webmaster", "noreply", "no-reply", "help",
-    "sales", "marketing", "hr", "careers", "billing", "finance",
-    "legal", "compliance", "privacy", "ceo", "cto", "cfo",
-    "dev", "engineering", "ops", "devops", "tech",
+    "admin",
+    "info",
+    "contact",
+    "support",
+    "security",
+    "abuse",
+    "postmaster",
+    "webmaster",
+    "noreply",
+    "no-reply",
+    "help",
+    "sales",
+    "marketing",
+    "hr",
+    "careers",
+    "billing",
+    "finance",
+    "legal",
+    "compliance",
+    "privacy",
+    "ceo",
+    "cto",
+    "cfo",
+    "dev",
+    "engineering",
+    "ops",
+    "devops",
+    "tech",
 ]
 
 
 def _scrape_emails(target, pages):
     """Scrape emails from web pages."""
-    email_pattern = re.compile(r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}')
+    email_pattern = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
     emails = set()
 
     for page in pages:
@@ -49,8 +84,7 @@ def _extract_mailto(target):
     try:
         resp = requests.get(f"http://{target}/", timeout=6)
         if resp.status_code == 200:
-            mailto = re.findall(r'mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})',
-                                 resp.text, re.IGNORECASE)
+            mailto = re.findall(r"mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})", resp.text, re.IGNORECASE)
             for e in mailto:
                 emails.add(e.lower())
     except Exception:
@@ -64,7 +98,9 @@ def _get_mx_records(target):
     try:
         result = subprocess.run(
             ["dig", "+short", "MX", safe_target],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
     except Exception:
@@ -78,7 +114,9 @@ def _check_email_security(target):
     try:
         spf = subprocess.run(
             ["dig", "+short", "TXT", safe_target],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         for line in spf.stdout.splitlines():
             if "v=spf1" in line:
@@ -95,7 +133,9 @@ def _check_email_security(target):
     try:
         dmarc = subprocess.run(
             ["dig", "+short", "TXT", f"_dmarc.{safe_target}"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         for line in dmarc.stdout.splitlines():
             if "v=DMARC1" in line:
@@ -150,7 +190,6 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "email_harvester",
         "versao": "2026.1",
-        "tecnicas": ["web_scraping", "mailto_extraction", "mx_lookup",
-                      "spf_dmarc_analysis", "email_inference"],
+        "tecnicas": ["web_scraping", "mailto_extraction", "mx_lookup", "spf_dmarc_analysis", "email_inference"],
         "resultados": resultado,
     }

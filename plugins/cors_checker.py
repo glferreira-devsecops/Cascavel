@@ -1,12 +1,21 @@
 # plugins/cors_checker.py — Cascavel 2026 Intelligence
 import requests
 
-
 PAGES = [
-    "/", "/api/", "/api/v1/", "/api/v1/users", "/login",
-    "/api/v1/me", "/api/v1/config", "/graphql", "/api/v2/",
-    "/api/profile", "/api/admin", "/api/v1/settings",
+    "/",
+    "/api/",
+    "/api/v1/",
+    "/api/v1/users",
+    "/login",
+    "/api/v1/me",
+    "/api/v1/config",
+    "/graphql",
+    "/api/v2/",
+    "/api/profile",
+    "/api/admin",
+    "/api/v1/settings",
 ]
+
 
 # ──────────── ORIGIN BYPASS VARIANTS ────────────
 def _get_test_origins(target):
@@ -40,21 +49,30 @@ def _test_origin_reflection(target, page, origins):
             acac = resp.headers.get("Access-Control-Allow-Credentials", "").lower()
 
             if acao == "*" and acac == "true":
-                vulns.append({
-                    "tipo": "CORS_WILDCARD_CREDENTIALS", "pagina": page,
-                    "origin": origin, "severidade": "CRITICO",
-                    "descricao": "Wildcard + credentials — full account takeover!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "CORS_WILDCARD_CREDENTIALS",
+                        "pagina": page,
+                        "origin": origin,
+                        "severidade": "CRITICO",
+                        "descricao": "Wildcard + credentials — full account takeover!",
+                    }
+                )
                 return vulns
 
             if acao == origin or (origin in acao and method != "SUBDOMAIN_TRUST"):
                 sev = "CRITICO" if acac == "true" else "ALTO"
-                vulns.append({
-                    "tipo": "CORS_ORIGIN_REFLECTED", "metodo": method,
-                    "pagina": page, "origin_refletido": acao,
-                    "credentials": acac, "severidade": sev,
-                    "descricao": f"Origin arbitrário refletido via {method}!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "CORS_ORIGIN_REFLECTED",
+                        "metodo": method,
+                        "pagina": page,
+                        "origin_refletido": acao,
+                        "credentials": acac,
+                        "severidade": sev,
+                        "descricao": f"Origin arbitrário refletido via {method}!",
+                    }
+                )
                 break
         except Exception:
             continue
@@ -79,19 +97,26 @@ def _test_preflight(target, page):
 
         dangerous_methods = [m for m in ["PUT", "DELETE", "PATCH"] if m in methods]
         if dangerous_methods:
-            vulns.append({
-                "tipo": "CORS_DANGEROUS_METHODS", "pagina": page,
-                "metodos": dangerous_methods, "severidade": "ALTO",
-                "descricao": f"CORS permite métodos destrutivos: {', '.join(dangerous_methods)}",
-            })
+            vulns.append(
+                {
+                    "tipo": "CORS_DANGEROUS_METHODS",
+                    "pagina": page,
+                    "metodos": dangerous_methods,
+                    "severidade": "ALTO",
+                    "descricao": f"CORS permite métodos destrutivos: {', '.join(dangerous_methods)}",
+                }
+            )
 
         if "*" in headers or "authorization" in headers.lower():
-            vulns.append({
-                "tipo": "CORS_ALLOWS_AUTH_HEADER", "pagina": page,
-                "headers_permitidos": headers[:100],
-                "severidade": "ALTO",
-                "descricao": "CORS permite Authorization header — token exfiltration!",
-            })
+            vulns.append(
+                {
+                    "tipo": "CORS_ALLOWS_AUTH_HEADER",
+                    "pagina": page,
+                    "headers_permitidos": headers[:100],
+                    "severidade": "ALTO",
+                    "descricao": "CORS permite Authorization header — token exfiltration!",
+                }
+            )
     except Exception:
         pass
     return vulns
@@ -100,13 +125,13 @@ def _test_preflight(target, page):
 def _test_vary_header(target, page):
     """Verifica se Vary: Origin está presente (cache poisoning prevention)."""
     try:
-        resp = requests.get(f"http://{target}{page}",
-                             headers={"Origin": "https://test.com"}, timeout=5)
+        resp = requests.get(f"http://{target}{page}", headers={"Origin": "https://test.com"}, timeout=5)
         vary = resp.headers.get("Vary", "")
         acao = resp.headers.get("Access-Control-Allow-Origin", "")
         if acao and acao != "*" and "Origin" not in vary:
             return {
-                "tipo": "CORS_MISSING_VARY", "pagina": page,
+                "tipo": "CORS_MISSING_VARY",
+                "pagina": page,
                 "severidade": "MEDIO",
                 "descricao": "CORS reflete origin sem Vary: Origin — cache poisoning possível!",
             }
@@ -118,15 +143,17 @@ def _test_vary_header(target, page):
 def _test_expose_headers(target, page):
     """Verifica se headers sensíveis são expostos via CORS."""
     try:
-        resp = requests.get(f"http://{target}{page}",
-                             headers={"Origin": "https://evil.com"}, timeout=5)
+        resp = requests.get(f"http://{target}{page}", headers={"Origin": "https://evil.com"}, timeout=5)
         exposed = resp.headers.get("Access-Control-Expose-Headers", "")
-        sensitive = [h for h in ["Authorization", "X-API-Key", "Set-Cookie", "X-CSRF-Token"]
-                     if h.lower() in exposed.lower()]
+        sensitive = [
+            h for h in ["Authorization", "X-API-Key", "Set-Cookie", "X-CSRF-Token"] if h.lower() in exposed.lower()
+        ]
         if sensitive:
             return {
-                "tipo": "CORS_EXPOSES_SENSITIVE_HEADERS", "pagina": page,
-                "headers": sensitive, "severidade": "ALTO",
+                "tipo": "CORS_EXPOSES_SENSITIVE_HEADERS",
+                "pagina": page,
+                "headers": sensitive,
+                "severidade": "ALTO",
                 "descricao": f"CORS expõe headers sensíveis: {', '.join(sensitive)}",
             }
     except Exception:
@@ -137,15 +164,18 @@ def _test_expose_headers(target, page):
 def _test_max_age(target, page):
     """Verifica se preflight cache é excessivamente longo."""
     try:
-        resp = requests.options(f"http://{target}{page}",
-                                 headers={"Origin": "https://evil.com",
-                                          "Access-Control-Request-Method": "GET"},
-                                 timeout=5)
+        resp = requests.options(
+            f"http://{target}{page}",
+            headers={"Origin": "https://evil.com", "Access-Control-Request-Method": "GET"},
+            timeout=5,
+        )
         max_age = resp.headers.get("Access-Control-Max-Age", "")
         if max_age and int(max_age) > 86400:
             return {
-                "tipo": "CORS_EXCESSIVE_MAX_AGE", "pagina": page,
-                "max_age": max_age, "severidade": "BAIXO",
+                "tipo": "CORS_EXCESSIVE_MAX_AGE",
+                "pagina": page,
+                "max_age": max_age,
+                "severidade": "BAIXO",
                 "descricao": f"Preflight cache {max_age}s (> 24h) — mudanças de policy demoram a propagar",
             }
     except Exception:
@@ -185,8 +215,16 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "cors_checker",
         "versao": "2026.1",
-        "tecnicas": ["origin_reflection", "null_origin", "prefix_suffix",
-                      "crlf_origin", "preflight_analysis", "vary_missing",
-                      "exposed_headers", "auth_header_leak", "max_age"],
+        "tecnicas": [
+            "origin_reflection",
+            "null_origin",
+            "prefix_suffix",
+            "crlf_origin",
+            "preflight_analysis",
+            "vary_missing",
+            "exposed_headers",
+            "auth_header_leak",
+            "max_age",
+        ],
         "resultados": vulns if vulns else "CORS configurado corretamente",
     }

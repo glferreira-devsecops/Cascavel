@@ -1,7 +1,6 @@
 # plugins/param_miner.py
 import requests
 
-
 DEBUG_PARAMS = {"debug", "trace", "verbose", "dev", "internal"}
 SENSITIVE_PARAMS = {"admin", "role", "secret", "token", "key", "api_key"}
 INJECTION_PARAMS = {"file", "path", "include", "template"}
@@ -16,14 +15,58 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
 
     hidden_params = [
-        "debug", "test", "admin", "internal", "dev", "staging", "verbose",
-        "trace", "callback", "jsonp", "format", "output", "type", "mode",
-        "action", "method", "func", "handler", "token", "key", "secret",
-        "api_key", "apikey", "access_token", "auth", "session", "role",
-        "user", "uid", "id", "config", "settings", "env", "version",
-        "v", "lang", "locale", "redirect", "return", "next", "url",
-        "file", "path", "include", "template", "view", "source",
-        "preview", "draft", "unpublished", "hidden", "private",
+        "debug",
+        "test",
+        "admin",
+        "internal",
+        "dev",
+        "staging",
+        "verbose",
+        "trace",
+        "callback",
+        "jsonp",
+        "format",
+        "output",
+        "type",
+        "mode",
+        "action",
+        "method",
+        "func",
+        "handler",
+        "token",
+        "key",
+        "secret",
+        "api_key",
+        "apikey",
+        "access_token",
+        "auth",
+        "session",
+        "role",
+        "user",
+        "uid",
+        "id",
+        "config",
+        "settings",
+        "env",
+        "version",
+        "v",
+        "lang",
+        "locale",
+        "redirect",
+        "return",
+        "next",
+        "url",
+        "file",
+        "path",
+        "include",
+        "template",
+        "view",
+        "source",
+        "preview",
+        "draft",
+        "unpublished",
+        "hidden",
+        "private",
     ]
     pages = ["/", "/api/", "/api/v1/", "/admin/", "/login"]
     resultado = {"params_descobertos": []}
@@ -45,7 +88,8 @@ def run(target, ip, open_ports, banners):
 
                 if diff > 50 or resp.status_code != baseline_status:
                     entry = {
-                        "pagina": page, "parametro": param,
+                        "pagina": page,
+                        "parametro": param,
                         "diff_tamanho": diff,
                         "status_baseline": baseline_status,
                         "status_param": resp.status_code,

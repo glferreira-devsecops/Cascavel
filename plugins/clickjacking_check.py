@@ -1,10 +1,20 @@
 # plugins/clickjacking_check.py — Cascavel 2026 Intelligence
-import requests
 import re
 
+import requests
 
-PAGES = ["/", "/login", "/admin", "/dashboard", "/settings", "/profile",
-         "/account", "/checkout", "/payment", "/transfer"]
+PAGES = [
+    "/",
+    "/login",
+    "/admin",
+    "/dashboard",
+    "/settings",
+    "/profile",
+    "/account",
+    "/checkout",
+    "/payment",
+    "/transfer",
+]
 
 
 def _check_frame_protection(target, page):
@@ -24,41 +34,54 @@ def _check_frame_protection(target, page):
 
         if not has_xfo and not has_csp_frame:
             sev = "ALTO" if page in ["/login", "/checkout", "/payment", "/transfer"] else "MEDIO"
-            vulns.append({
-                "tipo": "CLICKJACKING_VULNERAVEL", "pagina": page,
-                "severidade": sev,
-                "x_frame_options": xfo or "AUSENTE",
-                "csp_frame_ancestors": "AUSENTE",
-                "descricao": f"Página {page} pode ser carregada em iframe!",
-            })
+            vulns.append(
+                {
+                    "tipo": "CLICKJACKING_VULNERAVEL",
+                    "pagina": page,
+                    "severidade": sev,
+                    "x_frame_options": xfo or "AUSENTE",
+                    "csp_frame_ancestors": "AUSENTE",
+                    "descricao": f"Página {page} pode ser carregada em iframe!",
+                }
+            )
 
         if "ALLOW-FROM" in xfo:
-            vulns.append({
-                "tipo": "XFO_ALLOW_FROM_DEPRECATED", "pagina": page,
-                "severidade": "MEDIO",
-                "descricao": "ALLOW-FROM deprecated — não suportado em Chrome/Firefox!",
-            })
+            vulns.append(
+                {
+                    "tipo": "XFO_ALLOW_FROM_DEPRECATED",
+                    "pagina": page,
+                    "severidade": "MEDIO",
+                    "descricao": "ALLOW-FROM deprecated — não suportado em Chrome/Firefox!",
+                }
+            )
 
         # CSP frame-ancestors * or http:
         if "frame-ancestors" in csp:
-            fa_match = re.search(r'frame-ancestors\s+([^;]+)', csp)
+            fa_match = re.search(r"frame-ancestors\s+([^;]+)", csp)
             if fa_match:
                 fa_value = fa_match.group(1).strip()
                 if fa_value == "*" or "http:" in fa_value:
-                    vulns.append({
-                        "tipo": "CSP_FRAME_ANCESTORS_WEAK", "pagina": page,
-                        "value": fa_value[:60], "severidade": "ALTO",
-                        "descricao": "frame-ancestors permite wildcard ou HTTP — bypass!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "CSP_FRAME_ANCESTORS_WEAK",
+                            "pagina": page,
+                            "value": fa_value[:60],
+                            "severidade": "ALTO",
+                            "descricao": "frame-ancestors permite wildcard ou HTTP — bypass!",
+                        }
+                    )
 
         # XFO and CSP conflict
         if has_xfo and has_csp_frame:
             if xfo == "DENY" and "'self'" in csp:
-                vulns.append({
-                    "tipo": "XFO_CSP_CONFLICT", "pagina": page,
-                    "severidade": "BAIXO",
-                    "descricao": "XFO=DENY mas CSP permite self — browser usa CSP (mais permissivo)",
-                })
+                vulns.append(
+                    {
+                        "tipo": "XFO_CSP_CONFLICT",
+                        "pagina": page,
+                        "severidade": "BAIXO",
+                        "descricao": "XFO=DENY mas CSP permite self — browser usa CSP (mais permissivo)",
+                    }
+                )
 
         return vulns
     except Exception:
@@ -74,15 +97,18 @@ def _check_sandbox_bypass(target, page):
             return vulns
 
         # Check for forms (clickjacking targets)
-        if '<form' in resp.text.lower():
+        if "<form" in resp.text.lower():
             xfo = resp.headers.get("X-Frame-Options", "").upper()
             csp = resp.headers.get("Content-Security-Policy", "")
             if not xfo and "frame-ancestors" not in csp:
-                vulns.append({
-                    "tipo": "CLICKJACKING_FORM_TARGET", "pagina": page,
-                    "severidade": "ALTO",
-                    "descricao": "Formulário sem proteção contra clickjacking — form hijacking!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "CLICKJACKING_FORM_TARGET",
+                        "pagina": page,
+                        "severidade": "ALTO",
+                        "descricao": "Formulário sem proteção contra clickjacking — form hijacking!",
+                    }
+                )
     except Exception:
         pass
     return vulns
@@ -97,7 +123,8 @@ def _check_double_framing(target, page):
 
         if xfo == "SAMEORIGIN" and "frame-ancestors" not in csp:
             return {
-                "tipo": "DOUBLE_FRAMING_POSSIBLE", "pagina": page,
+                "tipo": "DOUBLE_FRAMING_POSSIBLE",
+                "pagina": page,
                 "severidade": "MEDIO",
                 "descricao": "X-Frame-Options: SAMEORIGIN sem CSP — double framing bypass possível!",
             }
@@ -118,13 +145,16 @@ def _check_drag_drop(target, page):
 
         # File upload or text input without frame protection
         has_upload = 'type="file"' in resp.text.lower()
-        has_textarea = '<textarea' in resp.text.lower()
+        has_textarea = "<textarea" in resp.text.lower()
 
         if (has_upload or has_textarea) and not xfo and "frame-ancestors" not in csp:
             return {
-                "tipo": "DRAG_DROP_CLICKJACKING", "pagina": page,
+                "tipo": "DRAG_DROP_CLICKJACKING",
+                "pagina": page,
                 "severidade": "ALTO",
-                "descricao": f"{'File upload' if has_upload else 'Textarea'} sem frame protection — drag-and-drop hijacking!",
+                "descricao": (
+                    f"{'File upload' if has_upload else 'Textarea'} sem frame protection — drag-and-drop hijacking!"
+                ),
             }
     except Exception:
         pass
@@ -159,7 +189,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "clickjacking_check",
         "versao": "2026.1",
-        "tecnicas": ["xfo_analysis", "csp_frame_ancestors", "double_framing",
-                      "form_targeting", "drag_drop", "sandbox_bypass"],
+        "tecnicas": [
+            "xfo_analysis",
+            "csp_frame_ancestors",
+            "double_framing",
+            "form_targeting",
+            "drag_drop",
+            "sandbox_bypass",
+        ],
         "resultados": vulns if vulns else "Proteção contra clickjacking presente",
     }

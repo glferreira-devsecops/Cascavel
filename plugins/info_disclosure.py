@@ -1,7 +1,6 @@
 # plugins/info_disclosure.py — Cascavel 2026 Intelligence
-import requests
-import re
 
+import requests
 
 # ──────────── SENSITIVE PATHS (2026 Expanded) ────────────
 SENSITIVE_PATHS = [
@@ -108,29 +107,38 @@ def _check_response_headers(target):
         # Server header
         server = resp.headers.get("Server", "")
         if server:
-            vulns.append({
-                "tipo": "SERVER_HEADER_EXPOSED", "valor": server[:80],
-                "severidade": "BAIXO",
-                "descricao": f"Server header expõe versão: {server[:80]}",
-            })
+            vulns.append(
+                {
+                    "tipo": "SERVER_HEADER_EXPOSED",
+                    "valor": server[:80],
+                    "severidade": "BAIXO",
+                    "descricao": f"Server header expõe versão: {server[:80]}",
+                }
+            )
 
         # X-Powered-By
         powered = resp.headers.get("X-Powered-By", "")
         if powered:
-            vulns.append({
-                "tipo": "X_POWERED_BY", "valor": powered[:80],
-                "severidade": "BAIXO",
-                "descricao": f"X-Powered-By expõe tecnologia: {powered[:80]}",
-            })
+            vulns.append(
+                {
+                    "tipo": "X_POWERED_BY",
+                    "valor": powered[:80],
+                    "severidade": "BAIXO",
+                    "descricao": f"X-Powered-By expõe tecnologia: {powered[:80]}",
+                }
+            )
 
         # X-AspNet-Version
         aspnet = resp.headers.get("X-AspNet-Version", "")
         if aspnet:
-            vulns.append({
-                "tipo": "ASPNET_VERSION", "valor": aspnet,
-                "severidade": "BAIXO",
-                "descricao": f"ASP.NET version exposed: {aspnet}",
-            })
+            vulns.append(
+                {
+                    "tipo": "ASPNET_VERSION",
+                    "valor": aspnet,
+                    "severidade": "BAIXO",
+                    "descricao": f"ASP.NET version exposed: {aspnet}",
+                }
+            )
 
     except Exception:
         pass
@@ -151,23 +159,32 @@ def _check_error_pages(target):
             body = resp.text.lower()
 
             if "stack trace" in body or "traceback" in body:
-                vulns.append({
-                    "tipo": "STACK_TRACE_EXPOSED", "path": path,
-                    "severidade": "ALTO",
-                    "descricao": "Stack trace exposed em error page!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "STACK_TRACE_EXPOSED",
+                        "path": path,
+                        "severidade": "ALTO",
+                        "descricao": "Stack trace exposed em error page!",
+                    }
+                )
             if "django" in body or "laravel" in body or "express" in body:
-                vulns.append({
-                    "tipo": "FRAMEWORK_EXPOSED_IN_ERROR", "path": path,
-                    "severidade": "MEDIO",
-                    "descricao": "Framework detectado via error page",
-                })
+                vulns.append(
+                    {
+                        "tipo": "FRAMEWORK_EXPOSED_IN_ERROR",
+                        "path": path,
+                        "severidade": "MEDIO",
+                        "descricao": "Framework detectado via error page",
+                    }
+                )
             if resp.headers.get("X-Debug-Token"):
-                vulns.append({
-                    "tipo": "DEBUG_TOKEN_EXPOSED", "path": path,
-                    "severidade": "ALTO",
-                    "descricao": "Symfony debug token em header!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "DEBUG_TOKEN_EXPOSED",
+                        "path": path,
+                        "severidade": "ALTO",
+                        "descricao": "Symfony debug token em header!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -193,16 +210,24 @@ def run(target, ip, open_ports, banners):
                 if indicators:
                     found = [ind for ind in indicators if ind in resp.text]
                     if found:
-                        vulns.append({
-                            "tipo": "INFO_DISCLOSURE", "path": path,
-                            "severidade": severidade, "indicadores": found,
-                            "tamanho": len(resp.text),
-                        })
+                        vulns.append(
+                            {
+                                "tipo": "INFO_DISCLOSURE",
+                                "path": path,
+                                "severidade": severidade,
+                                "indicadores": found,
+                                "tamanho": len(resp.text),
+                            }
+                        )
                 else:
-                    vulns.append({
-                        "tipo": "FILE_EXPOSED", "path": path,
-                        "severidade": severidade, "tamanho": len(resp.text),
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "FILE_EXPOSED",
+                            "path": path,
+                            "severidade": severidade,
+                            "tamanho": len(resp.text),
+                        }
+                    )
         except Exception:
             continue
 
@@ -212,8 +237,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "info_disclosure",
         "versao": "2026.1",
-        "tecnicas": ["sensitive_files", "env_files", "git_exposure",
-                      "actuators", "cloud_credentials", "cicd_files",
-                      "header_analysis", "error_page_analysis"],
+        "tecnicas": [
+            "sensitive_files",
+            "env_files",
+            "git_exposure",
+            "actuators",
+            "cloud_credentials",
+            "cicd_files",
+            "header_analysis",
+            "error_page_analysis",
+        ],
         "resultados": vulns if vulns else "Nenhuma information disclosure detectada",
     }

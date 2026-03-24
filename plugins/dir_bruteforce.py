@@ -1,9 +1,9 @@
 # plugins/dir_bruteforce.py
-import os
-import subprocess
 import json
-import shutil
+import os
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -36,8 +36,11 @@ def run(target, ip, open_ports, banners):
     resultado = []
     try:
         proc = subprocess.run(
-            ferox_cmd, shell=True, capture_output=True,
-            timeout=60, encoding="utf-8",
+            ferox_cmd,
+            shell=True,
+            capture_output=True,
+            timeout=60,
+            encoding="utf-8",
         )
         lines = [line for line in proc.stdout.split("\n") if line.strip()]
         for line in lines:

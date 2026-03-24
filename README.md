@@ -14,6 +14,11 @@
 </p>
 
 <p align="center">
+  🇺🇸 <strong>English</strong> ·
+  <a href="README.pt-BR.md">🇧🇷 Português (Brasil)</a>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=flat-square" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />

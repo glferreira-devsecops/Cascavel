@@ -1,7 +1,7 @@
 # plugins/heartbleed_scanner.py
-import subprocess
-import shutil
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):

@@ -1,7 +1,7 @@
 # plugins/cicd_exposure.py — Cascavel 2026 Intelligence
-import requests
 import re
 
+import requests
 
 CICD_FILES = {
     # GitHub Actions
@@ -57,9 +57,20 @@ CICD_FILES = {
     "/helm/": ("HELM_DIR", "Helm charts expostos"),
 }
 
-SECRET_PATTERNS = ["password", "secret", "token", "api_key", "aws_",
-                    "private_key", "credentials", "apikey", "auth_token",
-                    "database_url", "redis_url", "smtp_pass"]
+SECRET_PATTERNS = [
+    "password",
+    "secret",
+    "token",
+    "api_key",
+    "aws_",
+    "private_key",
+    "credentials",
+    "apikey",
+    "auth_token",
+    "database_url",
+    "redis_url",
+    "smtp_pass",
+]
 
 
 def _check_cicd_files(target):
@@ -69,11 +80,12 @@ def _check_cicd_files(target):
         try:
             resp = requests.get(f"http://{target}{path}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 20:
-                sev = "CRITICO" if any(k in tipo for k in
-                                        ["STATE", "VARS", "ENV_FILE", "ENV_PROD"]) else "ALTO"
+                sev = "CRITICO" if any(k in tipo for k in ["STATE", "VARS", "ENV_FILE", "ENV_PROD"]) else "ALTO"
                 vuln = {
-                    "tipo": f"CICD_{tipo}", "path": path,
-                    "severidade": sev, "tamanho": len(resp.text),
+                    "tipo": f"CICD_{tipo}",
+                    "path": path,
+                    "severidade": sev,
+                    "tamanho": len(resp.text),
                     "descricao": desc,
                 }
                 # Secret detection
@@ -106,14 +118,21 @@ def _check_jenkins(target):
     for path, tipo in jenkins_paths:
         try:
             resp = requests.get(f"http://{target}{path}", timeout=5)
-            if resp.status_code == 200 and any(k in resp.text.lower()
-                                                for k in ["jenkins", "hudson", "groovy", "build"]):
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["jenkins", "hudson", "groovy", "build"]
+            ):
                 sev = "CRITICO" if "script" in path or "credentials" in path else "ALTO"
-                vulns.append({
-                    "tipo": f"JENKINS_{tipo}", "path": path,
-                    "severidade": sev,
-                    "descricao": f"Jenkins {path} acessível — {'RCE via Script Console!' if 'script' in path else 'info disclosure!'}",
-                })
+                vulns.append(
+                    {
+                        "tipo": f"JENKINS_{tipo}",
+                        "path": path,
+                        "severidade": sev,
+                        "descricao": (
+                            f"Jenkins {path} acessível — "
+                            f"{'RCE via Script Console!' if 'script' in path else 'info disclosure!'}"
+                        ),
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -127,11 +146,14 @@ def _check_github_actions_artifacts(target):
         if resp.status_code == 200:
             yml_files = re.findall(r'href="([^"]*\.(?:yml|yaml))"', resp.text)
             if yml_files:
-                vulns.append({
-                    "tipo": "GITHUB_WORKFLOWS_LISTED", "severidade": "ALTO",
-                    "workflows": yml_files[:10],
-                    "descricao": f"{len(yml_files)} workflows GH Actions listáveis!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "GITHUB_WORKFLOWS_LISTED",
+                        "severidade": "ALTO",
+                        "workflows": yml_files[:10],
+                        "descricao": f"{len(yml_files)} workflows GH Actions listáveis!",
+                    }
+                )
     except Exception:
         pass
     return vulns
@@ -155,8 +177,15 @@ def run(target, ip, open_ports, banners):
     vulns.extend(_check_github_actions_artifacts(target))
 
     return {
-        "plugin": "cicd_exposure", "versao": "2026.1",
-        "tecnicas": ["cicd_files", "jenkins_unauth", "secret_detection",
-                      "terraform_state", "env_exposure", "workflow_listing"],
+        "plugin": "cicd_exposure",
+        "versao": "2026.1",
+        "tecnicas": [
+            "cicd_files",
+            "jenkins_unauth",
+            "secret_detection",
+            "terraform_state",
+            "env_exposure",
+            "workflow_listing",
+        ],
         "resultados": vulns if vulns else "Nenhuma exposição CI/CD detectada",
     }

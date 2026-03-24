@@ -1,6 +1,6 @@
 # plugins/domain_transf.py
-import subprocess
 import shlex
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
