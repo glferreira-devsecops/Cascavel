@@ -624,7 +624,9 @@ def validate_target(target: str, allow_self: bool = False) -> str:
     target = target.strip()
 
     # Allow domains, IPs, and targets with port (host:port)
-    if not re.match(r'^[a-zA-Z0-9._\-]+(:\d{1,5})?$', target):
+    # Regex segura: host pode ter ponto/hífen, porta é opcional
+    # Não aceita múltiplos colons (ambiguidade com IPv6 literal)
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._\-]*(:\d{1,5})?$', target):
         console.print(f"  [{S_RED}]\u2717 Target inv\u00e1lido: {target}[/]")
         console.print(f"  [{S_DIM}]Formatos aceitos: dominio.com | 1.2.3.4 | host:porta[/]")
         sys.exit(1)
@@ -846,7 +848,9 @@ def enum_tools(
             out = run_cmd(cmd, timeout=timeouts.get(name, 90))
             elapsed = time.time() - t0
             results[name] = out
-            report.append(f"\n### {name}\n```\n{out[:5000]}\n```")
+            # Sanitiza surrogates para evitar UnicodeEncodeError no report
+            safe_out = out[:5000].encode("utf-8", errors="replace").decode("utf-8")
+            report.append(f"\n### {name}\n```\n{safe_out}\n```")
             progress.advance(overall)
             console.print(f"    [green]✓[/] {name} [{S_DIM}]({elapsed:.1f}s)[/]")
 
@@ -880,10 +884,13 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
     banners: Dict[int, str] = {}
     # Strip port from target if present (host:port -> host)
     host = target.split(":")[0] if ":" in target else target
+    # Detecção de família: IPv6 literal usa AF_INET6
+    _is_ipv6 = ":" in host
+    _af = socket.AF_INET6 if _is_ipv6 else socket.AF_INET
     for port in ports[:20]:
         s = None
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s = socket.socket(_af, socket.SOCK_STREAM)
             s.settimeout(timeout)
             s.connect((host, port))
             s.sendall(b"HEAD / HTTP/1.0\r\nHost: " + host.encode() + b"\r\n\r\n")
@@ -992,9 +999,11 @@ def _classify(result: Dict[str, Any]) -> tuple:
         if status == "vulneravel" or resultados.get("vulns"):
             return "vuln", S_RED, "⚠"
         return "limpo", "green", "✓"
-    # List results (non-empty = vulns)
-    if isinstance(resultados, list) and resultados:
-        return "vuln", S_RED, "⚠"
+    # List results — filtra strings vazias e None antes de contar como vuln
+    if isinstance(resultados, list):
+        real_findings = [v for v in resultados if v and v != "" and v != "N/A"]
+        if real_findings:
+            return "vuln", S_RED, "⚠"
     return "limpo", "green", "✓"
 
 
@@ -1005,6 +1014,12 @@ def _count_sev(resultados: Any) -> Dict[str, int]:
         vulns = resultados
     elif isinstance(resultados, dict):
         vulns = resultados.get("vulns", resultados.get("forms_sem_csrf", []))
+        # Plugins que retornam severidade no root level do dict (não dentro de vulns)
+        if not vulns and "status" in resultados:
+            root_sev = resultados.get("severidade", "INFO")
+            if root_sev in counts and resultados.get("status") == "vulneravel":
+                counts[root_sev] += 1
+                return counts
     for v in vulns:
         if isinstance(v, dict):
             sev = v.get("severidade", "INFO")
@@ -1340,11 +1355,11 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
     # Fallback: osascript (macOS) / notify-send (Linux)
     if sys.platform == "darwin":
         try:
-            # Sanitize strings for osascript
-            safe_msg = message.replace('"', '\\"').replace("'", "\\'")
-            safe_title = title.replace('"', '\\"').replace("'", "\\'")
+            # Sanitize: remove newlines (injection vector) + escape quotes
+            safe_msg = message.replace('\n', ' ').replace('"', '\\"').replace("'", "\\'")
+            safe_title = title.replace('\n', ' ').replace('"', '\\"').replace("'", "\\'")
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
-            subprocess.run(["osascript", "-e", script], timeout=5)
+            subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
         except Exception:
             pass
     elif shutil.which("notify-send"):
@@ -1398,7 +1413,7 @@ def post_scan_menu(report_path: str) -> None:
     elif choice == "2":
         new_target = inputx("Novo target (IP/domain): ")
         new_target = validate_target(new_target)
-        run_scan(new_target)
+        run_scan(new_target, no_notify=False, output_format="md", global_timeout=90)
     elif choice == "3":
         list_plugins_table()
     else:
@@ -1512,11 +1527,26 @@ def list_plugins_table() -> None:
             if spec is None or spec.loader is None:
                 table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
                 continue
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)
+            # Lê docstring do source sem exec_module para evitar side effects
+            # (plugins podem fazer requests/prints na importação)
             doc = ""
-            if hasattr(mod, "run") and mod.run.__doc__:
-                doc = mod.run.__doc__.strip().split("\n")[0]
+            try:
+                with open(fp, "r", encoding="utf-8", errors="replace") as src:
+                    source = src.read()
+                import ast
+                tree = ast.parse(source)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef) and node.name == "run":
+                        raw_doc = ast.get_docstring(node)
+                        if raw_doc:
+                            doc = raw_doc.strip().split("\n")[0]
+                        break
+            except (SyntaxError, UnicodeDecodeError):
+                # Fallback: executa módulo se AST parsing falhar
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                if hasattr(mod, "run") and mod.run.__doc__:
+                    doc = mod.run.__doc__.strip().split("\n")[0]
             table.add_row(str(idx), name, doc or "[dim]—[/]", "[green]●[/]")
         except Exception:
             table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
@@ -1613,7 +1643,8 @@ def run_scan(
     if not plugins_only:
         results = enum_tools(target, report, wordlist, nuclei_templates, timeouts, available)
         ferox = run_feroxbuster(target, wordlist, available)
-        report.append(f"\n### feroxbuster\n```json\n{json.dumps(ferox, indent=2, ensure_ascii=False)[:5000]}\n```")
+        safe_ferox = _sanitize_for_json(ferox)
+        report.append(f"\n### feroxbuster\n```json\n{json.dumps(safe_ferox, indent=2, ensure_ascii=False)[:5000]}\n```")
 
         open_ports = scan_ports(results.get("naabu", ""))
         report.append(f"\n### Portas\n`{open_ports}`\n")
@@ -1684,9 +1715,10 @@ def main() -> None:
     args = parser.parse_args()
 
     quiet = args.quiet
-    available = detect_tools()
+    # Cache resultado para evitar chamar detect_tools() duas vezes (run_scan chama de novo)
+    _cached_available = detect_tools()
     plugin_count = _count_plugins()
-    tools_count = sum(1 for v in available.values() if v)
+    tools_count = sum(1 for v in _cached_available.values() if v)
 
     # Preloader cinematográfico
     if not quiet and not args.no_preloader and not args.list_plugins and not args.check_tools:
@@ -1696,7 +1728,7 @@ def main() -> None:
         print_header()
 
     if args.check_tools:
-        print_tools_status(available)
+        print_tools_status(_cached_available)
         sys.exit(0)
 
     if args.list_plugins:
