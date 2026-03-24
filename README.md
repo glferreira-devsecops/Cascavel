@@ -95,6 +95,18 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 
 ## ⚡ Install
 
+### Prerequisites
+
+| Requirement | Minimum | Why |
+|:---|:---|:---|
+| **Python** | 3.8+ | f-strings, `importlib.util`, `shlex.quote` |
+| **PyJWT** | 2.12.0 | CVE-2022-29217 — algorithm confusion attack |
+| **ReportLab** | 3.6.13 | CVE-2023-33733 — code execution via crafted PDF |
+| **Requests** | 2.31.0 | CVE-2023-32681 — header leak on redirect |
+
+> [!NOTE]
+> The installer automatically enforces these minimum versions. Manual installs should verify with `pip list`.
+
 **One command — works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), and WSL:**
 
 ```bash
