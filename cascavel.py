@@ -41,14 +41,16 @@ _shutdown_requested = False
 
 
 def _signal_handler(sig, frame):
-    """Graceful shutdown handler."""
+    """Graceful shutdown handler — signal-safe (no print/logging to avoid deadlock)."""
     global _shutdown_requested
     _shutdown_requested = True
+    # SEGURANÇA: os.write() é async-signal-safe. console.print()/logging NÃO são.
+    # Usar print/logging em signal handler causa deadlock por reentrância de locks.
     try:
-        console.print(f"\n  [bold red]✗ SIGINT recebido — encerrando graciosamente...[/]\n")
-    except Exception:
+        os.write(sys.stderr.fileno(), b"\n  \x1b[91m\xe2\x9c\x97 SIGINT recebido \xe2\x80\x94 encerrando...\x1b[0m\n")
+    except OSError:
         pass
-    sys.exit(0)
+    os._exit(130)  # 128 + SIGINT(2) = exit code padrão Unix
 
 
 signal.signal(signal.SIGINT, _signal_handler)
@@ -697,7 +699,7 @@ def scan_ports(naabu_out: str) -> List[int]:
 
 
 def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, str]:
-    """Grab banners dos primeiros 20 ports abertos."""
+    """Grab banners dos primeiros 20 ports abertos com recv loop."""
     banners: Dict[int, str] = {}
     # Strip port from target if present (host:port -> host)
     host = target.split(":")[0] if ":" in target else target
@@ -707,14 +709,30 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(timeout)
             s.connect((host, port))
-            s.send(b"HEAD / HTTP/1.0\r\n\r\n")
-            banners[port] = s.recv(512).decode(errors="ignore").strip()
+            s.sendall(b"HEAD / HTTP/1.0\r\nHost: " + host.encode() + b"\r\n\r\n")
+            # TCP é stream: recv pode retornar dados parciais (partial read)
+            chunks = []
+            total = 0
+            while total < 1024:  # Max 1KB banner
+                try:
+                    chunk = s.recv(512)
+                    if not chunk:  # Conexão fechada pelo servidor
+                        break
+                    chunks.append(chunk)
+                    total += len(chunk)
+                except (socket.timeout, OSError):
+                    break
+            banners[port] = b"".join(chunks).decode(errors="ignore").strip()[:512]
         except (socket.timeout, ConnectionRefusedError, OSError):
             banners[port] = "N/A"
         except Exception:
             banners[port] = "N/A"
         finally:
             if s:
+                try:
+                    s.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
                 try:
                     s.close()
                 except Exception:
@@ -903,7 +921,8 @@ def run_plugins(
 
     table_rows: list = []
 
-    with Live(
+    try:
+      with Live(
         _build_layout(table_rows, 1, valid[0][1] if valid else "", 0),
         console=console,
         refresh_per_second=4,
@@ -954,6 +973,17 @@ def run_plugins(
 
             next_name = valid[idx][1] if idx < total else "Concluindo..."
             live.update(_build_layout(table_rows, idx + 1, next_name, intel_idx))
+    except Exception as layout_err:
+        # Fallback para terminais estreitos ou sem suporte a Live Layout
+        console.print(f"  [dim]Live display falhou ({layout_err}), executando sem UI...[/]")
+        for idx, (file_path, name) in enumerate(valid, 1):
+            try:
+                result = _exec_plugin(file_path, name, target, ip, ports, banners)
+            except Exception as e:
+                result = {"plugin": name, "erro": f"Crash: {e}"}
+            results.append(result)
+            cls, style, icon = _classify(result)
+            console.print(f"  [{style}]{icon}[/] {name}")
 
     console.print()
 
@@ -1177,11 +1207,26 @@ def save_report(content: str) -> str:
     return filename
 
 
+def _sanitize_for_json(obj: Any) -> Any:
+    """Sanitiza strings com surrogates inválidos antes de json.dumps.
+
+    json.dumps(ensure_ascii=False) pode crashar com UnicodeEncodeError se
+    strings contêm surrogate pairs órfãos (ex: output binário decodado).
+    """
+    if isinstance(obj, str):
+        return obj.encode("utf-8", errors="replace").decode("utf-8")
+    if isinstance(obj, dict):
+        return {_sanitize_for_json(k): _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_for_json(i) for i in obj]
+    return obj
+
+
 def save_json_report(
     target: str, ip: str, plugin_results: List[Dict[str, Any]],
     elapsed: float,
 ) -> str:
-    """Salva relatório em formato JSON estruturado."""
+    """Salva relatório em formato JSON estruturado com proteção contra surrogates."""
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = os.path.join(REPORTS_PATH, f"cascavel_{ts}.json")
 
@@ -1202,7 +1247,7 @@ def save_json_report(
         "severity_counts": agg,
         "total_findings": sum(agg.values()),
         "plugins_executed": len(plugin_results),
-        "results": plugin_results,
+        "results": _sanitize_for_json(plugin_results),
     }
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(report_obj, f, indent=2, ensure_ascii=False)
@@ -1276,8 +1321,20 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Formato do relatório: md (padrão), json ou pdf")
     parser.add_argument("--pdf", action="store_true",
                         help="Gera relatório PDF profissional (equivalente a -o pdf)")
-    parser.add_argument("--timeout", type=int, default=90,
-                        help="Timeout global (segundos) para ferramentas externas (padrão: 90)")
+    def _positive_int(value: str) -> int:
+        """Validação de argparse: aceita apenas inteiros positivos."""
+        try:
+            ivalue = int(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"'{value}' não é um inteiro válido")
+        if ivalue <= 0:
+            raise argparse.ArgumentTypeError(f"Timeout deve ser > 0, recebido: {ivalue}")
+        if ivalue > 600:
+            raise argparse.ArgumentTypeError(f"Timeout máximo: 600s, recebido: {ivalue}")
+        return ivalue
+
+    parser.add_argument("--timeout", type=_positive_int, default=90,
+                        help="Timeout global (1-600 segundos) para ferramentas externas (padrão: 90)")
     return parser
 
 
