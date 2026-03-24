@@ -676,6 +676,127 @@ verify_installation() {
     _log "SUMMARY: ${FOUND}/${TOTAL} tools, ${PLUGIN_COUNT} plugins"
 }
 
+# ─── Global Command Setup ────────────────────────────────────────────
+setup_global_command() {
+    step "Configurando comando global 'cascavel'..."
+
+    # 1. pip install -e . (editable mode — desenvolvedor vê mudanças imediatas)
+    if [ -f "pyproject.toml" ]; then
+        dimlog "pip install -e . (editable mode)..."
+        pip install -e . --no-cache-dir -q 2>/dev/null || {
+            warn "Editable mode falhou. Tentando install padrão..."
+            pip install . --no-cache-dir -q 2>/dev/null || {
+                warn "pip install falhou. Comando global não configurado."
+                _log "ERROR: pip install -e . and pip install . both failed"
+                return
+            }
+        }
+        info "Pacote 'cascavel' registrado via pip."
+    else
+        warn "pyproject.toml não encontrado. Pulando instalação global."
+        return
+    fi
+
+    # 2. Verificar se 'cascavel' já está no PATH
+    if command -v cascavel &>/dev/null; then
+        CASCAVEL_PATH=$(command -v cascavel)
+        info "Comando 'cascavel' disponível: ${BOLD}${CASCAVEL_PATH}${NC}"
+        _log "GLOBAL: cascavel found at $CASCAVEL_PATH"
+        return
+    fi
+
+    # 3. Se não está no PATH, detectar e configurar
+    warn "'cascavel' não encontrado no PATH. Configurando automaticamente..."
+
+    # Detectar diretório de scripts do pip
+    PIP_SCRIPTS=""
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        PIP_SCRIPTS="${VIRTUAL_ENV}/bin"
+    else
+        PIP_SCRIPTS=$($PYTHON_CMD -c "import sysconfig; print(sysconfig.get_path('scripts'))" 2>/dev/null || echo "")
+    fi
+
+    # User scripts (--user install)
+    USER_SCRIPTS=""
+    USER_BASE=$($PYTHON_CMD -m site --user-base 2>/dev/null || echo "")
+    if [ -n "$USER_BASE" ]; then
+        USER_SCRIPTS="${USER_BASE}/bin"
+    fi
+
+    TARGET_DIR="${PIP_SCRIPTS:-$USER_SCRIPTS}"
+
+    if [ -z "$TARGET_DIR" ]; then
+        warn "Não foi possível detectar o diretório de scripts. Configure manualmente."
+        dimlog "Após instalar: pip show cascavel"
+        return
+    fi
+
+    # 4. Configurar PATH permanente em todos os shells
+    HOME_DIR="$HOME"
+    EXPORT_LINE="export PATH=\"${TARGET_DIR}:\$PATH\""
+    COMMENT="# Cascavel Security Framework — global command"
+
+    _add_to_profile() {
+        local profile="$1"
+        local line="$2"
+        local comment="$3"
+        local use_fish="$4"
+
+        if [ ! -f "$profile" ]; then
+            touch "$profile" 2>/dev/null || return
+        fi
+
+        # Anti-duplicação: verifica se já está configurado
+        if grep -q "$TARGET_DIR" "$profile" 2>/dev/null; then
+            info "PATH já configurado em $(basename "$profile")"
+            return
+        fi
+
+        if [ "$use_fish" = "yes" ]; then
+            echo "" >> "$profile"
+            echo "$comment" >> "$profile"
+            echo "set -gx PATH \"${TARGET_DIR}\" \$PATH" >> "$profile"
+        else
+            echo "" >> "$profile"
+            echo "$comment" >> "$profile"
+            echo "$line" >> "$profile"
+        fi
+        info "PATH adicionado em $(basename "$profile")"
+        _log "PATH: Added $TARGET_DIR to $profile"
+    }
+
+    # Bash
+    for bashrc in ".bashrc" ".bash_profile" ".profile"; do
+        if [ -f "${HOME_DIR}/${bashrc}" ]; then
+            _add_to_profile "${HOME_DIR}/${bashrc}" "$EXPORT_LINE" "$COMMENT" "no"
+            break
+        fi
+    done
+
+    # Zsh
+    if [ -f "${HOME_DIR}/.zshrc" ] || command -v zsh &>/dev/null; then
+        _add_to_profile "${HOME_DIR}/.zshrc" "$EXPORT_LINE" "$COMMENT" "no"
+    fi
+
+    # Fish
+    FISH_CONFIG="${HOME_DIR}/.config/fish/config.fish"
+    if [ -f "$FISH_CONFIG" ] || command -v fish &>/dev/null; then
+        $MKDIR -p "$(dirname "$FISH_CONFIG")" 2>/dev/null || true
+        _add_to_profile "$FISH_CONFIG" "" "$COMMENT" "yes"
+    fi
+
+    # Aplicar no shell atual
+    export PATH="${TARGET_DIR}:$PATH"
+
+    # Re-verificar
+    if command -v cascavel &>/dev/null; then
+        info "Comando 'cascavel' ativado: $(command -v cascavel)"
+    else
+        warn "Reinicie o terminal para usar: cascavel target.com"
+        dimlog "Ou execute agora: source ~/.bashrc  (ou ~/.zshrc)"
+    fi
+}
+
 # ─── Summary ─────────────────────────────────────────────────────────
 show_summary() {
     echo ""
@@ -683,16 +804,18 @@ show_summary() {
     echo -e "${GREEN}║${NC}  ${BOLD}🐍 CASCAVEL INSTALADO COM SUCESSO!${NC}                           ${GREEN}║${NC}"
     echo -e "${GREEN}╠═══════════════════════════════════════════════════════════════╣${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  Para ativar o ambiente:                                      ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}source venv/bin/activate${NC}                                    ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}Uso global (qualquer terminal):${NC}                               ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}cascavel target.com${NC}                                          ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}cascavel -t target.com --plugins-only${NC}                        ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  Para iniciar um scan:                                        ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py -t alvo.com${NC}                              ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}Se ainda não funciona:${NC}                                        ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}source ~/.bashrc${NC}  ou  ${CYAN}source ~/.zshrc${NC}                       ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --install-global${NC}                                    ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}  Mais opções:                                                 ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py --help${NC}                                   ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py --check-tools${NC}                            ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py --list-plugins${NC}                           ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --help${NC}                                              ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --check-tools${NC}                                       ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --list-plugins${NC}                                      ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}  ${DIM}Log: install.log | Permissões: reports/ (700)${NC}               ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}  ${DIM}Mantido por RET Tecnologia — rettecnologia.org${NC}              ${GREEN}║${NC}"
@@ -712,8 +835,8 @@ main() {
     _create_tmpdir
 
     show_logo
-    echo -e "  ${BOLD}Instalador Universal — v2.2.0 (Hardened 2026)${NC}"
-    echo -e "  ${DIM}Detecta SO, instala dependências, configura tudo.${NC}"
+    echo -e "  ${BOLD}Instalador Universal — v2.3.0 (Hardened 2026)${NC}"
+    echo -e "  ${DIM}Detecta SO, instala dependências, configura comando global.${NC}"
     echo ""
 
     _log "=== CASCAVEL INSTALL START ==="
@@ -738,6 +861,8 @@ main() {
     install_external_tools
     echo ""
     verify_installation
+    echo ""
+    setup_global_command
     show_summary
 
     _log "=== CASCAVEL INSTALL SUCCESS ==="
