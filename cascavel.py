@@ -468,11 +468,16 @@ def timestamp() -> str:
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def validate_target(target: str) -> str:
-    """Valida e normaliza o target. Aceita IPs, domínios, URLs e portas."""
+def validate_target(target: str, allow_self: bool = False) -> str:
+    """Valida e normaliza o target. Bloqueia localhost/IPs privados por padrão.
+
+    SEGURANÇA 2026: Uma ferramenta pentest que aceita localhost como alvo pode
+    ser usada para atacar o próprio host (SSRF self-attack, cloud metadata leak).
+    Use --allow-localhost para sobrescrever (red-teaming consentido).
+    """
     target = target.strip()
     if not target:
-        console.print(f"  [{S_RED}]✗ Target vazio. Abortando.[/]")
+        console.print(f"  [{S_RED}]\u2717 Target vazio. Abortando.[/]")
         sys.exit(1)
 
     # Strip protocol (http:// https://)
@@ -488,9 +493,30 @@ def validate_target(target: str) -> str:
 
     # Allow domains, IPs, and targets with port (host:port)
     if not re.match(r'^[a-zA-Z0-9._\-]+(:\d{1,5})?$', target):
-        console.print(f"  [{S_RED}]✗ Target inválido: {target}[/]")
+        console.print(f"  [{S_RED}]\u2717 Target inv\u00e1lido: {target}[/]")
         console.print(f"  [{S_DIM}]Formatos aceitos: dominio.com | 1.2.3.4 | host:porta[/]")
         sys.exit(1)
+
+    # SEGURANÇA: Bloqueia localhost / IPs privados / cloud metadata
+    if not allow_self:
+        host_part = target.split(":")[0] if ":" in target else target
+        _BLOCKED_HOSTS = {
+            "localhost", "127.0.0.1", "0.0.0.0", "::1", "0177.0.0.1",
+            "169.254.169.254",  # AWS/GCP/Azure cloud metadata
+            "metadata.google.internal", "metadata.google.com",
+        }
+        _PRIVATE_PREFIXES = (
+            "10.", "172.16.", "172.17.", "172.18.", "172.19.",
+            "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+            "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+            "172.30.", "172.31.", "192.168.", "169.254.",
+            "0000:", "fe80:", "::ffff:127.",
+        )
+        if host_part.lower() in _BLOCKED_HOSTS or host_part.startswith(_PRIVATE_PREFIXES):
+            console.print(f"  [{S_RED}]\u2717 Target bloqueado: {host_part}[/]")
+            console.print(f"  [{S_DIM}]Localhost/IPs privados s\u00e3o bloqueados por seguran\u00e7a.[/]")
+            console.print(f"  [{S_DIM}]Use --allow-localhost para sobrescrever.[/]")
+            sys.exit(1)
 
     return target
 
@@ -539,8 +565,28 @@ def get_wordlist(name: str = "common.txt") -> str:
 
 
 def ensure_nuclei_templates() -> str:
+    """Garante templates nuclei atualizados. Avisa sobre vers\u00f5es vulner\u00e1veis (CVE-2024-43405)."""
     if not shutil.which("nuclei"):
         return ""
+    # CVE-2024-43405: nuclei < 3.3.2 tem template signature bypass (RCE)
+    try:
+        ver_out = subprocess.run(
+            ["nuclei", "-version"], capture_output=True, text=True, timeout=10,
+        )
+        ver_str = (ver_out.stdout + ver_out.stderr).strip()
+        if ver_str:
+            # Parse version number
+            ver_match = re.search(r'(\d+\.\d+\.\d+)', ver_str)
+            if ver_match:
+                parts = ver_match.group(1).split(".")
+                major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+                if (major, minor, patch) < (3, 3, 2):
+                    console.print(
+                        f"  [{S_YELLOW}]\u26a0 Nuclei {ver_match.group(1)} detect\u00e1vel \u2014 "
+                        f"CVE-2024-43405 (template RCE). Atualize para \u2265 3.3.2![/]"
+                    )
+    except Exception:
+        pass
     if not os.path.isdir(NUCLEI_TEMPLATES_PATH) or not os.listdir(NUCLEI_TEMPLATES_PATH):
         try:
             subprocess.run(
@@ -597,8 +643,7 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
         # Kill entire process group (não deixa zombies)
         if proc is not None:
             try:
-                import os as _os
-                _os.killpg(_os.getpgid(proc.pid), signal.SIGKILL)
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
             except (ProcessLookupError, PermissionError, OSError):
                 try:
                     proc.kill()
@@ -746,7 +791,13 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
 def _exec_plugin(
     path: str, name: str,
     target: str, ip: str, ports: List[int], banners: Dict[int, str],
+    timeout: int = 120,
 ) -> Dict[str, Any]:
+    """Executa um plugin com timeout guard (SIGALRM, 120s padrão).
+
+    SEGURANÇA 2026: Plugins maliciosos ou bugados podem travar indefinidamente.
+    O alarm garante que o framework não fica preso em nenhum plugin individual.
+    """
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         return {"plugin": name, "erro": "Módulo não resolvido"}
@@ -757,13 +808,34 @@ def _exec_plugin(
     if not hasattr(mod, "run"):
         return {"plugin": name, "erro": "Sem função run()"}
 
+    # Per-plugin timeout via SIGALRM (Unix only)
+    _has_alarm = hasattr(signal, "SIGALRM")
+
+    class _PluginTimeout(Exception):
+        pass
+
+    def _alarm_handler(signum, frame):
+        raise _PluginTimeout(f"Plugin '{name}' excedeu timeout de {timeout}s")
+
+    old_handler = None
+    if _has_alarm:
+        old_handler = signal.signal(signal.SIGALRM, _alarm_handler)
+        signal.alarm(timeout)
+
     try:
         result = mod.run(target, ip, ports, banners)
         return result if result else {"plugin": name, "resultados": "Sem retorno"}
+    except _PluginTimeout:
+        return {"plugin": name, "erro": f"TIMEOUT ({timeout}s)"}
     except TypeError as e:
         return {"plugin": name, "erro": f"Assinatura: {e}"}
     except Exception as e:
         return {"plugin": name, "erro": str(e)}
+    finally:
+        if _has_alarm:
+            signal.alarm(0)  # Cancel pending alarm
+            if old_handler is not None:
+                signal.signal(signal.SIGALRM, old_handler)
 
 
 def _classify(result: Dict[str, Any]) -> tuple:
@@ -1335,6 +1407,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser.add_argument("--timeout", type=_positive_int, default=90,
                         help="Timeout global (1-600 segundos) para ferramentas externas (padrão: 90)")
+    parser.add_argument("--allow-localhost", action="store_true",
+                        help="Permite scan em localhost/IPs privados (red-teaming consentido)")
     return parser
 
 
@@ -1471,7 +1545,8 @@ def main() -> None:
         sys.exit(0)
 
     # Target
-    target = validate_target(args.target) if args.target else validate_target(inputx("Target (IP/domain): "))
+    allow_self = getattr(args, 'allow_localhost', False)
+    target = validate_target(args.target, allow_self=allow_self) if args.target else validate_target(inputx("Target (IP/domain): "), allow_self=allow_self)
 
     out_fmt = "pdf" if args.pdf else args.output_format
     run_scan(
