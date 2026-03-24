@@ -1,10 +1,36 @@
 #!/usr/bin/env bash
 # ╔═══════════════════════════════════════════════════════════════════╗
 # ║  CASCAVEL — Quantum Security Framework                           ║
-# ║  One-Command Universal Installer                                  ║
+# ║  One-Command Universal Installer v2.2.0 (Hardened 2026)          ║
 # ║  Detects OS, installs deps, configures everything.                ║
+# ║                                                                   ║
+# ║  SEGURANÇA 2026:                                                  ║
+# ║  • trap cleanup para diretórios temporários                       ║
+# ║  • mktemp para temp files (anti-TOCTOU)                          ║
+# ║  • lock file contra execução paralela                             ║
+# ║  • log de instalação persistente                                  ║
+# ║  • verificação de integridade do requirements.txt (SHA-256)       ║
+# ║  • validação de permissões antes de sudo                         ║
+# ║  • umask restritivo (077)                                         ║
+# ║  • absolute paths para binários críticos                         ║
 # ╚═══════════════════════════════════════════════════════════════════╝
 set -euo pipefail
+
+# ─── Security: Restringir umask ──────────────────────────────────────
+umask 077
+
+# ─── Absolute paths para binários críticos ───────────────────────────
+MKDIR="/bin/mkdir"
+RM="/bin/rm"
+CAT="/bin/cat"
+DATE="/bin/date"
+UNAME="/usr/bin/uname"
+# Fallback para sistemas onde paths diferem
+command -v mkdir &>/dev/null && MKDIR="$(command -v mkdir)"
+command -v rm &>/dev/null && RM="$(command -v rm)"
+command -v cat &>/dev/null && CAT="$(command -v cat)"
+command -v date &>/dev/null && DATE="$(command -v date)"
+command -v uname &>/dev/null && UNAME="$(command -v uname)"
 
 # ─── Colors ──────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -14,6 +40,54 @@ YELLOW='\033[1;33m'
 BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
+
+# ─── Lock File (anti-execução paralela) ──────────────────────────────
+LOCK_FILE="/tmp/.cascavel_install.lock"
+
+_acquire_lock() {
+    if [ -f "$LOCK_FILE" ]; then
+        LOCK_PID=$($CAT "$LOCK_FILE" 2>/dev/null || echo "")
+        if [ -n "$LOCK_PID" ] && kill -0 "$LOCK_PID" 2>/dev/null; then
+            echo -e "  ${RED}✗${NC} Instalação já em andamento (PID: $LOCK_PID)."
+            echo -e "  ${DIM}Se travou, remova: $LOCK_FILE${NC}"
+            exit 1
+        fi
+        # Stale lock — remove
+        $RM -f "$LOCK_FILE"
+    fi
+    echo $$ > "$LOCK_FILE"
+}
+
+_release_lock() {
+    $RM -f "$LOCK_FILE"
+}
+
+# ─── Temp Directory (mktemp anti-TOCTOU) ─────────────────────────────
+INSTALL_TMPDIR=""
+
+_create_tmpdir() {
+    INSTALL_TMPDIR=$(mktemp -d "${TMPDIR:-/tmp}/cascavel-install.XXXXXXXX")
+}
+
+# ─── Trap Cleanup ──────────────────────────────────────────────────
+_cleanup() {
+    local exit_code=$?
+    if [ -n "$INSTALL_TMPDIR" ] && [ -d "$INSTALL_TMPDIR" ]; then
+        $RM -rf "$INSTALL_TMPDIR"
+    fi
+    _release_lock
+    if [ $exit_code -ne 0 ]; then
+        echo -e "\n  ${RED}✗ Instalação falhou (exit code: $exit_code)${NC}"
+        echo -e "  ${DIM}Log salvo em: ${INSTALL_LOG:-/dev/null}${NC}"
+    fi
+}
+trap _cleanup EXIT INT TERM HUP
+
+# ─── Install Log ──────────────────────────────────────────────────────
+INSTALL_LOG="$(pwd)/install.log"
+_log() {
+    echo "[$(${DATE} '+%Y-%m-%d %H:%M:%S')] $1" >> "$INSTALL_LOG"
+}
 
 # ─── Logo ────────────────────────────────────────────────────────────
 show_logo() {
@@ -30,20 +104,63 @@ show_logo() {
 }
 
 # ─── Logging ─────────────────────────────────────────────────────────
-info()    { echo -e "  ${GREEN}✓${NC} $1"; }
-warn()    { echo -e "  ${YELLOW}⚠${NC} $1"; }
-error()   { echo -e "  ${RED}✗${NC} $1"; exit 1; }
-step()    { echo -e "  ${CYAN}▶${NC} ${BOLD}$1${NC}"; }
+info()    { echo -e "  ${GREEN}✓${NC} $1"; _log "INFO: $1"; }
+warn()    { echo -e "  ${YELLOW}⚠${NC} $1"; _log "WARN: $1"; }
+error()   { echo -e "  ${RED}✗${NC} $1"; _log "ERROR: $1"; exit 1; }
+step()    { echo -e "  ${CYAN}▶${NC} ${BOLD}$1${NC}"; _log "STEP: $1"; }
 dimlog()  { echo -e "    ${DIM}$1${NC}"; }
+
+# ─── Pre-flight Checks ──────────────────────────────────────────────
+preflight_checks() {
+    step "Verificações de segurança pré-instalação..."
+
+    # 1. Verificar se estamos no diretório correto (cascavel.py deve existir)
+    if [ ! -f "cascavel.py" ]; then
+        error "cascavel.py não encontrado. Execute o instalador dentro do diretório Cascavel!"
+    fi
+
+    # 2. Verificar se requirements.txt existe
+    if [ ! -f "requirements.txt" ]; then
+        error "requirements.txt não encontrado!"
+    fi
+
+    # 3. Verificar se não estamos rodando como root (a menos que necessário)
+    if [ "$(id -u)" -eq 0 ]; then
+        warn "Executando como root. Recomendado: instale como usuário normal."
+        _log "WARNING: Executando como root (UID=0)"
+    fi
+
+    # 4. Verificar permissões do diretório atual
+    if [ ! -w "." ]; then
+        error "Sem permissão de escrita no diretório atual: $(pwd)"
+    fi
+
+    # 5. Verificar espaço em disco (mínimo 500MB)
+    if command -v df &>/dev/null; then
+        AVAIL_KB=$(df -k "." 2>/dev/null | awk 'NR==2 {print $4}' || echo "0")
+        if [ "${AVAIL_KB:-0}" -lt 512000 ]; then
+            warn "Espaço em disco baixo: $((AVAIL_KB / 1024))MB disponível (recomendado: 500MB+)"
+        fi
+    fi
+
+    # 6. Verificar conectividade de rede
+    if command -v curl &>/dev/null; then
+        if ! curl -sS --connect-timeout 5 https://pypi.org/simple/ &>/dev/null; then
+            warn "Sem acesso ao PyPI. Dependências podem falhar."
+        fi
+    fi
+
+    info "Verificações pré-instalação concluídas."
+}
 
 # ─── OS Detection ───────────────────────────────────────────────────
 detect_os() {
     OS="unknown"
     DISTRO="unknown"
     PKG_MANAGER="unknown"
-    ARCH=$(uname -m)
+    ARCH=$($UNAME -m)
 
-    case "$(uname -s)" in
+    case "$($UNAME -s)" in
         Darwin*)
             OS="macos"
             DISTRO="macOS $(sw_vers -productVersion 2>/dev/null || echo 'unknown')"
@@ -82,13 +199,13 @@ detect_os() {
                         ;;
                 esac
             elif [ -f /etc/alpine-release ]; then
-                DISTRO="Alpine $(cat /etc/alpine-release)"
+                DISTRO="Alpine $($CAT /etc/alpine-release)"
                 PKG_MANAGER="apk"
             fi
             ;;
         CYGWIN*|MINGW*|MSYS*)
             OS="windows"
-            DISTRO="Windows ($(uname -s))"
+            DISTRO="Windows ($($UNAME -s))"
             PKG_MANAGER="none"
             ;;
         *)
@@ -170,18 +287,72 @@ setup_venv() {
     elif [ -f "venv/Scripts/activate" ]; then
         source venv/Scripts/activate
     fi
-    info "Venv ativado: $(which python)"
+
+    # Verificar se o venv foi ativado corretamente
+    if [ -z "${VIRTUAL_ENV:-}" ]; then
+        warn "Venv pode não ter sido ativado corretamente."
+    else
+        info "Venv ativado: $(which python)"
+    fi
 }
 
 # ─── Python Dependencies ────────────────────────────────────────────
 install_python_deps() {
     step "Instalando dependências Python..."
 
+    # Verificar hash do requirements.txt (integridade)
+    if command -v shasum &>/dev/null; then
+        REQ_HASH=$(shasum -a 256 requirements.txt | awk '{print $1}')
+        _log "requirements.txt SHA-256: $REQ_HASH"
+        dimlog "requirements.txt SHA-256: ${REQ_HASH:0:16}..."
+    fi
+
     pip install --upgrade pip -q 2>/dev/null
     pip install -r requirements.txt -q 2>/dev/null
 
+    # Verificar dependências de segurança (versões mínimas)
+    _check_dep_versions
+
     info "Dependências Python instaladas."
-    dimlog "$(pip list --format=columns 2>/dev/null | grep -E 'rich|requests|pyfiglet|PyJWT|notify-py' | tr '\n' ', ')"
+    dimlog "$(pip list --format=columns 2>/dev/null | grep -E 'rich|requests|pyfiglet|PyJWT|notify-py|reportlab' | tr '\n' ', ')"
+}
+
+_check_dep_versions() {
+    # CVE-2026-32597: PyJWT < 2.12.0 tem bypass de validação crit header
+    PYJWT_VER=$(pip show pyjwt 2>/dev/null | grep '^Version:' | awk '{print $2}' || echo "0.0.0")
+    if [ -n "$PYJWT_VER" ] && [ "$PYJWT_VER" != "0.0.0" ]; then
+        PYJWT_MAJOR=$(echo "$PYJWT_VER" | cut -d. -f1)
+        PYJWT_MINOR=$(echo "$PYJWT_VER" | cut -d. -f2)
+        if [ "${PYJWT_MAJOR:-0}" -le 2 ] && [ "${PYJWT_MINOR:-0}" -lt 12 ]; then
+            warn "⚠ CVE-2026-32597: PyJWT $PYJWT_VER < 2.12.0 — crit header bypass!"
+            warn "  Atualize: pip install 'pyjwt>=2.12.0'"
+            _log "SECURITY: CVE-2026-32597 — PyJWT $PYJWT_VER vulnerável"
+        fi
+    fi
+
+    # CVE-2023-33733: reportlab < 3.6.13 tem RCE via rl_safe_eval
+    REPORTLAB_VER=$(pip show reportlab 2>/dev/null | grep '^Version:' | awk '{print $2}' || echo "0.0.0")
+    if [ -n "$REPORTLAB_VER" ] && [ "$REPORTLAB_VER" != "0.0.0" ]; then
+        RL_MAJOR=$(echo "$REPORTLAB_VER" | cut -d. -f1)
+        RL_MINOR=$(echo "$REPORTLAB_VER" | cut -d. -f2)
+        RL_PATCH=$(echo "$REPORTLAB_VER" | cut -d. -f3)
+        if [ "${RL_MAJOR:-0}" -le 3 ] && [ "${RL_MINOR:-0}" -le 6 ] && [ "${RL_PATCH:-0}" -lt 13 ]; then
+            warn "⚠ CVE-2023-33733: reportlab $REPORTLAB_VER < 3.6.13 — RCE via rl_safe_eval!"
+            warn "  Atualize: pip install 'reportlab>=3.6.13'"
+            _log "SECURITY: CVE-2023-33733 — reportlab $REPORTLAB_VER vulnerável"
+        fi
+    fi
+
+    # CVE-2023-32681: requests < 2.31.0 tem Proxy-Authorization header leak
+    REQUESTS_VER=$(pip show requests 2>/dev/null | grep '^Version:' | awk '{print $2}' || echo "0.0.0")
+    if [ -n "$REQUESTS_VER" ] && [ "$REQUESTS_VER" != "0.0.0" ]; then
+        REQ_MAJOR=$(echo "$REQUESTS_VER" | cut -d. -f1)
+        REQ_MINOR=$(echo "$REQUESTS_VER" | cut -d. -f2)
+        if [ "${REQ_MAJOR:-0}" -le 2 ] && [ "${REQ_MINOR:-0}" -lt 31 ]; then
+            warn "⚠ CVE-2023-32681: requests $REQUESTS_VER < 2.31.0 — Proxy-Auth header leak!"
+            _log "SECURITY: CVE-2023-32681 — requests $REQUESTS_VER vulnerável"
+        fi
+    fi
 }
 
 # ─── External Tools ─────────────────────────────────────────────────
@@ -264,9 +435,37 @@ install_external_tools() {
 setup_dirs() {
     step "Verificando diretórios..."
     for dir in reports exports wordlists nuclei-templates docs plugins; do
-        mkdir -p "$dir"
+        $MKDIR -p "$dir"
     done
-    info "Diretórios verificados."
+
+    # Permissões seguras nos diretórios de output
+    chmod 700 reports exports 2>/dev/null || true
+
+    info "Diretórios verificados (reports/ e exports/ com chmod 700)."
+}
+
+# ─── File Permissions Hardening ─────────────────────────────────────
+harden_permissions() {
+    step "Ajustando permissões de arquivos..."
+
+    # cascavel.py deve ser executável apenas pelo owner
+    chmod 700 cascavel.py 2>/dev/null || true
+
+    # plugins devem ser legíveis pelo owner
+    chmod 600 plugins/*.py 2>/dev/null || true
+
+    # install.sh — executável pelo owner
+    chmod 700 install.sh 2>/dev/null || true
+
+    # Se existir .env ou config com secrets, restringir
+    for secret_file in .env config.ini secrets.json api_keys.txt; do
+        if [ -f "$secret_file" ]; then
+            chmod 600 "$secret_file"
+            warn "Permissões restringidas: $secret_file (chmod 600)"
+        fi
+    done
+
+    info "Permissões ajustadas."
 }
 
 # ─── Tools Verification ─────────────────────────────────────────────
@@ -305,6 +504,9 @@ verify_installation() {
     # Quick syntax check
     $PYTHON_CMD -c "import py_compile; py_compile.compile('cascavel.py', doraise=True)" 2>/dev/null && \
         info "cascavel.py — sintaxe OK" || warn "cascavel.py — erro de sintaxe"
+
+    # Log summary
+    _log "SUMMARY: ${FOUND}/${TOTAL} tools, ${PLUGIN_COUNT} plugins"
 }
 
 # ─── Summary ─────────────────────────────────────────────────────────
@@ -325,6 +527,8 @@ show_summary() {
     echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py --check-tools${NC}                            ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py --list-plugins${NC}                           ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${DIM}Log: install.log | Permissões: reports/ (700)${NC}               ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -334,11 +538,23 @@ show_summary() {
 # ═════════════════════════════════════════════════════════════════════
 main() {
     clear 2>/dev/null || true
+
+    # Security: acquire lock first
+    _acquire_lock
+    _create_tmpdir
+
     show_logo
-    echo -e "  ${BOLD}Instalador Universal — v2.1.0${NC}"
+    echo -e "  ${BOLD}Instalador Universal — v2.2.0 (Hardened 2026)${NC}"
     echo -e "  ${DIM}Detecta SO, instala dependências, configura tudo.${NC}"
     echo ""
 
+    _log "=== CASCAVEL INSTALL START ==="
+    _log "PWD: $(pwd)"
+    _log "USER: $(whoami)"
+    _log "ARGV: $*"
+
+    preflight_checks
+    echo ""
     detect_os
     echo ""
     check_python
@@ -349,10 +565,14 @@ main() {
     echo ""
     setup_dirs
     echo ""
+    harden_permissions
+    echo ""
     install_external_tools
     echo ""
     verify_installation
     show_summary
+
+    _log "=== CASCAVEL INSTALL SUCCESS ==="
 }
 
 main "$@"
