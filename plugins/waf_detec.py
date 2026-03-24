@@ -1,12 +1,16 @@
 # plugins/waf_detec.py
+import requests
+import shutil
+import subprocess
+import shlex
+
+
 def run(target, ip, open_ports, banners):
     """
     Detecta presença de Web Application Firewall (WAF) de forma heurística.
     Analisa respostas HTTP suspeitas a payloads típicos de SQLi/XSS.
     """
-    import requests
-    import shutil
-    import subprocess
+    _ = (ip, open_ports, banners)
 
     resultado = {}
 
@@ -39,10 +43,11 @@ def run(target, ip, open_ports, banners):
 
     # Método 2: wafw00f (se disponível)
     if shutil.which("wafw00f"):
+        safe_target = shlex.quote(target)
         try:
             proc = subprocess.run(
-                f"wafw00f {target}", shell=True, capture_output=True,
-                timeout=20, encoding="utf-8"
+                f"wafw00f {safe_target}", shell=True, capture_output=True,
+                timeout=20, encoding="utf-8",
             )
             resultado["wafw00f"] = proc.stdout[:1500]
         except Exception as e:

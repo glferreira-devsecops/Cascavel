@@ -1,21 +1,21 @@
 # plugins/ftp_brute.py
+import socket
+import ftplib
+
+
 def run(target, ip, open_ports, banners):
     """
     Scanner e brute-force básico para FTP.
     Detecta portas FTP abertas, coleta banners e tenta credenciais comuns.
-    Utiliza open_ports do core para otimizar o scan.
     """
-    import socket
-    import ftplib
+    _ = (ip, banners)
 
     ftp_default_ports = [21, 2121, 8021]
     ftp_ports_found = []
     creds_found = []
 
-    # Combinar portas FTP padrão com portas abertas do core
     ports_to_check = sorted(set(ftp_default_ports + [p for p in open_ports if p in ftp_default_ports]))
 
-    # 1. Scan de portas FTP e coleta de banners
     for port in ports_to_check:
         s = socket.socket()
         s.settimeout(3)
@@ -28,7 +28,6 @@ def run(target, ip, open_ports, banners):
         finally:
             s.close()
 
-    # 2. Brute-force com credenciais comuns
     users = ["ftp", "admin", "user", "anonymous"]
     passwords = ["ftp", "123456", "admin", "anonymous@", "password"]
 
@@ -49,6 +48,6 @@ def run(target, ip, open_ports, banners):
         "plugin": "ftp_brute",
         "resultados": {
             "ftp_ports": ftp_ports_found if ftp_ports_found else "Nenhuma porta FTP aberta",
-            "credenciais": creds_found if creds_found else "Nenhuma credencial encontrada"
-        }
+            "credenciais": creds_found if creds_found else "Nenhuma credencial encontrada",
+        },
     }

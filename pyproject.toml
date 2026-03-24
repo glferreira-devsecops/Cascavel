@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cascavel"
-version = "2.0.0"
-description = "Quantum Security Framework — Pentest automation with 60 plugins"
+version = "2.1.0"
+description = "Quantum Security Framework — Pentest automation with 84 plugins, Red Team 2026 intelligence"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
 authors = [
     {name = "DevFerreiraG", email = "devferreirag@proton.me"},
 ]
-keywords = ["pentest", "security", "osint", "framework", "plugins", "red-team"]
+keywords = ["pentest", "security", "osint", "framework", "plugins", "red-team", "vulnerability-scanner"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -21,6 +21,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -32,9 +33,9 @@ classifiers = [
 ]
 
 dependencies = [
-    "colorama",
-    "termcolor",
     "requests",
+    "rich",
+    "pyfiglet",
 ]
 
 [project.optional-dependencies]
@@ -44,15 +45,18 @@ full = [
     "python-nmap",
     "pyOpenSSL",
     "paramiko",
+    "pyjwt",
     "boto3",
     "shodan",
     "censys",
+    "notify-py",
 ]
 
 [project.urls]
 Homepage = "https://github.com/glferreira-devsecops/Cascavel"
 Repository = "https://github.com/glferreira-devsecops/Cascavel"
 Issues = "https://github.com/glferreira-devsecops/Cascavel/issues"
+Changelog = "https://github.com/glferreira-devsecops/Cascavel/blob/main/CHANGELOG.md"
 
 [project.scripts]
 cascavel = "cascavel:main"

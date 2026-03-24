@@ -1,12 +1,17 @@
 # plugins/subdomain_hunter.py
+import subprocess
+import shutil
+import shlex
+
+
 def run(target, ip, open_ports, banners):
     """
     Enumeração massiva de subdomínios combinando subfinder + amass + httpx.
     Agrega resultados, remove duplicatas, e faz probe HTTP para detectar ativos.
     """
-    import subprocess
-    import shutil
+    _ = (ip, open_ports, banners)
 
+    safe_target = shlex.quote(target)
     subdomains = set()
     resultado = {}
 
@@ -14,13 +19,13 @@ def run(target, ip, open_ports, banners):
     if shutil.which("subfinder"):
         try:
             proc = subprocess.run(
-                f"subfinder -d {target} -silent -all",
-                shell=True, capture_output=True, timeout=90, encoding="utf-8"
+                f"subfinder -d {safe_target} -silent -all",
+                shell=True, capture_output=True, timeout=90, encoding="utf-8",
             )
             for line in proc.stdout.splitlines():
                 if line.strip():
                     subdomains.add(line.strip())
-            resultado["subfinder_count"] = len([l for l in proc.stdout.splitlines() if l.strip()])
+            resultado["subfinder_count"] = len(subdomains)
         except subprocess.TimeoutExpired:
             resultado["subfinder"] = "Timeout (90s)"
         except Exception as e:
@@ -32,8 +37,8 @@ def run(target, ip, open_ports, banners):
     if shutil.which("amass"):
         try:
             proc = subprocess.run(
-                f"amass enum -passive -d {target} -timeout 2",
-                shell=True, capture_output=True, timeout=120, encoding="utf-8"
+                f"amass enum -passive -d {safe_target} -timeout 2",
+                shell=True, capture_output=True, timeout=120, encoding="utf-8",
             )
             pre_count = len(subdomains)
             for line in proc.stdout.splitlines():
@@ -51,13 +56,13 @@ def run(target, ip, open_ports, banners):
     ativos = []
     if shutil.which("httpx") and subdomains:
         try:
-            subs_input = "\n".join(list(subdomains)[:200])  # Top 200
+            subs_input = "\n".join(list(subdomains)[:200])
             proc = subprocess.run(
                 "httpx -silent -title -tech-detect -status-code -ip",
                 input=subs_input, shell=True, capture_output=True,
-                timeout=120, encoding="utf-8"
+                timeout=120, encoding="utf-8",
             )
-            ativos = [l.strip() for l in proc.stdout.splitlines() if l.strip()]
+            ativos = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
         except subprocess.TimeoutExpired:
             resultado["httpx"] = "Timeout (120s)"
         except Exception as e:

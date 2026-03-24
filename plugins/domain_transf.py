@@ -1,13 +1,18 @@
 # plugins/domain_transf.py
+import subprocess
+import shlex
+
+
 def run(target, ip, open_ports, banners):
     """
     Tenta realizar transferência de zona DNS AXFR (zone transfer) no domínio alvo.
     Retorna resultado estruturado para o core do Cascavel.
     """
-    import subprocess
+    _ = (ip, open_ports, banners)
 
+    safe_target = shlex.quote(target)
     resultado = {}
-    cmd = f"dig axfr {target} @{target}"
+    cmd = f"dig axfr {safe_target} @{safe_target}"
     try:
         output = subprocess.check_output(cmd, shell=True, timeout=20)
         decoded = output.decode()

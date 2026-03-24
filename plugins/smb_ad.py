@@ -1,19 +1,24 @@
 # plugins/smb_ad.py
+import subprocess
+import re
+import shutil
+import shlex
+
+
 def run(target, ip, open_ports, banners):
     """
     Enumera compartilhamentos SMB abertos no alvo usando smbclient.
     Retorna lista de shares ou erro no formato estruturado.
     """
-    import subprocess
-    import re
-    import shutil
+    _ = (ip, open_ports, banners)
 
     if not shutil.which("smbclient"):
         return {"plugin": "smb_ad", "resultados": {"erro": "smbclient não encontrado no PATH"}}
 
+    safe_target = shlex.quote(target)
     resultado = {}
     try:
-        cmd = f"smbclient -L //{target} -N"
+        cmd = f"smbclient -L //{safe_target} -N"
         proc = subprocess.run(cmd, shell=True, capture_output=True, timeout=20, encoding="utf-8")
         saida = proc.stdout
         compartilhamentos = re.findall(r'^\s*([A-Za-z0-9\$\-_]+)\s+Disk', saida, re.MULTILINE)
