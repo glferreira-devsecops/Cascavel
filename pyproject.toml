@@ -5,20 +5,38 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cascavel"
 version = "2.1.0"
-description = "Quantum Security Framework — Pentest automation with 84 plugins, Red Team 2026 intelligence"
+description = "Quantum Security Framework by RET Tecnologia — Pentest automation with 85+ plugins, Red Team 2026 intelligence"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
 authors = [
-    {name = "DevFerreiraG", email = "devferreirag@proton.me"},
+    {name = "Gabriel Ferreira (DevFerreiraG)", email = "devferreirag@proton.me"},
 ]
-keywords = ["pentest", "security", "osint", "framework", "plugins", "red-team", "vulnerability-scanner"]
+maintainers = [
+    {name = "RET Tecnologia", email = "devferreirag@proton.me"},
+]
+keywords = [
+    "pentest",
+    "security",
+    "osint",
+    "framework",
+    "plugins",
+    "red-team",
+    "vulnerability-scanner",
+    "reconnaissance",
+    "offensive-security",
+    "bug-bounty",
+    "automation",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
+    "Framework :: Pytest",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
+    "Natural Language :: Portuguese (Brazilian)",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
@@ -30,36 +48,67 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Security",
+    "Topic :: System :: Networking",
+    "Topic :: Utilities",
+    "Typing :: Typed",
 ]
 
 dependencies = [
-    "requests",
-    "rich",
-    "pyfiglet",
+    "requests>=2.31.0",
+    "rich>=13.7.0",
+    "pyfiglet>=1.0.2",
 ]
 
 [project.optional-dependencies]
 full = [
-    "beautifulsoup4",
-    "dnspython",
-    "python-nmap",
-    "pyOpenSSL",
-    "paramiko",
-    "pyjwt",
-    "boto3",
-    "shodan",
-    "censys",
-    "notify-py",
+    "beautifulsoup4>=4.12.0",
+    "dnspython>=2.6.0",
+    "python-nmap>=0.7.1",
+    "pyOpenSSL>=24.0.0",
+    "paramiko>=3.4.0",
+    "pyjwt>=2.8.0",
+    "boto3>=1.34.0",
+    "shodan>=1.31.0",
+    "censys>=2.2.0",
+    "notify-py>=0.3.42",
+]
+dev = [
+    "bandit>=1.7.7",
+    "semgrep>=1.60.0",
+    "pip-audit>=2.7.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/glferreira-devsecops/Cascavel"
+Homepage = "https://rettecnologia.org"
+Documentation = "https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md"
 Repository = "https://github.com/glferreira-devsecops/Cascavel"
 Issues = "https://github.com/glferreira-devsecops/Cascavel/issues"
 Changelog = "https://github.com/glferreira-devsecops/Cascavel/blob/main/CHANGELOG.md"
+"Security Policy" = "https://github.com/glferreira-devsecops/Cascavel/blob/main/SECURITY.md"
+"RET Tecnologia" = "https://rettecnologia.org"
 
 [project.scripts]
 cascavel = "cascavel:main"
 
 [tool.setuptools]
 py-modules = ["cascavel"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "S", "B", "UP"]
+ignore = ["S101", "S603", "S607"]  # assert, subprocess calls — security tool
+
+[tool.bandit]
+exclude_dirs = ["wordlists", "nuclei-templates"]
+skips = ["B101", "B603", "B607"]  # assert, subprocess — security tool by design
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

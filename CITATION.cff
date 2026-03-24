@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "Se você utilizar o Cascavel em sua pesquisa ou trabalho, por favor cite-o conforme abaixo."
+title: "Cascavel — Quantum Security Framework"
+type: software
+version: "2.1.0"
+date-released: "2026-03-24"
+license: MIT
+url: "https://github.com/glferreira-devsecops/Cascavel"
+repository-code: "https://github.com/glferreira-devsecops/Cascavel"
+keywords:
+  - pentest
+  - security
+  - red-team
+  - osint
+  - vulnerability-scanner
+  - python
+  - offensive-security
+  - reconnaissance
+  - automation
+  - plugins
+authors:
+  - family-names: "Ferreira"
+    given-names: "Gabriel"
+    alias: "DevFerreiraG"
+    email: "devferreirag@proton.me"
+    affiliation: "RET Tecnologia"
+    orcid: ""
+contact:
+  - name: "RET Tecnologia"
+    email: "devferreirag@proton.me"
+    website: "https://rettecnologia.org"
+abstract: >-
+  Cascavel é um framework de segurança ofensiva de código aberto,
+  desenvolvido pela RET Tecnologia, que automatiza reconhecimento,
+  enumeração e auditoria de vulnerabilidades com 85+ plugins Python
+  e integração nativa com ferramentas de Red Team como Nuclei,
+  Subfinder, Naabu, Feroxbuster e Nikto. Projetado para pentesters,
+  bug bounty hunters e equipes de segurança que exigem velocidade,
+  modularidade e inteligência em cada scan.

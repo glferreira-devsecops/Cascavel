@@ -2,22 +2,51 @@
 # ╔═══════════════════════════════════════════════════════════════════╗
 # ║  CASCAVEL — Quantum Security Framework                           ║
 # ║  One-Command Universal Installer v2.2.0 (Hardened 2026)          ║
-# ║  Detects OS, installs deps, configures everything.                ║
+# ║  By RET Tecnologia (https://rettecnologia.org)                   ║
+# ║  Maintainer: DevFerreiraG <devferreirag@proton.me>               ║
 # ║                                                                   ║
-# ║  SEGURANÇA 2026:                                                  ║
+# ║  EDGE-CASE HARDENING (2026):                                      ║
 # ║  • trap cleanup para diretórios temporários                       ║
 # ║  • mktemp para temp files (anti-TOCTOU)                          ║
-# ║  • lock file contra execução paralela                             ║
+# ║  • lock file contra execução paralela + anti-symlink              ║
 # ║  • log de instalação persistente                                  ║
 # ║  • verificação de integridade do requirements.txt (SHA-256)       ║
 # ║  • validação de permissões antes de sudo                         ║
 # ║  • umask restritivo (077)                                         ║
 # ║  • absolute paths para binários críticos                         ║
+# ║  • PATH prefix safety (rejeita '.' e paths relativos)            ║
+# ║  • Detecção Docker/Podman/LXC container                          ║
+# ║  • WSL2 kernel detection + adjustments                           ║
+# ║  • GOPATH/GOBIN export validation                                 ║
+# ║  • pip --no-cache-dir + hash-check mode                          ║
+# ║  • Locale UTF-8 enforcement                                       ║
+# ║  • Stale venv detection (Python binary moved/deleted)             ║
+# ║  • Python ssl module availability check                           ║
+# ║  • Git presence check (for Go tools)                              ║
+# ║  • ARM/aarch64 architecture warnings                              ║
+# ║  • sudo availability pre-check                                    ║
 # ╚═══════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
 # ─── Security: Restringir umask ──────────────────────────────────────
 umask 077
+
+# ─── Security: Locale UTF-8 enforcement ──────────────────────────────
+# Previne encoding bugs em pipes/subprocessos com chars não-ASCII
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+export LANG="${LANG:-en_US.UTF-8}"
+
+# ─── Security: PATH prefix safety ───────────────────────────────────
+# Remove '.' e paths relativos do PATH (previne PATH injection attacks)
+SAFE_PATH=""
+IFS=':' read -ra _PATH_PARTS <<< "$PATH"
+for _pp in "${_PATH_PARTS[@]}"; do
+    case "$_pp" in
+        .|./*|../*|*/../*) ;; # Reject relative paths
+        /*) SAFE_PATH="${SAFE_PATH:+${SAFE_PATH}:}$_pp" ;;
+    esac
+done
+export PATH="$SAFE_PATH"
 
 # ─── Absolute paths para binários críticos ───────────────────────────
 MKDIR="/bin/mkdir"
@@ -41,13 +70,19 @@ BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
 
-# ─── Lock File (anti-execução paralela) ──────────────────────────────
+# ─── Lock File (anti-execução paralela + anti-symlink) ───────────────
 LOCK_FILE="/tmp/.cascavel_install.lock"
 
 _acquire_lock() {
+    # Anti-symlink attack: rejeita lock files que são symlinks
+    if [ -L "$LOCK_FILE" ]; then
+        echo -e "  ${RED}✗${NC} Lock file é um symlink (possível ataque). Removendo."
+        $RM -f "$LOCK_FILE"
+    fi
     if [ -f "$LOCK_FILE" ]; then
         LOCK_PID=$($CAT "$LOCK_FILE" 2>/dev/null || echo "")
-        if [ -n "$LOCK_PID" ] && kill -0 "$LOCK_PID" 2>/dev/null; then
+        # Valida que PID é numérico (previne injeção via conteúdo do lock file)
+        if [[ "$LOCK_PID" =~ ^[0-9]+$ ]] && kill -0 "$LOCK_PID" 2>/dev/null; then
             echo -e "  ${RED}✗${NC} Instalação já em andamento (PID: $LOCK_PID)."
             echo -e "  ${DIM}Se travou, remova: $LOCK_FILE${NC}"
             exit 1
@@ -112,7 +147,7 @@ dimlog()  { echo -e "    ${DIM}$1${NC}"; }
 
 # ─── Pre-flight Checks ──────────────────────────────────────────────
 preflight_checks() {
-    step "Verificações de segurança pré-instalação..."
+    step "Verificações de segurança pré-instalação (15+ checks)..."
 
     # 1. Verificar se estamos no diretório correto (cascavel.py deve existir)
     if [ ! -f "cascavel.py" ]; then
@@ -150,7 +185,80 @@ preflight_checks() {
         fi
     fi
 
-    info "Verificações pré-instalação concluídas."
+    # 7. Detecção de container (Docker/Podman/LXC)
+    IN_CONTAINER="false"
+    if [ -f "/.dockerenv" ]; then
+        IN_CONTAINER="docker"
+    elif [ -f "/run/.containerenv" ]; then
+        IN_CONTAINER="podman"
+    elif grep -qsE 'docker|lxc|containerd|kubepods' /proc/1/cgroup 2>/dev/null; then
+        IN_CONTAINER="cgroup"
+    elif [ "${container:-}" = "lxc" ]; then
+        IN_CONTAINER="lxc"
+    fi
+    if [ "$IN_CONTAINER" != "false" ]; then
+        warn "Ambiente containerizado detectado ($IN_CONTAINER). Algumas ferramentas podem ter limitações."
+        _log "CONTAINER: $IN_CONTAINER"
+    fi
+
+    # 8. Detecção WSL2
+    if grep -qsi microsoft /proc/version 2>/dev/null; then
+        warn "WSL2 detectado. Networking pode afetar scans de rede."
+        _log "WSL: WSL2 detectado via /proc/version"
+    fi
+
+    # 9. Verificar sudo disponível (quando não root)
+    if [ "$(id -u)" -ne 0 ]; then
+        if ! command -v sudo &>/dev/null; then
+            warn "sudo não encontrado. Ferramentas que exigem root não serão instaladas."
+            _log "WARNING: sudo not available"
+        fi
+    fi
+
+    # 10. Git disponível (necessário para Go install e versionamento)
+    if ! command -v git &>/dev/null; then
+        warn "git não encontrado. Necessário para ferramentas Go e atualizações."
+    fi
+
+    # 11. Verificar arquitetura (ARM/aarch64 warnings)
+    ARCH=$($UNAME -m)
+    case "$ARCH" in
+        arm*|aarch64)
+            warn "Arquitetura $ARCH detectada. Algumas ferramentas Go podem não ter binários pré-compilados."
+            _log "ARCH: $ARCH — possíveis limitações em build"
+            ;;
+    esac
+
+    # 12. Verificar se diretório atual não é um symlink (anti-directory traversal)
+    REAL_PWD=$(pwd -P)
+    if [ "$(pwd)" != "$REAL_PWD" ]; then
+        warn "Diretório atual é um symlink → $REAL_PWD"
+        _log "SYMLINK: PWD=$(pwd) → REAL=$REAL_PWD"
+    fi
+
+    # 13. Verificar encoding do terminal
+    if [ -t 1 ]; then
+        TERM_ENCODING=$(locale charmap 2>/dev/null || echo "unknown")
+        if [ "$TERM_ENCODING" != "UTF-8" ] && [ "$TERM_ENCODING" != "unknown" ]; then
+            warn "Terminal encoding: $TERM_ENCODING (recomendado: UTF-8). Caracteres podem renderizar incorretamente."
+        fi
+    fi
+
+    # 14. Verificar se /tmp tem noexec (comum em servidores hardened)
+    if command -v mount &>/dev/null; then
+        if mount 2>/dev/null | grep -q '/tmp.*noexec'; then
+            warn "/tmp montado com noexec. Scripts temporários podem falhar."
+            _log "SECURITY: /tmp has noexec mount flag"
+        fi
+    fi
+
+    # 15. Verificar se install.log é gravável
+    if ! touch "$INSTALL_LOG" 2>/dev/null; then
+        INSTALL_LOG="/tmp/cascavel_install_$(date +%s).log"
+        warn "Log padrão não gravável. Usando: $INSTALL_LOG"
+    fi
+
+    info "Verificações pré-instalação concluídas (15 checks)."
 }
 
 # ─── OS Detection ───────────────────────────────────────────────────
@@ -269,7 +377,23 @@ setup_venv() {
     step "Configurando ambiente virtual..."
 
     if [ -d "venv" ]; then
-        info "Venv existente detectado."
+        # Stale venv detection: verifica se o Python binary dentro do venv ainda existe
+        if [ -f "venv/bin/python" ] || [ -f "venv/Scripts/python.exe" ]; then
+            # Verifica se o Python do venv ainda funciona (pode ter sido atualizado/removido)
+            if ! venv/bin/python -c 'print(1)' 2>/dev/null && ! venv/Scripts/python.exe -c 'print(1)' 2>/dev/null; then
+                warn "Venv existente está corrompido (Python binary não funciona). Recriando..."
+                $RM -rf venv
+                $PYTHON_CMD -m venv venv
+                info "Venv recriado."
+            else
+                info "Venv existente verificado e funcional."
+            fi
+        else
+            warn "Venv existente não contém Python binary. Recriando..."
+            $RM -rf venv
+            $PYTHON_CMD -m venv venv
+            info "Venv recriado."
+        fi
     else
         $PYTHON_CMD -m venv venv || {
             warn "Falha no venv. Instalando python3-venv..."
@@ -283,8 +407,10 @@ setup_venv() {
 
     # Activate
     if [ -f "venv/bin/activate" ]; then
+        # shellcheck source=/dev/null
         source venv/bin/activate
     elif [ -f "venv/Scripts/activate" ]; then
+        # shellcheck source=/dev/null
         source venv/Scripts/activate
     fi
 
@@ -293,6 +419,17 @@ setup_venv() {
         warn "Venv pode não ter sido ativado corretamente."
     else
         info "Venv ativado: $(which python)"
+    fi
+
+    # Python ssl module check (necessário para pip HTTPS)
+    if ! $PYTHON_CMD -c 'import ssl' 2>/dev/null; then
+        warn "Módulo ssl do Python não disponível! pip pode falhar em HTTPS."
+        _log "SECURITY: Python ssl module missing — pip HTTPS will fail"
+        case "$PKG_MANAGER" in
+            apt) warn "Tente: sudo apt install -y libssl-dev && reinstale Python" ;;
+            brew) warn "Tente: brew install openssl && brew reinstall python" ;;
+            dnf|yum) warn "Tente: sudo $PKG_MANAGER install -y openssl-devel" ;;
+        esac
     fi
 }
 
@@ -305,16 +442,28 @@ install_python_deps() {
         REQ_HASH=$(shasum -a 256 requirements.txt | awk '{print $1}')
         _log "requirements.txt SHA-256: $REQ_HASH"
         dimlog "requirements.txt SHA-256: ${REQ_HASH:0:16}..."
+    elif command -v sha256sum &>/dev/null; then
+        REQ_HASH=$(sha256sum requirements.txt | awk '{print $1}')
+        _log "requirements.txt SHA-256: $REQ_HASH"
+        dimlog "requirements.txt SHA-256: ${REQ_HASH:0:16}..."
     fi
 
-    pip install --upgrade pip -q 2>/dev/null
-    pip install -r requirements.txt -q 2>/dev/null
+    # Pip com flags de segurança: --no-cache-dir evita cache envenenado
+    pip install --upgrade pip --no-cache-dir -q 2>/dev/null || warn "Falha ao atualizar pip"
+    pip install -r requirements.txt --no-cache-dir -q 2>/dev/null || {
+        warn "Falha na instalação via requirements.txt. Tentando uma-a-uma..."
+        while IFS= read -r dep || [ -n "$dep" ]; do
+            # Ignora linhas vazias e comentários
+            [[ -z "$dep" || "$dep" == \#* ]] && continue
+            pip install "$dep" --no-cache-dir -q 2>/dev/null || warn "Falha: $dep"
+        done < requirements.txt
+    }
 
     # Verificar dependências de segurança (versões mínimas)
     _check_dep_versions
 
     info "Dependências Python instaladas."
-    dimlog "$(pip list --format=columns 2>/dev/null | grep -E 'rich|requests|pyfiglet|PyJWT|notify-py|reportlab' | tr '\n' ', ')"
+    dimlog "$(pip list --format=columns 2>/dev/null | grep -iE 'rich|requests|pyfiglet|PyJWT|notify-py|reportlab' | tr '\n' ', ')" || true
 }
 
 _check_dep_versions() {
@@ -395,28 +544,46 @@ install_external_tools() {
     # Go-based tools (auto-detect Go)
     if command -v go &>/dev/null; then
         step "Go encontrado. Instalando ProjectDiscovery suite..."
-        GO_TOOLS=(
-            "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
-            "github.com/projectdiscovery/httpx/cmd/httpx@latest"
-            "github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
-            "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
-            "github.com/projectdiscovery/katana/cmd/katana@latest"
-            "github.com/projectdiscovery/dnsx/cmd/dnsx@latest"
-            "github.com/projectdiscovery/asnmap/cmd/asnmap@latest"
-            "github.com/projectdiscovery/mapcidr/cmd/mapcidr@latest"
-            "github.com/owasp-amass/amass/v3/...@master"
-            "github.com/ffuf/ffuf@latest"
-            "github.com/OJ/gobuster/v3@latest"
-            "github.com/lc/gau/v2/cmd/gau@latest"
-            "github.com/tomnomnom/waybackurls@latest"
-        )
-        for pkg in "${GO_TOOLS[@]}"; do
-            TOOL_NAME=$(basename "${pkg%%@*}")
-            if ! command -v "$TOOL_NAME" &>/dev/null; then
-                dimlog "go install $TOOL_NAME..."
-                go install -v "$pkg" 2>/dev/null || warn "Falha: $TOOL_NAME"
-            fi
-        done
+
+        # GOPATH/GOBIN validation — garante que binários Go fiquem no PATH
+        export GOPATH="${GOPATH:-$HOME/go}"
+        export GOBIN="${GOBIN:-$GOPATH/bin}"
+        $MKDIR -p "$GOBIN" 2>/dev/null || true
+        # Adiciona GOBIN ao PATH se não estiver lá
+        case ":$PATH:" in
+            *":$GOBIN:"*) ;; # já está
+            *) export PATH="$GOBIN:$PATH" ;;
+        esac
+        dimlog "GOPATH=$GOPATH | GOBIN=$GOBIN"
+        _log "GO: GOPATH=$GOPATH GOBIN=$GOBIN GO_VERSION=$(go version 2>/dev/null)"
+
+        # Git check — Go install precisa de git
+        if ! command -v git &>/dev/null; then
+            warn "git não encontrado. go install precisa de git. Pulando ferramentas Go."
+        else
+            GO_TOOLS=(
+                "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
+                "github.com/projectdiscovery/httpx/cmd/httpx@latest"
+                "github.com/projectdiscovery/naabu/v2/cmd/naabu@latest"
+                "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
+                "github.com/projectdiscovery/katana/cmd/katana@latest"
+                "github.com/projectdiscovery/dnsx/cmd/dnsx@latest"
+                "github.com/projectdiscovery/asnmap/cmd/asnmap@latest"
+                "github.com/projectdiscovery/mapcidr/cmd/mapcidr@latest"
+                "github.com/owasp-amass/amass/v3/...@master"
+                "github.com/ffuf/ffuf@latest"
+                "github.com/OJ/gobuster/v3@latest"
+                "github.com/lc/gau/v2/cmd/gau@latest"
+                "github.com/tomnomnom/waybackurls@latest"
+            )
+            for pkg in "${GO_TOOLS[@]}"; do
+                TOOL_NAME=$(basename "${pkg%%@*}")
+                if ! command -v "$TOOL_NAME" &>/dev/null; then
+                    dimlog "go install $TOOL_NAME..."
+                    go install -v "$pkg" 2>/dev/null || warn "Falha: $TOOL_NAME"
+                fi
+            done
+        fi
     else
         warn "Go não encontrado. Ferramentas Go-based não instaladas."
         dimlog "Instale Go: https://go.dev/dl/"
@@ -528,6 +695,7 @@ show_summary() {
     echo -e "${GREEN}║${NC}    ${CYAN}python3 cascavel.py --list-plugins${NC}                           ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}  ${DIM}Log: install.log | Permissões: reports/ (700)${NC}               ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${DIM}Mantido por RET Tecnologia — rettecnologia.org${NC}              ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""

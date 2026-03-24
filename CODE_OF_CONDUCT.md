@@ -43,5 +43,9 @@ Este Código de Conduta é adaptado do [Contributor Covenant](https://www.contri
 
 ---
 
-> Powered by **DevFerreiraG**
-> [github.com/glferreira-devsecops](https://github.com/glferreira-devsecops) | [linkedin.com/in/DevFerreiraG](https://linkedin.com/in/DevFerreiraG)
+<div align="center">
+
+**Cascavel** — Mantido por [RET Tecnologia](https://rettecnologia.org) · MIT License
+<br>[GitHub](https://github.com/glferreira-devsecops) · [LinkedIn](https://linkedin.com/in/DevFerreiraG) · [Website](https://rettecnologia.org)
+
+</div>
