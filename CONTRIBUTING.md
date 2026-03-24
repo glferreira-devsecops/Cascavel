@@ -145,6 +145,29 @@ python3 cascavel.py --plugins-only -t target.com  # Apenas plugins (sem tools ex
 python3 cascavel.py -q -o json -t target.com      # Quiet + JSON (CI/CD)
 ```
 
+## 📜 DCO — Developer Certificate of Origin
+
+Cascavel adota o **DCO (Developer Certificate of Origin)** para garantir a integridade legal de todas as contribuições. Ao enviar um commit, você atesta que:
+
+1. Você criou a contribuição, ou tem o direito de submetê-la sob a licença MIT
+2. A contribuição é fornecida sob a licença MIT do projeto
+
+### Como assinar
+
+Adicione o flag `-s` ao seu commit:
+
+```bash
+git commit -s -m "feat: add new plugin for X detection"
+```
+
+Isso gera automaticamente a linha:
+
+```
+Signed-off-by: Seu Nome <seu@email.com>
+```
+
+> **Nota:** O nome e email devem corresponder aos configurados no seu Git (`git config user.name` e `git config user.email`).
+
 ## 🐞 Relatando Bugs
 
 Abra uma [Issue no GitHub](https://github.com/glferreira-devsecops/Cascavel/issues) com:

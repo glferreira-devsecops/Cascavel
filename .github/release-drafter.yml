@@ -1,0 +1,108 @@
+# Release Drafter — Automatic Release Notes
+# Cascavel Security Framework | RET Tecnologia
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+template: |
+  ## What's Changed in $RESOLVED_VERSION
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+  ---
+  _Cascavel Security Framework — An open-source product by [RET Tecnologia](https://rettecnologia.org)_
+
+categories:
+  - title: '🚀 New Features'
+    labels:
+      - 'enhancement'
+      - 'feature'
+
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+      - 'fix'
+      - 'bugfix'
+
+  - title: '🔒 Security'
+    labels:
+      - 'security'
+      - 'vulnerability'
+
+  - title: '📝 Documentation'
+    labels:
+      - 'documentation'
+      - 'docs'
+
+  - title: '🧰 Maintenance'
+    labels:
+      - 'chore'
+      - 'maintenance'
+      - 'dependencies'
+      - 'ci/cd'
+
+  - title: '🗑️ Deprecated'
+    labels:
+      - 'deprecated'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+change-title-escapes: '\<*_&'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking'
+  minor:
+    labels:
+      - 'minor'
+      - 'enhancement'
+      - 'feature'
+  patch:
+    labels:
+      - 'patch'
+      - 'bug'
+      - 'fix'
+      - 'maintenance'
+  default: patch
+
+exclude-labels:
+  - 'skip-changelog'
+  - 'wontfix'
+  - 'duplicate'
+  - 'invalid'
+
+autolabeler:
+  - label: 'documentation'
+    files:
+      - '*.md'
+      - 'docs/**'
+    branch:
+      - '/docs{0,1}\/.+/'
+
+  - label: 'bug'
+    branch:
+      - '/fix\/.+/'
+    title:
+      - '/fix/i'
+
+  - label: 'enhancement'
+    branch:
+      - '/feature\/.+/'
+      - '/feat\/.+/'
+
+  - label: 'security'
+    branch:
+      - '/security\/.+/'
+    title:
+      - '/security/i'
+      - '/vuln/i'
+      - '/cve/i'
+
+  - label: 'ci/cd'
+    files:
+      - '.github/**'
+    title:
+      - '/ci/i'

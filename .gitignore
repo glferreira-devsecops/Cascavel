@@ -1,47 +1,127 @@
-# Python
+# ============================================
+# Cascavel Security Framework — .gitignore
+# RET Tecnologia | https://rettecnologia.org
+# ============================================
+
+# ── Python Bytecode ──────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
-venv/
-.venv/
-.env
-*.bak
-*.egg-info/
+*.pyc
+*.pyd
+
+# ── Distribution / Packaging ─────────────────
 dist/
 build/
+*.egg-info/
+*.egg
 .eggs/
+*.whl
+*.tar.gz
+sdist/
+wheels/
+pip-wheel-metadata/
 
-# Logs e Dados Temporários
+# ── Virtual Environments ─────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Environment Variables / Secrets ──────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets.yml
+secrets.yaml
+credentials.json
+
+# ── IDE / Editor ─────────────────────────────
+.vscode/
+.idea/
+.gemini/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+.spyderproject
+.spyproject
+.ropeproject
+
+# ── OS Generated ─────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Tool Caches ──────────────────────────────
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
+.pyre/
+
+# ── Coverage ─────────────────────────────────
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+
+# ── Logs ─────────────────────────────────────
 *.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── Temporary Files ──────────────────────────
 *.tmp
 *.temp
 *.swp
 *.swo
+*~
+*.bak
 
-# IDEs
-.vscode/
-.idea/
-.gemini/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Cascavel — Runtime Outputs (auto-generated)
+# ── Cascavel Runtime Outputs ─────────────────
 exports/
 reports/
 nuclei-templates/
+data/
 
-# Wordlists (downloaded at runtime)
+# ── Wordlists (downloaded at runtime) ────────
 wordlists/*.txt
 
-# Dependências
+# ── Dependencies (legacy) ────────────────────
 .pipenv/
+Pipfile.lock
 
-# pytest
-.pytest_cache/
-.coverage
-htmlcov/
+# ── Jupyter Notebooks ────────────────────────
+.ipynb_checkpoints/
 
-# Dados gerados
-data/
+# ── Docker ───────────────────────────────────
+*.pid
+docker-compose.override.yml
+
+# ── Terraform / IaC (if used in plugins) ─────
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# ── Node (if frontend docs) ─────────────────
+node_modules/
+package-lock.json
+yarn.lock
