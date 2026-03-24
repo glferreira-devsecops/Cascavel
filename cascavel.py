@@ -323,12 +323,17 @@ def _fade_in_logo() -> None:
         # Phase 1: Cobra art — cada linha com cor progressiva (verde escuro → bright green)
         # Palette 256-color: 22=darkgreen, 28, 34, 35, 40, 41, 46=bright green
         green_ramp = [22, 22, 28, 28, 34, 34, 35, 40, 41, 46, 46]
-        for i, line in enumerate(COBRA_ART):
-            ci = green_ramp[i] if i < len(green_ramp) else 46
-            color = f"\033[38;5;{ci}m"
-            sys.stdout.write(f"{color}{line}\033[0m\n")
+        try:
+            for i, line in enumerate(COBRA_ART):
+                ci = green_ramp[i] if i < len(green_ramp) else 46
+                color = f"\033[38;5;{ci}m"
+                sys.stdout.write(f"{color}{line}\033[0m\n")
+                sys.stdout.flush()
+                time.sleep(0.05)
+        except KeyboardInterrupt:
+            sys.stdout.write("\033[0m\n")  # Reset + newline
             sys.stdout.flush()
-            time.sleep(0.05)
+            raise
 
         time.sleep(0.2)
 
@@ -384,6 +389,7 @@ def _clear_block(num_lines: int) -> None:
         for _ in range(safe_lines):
             sys.stdout.write("\033[2K\n")
         sys.stdout.write(f"\033[{safe_lines}A")
+        sys.stdout.write("\033[u")  # Restore cursor ao ponto salvo
         sys.stdout.flush()
     except (OSError, IOError):
         pass  # Silencia erros em terminais incompatíveis
@@ -1027,8 +1033,10 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
     next_text.append(f"\n  NEXT: {next_tag}\n", style="dim bright_cyan")
     # Trunca com boundary seguro para evitar cortar emoji no meio
     safe_len = min(55, len(next_tip))
-    truncated = next_tip[:safe_len].rsplit(' ', 1)[0] if len(next_tip) > safe_len else next_tip
-    next_text.append(f"  {truncated}...\n", style="dim")
+    was_truncated = len(next_tip) > safe_len
+    truncated = next_tip[:safe_len].rsplit(' ', 1)[0] if was_truncated else next_tip
+    suffix = "..." if was_truncated else ""
+    next_text.append(f"  {truncated}{suffix}\n", style="dim")
 
     from rich.console import Group  # noqa: E402 — import local para evitar circular em testes
     content = Group(
@@ -1103,15 +1111,19 @@ def run_plugins(
         return t
 
     def _build_layout(rows, current_idx, current_name, intel_i):
-        """Split-screen: tabela de scan + painel de intel."""
+        """Split-screen: tabela de scan + painel de intel.
+
+        Protege contra intel_order vazio (SECURITY_INTEL=[]).
+        """
         layout = Layout()
         layout.split_row(
             Layout(name="scan", ratio=3),
             Layout(name="intel", ratio=1, minimum_size=30),
         )
         layout["scan"].update(_build_table(rows, current_idx, current_name))
+        safe_intel_i = intel_order[intel_i % len(intel_order)] if intel_order else 0
         layout["intel"].update(_build_intel_panel(
-            intel_order[intel_i % len(intel_order)],
+            safe_intel_i,
             scan_stats, time.time() - scan_start,
         ))
         return layout
