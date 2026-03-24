@@ -22,11 +22,13 @@ def run(target, ip, open_ports, banners):
                     code, msg = server.verify(usuario)
                     decoded_msg = msg.decode() if isinstance(msg, bytes) else str(msg)
                     if code == 250:
-                        encontrados.append({
-                            "usuario": usuario,
-                            "porta": smtp_port,
-                            "resposta": decoded_msg,
-                        })
+                        encontrados.append(
+                            {
+                                "usuario": usuario,
+                                "porta": smtp_port,
+                                "resposta": decoded_msg,
+                            }
+                        )
                 except Exception:
                     continue
             server.quit()

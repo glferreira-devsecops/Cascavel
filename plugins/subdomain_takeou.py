@@ -1,15 +1,43 @@
 # plugins/subdomain_takeou.py — Cascavel 2026 Intelligence
-import requests
 import socket
 
+import requests
 
 # ──────────── SUBDOMAINS TO TEST ────────────
 COMMON_SUBS = [
-    "dev", "test", "staging", "beta", "app", "api", "mail", "cdn",
-    "status", "docs", "shop", "blog", "admin", "portal", "auth",
-    "sso", "vpn", "git", "ci", "jenkins", "grafana", "kibana",
-    "demo", "sandbox", "preview", "legacy", "old", "backup",
-    "internal", "intranet", "extranet", "webmail", "ftp",
+    "dev",
+    "test",
+    "staging",
+    "beta",
+    "app",
+    "api",
+    "mail",
+    "cdn",
+    "status",
+    "docs",
+    "shop",
+    "blog",
+    "admin",
+    "portal",
+    "auth",
+    "sso",
+    "vpn",
+    "git",
+    "ci",
+    "jenkins",
+    "grafana",
+    "kibana",
+    "demo",
+    "sandbox",
+    "preview",
+    "legacy",
+    "old",
+    "backup",
+    "internal",
+    "intranet",
+    "extranet",
+    "webmail",
+    "ftp",
 ]
 
 # ──────────── TAKEOVER FINGERPRINTS (50+) ────────────
@@ -74,11 +102,14 @@ FINGERPRINTS = [
 def _check_cname_dangling(subdomain):
     """Verifica se CNAME aponta para domínio que não resolve."""
     try:
-        import subprocess
         import shlex
+        import subprocess
+
         result = subprocess.run(
             ["dig", "+short", "CNAME", shlex.quote(subdomain)],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         cname = result.stdout.strip()
         if cname:
@@ -87,7 +118,7 @@ def _check_cname_dangling(subdomain):
                 socket.gethostbyname(cname)
                 return cname, False  # CNAME exists and resolves
             except socket.gaierror:
-                return cname, True   # CNAME dangling!
+                return cname, True  # CNAME dangling!
     except Exception:
         pass
     return None, False
@@ -110,12 +141,15 @@ def run(target, ip, open_ports, banners):
         # Check CNAME dangling first
         cname, is_dangling = _check_cname_dangling(sub)
         if is_dangling:
-            takeover.append({
-                "subdominio": sub, "cname": cname,
-                "indicador": "CNAME_DANGLING",
-                "severidade": "CRITICO",
-                "descricao": f"CNAME {cname} não resolve — subdomain takeover confirmado!",
-            })
+            takeover.append(
+                {
+                    "subdominio": sub,
+                    "cname": cname,
+                    "indicador": "CNAME_DANGLING",
+                    "severidade": "CRITICO",
+                    "descricao": f"CNAME {cname} não resolve — subdomain takeover confirmado!",
+                }
+            )
             continue
 
         # HTTP check
@@ -124,29 +158,34 @@ def run(target, ip, open_ports, banners):
             body = resp.text.lower()
             for fp_text, service, sev in FINGERPRINTS:
                 if fp_text.lower() in body:
-                    takeover.append({
-                        "subdominio": sub, "servico": service,
-                        "indicador": fp_text[:60],
-                        "status_http": resp.status_code,
-                        "severidade": sev,
-                        "cname": cname or "N/A",
-                        "descricao": f"Takeover possível via {service}!",
-                    })
+                    takeover.append(
+                        {
+                            "subdominio": sub,
+                            "servico": service,
+                            "indicador": fp_text[:60],
+                            "status_http": resp.status_code,
+                            "severidade": sev,
+                            "cname": cname or "N/A",
+                            "descricao": f"Takeover possível via {service}!",
+                        }
+                    )
                     break
         except requests.ConnectionError:
-            takeover.append({
-                "subdominio": sub,
-                "indicador": "DNS_NXDOMAIN_OU_UNREACHABLE",
-                "status_http": None, "severidade": "MEDIO",
-                "descricao": "Subdomínio unreachable — verificar CNAME manualmente",
-            })
+            takeover.append(
+                {
+                    "subdominio": sub,
+                    "indicador": "DNS_NXDOMAIN_OU_UNREACHABLE",
+                    "status_http": None,
+                    "severidade": "MEDIO",
+                    "descricao": "Subdomínio unreachable — verificar CNAME manualmente",
+                }
+            )
         except Exception:
             pass
 
     return {
         "plugin": "subdomain_takeou",
         "versao": "2026.1",
-        "tecnicas": ["fingerprint_34", "cname_dangling", "dns_nxdomain",
-                      "http_probe", "multi_service_detection"],
+        "tecnicas": ["fingerprint_34", "cname_dangling", "dns_nxdomain", "http_probe", "multi_service_detection"],
         "resultados": takeover if takeover else "Nenhum takeover detectado",
     }

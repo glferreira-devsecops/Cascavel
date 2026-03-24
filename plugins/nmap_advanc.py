@@ -1,7 +1,7 @@
 # plugins/nmap_advanc.py
-import subprocess
-import shutil
 import shlex
+import shutil
+import subprocess
 import xml.etree.ElementTree as ET
 
 
@@ -47,8 +47,11 @@ def run(target, ip, open_ports, banners):
     resultado = {}
     try:
         proc = subprocess.run(
-            nmap_cmd, shell=True, capture_output=True,
-            timeout=300, encoding="utf-8",
+            nmap_cmd,
+            shell=True,
+            capture_output=True,
+            timeout=300,
+            encoding="utf-8",
         )
         try:
             resultado["hosts"] = _parse_nmap_xml(proc.stdout)

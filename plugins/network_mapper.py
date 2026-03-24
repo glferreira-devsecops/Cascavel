@@ -1,7 +1,7 @@
 # plugins/network_mapper.py
-import subprocess
-import shutil
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -21,7 +21,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"echo {safe_host} | asnmap -silent",
-                shell=True, capture_output=True, timeout=30, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=30,
+                encoding="utf-8",
             )
             ranges = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
             resultado["asn_ranges"] = ranges if ranges else "Nenhum range ASN encontrado"
@@ -38,8 +41,11 @@ def run(target, ip, open_ports, banners):
             ranges_input = "\n".join(resultado["asn_ranges"][:3])
             proc = subprocess.run(
                 "mapcidr -silent -count",
-                input=ranges_input, shell=True, capture_output=True,
-                timeout=15, encoding="utf-8",
+                input=ranges_input,
+                shell=True,
+                capture_output=True,
+                timeout=15,
+                encoding="utf-8",
             )
             resultado["cidr_count"] = proc.stdout.strip()
         except Exception as e:
@@ -49,7 +55,10 @@ def run(target, ip, open_ports, banners):
     try:
         proc = subprocess.run(
             f"whois {safe_host}",
-            shell=True, capture_output=True, timeout=15, encoding="utf-8",
+            shell=True,
+            capture_output=True,
+            timeout=15,
+            encoding="utf-8",
         )
         whois_lines = proc.stdout.splitlines()
         whois_info = {}

@@ -1,7 +1,6 @@
 # plugins/docker_exposure.py — Cascavel 2026 Intelligence
 import requests
 
-
 DOCKER_PATHS = {
     "/v2/": ("REGISTRY_ROOT", "ALTO"),
     "/v2/_catalog": ("REGISTRY_CATALOG", "CRITICO"),
@@ -37,8 +36,11 @@ def _check_docker_api(target, port):
             resp = requests.get(url, timeout=5)
             if resp.status_code == 200 and len(resp.text) > 2:
                 vuln = {
-                    "tipo": f"DOCKER_{tipo}", "porta": port, "path": path,
-                    "severidade": sev, "amostra": resp.text[:200],
+                    "tipo": f"DOCKER_{tipo}",
+                    "porta": port,
+                    "path": path,
+                    "severidade": sev,
+                    "amostra": resp.text[:200],
                     "descricao": f"Docker API {path} exposta em :{port}!",
                 }
 
@@ -87,7 +89,8 @@ def _check_registry(target):
                 resp = requests.get(url, timeout=5, verify=False)
                 if resp.status_code == 200 and "repositories" in resp.text:
                     vuln = {
-                        "tipo": "DOCKER_REGISTRY_OPEN", "porta": port,
+                        "tipo": "DOCKER_REGISTRY_OPEN",
+                        "porta": port,
                         "severidade": "CRITICO",
                         "descricao": "Docker Registry aberto — imagens acessíveis sem auth!",
                     }
@@ -98,8 +101,8 @@ def _check_registry(target):
                         # Try to get tags for first repo
                         if repos:
                             tags_resp = requests.get(
-                                f"{scheme}://{target}:{port}/v2/{repos[0]}/tags/list",
-                                timeout=5, verify=False)
+                                f"{scheme}://{target}:{port}/v2/{repos[0]}/tags/list", timeout=5, verify=False
+                            )
                             if tags_resp.status_code == 200:
                                 vuln["tags_amostra"] = tags_resp.json().get("tags", [])[:10]
                     except Exception:
@@ -113,22 +116,32 @@ def _check_registry(target):
 def _check_compose_files(target):
     """Verifica docker-compose e Dockerfiles expostos."""
     vulns = []
-    files = ["/docker-compose.yml", "/docker-compose.yaml",
-             "/docker-compose.prod.yml", "/docker-compose.dev.yml",
-             "/docker-compose.override.yml", "/Dockerfile",
-             "/Dockerfile.prod", "/.dockerignore"]
+    files = [
+        "/docker-compose.yml",
+        "/docker-compose.yaml",
+        "/docker-compose.prod.yml",
+        "/docker-compose.dev.yml",
+        "/docker-compose.override.yml",
+        "/Dockerfile",
+        "/Dockerfile.prod",
+        "/.dockerignore",
+    ]
     for f in files:
         try:
             resp = requests.get(f"http://{target}{f}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 20:
-                sev = "CRITICO" if any(s in resp.text.lower()
-                                        for s in ["password", "secret", "key", "token"]) else "ALTO"
-                vulns.append({
-                    "tipo": "DOCKER_COMPOSE_EXPOSED", "path": f,
-                    "severidade": sev,
-                    "secrets_in_compose": sev == "CRITICO",
-                    "descricao": f"Arquivo {f} exposto — infraestrutura mapeável!",
-                })
+                sev = (
+                    "CRITICO" if any(s in resp.text.lower() for s in ["password", "secret", "key", "token"]) else "ALTO"
+                )
+                vulns.append(
+                    {
+                        "tipo": "DOCKER_COMPOSE_EXPOSED",
+                        "path": f,
+                        "severidade": sev,
+                        "secrets_in_compose": sev == "CRITICO",
+                        "descricao": f"Arquivo {f} exposto — infraestrutura mapeável!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -153,8 +166,15 @@ def run(target, ip, open_ports, banners):
     vulns.extend(_check_compose_files(target))
 
     return {
-        "plugin": "docker_exposure", "versao": "2026.1",
-        "tecnicas": ["docker_api", "registry_enum", "privileged_detection",
-                      "mount_analysis", "secrets_enum", "compose_exposure"],
+        "plugin": "docker_exposure",
+        "versao": "2026.1",
+        "tecnicas": [
+            "docker_api",
+            "registry_enum",
+            "privileged_detection",
+            "mount_analysis",
+            "secrets_enum",
+            "compose_exposure",
+        ],
         "resultados": vulns if vulns else "Nenhuma exposição Docker detectada",
     }

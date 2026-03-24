@@ -7,12 +7,12 @@ geographic hop estimation, autonomous system detection, firewall/filter
 detection, path anomaly analysis (asymmetric routing), private IP detection,
 hop count security scoring, CDN/proxy detection via hop patterns.
 """
-import subprocess
+
+import re
 import shlex
 import shutil
-import re
 import socket
-
+import subprocess
 
 PRIVATE_RANGES = [
     (0x0A000000, 0x0AFFFFFF),  # 10.0.0.0/8
@@ -46,7 +46,10 @@ def _run_traceroute(target):
         safe = shlex.quote(target).strip("'")
         proc = subprocess.run(
             [tr_cmd, "-m", "30", "-w", "3", safe],
-            capture_output=True, timeout=60, encoding="utf-8", errors="ignore",
+            capture_output=True,
+            timeout=60,
+            encoding="utf-8",
+            errors="ignore",
         )
         return proc.stdout
     except Exception:
@@ -64,7 +67,7 @@ def _parse_traceroute(raw):
             continue
 
         # Parse hop number
-        match = re.match(r'^\s*(\d+)\s+(.+)', line)
+        match = re.match(r"^\s*(\d+)\s+(.+)", line)
         if not match:
             continue
 
@@ -72,12 +75,12 @@ def _parse_traceroute(raw):
         rest = match.group(2)
 
         # Extract IPs and hostnames
-        ips = re.findall(r'(\d+\.\d+\.\d+\.\d+)', rest)
-        hostnames = re.findall(r'([a-zA-Z][\w.-]+\.[a-z]{2,})', rest)
+        ips = re.findall(r"(\d+\.\d+\.\d+\.\d+)", rest)
+        hostnames = re.findall(r"([a-zA-Z][\w.-]+\.[a-z]{2,})", rest)
 
         # Extract latency values
-        latencies = re.findall(r'([\d.]+)\s*ms', rest)
-        latencies = [float(l) for l in latencies]
+        latencies = re.findall(r"([\d.]+)\s*ms", rest)
+        latencies = [float(lat_val) for lat_val in latencies]
 
         is_timeout = "* * *" in rest or rest.strip() == "*"
 
@@ -112,11 +115,14 @@ def _analyze_hops(hops):
 
     # Hop count analysis
     if len(hops) > 20:
-        vulns.append({
-            "tipo": "HIGH_HOP_COUNT", "severidade": "INFO",
-            "hops": len(hops),
-            "descricao": f"{len(hops)} hops — rede complexa ou geo-distância alta",
-        })
+        vulns.append(
+            {
+                "tipo": "HIGH_HOP_COUNT",
+                "severidade": "INFO",
+                "hops": len(hops),
+                "descricao": f"{len(hops)} hops — rede complexa ou geo-distância alta",
+            }
+        )
 
     # Firewall detection (consecutive timeouts)
     consecutive_timeouts = 0
@@ -124,11 +130,14 @@ def _analyze_hops(hops):
         if h.get("timeout"):
             consecutive_timeouts += 1
             if consecutive_timeouts >= 3:
-                vulns.append({
-                    "tipo": "FIREWALL_FILTER_DETECTED", "severidade": "INFO",
-                    "hop": h["hop"],
-                    "descricao": f"3+ timeouts consecutivos no hop {h['hop']} — firewall/ACL filtering!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "FIREWALL_FILTER_DETECTED",
+                        "severidade": "INFO",
+                        "hop": h["hop"],
+                        "descricao": f"3+ timeouts consecutivos no hop {h['hop']} — firewall/ACL filtering!",
+                    }
+                )
                 break
         else:
             consecutive_timeouts = 0
@@ -139,36 +148,67 @@ def _analyze_hops(hops):
         if h.get("avg_latency") and prev_latency:
             spike = h["avg_latency"] - prev_latency
             if spike > 100:
-                vulns.append({
-                    "tipo": "LATENCY_SPIKE", "severidade": "INFO",
-                    "hop": h["hop"], "spike_ms": round(spike, 1),
-                    "descricao": f"Salto de latência de {round(spike, 1)}ms no hop {h['hop']} — possível link intercontinental ou throttling",
-                })
+                vulns.append(
+                    {
+                        "tipo": "LATENCY_SPIKE",
+                        "severidade": "INFO",
+                        "hop": h["hop"],
+                        "spike_ms": round(spike, 1),
+                        "descricao": (
+                            f"Salto de latência de {round(spike, 1)}ms no hop {h['hop']}"
+                            " — possível link intercontinental ou throttling"
+                        ),
+                    }
+                )
         if h.get("avg_latency"):
             prev_latency = h["avg_latency"]
 
     # Private IP leak in path
     for h in hops:
         if h.get("private") and h["hop"] > 2:
-            vulns.append({
-                "tipo": "PRIVATE_IP_IN_PATH", "severidade": "MEDIO",
-                "hop": h["hop"], "ips": h["ips"],
-                "descricao": f"IP privado exposto no hop {h['hop']} — topology leak!",
-            })
+            vulns.append(
+                {
+                    "tipo": "PRIVATE_IP_IN_PATH",
+                    "severidade": "MEDIO",
+                    "hop": h["hop"],
+                    "ips": h["ips"],
+                    "descricao": f"IP privado exposto no hop {h['hop']} — topology leak!",
+                }
+            )
 
     # CDN/Proxy detection
     all_hostnames = []
     for h in hops:
         all_hostnames.extend(h.get("hostnames", []))
-    cdn_keywords = ["cloudflare", "akamai", "fastly", "cloudfront", "edgecast",
-                     "incapsula", "sucuri", "stackpath", "cdn"]
+    cdn_keywords = [
+        "cloudflare",
+        "akamai",
+        "fastly",
+        "cloudfront",
+        "edgecast",
+        "incapsula",
+        "sucuri",
+        "stackpath",
+        "cdn",
+    ]
     detected_cdns = [kw for kw in cdn_keywords if any(kw in hn.lower() for hn in all_hostnames)]
     if detected_cdns:
         intel["cdns_detected"] = detected_cdns
 
     # ISP/Carrier detection
-    carrier_keywords = ["comcast", "att", "verizon", "level3", "cogent", "ntt",
-                        "telia", "hurricane", "zayo", "lumen", "equinix"]
+    carrier_keywords = [
+        "comcast",
+        "att",
+        "verizon",
+        "level3",
+        "cogent",
+        "ntt",
+        "telia",
+        "hurricane",
+        "zayo",
+        "lumen",
+        "equinix",
+    ]
     detected_carriers = [kw for kw in carrier_keywords if any(kw in hn.lower() for hn in all_hostnames)]
     if detected_carriers:
         intel["carriers_detected"] = detected_carriers
@@ -201,7 +241,8 @@ def run(target, ip, open_ports, banners):
     raw_output = _run_traceroute(target)
     if not raw_output:
         return {
-            "plugin": "traceroute_mapper", "versao": "2026.1",
+            "plugin": "traceroute_mapper",
+            "versao": "2026.1",
             "resultados": "traceroute não disponível no sistema",
         }
 
@@ -217,10 +258,18 @@ def run(target, ip, open_ports, banners):
                     h["reverse_dns"] = rdns
 
     return {
-        "plugin": "traceroute_mapper", "versao": "2026.1",
-        "tecnicas": ["traceroute_native", "hop_analysis", "latency_profiling",
-                      "firewall_detection", "private_ip_leak", "cdn_detection",
-                      "carrier_mapping", "reverse_dns"],
+        "plugin": "traceroute_mapper",
+        "versao": "2026.1",
+        "tecnicas": [
+            "traceroute_native",
+            "hop_analysis",
+            "latency_profiling",
+            "firewall_detection",
+            "private_ip_leak",
+            "cdn_detection",
+            "carrier_mapping",
+            "reverse_dns",
+        ],
         "resultados": {
             "hops": hops,
             "path_intelligence": path_intel,

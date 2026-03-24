@@ -1,7 +1,6 @@
 # plugins/elastic_exposure.py — Cascavel 2026 Intelligence
-import requests
-import re
 
+import requests
 
 ELASTIC_PORTS = [9200, 9300, 9201, 9202]
 
@@ -27,8 +26,7 @@ ELASTIC_PATHS = {
     "/_tasks": ("ES_TASKS", "MEDIO", "Running tasks"),
 }
 
-PII_PATTERNS = ["email", "password", "ssn", "credit_card", "phone",
-                "address", "name", "cpf", "rg", "token", "secret"]
+PII_PATTERNS = ["email", "password", "ssn", "credit_card", "phone", "address", "name", "cpf", "rg", "token", "secret"]
 
 
 def _probe_elastic(target, port):
@@ -39,8 +37,11 @@ def _probe_elastic(target, port):
             resp = requests.get(f"http://{target}:{port}{path}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 5:
                 vuln = {
-                    "tipo": tipo, "porta": port, "path": path,
-                    "severidade": sev, "amostra": resp.text[:200],
+                    "tipo": tipo,
+                    "porta": port,
+                    "path": path,
+                    "severidade": sev,
+                    "amostra": resp.text[:200],
                     "descricao": f"{desc} em :{port}!",
                 }
 
@@ -90,14 +91,17 @@ def _check_kibana(target):
     for port, path, label in kibana_paths:
         try:
             resp = requests.get(f"http://{target}:{port}{path}", timeout=5)
-            if resp.status_code == 200 and any(k in resp.text.lower()
-                                                for k in ["kibana", "opensearch", "elastic"]):
+            if resp.status_code == 200 and any(k in resp.text.lower() for k in ["kibana", "opensearch", "elastic"]):
                 sev = "CRITICO" if "dev_tools" in path or "saved_objects" in path else "ALTO"
-                vulns.append({
-                    "tipo": f"{label}_UNAUTH", "porta": port, "path": path,
-                    "severidade": sev,
-                    "descricao": f"{'Kibana Dev Tools' if 'dev_tools' in path else 'Kibana'} sem auth!",
-                })
+                vulns.append(
+                    {
+                        "tipo": f"{label}_UNAUTH",
+                        "porta": port,
+                        "path": path,
+                        "severidade": sev,
+                        "descricao": f"{'Kibana Dev Tools' if 'dev_tools' in path else 'Kibana'} sem auth!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -109,11 +113,14 @@ def _check_opensearch(target):
     try:
         resp = requests.get(f"http://{target}:9200/", timeout=5)
         if "opensearch" in resp.text.lower():
-            vulns.append({
-                "tipo": "OPENSEARCH_DETECTED", "porta": 9200,
-                "severidade": "MEDIO",
-                "descricao": "OpenSearch detectado (fork AWS do Elasticsearch)",
-            })
+            vulns.append(
+                {
+                    "tipo": "OPENSEARCH_DETECTED",
+                    "porta": 9200,
+                    "severidade": "MEDIO",
+                    "descricao": "OpenSearch detectado (fork AWS do Elasticsearch)",
+                }
+            )
     except Exception:
         pass
     return vulns
@@ -137,8 +144,15 @@ def run(target, ip, open_ports, banners):
     vulns.extend(_check_opensearch(target))
 
     return {
-        "plugin": "elastic_exposure", "versao": "2026.1",
-        "tecnicas": ["elastic_api", "kibana_unauth", "pii_detection",
-                      "opensearch", "snapshot_enum", "version_disclosure"],
+        "plugin": "elastic_exposure",
+        "versao": "2026.1",
+        "tecnicas": [
+            "elastic_api",
+            "kibana_unauth",
+            "pii_detection",
+            "opensearch",
+            "snapshot_enum",
+            "version_disclosure",
+        ],
         "resultados": vulns if vulns else "Nenhum Elasticsearch exposto",
     }

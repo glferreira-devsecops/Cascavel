@@ -1,8 +1,8 @@
 # plugins/katana_crawler.py
-import subprocess
-import shutil
-import shlex
 import re
+import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -21,15 +21,18 @@ def run(target, ip, open_ports, banners):
     try:
         cmd = f"echo http://{safe_target} | katana -silent -d 3 -jc -kf all -ct 60"
         proc = subprocess.run(
-            cmd, shell=True, capture_output=True,
-            timeout=90, encoding="utf-8",
+            cmd,
+            shell=True,
+            capture_output=True,
+            timeout=90,
+            encoding="utf-8",
         )
         urls = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
 
         if urls:
-            js_files = [u for u in urls if re.search(r'\.js(\?|$)', u, re.IGNORECASE)]
-            forms = [u for u in urls if re.search(r'\?(.*=)', u)]
-            api_endpoints = [u for u in urls if re.search(r'/api/|/v[0-9]+/|/graphql', u, re.IGNORECASE)]
+            js_files = [u for u in urls if re.search(r"\.js(\?|$)", u, re.IGNORECASE)]
+            forms = [u for u in urls if re.search(r"\?(.*=)", u)]
+            api_endpoints = [u for u in urls if re.search(r"/api/|/v[0-9]+/|/graphql", u, re.IGNORECASE)]
             resultado["total_urls"] = len(urls)
             resultado["js_files"] = js_files[:20]
             resultado["forms_parametros"] = forms[:30]

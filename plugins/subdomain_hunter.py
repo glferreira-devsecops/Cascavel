@@ -1,7 +1,7 @@
 # plugins/subdomain_hunter.py
-import subprocess
-import shutil
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -20,7 +20,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"subfinder -d {safe_target} -silent -all",
-                shell=True, capture_output=True, timeout=90, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=90,
+                encoding="utf-8",
             )
             for line in proc.stdout.splitlines():
                 if line.strip():
@@ -38,7 +41,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"amass enum -passive -d {safe_target} -timeout 2",
-                shell=True, capture_output=True, timeout=120, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=120,
+                encoding="utf-8",
             )
             pre_count = len(subdomains)
             for line in proc.stdout.splitlines():
@@ -59,8 +65,11 @@ def run(target, ip, open_ports, banners):
             subs_input = "\n".join(list(subdomains)[:200])
             proc = subprocess.run(
                 "httpx -silent -title -tech-detect -status-code -ip",
-                input=subs_input, shell=True, capture_output=True,
-                timeout=120, encoding="utf-8",
+                input=subs_input,
+                shell=True,
+                capture_output=True,
+                timeout=120,
+                encoding="utf-8",
             )
             ativos = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
         except subprocess.TimeoutExpired:

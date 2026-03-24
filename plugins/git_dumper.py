@@ -1,17 +1,26 @@
 # plugins/git_dumper.py — Cascavel 2026 Intelligence
-import requests
 import re
 
+import requests
 
 GIT_PATHS = [
-    "/.git/config", "/.git/HEAD", "/.git/index",
-    "/.git/logs/HEAD", "/.git/refs/heads/main",
-    "/.git/refs/heads/master", "/.git/refs/heads/develop",
-    "/.git/COMMIT_EDITMSG", "/.git/description",
-    "/.git/info/refs", "/.git/info/exclude",
-    "/.git/packed-refs", "/.git/objects/info/packs",
-    "/.git/refs/stash", "/.git/FETCH_HEAD",
-    "/.git/ORIG_HEAD", "/.git/refs/remotes/origin/HEAD",
+    "/.git/config",
+    "/.git/HEAD",
+    "/.git/index",
+    "/.git/logs/HEAD",
+    "/.git/refs/heads/main",
+    "/.git/refs/heads/master",
+    "/.git/refs/heads/develop",
+    "/.git/COMMIT_EDITMSG",
+    "/.git/description",
+    "/.git/info/refs",
+    "/.git/info/exclude",
+    "/.git/packed-refs",
+    "/.git/objects/info/packs",
+    "/.git/refs/stash",
+    "/.git/FETCH_HEAD",
+    "/.git/ORIG_HEAD",
+    "/.git/refs/remotes/origin/HEAD",
 ]
 
 VCS_PATHS = [
@@ -25,15 +34,15 @@ VCS_PATHS = [
 ]
 
 SENSITIVE_PATTERNS = [
-    (r'password\s*=', "PASSWORD_IN_GIT"),
-    (r'token\s*=', "TOKEN_IN_GIT"),
-    (r'url\s*=\s*https?://[^@]+@', "CREDS_IN_REMOTE_URL"),
-    (r'aws_access_key', "AWS_KEY_IN_GIT"),
-    (r'private[_-]?key', "PRIVATE_KEY_IN_GIT"),
-    (r'secret\s*=', "SECRET_IN_GIT"),
-    (r'api[_-]?key\s*=', "APIKEY_IN_GIT"),
-    (r'github_token', "GITHUB_TOKEN_IN_GIT"),
-    (r'smtp_pass', "SMTP_PASS_IN_GIT"),
+    (r"password\s*=", "PASSWORD_IN_GIT"),
+    (r"token\s*=", "TOKEN_IN_GIT"),
+    (r"url\s*=\s*https?://[^@]+@", "CREDS_IN_REMOTE_URL"),
+    (r"aws_access_key", "AWS_KEY_IN_GIT"),
+    (r"private[_-]?key", "PRIVATE_KEY_IN_GIT"),
+    (r"secret\s*=", "SECRET_IN_GIT"),
+    (r"api[_-]?key\s*=", "APIKEY_IN_GIT"),
+    (r"github_token", "GITHUB_TOKEN_IN_GIT"),
+    (r"smtp_pass", "SMTP_PASS_IN_GIT"),
 ]
 
 
@@ -45,13 +54,15 @@ def _probe_git_files(target):
             resp = requests.get(f"http://{target}{path}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 5:
                 content = resp.text
-                is_git = any(k in content for k in
-                             ["[core]", "ref:", "PACK", "commit", "[remote",
-                              "gitdir", "[branch", "[user"])
+                is_git = any(
+                    k in content for k in ["[core]", "ref:", "PACK", "commit", "[remote", "gitdir", "[branch", "[user"]
+                )
                 if is_git or path.endswith("HEAD"):
                     vuln = {
-                        "tipo": "GIT_FILE_EXPOSED", "path": path,
-                        "severidade": "CRITICO", "tamanho": len(content),
+                        "tipo": "GIT_FILE_EXPOSED",
+                        "path": path,
+                        "severidade": "CRITICO",
+                        "tamanho": len(content),
                         "amostra": content[:150],
                         "descricao": f"{path} exposto — source code recovery!",
                     }
@@ -75,18 +86,24 @@ def _scan_config_secrets(target):
         if resp.status_code == 200:
             for pattern, tipo in SENSITIVE_PATTERNS:
                 if re.search(pattern, resp.text, re.IGNORECASE):
-                    vulns.append({
-                        "tipo": tipo, "severidade": "CRITICO",
-                        "descricao": f"Segredo em .git/config ({tipo})",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": tipo,
+                            "severidade": "CRITICO",
+                            "descricao": f"Segredo em .git/config ({tipo})",
+                        }
+                    )
             # Extract remote URLs
-            remotes = re.findall(r'url\s*=\s*(.+)', resp.text)
+            remotes = re.findall(r"url\s*=\s*(.+)", resp.text)
             if remotes:
-                vulns.append({
-                    "tipo": "GIT_REMOTES_EXPOSED", "severidade": "ALTO",
-                    "remotes": [r.strip() for r in remotes[:5]],
-                    "descricao": "Remote URLs expostos — repo source disclosed!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "GIT_REMOTES_EXPOSED",
+                        "severidade": "ALTO",
+                        "remotes": [r.strip() for r in remotes[:5]],
+                        "descricao": "Remote URLs expostos — repo source disclosed!",
+                    }
+                )
     except Exception:
         pass
     return vulns
@@ -98,14 +115,17 @@ def _check_git_log(target):
     try:
         resp = requests.get(f"http://{target}/.git/logs/HEAD", timeout=5)
         if resp.status_code == 200 and "commit" in resp.text.lower():
-            emails = list(set(re.findall(r'<([^>]+@[^>]+)>', resp.text)))[:15]
+            emails = list(set(re.findall(r"<([^>]+@[^>]+)>", resp.text)))[:15]
             commit_count = resp.text.count("\n")
-            vulns.append({
-                "tipo": "GIT_LOG_EXPOSED", "severidade": "ALTO",
-                "emails_developers": emails,
-                "commits_visiveis": commit_count,
-                "descricao": f"Git log exposto — {len(emails)} emails, {commit_count} commits!",
-            })
+            vulns.append(
+                {
+                    "tipo": "GIT_LOG_EXPOSED",
+                    "severidade": "ALTO",
+                    "emails_developers": emails,
+                    "commits_visiveis": commit_count,
+                    "descricao": f"Git log exposto — {len(emails)} emails, {commit_count} commits!",
+                }
+            )
     except Exception:
         pass
     return vulns
@@ -118,12 +138,15 @@ def _check_other_vcs(target):
         try:
             resp = requests.get(f"http://{target}{path}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 5:
-                vulns.append({
-                    "tipo": f"{vcs_type}_EXPOSED", "path": path,
-                    "severidade": "CRITICO",
-                    "descricao": f"{desc} — source code recovery!",
-                    "amostra": resp.text[:150],
-                })
+                vulns.append(
+                    {
+                        "tipo": f"{vcs_type}_EXPOSED",
+                        "path": path,
+                        "severidade": "CRITICO",
+                        "descricao": f"{desc} — source code recovery!",
+                        "amostra": resp.text[:150],
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -134,10 +157,11 @@ def _check_git_objects(target):
     try:
         resp = requests.get(f"http://{target}/.git/objects/info/packs", timeout=5)
         if resp.status_code == 200 and "pack-" in resp.text:
-            pack_hash = re.search(r'pack-([a-f0-9]+)\.pack', resp.text)
+            pack_hash = re.search(r"pack-([a-f0-9]+)\.pack", resp.text)
             if pack_hash:
                 return {
-                    "tipo": "GIT_PACK_EXPOSED", "severidade": "CRITICO",
+                    "tipo": "GIT_PACK_EXPOSED",
+                    "severidade": "CRITICO",
                     "pack_hash": pack_hash.group(1),
                     "descricao": "Git pack file acessível — clone completo do repo possível!",
                 }
@@ -168,8 +192,8 @@ def run(target, ip, open_ports, banners):
         vulns.append(pack)
 
     return {
-        "plugin": "git_dumper", "versao": "2026.1",
-        "tecnicas": ["git_files", "config_secrets", "git_log",
-                      "svn", "mercurial", "bazaar", "cvs", "pack_clone"],
+        "plugin": "git_dumper",
+        "versao": "2026.1",
+        "tecnicas": ["git_files", "config_secrets", "git_log", "svn", "mercurial", "bazaar", "cvs", "pack_clone"],
         "resultados": vulns if vulns else "Nenhum VCS exposto",
     }

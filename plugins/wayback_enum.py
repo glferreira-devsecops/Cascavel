@@ -1,8 +1,8 @@
 # plugins/wayback_enum.py
-import subprocess
-import shutil
-import shlex
 import re
+import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -22,7 +22,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"echo {safe_target} | gau --threads 3 --blacklist png,jpg,gif,css,woff,ttf,svg",
-                shell=True, capture_output=True, timeout=60, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+                encoding="utf-8",
             )
             for url in proc.stdout.splitlines():
                 if url.strip():
@@ -39,7 +42,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"echo {safe_target} | waybackurls",
-                shell=True, capture_output=True, timeout=60, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+                encoding="utf-8",
             )
             for url in proc.stdout.splitlines():
                 if url.strip():
@@ -53,14 +59,24 @@ def run(target, ip, open_ports, banners):
 
     # Classificar URLs encontradas
     if urls_encontradas:
-        sensiveis = [u for u in urls_encontradas if re.search(
-            r'\.(php|asp|aspx|jsp|env|config|bak|sql|xml|json|yml|yaml|log|txt|ini|conf)(\?|$)',
-            u, re.IGNORECASE,
-        )]
-        api_endpoints = [u for u in urls_encontradas if re.search(
-            r'/api/|/v[0-9]+/|/graphql|/rest/',
-            u, re.IGNORECASE,
-        )]
+        sensiveis = [
+            u
+            for u in urls_encontradas
+            if re.search(
+                r"\.(php|asp|aspx|jsp|env|config|bak|sql|xml|json|yml|yaml|log|txt|ini|conf)(\?|$)",
+                u,
+                re.IGNORECASE,
+            )
+        ]
+        api_endpoints = [
+            u
+            for u in urls_encontradas
+            if re.search(
+                r"/api/|/v[0-9]+/|/graphql|/rest/",
+                u,
+                re.IGNORECASE,
+            )
+        ]
         resultado["total_urls"] = len(urls_encontradas)
         resultado["urls_sensiveis"] = sensiveis[:50]
         resultado["api_endpoints"] = api_endpoints[:30]

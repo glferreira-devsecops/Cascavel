@@ -1,12 +1,23 @@
 # plugins/deserialization_scan.py — Cascavel 2026 Intelligence
-import requests
 import base64
 import re
 
+import requests
 
-ENDPOINTS = ["/", "/api/", "/api/v1/", "/import", "/upload",
-             "/deserialize", "/object", "/data", "/api/import",
-             "/api/data", "/webhook", "/callback"]
+ENDPOINTS = [
+    "/",
+    "/api/",
+    "/api/v1/",
+    "/import",
+    "/upload",
+    "/deserialize",
+    "/object",
+    "/data",
+    "/api/import",
+    "/api/data",
+    "/webhook",
+    "/callback",
+]
 
 # ──────────── DESERIALIZATION PAYLOADS (2026) ────────────
 JAVA_PAYLOADS = [
@@ -14,8 +25,13 @@ JAVA_PAYLOADS = [
         "nome": "JAVA_SERIAL_HASHMAP",
         "data": base64.b64decode("rO0ABXNyABFqYXZhLnV0aWwuSGFzaE1hcA=="),
         "content_type": "application/x-java-serialized-object",
-        "indicadores": ["java.", "ClassNotFoundException", "ObjectInputStream",
-                        "serialVersionUID", "InvalidClassException"],
+        "indicadores": [
+            "java.",
+            "ClassNotFoundException",
+            "ObjectInputStream",
+            "serialVersionUID",
+            "InvalidClassException",
+        ],
     },
     {
         "nome": "JAVA_YSOSERIAL_PROBE",
@@ -30,12 +46,11 @@ PHP_PAYLOADS = [
         "nome": "PHP_SERIAL_STDCLASS",
         "data": 'O:8:"stdClass":1:{s:4:"test";s:4:"test";}',
         "content_type": "application/x-www-form-urlencoded",
-        "indicadores": ["unserialize", "stdClass", "__wakeup", "__destruct",
-                        "allowed_classes"],
+        "indicadores": ["unserialize", "stdClass", "__wakeup", "__destruct", "allowed_classes"],
     },
     {
         "nome": "PHP_PHAR_PROBE",
-        "data": 'phar://test.phar',
+        "data": "phar://test.phar",
         "content_type": "text/plain",
         "indicadores": ["phar", "PharException", "stream_wrapper"],
     },
@@ -44,10 +59,9 @@ PHP_PAYLOADS = [
 PYTHON_PAYLOADS = [
     {
         "nome": "PYTHON_PICKLE",
-        "data": base64.b64encode(b'\x80\x04\x95\x05\x00\x00\x00\x00\x00\x00\x00\x8c\x01X\x94.').decode(),
+        "data": base64.b64encode(b"\x80\x04\x95\x05\x00\x00\x00\x00\x00\x00\x00\x8c\x01X\x94.").decode(),
         "content_type": "application/octet-stream",
-        "indicadores": ["pickle", "unpickle", "cPickle", "Unpickler",
-                        "_pickle", "UnpicklingError"],
+        "indicadores": ["pickle", "unpickle", "cPickle", "Unpickler", "_pickle", "UnpicklingError"],
     },
 ]
 
@@ -56,8 +70,7 @@ DOTNET_PAYLOADS = [
         "nome": "DOTNET_BINARYFORMATTER",
         "data": "AAEAAAD/////",
         "content_type": "application/octet-stream",
-        "indicadores": ["BinaryFormatter", "SerializationException",
-                        "TypeLoadException", "System.Runtime"],
+        "indicadores": ["BinaryFormatter", "SerializationException", "TypeLoadException", "System.Runtime"],
     },
 ]
 
@@ -76,8 +89,10 @@ def _test_payload(url, payload):
     try:
         data = payload["data"]
         resp = requests.post(
-            url, data=data if isinstance(data, bytes) else str(data),
-            timeout=5, headers={"Content-Type": payload["content_type"]},
+            url,
+            data=data if isinstance(data, bytes) else str(data),
+            timeout=5,
+            headers={"Content-Type": payload["content_type"]},
         )
         for indicator in payload["indicadores"]:
             if indicator.lower() in resp.text.lower():
@@ -89,8 +104,7 @@ def _test_payload(url, payload):
                     "status": resp.status_code,
                 }
         # Check for generic error disclosure
-        if resp.status_code == 500 and any(e in resp.text.lower()
-                                            for e in ["exception", "error", "traceback"]):
+        if resp.status_code == 500 and any(e in resp.text.lower() for e in ["exception", "error", "traceback"]):
             return {
                 "tipo": "DESER_ERROR_DISCLOSURE",
                 "tecnologia": payload["nome"],
@@ -111,8 +125,10 @@ def _test_viewstate(url):
             vs_size = len(viewstate.group(1)) if viewstate else 0
 
             vuln = {
-                "tipo": "VIEWSTATE_DETECTADO", "endpoint": url,
-                "severidade": "MEDIO", "tamanho": vs_size,
+                "tipo": "VIEWSTATE_DETECTADO",
+                "endpoint": url,
+                "severidade": "MEDIO",
+                "tamanho": vs_size,
                 "descricao": "ASP.NET ViewState presente",
             }
 
@@ -150,14 +166,18 @@ def _test_json_deserialization(url):
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 500:
                 body = resp.text.lower()
-                if any(e in body for e in ["jackson", "fastjson", "typeloader",
-                                            "remoting", "jdbcrowset", "objectdataprovider"]):
-                    vulns.append({
-                        "tipo": "JSON_DESERIALIZATION",
-                        "severidade": "CRITICO",
-                        "descricao": "JSON polymorphic deserialization detected!",
-                        "amostra": resp.text[:150],
-                    })
+                if any(
+                    e in body
+                    for e in ["jackson", "fastjson", "typeloader", "remoting", "jdbcrowset", "objectdataprovider"]
+                ):
+                    vulns.append(
+                        {
+                            "tipo": "JSON_DESERIALIZATION",
+                            "severidade": "CRITICO",
+                            "descricao": "JSON polymorphic deserialization detected!",
+                            "amostra": resp.text[:150],
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -194,8 +214,16 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "deserialization_scan",
         "versao": "2026.1",
-        "tecnicas": ["java_serial", "ysoserial", "php_serial", "phar",
-                      "python_pickle", "dotnet_binary", "yaml_deser",
-                      "viewstate", "json_polymorphic"],
+        "tecnicas": [
+            "java_serial",
+            "ysoserial",
+            "php_serial",
+            "phar",
+            "python_pickle",
+            "dotnet_binary",
+            "yaml_deser",
+            "viewstate",
+            "json_polymorphic",
+        ],
         "resultados": vulns if vulns else "Nenhum endpoint de deserialization detectado",
     }

@@ -1,8 +1,8 @@
 # plugins/profiler_bundpent.py
-import subprocess
 import platform
-import shutil
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -33,7 +33,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"nmap -O -T4 {safe_target}",
-                shell=True, capture_output=True, timeout=60, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+                encoding="utf-8",
             )
             profile["nmap_os_detect"] = proc.stdout[:2000]
         except subprocess.TimeoutExpired:
@@ -49,7 +52,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"{whatweb_bin} {safe_target}",
-                shell=True, capture_output=True, timeout=30, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=30,
+                encoding="utf-8",
             )
             profile["whatweb"] = proc.stdout[:2000]
         except subprocess.TimeoutExpired:
@@ -64,7 +70,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"nmap --script ssl-cert,ssl-enum-ciphers -p 443 {safe_target}",
-                shell=True, capture_output=True, timeout=30, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=30,
+                encoding="utf-8",
             )
             profile["sslscan"] = proc.stdout[:2000]
         except subprocess.TimeoutExpired:

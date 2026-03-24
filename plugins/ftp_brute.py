@@ -1,6 +1,6 @@
 # plugins/ftp_brute.py
-import socket
 import ftplib
+import socket
 
 
 def run(target, ip, open_ports, banners):

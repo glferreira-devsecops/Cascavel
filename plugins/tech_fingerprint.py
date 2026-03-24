@@ -1,7 +1,7 @@
 # plugins/tech_fingerprint.py — Cascavel 2026 Intelligence
-import requests
 import re
 
+import requests
 
 # ──────────── TECHNOLOGY SIGNATURES (2026 Expanded) ────────────
 TECH_SIGNATURES = {
@@ -80,19 +80,27 @@ def _detect_tech(resp, headers):
     if server:
         techs["server"] = server
         # Check for version disclosure
-        if re.search(r'[\d.]+', server):
-            vulns.append({
-                "tipo": "SERVER_VERSION_DISCLOSED", "header": "Server",
-                "valor": server[:80], "severidade": "BAIXO",
-                "descricao": f"Server version exposed: {server[:80]}",
-            })
+        if re.search(r"[\d.]+", server):
+            vulns.append(
+                {
+                    "tipo": "SERVER_VERSION_DISCLOSED",
+                    "header": "Server",
+                    "valor": server[:80],
+                    "severidade": "BAIXO",
+                    "descricao": f"Server version exposed: {server[:80]}",
+                }
+            )
     if powered:
         techs["x_powered_by"] = powered
-        vulns.append({
-            "tipo": "X_POWERED_BY_EXPOSED", "header": "X-Powered-By",
-            "valor": powered, "severidade": "BAIXO",
-            "descricao": "X-Powered-By expõe stack — remover em produção",
-        })
+        vulns.append(
+            {
+                "tipo": "X_POWERED_BY_EXPOSED",
+                "header": "X-Powered-By",
+                "valor": powered,
+                "severidade": "BAIXO",
+                "descricao": "X-Powered-By expõe stack — remover em produção",
+            }
+        )
     if via:
         techs["via"] = via
 
@@ -125,37 +133,53 @@ def _audit_security_headers(headers):
             # HSTS analysis
             if label == "HSTS":
                 if "includeSubDomains" not in val:
-                    vulns.append({
-                        "tipo": "HSTS_NO_SUBDOMAINS", "severidade": "MEDIO",
-                        "descricao": "HSTS sem includeSubDomains!",
-                    })
-                max_age_match = re.search(r'max-age=(\d+)', val)
+                    vulns.append(
+                        {
+                            "tipo": "HSTS_NO_SUBDOMAINS",
+                            "severidade": "MEDIO",
+                            "descricao": "HSTS sem includeSubDomains!",
+                        }
+                    )
+                max_age_match = re.search(r"max-age=(\d+)", val)
                 if max_age_match and int(max_age_match.group(1)) < 31536000:
-                    vulns.append({
-                        "tipo": "HSTS_SHORT_MAX_AGE", "severidade": "MEDIO",
-                        "max_age": max_age_match.group(1),
-                        "descricao": "HSTS max-age < 1 ano!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "HSTS_SHORT_MAX_AGE",
+                            "severidade": "MEDIO",
+                            "max_age": max_age_match.group(1),
+                            "descricao": "HSTS max-age < 1 ano!",
+                        }
+                    )
                 if "preload" not in val:
-                    vulns.append({
-                        "tipo": "HSTS_NO_PRELOAD", "severidade": "BAIXO",
-                        "descricao": "HSTS sem preload — não está na lista HSTS preload!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "HSTS_NO_PRELOAD",
+                            "severidade": "BAIXO",
+                            "descricao": "HSTS sem preload — não está na lista HSTS preload!",
+                        }
+                    )
 
             # X-XSS-Protection deprecated
             if label == "X-XSS":
                 if val.strip() == "1; mode=block":
-                    vulns.append({
-                        "tipo": "X_XSS_DEPRECATED", "severidade": "INFO",
-                        "descricao": "X-XSS-Protection deprecated — substituir por CSP!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "X_XSS_DEPRECATED",
+                            "severidade": "INFO",
+                            "descricao": "X-XSS-Protection deprecated — substituir por CSP!",
+                        }
+                    )
         else:
             ausentes.append(label)
             if sev in ("ALTO", "MEDIO"):
-                vulns.append({
-                    "tipo": "HEADER_AUSENTE", "header": header,
-                    "label": label, "severidade": sev,
-                })
+                vulns.append(
+                    {
+                        "tipo": "HEADER_AUSENTE",
+                        "header": header,
+                        "label": label,
+                        "severidade": sev,
+                    }
+                )
 
     found["ausentes"] = ausentes
     return found, vulns
@@ -172,30 +196,41 @@ def _audit_cookies(headers):
     cookie_name = cookies.split("=")[0] if "=" in cookies else "unknown"
 
     if "httponly" not in lower:
-        vulns.append({
-            "tipo": "COOKIE_SEM_HTTPONLY", "cookie": cookie_name[:30],
-            "severidade": "ALTO",
-            "descricao": "Cookie sem HttpOnly — acessível via JavaScript (XSS)!",
-        })
+        vulns.append(
+            {
+                "tipo": "COOKIE_SEM_HTTPONLY",
+                "cookie": cookie_name[:30],
+                "severidade": "ALTO",
+                "descricao": "Cookie sem HttpOnly — acessível via JavaScript (XSS)!",
+            }
+        )
     if "secure" not in lower:
-        vulns.append({
-            "tipo": "COOKIE_SEM_SECURE", "cookie": cookie_name[:30],
-            "severidade": "MEDIO",
-            "descricao": "Cookie sem Secure — transmitido via HTTP!",
-        })
+        vulns.append(
+            {
+                "tipo": "COOKIE_SEM_SECURE",
+                "cookie": cookie_name[:30],
+                "severidade": "MEDIO",
+                "descricao": "Cookie sem Secure — transmitido via HTTP!",
+            }
+        )
     if "samesite" not in lower:
-        vulns.append({
-            "tipo": "COOKIE_SEM_SAMESITE", "cookie": cookie_name[:30],
-            "severidade": "MEDIO",
-            "descricao": "Cookie sem SameSite — CSRF possível!",
-        })
+        vulns.append(
+            {
+                "tipo": "COOKIE_SEM_SAMESITE",
+                "cookie": cookie_name[:30],
+                "severidade": "MEDIO",
+                "descricao": "Cookie sem SameSite — CSRF possível!",
+            }
+        )
     if "__host-" in lower or "__secure-" in lower:
         if "secure" not in lower or "path=/" not in lower:
-            vulns.append({
-                "tipo": "COOKIE_PREFIX_VIOLATION",
-                "severidade": "ALTO",
-                "descricao": "Cookie prefix (__Host-/__Secure-) sem Secure/Path=/!",
-            })
+            vulns.append(
+                {
+                    "tipo": "COOKIE_PREFIX_VIOLATION",
+                    "severidade": "ALTO",
+                    "descricao": "Cookie prefix (__Host-/__Secure-) sem Secure/Path=/!",
+                }
+            )
 
     return vulns
 
@@ -255,10 +290,17 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "tech_fingerprint",
         "versao": "2026.1",
-        "tecnicas": ["tech_signatures", "js_frameworks", "security_headers",
-                      "hsts_analysis", "cookie_audit", "waf_detection"],
+        "tecnicas": [
+            "tech_signatures",
+            "js_frameworks",
+            "security_headers",
+            "hsts_analysis",
+            "cookie_audit",
+            "waf_detection",
+        ],
         "resultados": {
-            "tecnologias": techs, "headers_seguranca": sec_headers,
+            "tecnologias": techs,
+            "headers_seguranca": sec_headers,
             "waf": waf if waf else "Nenhum WAF detectado",
             "vulns": vulns,
         },

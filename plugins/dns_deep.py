@@ -1,7 +1,7 @@
 # plugins/dns_deep.py
-import subprocess
-import shutil
 import shlex
+import shutil
+import subprocess
 
 
 def run(target, ip, open_ports, banners):
@@ -19,7 +19,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"echo {safe_target} | dnsx -silent -a -aaaa -mx -ns -cname -txt -soa -resp",
-                shell=True, capture_output=True, timeout=30, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=30,
+                encoding="utf-8",
             )
             registros = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
             resultado["dnsx"] = registros if registros else "Sem resultados"
@@ -35,7 +38,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"dnsrecon -d {safe_target} -t std,brt,axfr",
-                shell=True, capture_output=True, timeout=60, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+                encoding="utf-8",
             )
             resultado["dnsrecon"] = proc.stdout[:3000] if proc.stdout else "Sem resultados"
         except subprocess.TimeoutExpired:
@@ -50,7 +56,10 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"fierce --domain {safe_target}",
-                shell=True, capture_output=True, timeout=60, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+                encoding="utf-8",
             )
             resultado["fierce"] = proc.stdout[:3000] if proc.stdout else "Sem resultados"
         except subprocess.TimeoutExpired:
@@ -66,7 +75,10 @@ def run(target, ip, open_ports, banners):
         for tipo in ["A", "MX", "NS", "TXT", "CNAME", "SOA"]:
             proc = subprocess.run(
                 f"dig +short {safe_target} {tipo}",
-                shell=True, capture_output=True, timeout=10, encoding="utf-8",
+                shell=True,
+                capture_output=True,
+                timeout=10,
+                encoding="utf-8",
             )
             registros[tipo] = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
         resultado["dig_records"] = registros

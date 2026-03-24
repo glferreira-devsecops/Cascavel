@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ╔═══════════════════════════════════════════════════════════════╗
 ║  CASCAVEL — Quantum Security Framework v2.2.0                ║
@@ -8,29 +7,28 @@
 ╚═══════════════════════════════════════════════════════════════╝
 """
 
-import os
-import sys
-import subprocess
+import argparse
+import ast
+import concurrent.futures
 import datetime
-import socket
 import glob
 import importlib.util
-import json
-import signal
-import shutil
-import re
-import argparse
-import shlex
-import time
-import random
-import platform
-import urllib.request
-import threading
 import ipaddress
-import concurrent.futures
+import json
+import os
+import platform
+import random
+import re
+import shlex
+import shutil
+import signal
+import socket
+import subprocess
+import sys
+import time
 import unicodedata
-import ast
-from typing import List, Dict, Any, NoReturn, Optional, Tuple
+import urllib.request
+from typing import Any, Dict, List, NoReturn, Optional, Tuple
 
 __version__ = "2.2.0"
 
@@ -43,34 +41,36 @@ __version__ = "2.2.0"
 # - Executar comandos via iTerm2/Kitty OSC sequences
 # Regex strips ALL non-SGR ANSI sequences, mantendo apenas cores.
 _ANSI_DANGEROUS_RE = re.compile(
-    r'\x1b'
-    r'(?:'
-    r'\].*?(?:\x07|\x1b\\)'  # OSC sequences (title change, clipboard)
-    r'|P.*?\x1b\\'            # DCS sequences
-    r'|\[(?:'
-    r'\d*[ABCDEFGHJKST]'       # Cursor movement
-    r'|\d*;?\d*[Hf]'           # Cursor positioning
-    r'|[su]'                    # Cursor save/restore
-    r'|\?\d+[hl]'              # Private mode set/reset
-    r'|\d*[JK]'                # Erase in display/line
-    r')'
-    r')',
+    r"\x1b"
+    r"(?:"
+    r"\].*?(?:\x07|\x1b\\)"  # OSC sequences (title change, clipboard)
+    r"|P.*?\x1b\\"  # DCS sequences
+    r"|\[(?:"
+    r"\d*[ABCDEFGHJKST]"  # Cursor movement
+    r"|\d*;?\d*[Hf]"  # Cursor positioning
+    r"|[su]"  # Cursor save/restore
+    r"|\?\d+[hl]"  # Private mode set/reset
+    r"|\d*[JK]"  # Erase in display/line
+    r")"
+    r")",
     re.DOTALL,
 )
 
+
 def _sanitize_output(data: Any) -> Any:
     """Sanitiza saída de plugin contra ANSI escape injection.
-    
+
     Remove sequências perigosas (cursor movement, OSC, DCS) mas preserva
     cores SGR básicas (\x1b[...m) para manter formatação visual.
     """
     if isinstance(data, str):
-        return _ANSI_DANGEROUS_RE.sub('', data)
+        return _ANSI_DANGEROUS_RE.sub("", data)
     if isinstance(data, dict):
         return {k: _sanitize_output(v) for k, v in data.items()}
     if isinstance(data, list):
         return [_sanitize_output(item) for item in data]
     return data
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DEPENDENCY BOOTSTRAP
@@ -125,17 +125,17 @@ def _check_deps() -> None:
 
 _check_deps()
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
-from rich.text import Text
+from rich import box
 from rich.align import Align
 from rich.columns import Columns
-from rich.rule import Rule
-from rich.live import Live
+from rich.console import Console
 from rich.layout import Layout
-from rich import box
+from rich.live import Live
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.rule import Rule
+from rich.table import Table
+from rich.text import Text
 
 try:
     import pyfiglet
@@ -161,10 +161,10 @@ S_YELLOW = "bold yellow"
 
 SEV_MAP = {
     "CRITICO": (S_RED, "💀"),
-    "ALTO":    ("red", "🔴"),
-    "MEDIO":   ("yellow", "🟡"),
-    "BAIXO":   ("cyan", "🔵"),
-    "INFO":    (S_DIM, "⚪"),
+    "ALTO": ("red", "🔴"),
+    "MEDIO": ("yellow", "🟡"),
+    "BAIXO": ("cyan", "🔵"),
+    "INFO": (S_DIM, "⚪"),
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -284,7 +284,7 @@ def _typewriter(text: str, speed: float = 0.02) -> None:
             time.sleep(speed)
     except KeyboardInterrupt:
         # Garante newline antes de propagar SIGINT
-        sys.stdout.write('\n')
+        sys.stdout.write("\n")
         sys.stdout.flush()
         raise
 
@@ -355,11 +355,11 @@ def _fade_in_logo() -> None:
 
         # Phase 2: Logo text — 4 estágios de fade (dim gray → bold bright green)
         fade_codes = [
-            "\033[2;90m",   # dim gray
-            "\033[0;90m",   # gray
-            "\033[0;32m",   # green
-            "\033[1;32m",   # bold green
-            "\033[1;92m",   # bold bright green
+            "\033[2;90m",  # dim gray
+            "\033[0;90m",  # gray
+            "\033[0;32m",  # green
+            "\033[1;32m",  # bold green
+            "\033[1;92m",  # bold bright green
         ]
 
         for stage_idx, ansi in enumerate(fade_codes):
@@ -381,7 +381,7 @@ def _fade_in_logo() -> None:
         console.print(f"  [bold bright_cyan]{subtitle}[/]")
         time.sleep(0.4)
 
-    except (OSError, IOError):
+    except OSError:
         # Fallback completo se CSI falhar (ex: terminal incompatível)
         for line in CASCAVEL_LOGO_ASCII:
             console.print(f"[bold bright_green]{line}[/]")
@@ -407,7 +407,7 @@ def _clear_block(num_lines: int) -> None:
         sys.stdout.write(f"\033[{safe_lines}A")
         sys.stdout.write("\033[u")  # Restore cursor ao ponto salvo
         sys.stdout.flush()
-    except (OSError, IOError):
+    except OSError:
         pass  # Silencia erros em terminais incompatíveis
 
 
@@ -424,7 +424,7 @@ def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | Non
     """
     try:
         _run_preloader_impl(plugin_count, tools_count, target_hint=target_hint)
-    except (OSError, IOError, Exception) as e:
+    except (OSError, Exception) as e:
         # Fallback: terminal incompatível — imprime versão estática
         console.print(f"\n  [bold bright_green]🐍 CASCAVEL v{__version__} — ONLINE[/]")
         console.print(f"  [dim]Preloader desativado: {type(e).__name__}[/]\n")
@@ -450,12 +450,14 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
     if target_hint:
         boot_title = f"[bold green]▶ SYSTEM BOOT SEQUENCE[/]  [bold bright_red]⚡ {target_hint}[/]"
 
-    console.print(Panel(
-        boot_title,
-        border_style="green",
-        box=box.HEAVY,
-        width=68,
-    ))
+    console.print(
+        Panel(
+            boot_title,
+            border_style="green",
+            box=box.HEAVY,
+            width=68,
+        )
+    )
     console.print()
 
     replacements = {
@@ -505,7 +507,9 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
                 time.sleep(0.012)
 
     if target_hint:
-        console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — [bright_red]{target_hint}[/] LOCKED & LOADED[/]\n")
+        console.print(
+            f"  [bold bright_green]✓ CASCAVEL v{__version__} — [bright_red]{target_hint}[/] LOCKED & LOADED[/]\n"
+        )
     else:
         console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — ONLINE[/]\n")
 
@@ -529,10 +533,7 @@ SNAKE_ART = r"""[green]
 
 
 def _count_plugins() -> int:
-    return sum(
-        1 for f in glob.glob(os.path.join(PLUGINS_PATH, "*.py"))
-        if not os.path.basename(f).startswith("__")
-    )
+    return sum(1 for f in glob.glob(os.path.join(PLUGINS_PATH, "*.py")) if not os.path.basename(f).startswith("__"))
 
 
 def print_header() -> None:
@@ -545,12 +546,14 @@ def print_header() -> None:
         styled.stylize(S_GREEN)
         console.print(Align.center(styled))
     else:
-        fallback = Text("  ██████╗  █████╗ ███████╗ ██████╗  █████╗ ██╗   ██╗███████╗██╗\n"
-                        " ██╔════╝ ██╔══██╗██╔════╝██╔════╝ ██╔══██╗██║   ██║██╔════╝██║\n"
-                        " ██║      ███████║███████╗██║      ███████║██║   ██║█████╗  ██║\n"
-                        " ██║      ██╔══██║╚════██║██║      ██╔══██║╚██╗ ██╔╝██╔══╝  ██║\n"
-                        " ╚██████╗ ██║  ██║███████║╚██████╗ ██║  ██║ ╚████╔╝ ███████╗███████╗\n"
-                        "  ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚══════╝\n")
+        fallback = Text(
+            "  ██████╗  █████╗ ███████╗ ██████╗  █████╗ ██╗   ██╗███████╗██╗\n"
+            " ██╔════╝ ██╔══██╗██╔════╝██╔════╝ ██╔══██╗██║   ██║██╔════╝██║\n"
+            " ██║      ███████║███████╗██║      ███████║██║   ██║█████╗  ██║\n"
+            " ██║      ██╔══██║╚════██║██║      ██╔══██║╚██╗ ██╔╝██╔══╝  ██║\n"
+            " ╚██████╗ ██║  ██║███████║╚██████╗ ██║  ██║ ╚████╔╝ ███████╗███████╗\n"
+            "  ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚══════╝\n"
+        )
         fallback.stylize(S_GREEN)
         console.print(Align.center(fallback))
 
@@ -564,18 +567,22 @@ def print_header() -> None:
     info_table.add_column(style=S_CYAN)
     info_table.add_column(style="white")
     info_table.add_row(
-        "🕐 Timestamp", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "💻 Plataforma", f"{sys.platform} | Python {sys.version.split()[0]}",
+        "🕐 Timestamp",
+        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "💻 Plataforma",
+        f"{sys.platform} | Python {sys.version.split()[0]}",
     )
     info_table.add_row("👤 Autor", "DevFerreiraG", "📦 Versão", f"v{__version__}")
 
-    console.print(Panel(
-        Align.center(info_table),
-        border_style="bright_green",
-        title=f"[{S_GREEN}]🐍 CASCAVEL[/]",
-        subtitle="[dim]Quantum Security Framework[/]",
-        box=box.DOUBLE_EDGE,
-    ))
+    console.print(
+        Panel(
+            Align.center(info_table),
+            border_style="bright_green",
+            title=f"[{S_GREEN}]🐍 CASCAVEL[/]",
+            subtitle="[dim]Quantum Security Framework[/]",
+            box=box.DOUBLE_EDGE,
+        )
+    )
     console.print()
 
 
@@ -591,12 +598,14 @@ def print_target_card(target: str, ip: str) -> None:
     grid.add_row("🕐 Início", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     grid.add_row("🐍 Versão", f"v{__version__}")
 
-    console.print(Panel(
-        Align.center(grid),
-        title=f"[{S_RED}]⚡ TARGET ACQUISITION ⚡[/]",
-        border_style="red",
-        box=box.HEAVY,
-    ))
+    console.print(
+        Panel(
+            Align.center(grid),
+            title=f"[{S_RED}]⚡ TARGET ACQUISITION ⚡[/]",
+            border_style="red",
+            box=box.HEAVY,
+        )
+    )
     console.print()
 
 
@@ -610,12 +619,14 @@ def print_tools_status(tools: Dict[str, bool]) -> None:
     for t in absent:
         items.append(Text(f" ○ {t} ", style="dim red"))
 
-    console.print(Panel(
-        Columns(items, column_first=True, expand=True, padding=(0, 1)),
-        title=f"[{S_CYAN}]🔧 FERRAMENTAS EXTERNAS ({len(present)}/{len(tools)})[/]",
-        border_style="cyan",
-        box=box.ROUNDED,
-    ))
+    console.print(
+        Panel(
+            Columns(items, column_first=True, expand=True, padding=(0, 1)),
+            title=f"[{S_CYAN}]🔧 FERRAMENTAS EXTERNAS ({len(present)}/{len(tools)})[/]",
+            border_style="cyan",
+            box=box.ROUNDED,
+        )
+    )
     console.print()
 
 
@@ -631,20 +642,24 @@ def timestamp() -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 _CLOUD_METADATA_HOSTS = {
     # AWS
-    "169.254.169.254", "fd00:ec2::254", "169.254.169.123",
-    # GCP
-    "metadata.google.internal", "metadata.google.com",
-    # Azure
     "169.254.169.254",
+    "fd00:ec2::254",
+    "169.254.169.123",
+    # GCP
+    "metadata.google.internal",
+    "metadata.google.com",
+    # Azure
     # Alibaba Cloud
     "100.100.100.200",
     # DigitalOcean
-    "169.254.169.254",
     # Oracle Cloud
-    "169.254.169.254",
     # Generic blocked
-    "localhost", "0.0.0.0", "::1", "0177.0.0.1",
-    "ip6-localhost", "ip6-loopback",
+    "localhost",
+    "0.0.0.0",
+    "::1",
+    "0177.0.0.1",
+    "ip6-localhost",
+    "ip6-loopback",
 }
 
 
@@ -841,9 +856,11 @@ def validate_target(target: str, allow_self: bool = False) -> str:
             return ""
 
     # Regex: aceita domínios, IPs, e hostnames
-    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._\-]*(:\d{1,5})?$', target):
+    if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._\-]*(:\d{1,5})?$", target):
         # Tenta aceitar xn-- (punycode) e Unicode antes de rejeitar
-        if not any(ord(c) > 127 for c in target) and not any(l.startswith("xn--") for l in host_part.split(".")):
+        has_unicode = any(ord(c) > 127 for c in target)
+        has_punycode = any(label.startswith("xn--") for label in host_part.split("."))
+        if not has_unicode and not has_punycode:
             console.print(f"  [{S_RED}]✗ Target inválido: {target}[/]")
             console.print(f"  [{S_DIM}]Formatos aceitos: dominio.com │ 1.2.3.4 │ host:porta[/]")
             console.print(f"  [{S_DIM}]Exemplos: example.com, 93.184.216.34, api.target.io:8443[/]")
@@ -883,7 +900,7 @@ def validate_target(target: str, allow_self: bool = False) -> str:
             socket.setdefaulttimeout(5)
             try:
                 addrs = socket.getaddrinfo(host_part, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
-                for family, _, _, _, sockaddr in addrs:
+                for _family, _, _, _, sockaddr in addrs:
                     resolved_ip: str = str(sockaddr[0])
                     blocked, reason = _is_blocked_ip(resolved_ip)
                     if blocked:
@@ -958,14 +975,23 @@ def _preflight_check() -> bool:
 
     # 1. Python version
     py_ok = sys.version_info >= (3, 8)
-    checks.append(("Python ≥ 3.8", py_ok,
-                    f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-                    "Atualize Python: python.org/downloads"))
+    checks.append(
+        (
+            "Python ≥ 3.8",
+            py_ok,
+            f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "Atualize Python: python.org/downloads",
+        )
+    )
 
     # 2. Diretórios existem e são writable
     dirs_ok = True
-    for name, path in [("plugins", PLUGINS_PATH), ("reports", REPORTS_PATH),
-                       ("exports", EXPORTS_PATH), ("wordlists", WORDLISTS_PATH)]:
+    for _dir_name, path in [
+        ("plugins", PLUGINS_PATH),
+        ("reports", REPORTS_PATH),
+        ("exports", EXPORTS_PATH),
+        ("wordlists", WORDLISTS_PATH),
+    ]:
         if not os.path.isdir(path):
             try:
                 os.makedirs(path, exist_ok=True)
@@ -973,9 +999,14 @@ def _preflight_check() -> bool:
                 dirs_ok = False
         if not os.access(path, os.W_OK):
             dirs_ok = False
-    checks.append(("Diretórios R/W", dirs_ok,
-                    "plugins/ reports/ exports/ wordlists/",
-                    "Verifique permissões: chmod 755 nos diretórios"))
+    checks.append(
+        (
+            "Diretórios R/W",
+            dirs_ok,
+            "plugins/ reports/ exports/ wordlists/",
+            "Verifique permissões: chmod 755 nos diretórios",
+        )
+    )
 
     # 3. Rich importável
     rich_ok = True
@@ -986,10 +1017,9 @@ def _preflight_check() -> bool:
     checks.append(("Rich library", rich_ok, "Importada", "pip install rich"))
 
     # 4. Terminal encoding
-    encoding = getattr(sys.stdout, 'encoding', 'unknown') or 'unknown'
+    encoding = getattr(sys.stdout, "encoding", "unknown") or "unknown"
     enc_ok = encoding.lower().replace("-", "") in ("utf8", "utf16", "utf32")
-    checks.append(("Terminal UTF-8", enc_ok, encoding,
-                    "export LANG=en_US.UTF-8 ou PYTHONIOENCODING=utf-8"))
+    checks.append(("Terminal UTF-8", enc_ok, encoding, "export LANG=en_US.UTF-8 ou PYTHONIOENCODING=utf-8"))
 
     # 5. Espaço em disco (≥50MB em reports/)
     disk_ok = True
@@ -999,9 +1029,14 @@ def _preflight_check() -> bool:
         disk_ok = free_mb >= 50
     except (OSError, AttributeError):
         free_mb = -1
-    checks.append(("Disco ≥ 50MB", disk_ok,
-                    f"{free_mb:.0f}MB livres" if free_mb >= 0 else "N/A",
-                    "Libere espaço em disco para relatórios"))
+    checks.append(
+        (
+            "Disco ≥ 50MB",
+            disk_ok,
+            f"{free_mb:.0f}MB livres" if free_mb >= 0 else "N/A",
+            "Libere espaço em disco para relatórios",
+        )
+    )
 
     # 6. DNS funcional
     dns_ok = False
@@ -1013,30 +1048,33 @@ def _preflight_check() -> bool:
         pass
     finally:
         socket.setdefaulttimeout(None)
-    checks.append(("DNS funcional", dns_ok, "dns.google",
-                    "Verifique sua conexão de rede e DNS"))
+    checks.append(("DNS funcional", dns_ok, "dns.google", "Verifique sua conexão de rede e DNS"))
 
     # 7. Pelo menos 1 plugin
     plugin_count = _count_plugins()
-    checks.append(("Plugins ≥ 1", plugin_count > 0, f"{plugin_count} plugins",
-                    "Verifique a pasta plugins/"))
+    checks.append(("Plugins ≥ 1", plugin_count > 0, f"{plugin_count} plugins", "Verifique a pasta plugins/"))
 
     # 8. Pelo menos 1 ferramenta externa
     tools_avail = detect_tools()
     tools_count = sum(1 for v in tools_avail.values() if v)
-    checks.append(("Tools externas ≥ 1", tools_count > 0,
-                    f"{tools_count}/{len(tools_avail)}",
-                    "Instale: nmap, curl, whois (mínimo)"))
+    checks.append(
+        (
+            "Tools externas ≥ 1",
+            tools_count > 0,
+            f"{tools_count}/{len(tools_avail)}",
+            "Instale: nmap, curl, whois (mínimo)",
+        )
+    )
 
     # 9. Permissão de escrita em reports/
     write_ok = os.access(REPORTS_PATH, os.W_OK) if os.path.isdir(REPORTS_PATH) else False
-    checks.append(("Escrita reports/", write_ok, REPORTS_PATH,
-                    "chmod 755 reports/ ou execute como owner"))
+    checks.append(("Escrita reports/", write_ok, REPORTS_PATH, "chmod 755 reports/ ou execute como owner"))
 
     # Display
     table = Table(
         title=f"[{S_GREEN}]🔍 PRE-FLIGHT CHECK[/]",
-        box=box.ROUNDED, border_style="green",
+        box=box.ROUNDED,
+        border_style="green",
         header_style=f"{S_WHITE} on dark_green",
     )
     table.add_column("Check", style=S_CYAN, min_width=18)
@@ -1045,7 +1083,7 @@ def _preflight_check() -> bool:
 
     all_ok = True
     for name, ok, detail, fix in checks:
-        icon = f"[green]✓[/]" if ok else f"[red]✗[/]"
+        icon = "[green]✓[/]" if ok else "[red]✗[/]"
         detail_str = detail if ok else f"[red]{detail}[/] — {fix}"
         table.add_row(name, icon, detail_str)
         if not ok:
@@ -1073,11 +1111,14 @@ def _check_single_tool(tool: str) -> Tuple[str, bool, str]:
     version = ""
     try:
         result = subprocess.run(
-            [path, "--version"], capture_output=True, text=True, timeout=3,
+            [path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         out = (result.stdout or "") + (result.stderr or "")
         # Extrai primeira versão encontrada (X.Y.Z ou X.Y)
-        ver_match = re.search(r'(\d+\.\d+(?:\.\d+)?)', out)
+        ver_match = re.search(r"(\d+\.\d+(?:\.\d+)?)", out)
         if ver_match:
             version = ver_match.group(1)
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError, PermissionError):
@@ -1091,11 +1132,36 @@ def detect_tools() -> Dict[str, bool]:
     ~30 tools verificadas em ~3s (paralelo) vs ~15s (serial).
     """
     tools = [
-        "subfinder", "amass", "httpx", "nmap", "ffuf", "gobuster",
-        "naabu", "nuclei", "feroxbuster", "curl", "nikto", "sqlmap",
-        "wafw00f", "dnsrecon", "fierce", "hydra", "gau", "waybackurls",
-        "katana", "dnsx", "asnmap", "mapcidr", "tshark", "sslscan",
-        "whatweb", "wpscan", "john", "whois", "traceroute", "dig",
+        "subfinder",
+        "amass",
+        "httpx",
+        "nmap",
+        "ffuf",
+        "gobuster",
+        "naabu",
+        "nuclei",
+        "feroxbuster",
+        "curl",
+        "nikto",
+        "sqlmap",
+        "wafw00f",
+        "dnsrecon",
+        "fierce",
+        "hydra",
+        "gau",
+        "waybackurls",
+        "katana",
+        "dnsx",
+        "asnmap",
+        "mapcidr",
+        "tshark",
+        "sslscan",
+        "whatweb",
+        "wpscan",
+        "john",
+        "whois",
+        "traceroute",
+        "dig",
     ]
     return {tool: shutil.which(tool) is not None for tool in tools}
 
@@ -1103,11 +1169,36 @@ def detect_tools() -> Dict[str, bool]:
 def detect_tools_with_versions() -> Dict[str, Tuple[bool, str]]:
     """Versão estendida: retorna {tool: (disponível, versão)} em paralelo."""
     tools = [
-        "subfinder", "amass", "httpx", "nmap", "ffuf", "gobuster",
-        "naabu", "nuclei", "feroxbuster", "curl", "nikto", "sqlmap",
-        "wafw00f", "dnsrecon", "fierce", "hydra", "gau", "waybackurls",
-        "katana", "dnsx", "asnmap", "mapcidr", "tshark", "sslscan",
-        "whatweb", "wpscan", "john", "whois", "traceroute", "dig",
+        "subfinder",
+        "amass",
+        "httpx",
+        "nmap",
+        "ffuf",
+        "gobuster",
+        "naabu",
+        "nuclei",
+        "feroxbuster",
+        "curl",
+        "nikto",
+        "sqlmap",
+        "wafw00f",
+        "dnsrecon",
+        "fierce",
+        "hydra",
+        "gau",
+        "waybackurls",
+        "katana",
+        "dnsx",
+        "asnmap",
+        "mapcidr",
+        "tshark",
+        "sslscan",
+        "whatweb",
+        "wpscan",
+        "john",
+        "whois",
+        "traceroute",
+        "dig",
     ]
     results = {}
     try:
@@ -1155,12 +1246,15 @@ def ensure_nuclei_templates() -> str:
     # CVE-2024-43405: nuclei < 3.3.2 tem template signature bypass (RCE)
     try:
         ver_out = subprocess.run(
-            ["nuclei", "-version"], capture_output=True, text=True, timeout=10,
+            ["nuclei", "-version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         ver_str = (ver_out.stdout + ver_out.stderr).strip()
         if ver_str:
             # Parse version number
-            ver_match = re.search(r'(\d+\.\d+\.\d+)', ver_str)
+            ver_match = re.search(r"(\d+\.\d+\.\d+)", ver_str)
             if ver_match:
                 parts = ver_match.group(1).split(".")
                 major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
@@ -1175,7 +1269,8 @@ def ensure_nuclei_templates() -> str:
         try:
             subprocess.run(
                 ["nuclei", "-update-templates", "-ut", NUCLEI_TEMPLATES_PATH],
-                check=True, timeout=120,
+                check=True,
+                timeout=120,
             )
         except Exception:
             return ""
@@ -1223,7 +1318,10 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
     try:
         # start_new_session=True cria process group para matar filhos no timeout
         proc = subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             start_new_session=True,
         )
         stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
@@ -1291,9 +1389,12 @@ def _stderr_log(tool_name: str, stderr_content: str) -> None:
 # PIPELINE FERRAMENTAS EXTERNAS
 # ═══════════════════════════════════════════════════════════════════════════════
 def enum_tools(
-    target: str, report: List[str],
-    wordlist: str, nuclei_templates: str,
-    timeouts: Dict[str, int], available: Dict[str, bool],
+    target: str,
+    report: List[str],
+    wordlist: str,
+    nuclei_templates: str,
+    timeouts: Dict[str, int],
+    available: Dict[str, bool],
 ) -> Dict[str, Any]:
     results: Dict[str, Any] = {}
     safe = shlex.quote(target)
@@ -1303,8 +1404,7 @@ def enum_tools(
         "amass": f"amass enum -d {safe} -timeout 2",
         "httpx": f"echo {safe} | httpx -silent -title -tech-detect -ip",
         "nmap": f"nmap -Pn -A {safe}",
-        "ffuf": (f"ffuf -u http://{safe}/FUZZ -w {wordlist} "
-                 "-mc 200,204,301,302,307,401,403 -t 40") if wordlist else "",
+        "ffuf": (f"ffuf -u http://{safe}/FUZZ -w {wordlist} -mc 200,204,301,302,307,401,403 -t 40") if wordlist else "",
         "gobuster": f"gobuster dir -u http://{safe} -w {wordlist} -q" if wordlist else "",
         "naabu": f"echo {safe} | naabu -silent",
         "nuclei": f"echo {safe} | nuclei -silent -t {nuclei_templates}" if nuclei_templates else "",
@@ -1420,8 +1520,12 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
 # 🔌 PLUGIN ENGINE
 # ═══════════════════════════════════════════════════════════════════════════════
 def _exec_plugin(
-    path: str, name: str,
-    target: str, ip: str, ports: List[int], banners: Dict[int, str],
+    path: str,
+    name: str,
+    target: str,
+    ip: str,
+    ports: List[int],
+    banners: Dict[int, str],
     timeout: int = 120,
 ) -> Dict[str, Any]:
     """Executa um plugin com timeout guard (SIGALRM, 120s padrão).
@@ -1430,6 +1534,7 @@ def _exec_plugin(
     O alarm garante que o framework não fica preso em nenhum plugin individual.
     """
     import importlib.machinery as _ilm
+
     spec: Optional[_ilm.ModuleSpec] = importlib.util.spec_from_file_location(name, path)
     if spec is None:
         return {"plugin": name, "erro": "Módulo não resolvido"}
@@ -1446,11 +1551,11 @@ def _exec_plugin(
     # Per-plugin timeout via SIGALRM (Unix only)
     _has_alarm = hasattr(signal, "SIGALRM")
 
-    class _PluginTimeout(Exception):
+    class _PluginTimeoutError(Exception):
         pass
 
     def _alarm_handler(signum, frame):
-        raise _PluginTimeout(f"Plugin '{name}' excedeu timeout de {timeout}s")
+        raise _PluginTimeoutError(f"Plugin '{name}' excedeu timeout de {timeout}s")
 
     old_handler = None
     if _has_alarm:
@@ -1462,7 +1567,7 @@ def _exec_plugin(
         # SEGURANÇA 2026: Sanitiza saída contra ANSI escape injection
         result = _sanitize_output(result) if result else {"plugin": name, "resultados": "Sem retorno"}
         return result
-    except _PluginTimeout:
+    except _PluginTimeoutError:
         return {"plugin": name, "erro": f"TIMEOUT ({timeout}s)"}
     except TypeError as e:
         return {"plugin": name, "erro": f"Assinatura: {_sanitize_output(str(e))}"}
@@ -1566,6 +1671,7 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
     next_text.append(f"  {truncated}{suffix}\n", style="dim")
 
     from rich.console import Group  # noqa: E402 — import local para evitar circular em testes
+
     content = Group(
         Panel(intel_text, border_style="bright_yellow", title="[bold yellow]🧠 SECURITY INTEL[/]", box=box.ROUNDED),
         Panel(stats, border_style="bright_green", title="[bold green]📊 LIVE STATS[/]", box=box.ROUNDED),
@@ -1575,20 +1681,29 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
 
 
 def run_plugins(
-    target: str, ip: str, ports: List[int],
-    banners: Dict[int, str], report: List[str],
+    target: str,
+    ip: str,
+    ports: List[int],
+    banners: Dict[int, str],
+    report: List[str],
 ) -> List[Dict[str, Any]]:
     """Executa todos os plugins com split-screen: scan table + security intel."""
     results: List[Dict[str, Any]] = []
     plugin_files = sorted(glob.glob(os.path.join(PLUGINS_PATH, "*.py")))
     valid = [
-        (f, os.path.splitext(os.path.basename(f))[0])
-        for f in plugin_files
-        if not os.path.basename(f).startswith("__")
+        (f, os.path.splitext(os.path.basename(f))[0]) for f in plugin_files if not os.path.basename(f).startswith("__")
     ]
     total = len(valid)
-    scan_stats: Dict[str, int] = {"ok": 0, "vuln": 0, "err": 0,
-                                   "CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
+    scan_stats: Dict[str, int] = {
+        "ok": 0,
+        "vuln": 0,
+        "err": 0,
+        "CRITICO": 0,
+        "ALTO": 0,
+        "MEDIO": 0,
+        "BAIXO": 0,
+        "INFO": 0,
+    }
 
     console.print(Rule(f"[bold magenta]🔌 PLUGIN ENGINE — {total} PLUGINS[/]", style="magenta"))
     console.print()
@@ -1600,7 +1715,9 @@ def run_plugins(
     scan_start = time.time()
 
     def _build_table(
-        rows: list, current_idx: int, current_name: str,
+        rows: list,
+        current_idx: int,
+        current_name: str,
     ) -> Table:
         """Constrói a tabela de resultados que atualiza em Live."""
         pct = min(int((current_idx / total) * 100), 100) if total else 100
@@ -1635,8 +1752,12 @@ def run_plugins(
         # Current plugin indicator
         if current_idx < total:
             t.add_row(
-                str(current_idx), f"[bold yellow]▶ {current_name}[/]",
-                "[yellow]⋯[/]", "[yellow]Executando...[/]", "", "",
+                str(current_idx),
+                f"[bold yellow]▶ {current_name}[/]",
+                "[yellow]⋯[/]",
+                "[yellow]Executando...[/]",
+                "",
+                "",
             )
 
         return t
@@ -1653,10 +1774,13 @@ def run_plugins(
         )
         layout["scan"].update(_build_table(rows, current_idx, current_name))
         safe_intel_i = intel_order[intel_i % len(intel_order)] if intel_order else 0
-        layout["intel"].update(_build_intel_panel(
-            safe_intel_i,
-            scan_stats, time.time() - scan_start,
-        ))
+        layout["intel"].update(
+            _build_intel_panel(
+                safe_intel_i,
+                scan_stats,
+                time.time() - scan_start,
+            )
+        )
         return layout
 
     table_rows: list = []
@@ -1667,7 +1791,6 @@ def run_plugins(
             console=console,
             refresh_per_second=4,
         ) as live:
-
             for idx, (file_path, name) in enumerate(valid, 1):
                 t0 = time.time()
 
@@ -1710,10 +1833,16 @@ def run_plugins(
                     ok_count: int = scan_stats.get("ok", 0)
                     scan_stats["ok"] = ok_count + 1
 
-                table_rows.append((
-                    str(idx), name, f"[{style}]{icon}[/]",
-                    desc, sev_str or "[green]—[/]", f"{elapsed:.1f}s",
-                ))
+                table_rows.append(
+                    (
+                        str(idx),
+                        name,
+                        f"[{style}]{icon}[/]",
+                        desc,
+                        sev_str or "[green]—[/]",
+                        f"{elapsed:.1f}s",
+                    )
+                )
 
                 # Rotate intel every 2 plugins
                 if idx % 2 == 0:
@@ -1758,8 +1887,11 @@ def run_plugins(
 # 📊 DASHBOARD FINAL
 # ═══════════════════════════════════════════════════════════════════════════════
 def print_dashboard(
-    target: str, ip: str, results: List[Dict[str, Any]],
-    elapsed_total: float, report_path: str,
+    target: str,
+    ip: str,
+    results: List[Dict[str, Any]],
+    elapsed_total: float,
+    report_path: str,
 ) -> None:
     console.print(Rule(f"[{S_GREEN}]📊 MISSION REPORT[/]", style="bright_green"))
     console.print()
@@ -1825,10 +1957,13 @@ def print_dashboard(
         f"[red]✗ Erros: {total_err}[/]",
         f"[{S_WHITE}]Findings: {total_findings}[/]",
     ]
-    console.print(Panel(
-        Align.center(Text.from_markup("  │  ".join(parts))),
-        border_style="cyan", box=box.ROUNDED,
-    ))
+    console.print(
+        Panel(
+            Align.center(Text.from_markup("  │  ".join(parts))),
+            border_style="cyan",
+            box=box.ROUNDED,
+        )
+    )
     console.print()
 
     # Risk level
@@ -1871,8 +2006,8 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
     if sys.platform == "darwin":
         try:
             # Sanitize: remove newlines (injection vector) + escape quotes
-            safe_msg = message.replace('\n', ' ').replace('"', '\\"').replace("'", "\\'")
-            safe_title = title.replace('\n', ' ').replace('"', '\\"').replace("'", "\\'")
+            safe_msg = message.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
+            safe_title = title.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
             subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
         except Exception:
@@ -1934,7 +2069,7 @@ def post_scan_menu(report_path: str) -> None:
     # Validação de input com retry (máx 3 tentativas)
     valid_choices = {"0", "1", "2", "3", "4", "5"}
     choice = ""
-    for attempt in range(3):
+    for _attempt in range(3):
         raw = inputx("Opção [0-5]: ").strip()
         if raw in valid_choices:
             choice = raw
@@ -1952,11 +2087,13 @@ def post_scan_menu(report_path: str) -> None:
     elif choice == "2":
         console.print(f"  [{S_CYAN}]▶ Novo scan[/]")
         allow_self = False
+
         def _target_validator(val: str) -> str:
             result = validate_target(val, allow_self=allow_self)
             if not result:
                 return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
             return ""
+
         new_target_raw = inputx("Novo target (IP/domain): ", validator=_target_validator)
         new_target = validate_target(new_target_raw, allow_self=allow_self)
         if new_target:
@@ -1972,7 +2109,7 @@ def post_scan_menu(report_path: str) -> None:
         if report_path and os.path.isfile(report_path):
             json_path = report_path.rsplit(".", 1)[0] + ".json"
             try:
-                with open(report_path, "r", encoding="utf-8", errors="replace") as f:
+                with open(report_path, encoding="utf-8", errors="replace") as f:
                     content = f.read()
                 report_data = {
                     "source": report_path,
@@ -1993,11 +2130,12 @@ def post_scan_menu(report_path: str) -> None:
         # Exportar como PDF
         try:
             from report_generator import generate_pdf_report
+
             if report_path and os.path.isfile(report_path):
-                with open(report_path, "r", encoding="utf-8", errors="replace") as f:
+                with open(report_path, encoding="utf-8", errors="replace") as f:
                     content = f.read()
                 # Extrair target do nome do arquivo para o PDF
-                pdf_path = report_path.rsplit(".", 1)[0] + ".pdf"
+                report_path.rsplit(".", 1)[0] + ".pdf"
                 console.print(f"  [{S_CYAN}]▶ Gerando PDF...[/]")
                 # Usar report_generator se disponível
                 scan_data = {"content": content, "exported_at": datetime.datetime.now().isoformat()}
@@ -2029,8 +2167,8 @@ def run_feroxbuster(target: str, wordlist: str, available: Dict[str, bool]) -> L
     run_cmd(cmd, timeout=90)
     if os.path.isfile(output_path):
         try:
-            with open(output_path, "r", encoding="utf-8", errors="replace") as f:
-                return [json.loads(l) for l in f if l.strip()]
+            with open(output_path, encoding="utf-8", errors="replace") as f:
+                return [json.loads(line) for line in f if line.strip()]
         except (json.JSONDecodeError, UnicodeDecodeError):
             return [{"error": "Erro ao parsear saída do feroxbuster"}]
     return [{"error": "Sem saída"}]
@@ -2063,7 +2201,9 @@ def _sanitize_for_json(obj: Any) -> Any:
 
 
 def save_json_report(
-    target: str, ip: str, plugin_results: List[Dict[str, Any]],
+    target: str,
+    ip: str,
+    plugin_results: List[Dict[str, Any]],
     elapsed: float,
 ) -> str:
     """Salva relatório em formato JSON estruturado com proteção contra surrogates."""
@@ -2118,6 +2258,7 @@ def list_plugins_table() -> None:
         idx += 1
         try:
             import importlib.machinery as _ilm_p
+
             spec_p: Optional[_ilm_p.ModuleSpec] = importlib.util.spec_from_file_location(name, fp)
             if spec_p is None:
                 table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
@@ -2128,7 +2269,7 @@ def list_plugins_table() -> None:
                 continue
             doc = ""
             try:
-                with open(fp, "r", encoding="utf-8", errors="replace") as src:
+                with open(fp, encoding="utf-8", errors="replace") as src:
                     source = src.read()
                 tree = ast.parse(source)
                 for node in ast.walk(tree):
@@ -2177,17 +2318,18 @@ def build_parser() -> argparse.ArgumentParser:
         description="🐍 Cascavel — Quantum Security Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Examples:\n"
-               "  cascavel target.com                     Scan direto\n"
-               "  cascavel -t target.com                  Full scan\n"
-               "  cascavel -t target.com --plugins-only   Plugins only\n"
-               "  cascavel -t target.com -q -o json       Quiet + JSON\n"
-               "  cascavel --list-plugins                 Show arsenal\n"
-               "  cascavel --check-tools                  Verify tools\n"
-               "  cascavel --install-global               Instalar globalmente",
+        "  cascavel target.com                     Scan direto\n"
+        "  cascavel -t target.com                  Full scan\n"
+        "  cascavel -t target.com --plugins-only   Plugins only\n"
+        "  cascavel -t target.com -q -o json       Quiet + JSON\n"
+        "  cascavel --list-plugins                 Show arsenal\n"
+        "  cascavel --check-tools                  Verify tools\n"
+        "  cascavel --install-global               Instalar globalmente",
     )
     # Target posicional (opcional) — permite 'cascavel target.com'
-    parser.add_argument("target_positional", nargs="?", default=None,
-                        help="Target direto (IP/domínio) — ex: cascavel target.com")
+    parser.add_argument(
+        "target_positional", nargs="?", default=None, help="Target direto (IP/domínio) — ex: cascavel target.com"
+    )
     parser.add_argument("-t", "--target", help="Target (IP/domínio) — forma alternativa")
     parser.add_argument("-v", "--version", action="version", version=f"v{__version__}")
     parser.add_argument("--list-plugins", action="store_true", help="Lista plugins disponíveis")
@@ -2196,29 +2338,39 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-preloader", action="store_true", help="Desativa preloader cinematográfico")
     parser.add_argument("--no-notify", action="store_true", help="Desativa notificação nativa pós-scan")
     parser.add_argument("-q", "--quiet", action="store_true", help="Modo silencioso (sem preloader/banner/animações)")
-    parser.add_argument("-o", "--output-format", choices=["md", "json", "pdf"], default="md",
-                        help="Formato do relatório: md (padrão), json ou pdf")
-    parser.add_argument("--pdf", action="store_true",
-                        help="Gera relatório PDF profissional (equivalente a -o pdf)")
-    parser.add_argument("--install-global", action="store_true",
-                        help="Instala o Cascavel como comando global no sistema")
+    parser.add_argument(
+        "-o",
+        "--output-format",
+        choices=["md", "json", "pdf"],
+        default="md",
+        help="Formato do relatório: md (padrão), json ou pdf",
+    )
+    parser.add_argument("--pdf", action="store_true", help="Gera relatório PDF profissional (equivalente a -o pdf)")
+    parser.add_argument(
+        "--install-global", action="store_true", help="Instala o Cascavel como comando global no sistema"
+    )
 
     def _positive_int(value: str) -> int:
         """Validação de argparse: aceita apenas inteiros positivos."""
         try:
             ivalue = int(value)
         except ValueError:
-            raise argparse.ArgumentTypeError(f"'{value}' não é um inteiro válido")
+            raise argparse.ArgumentTypeError(f"'{value}' não é um inteiro válido") from None
         if ivalue <= 0:
             raise argparse.ArgumentTypeError(f"Timeout deve ser > 0, recebido: {ivalue}")
         if ivalue > 600:
             raise argparse.ArgumentTypeError(f"Timeout máximo: 600s, recebido: {ivalue}")
         return ivalue
 
-    parser.add_argument("--timeout", type=_positive_int, default=90,
-                        help="Timeout global (1-600 segundos) para ferramentas externas (padrão: 90)")
-    parser.add_argument("--allow-localhost", action="store_true",
-                        help="Permite scan em localhost/IPs privados (red-teaming consentido)")
+    parser.add_argument(
+        "--timeout",
+        type=_positive_int,
+        default=90,
+        help="Timeout global (1-600 segundos) para ferramentas externas (padrão: 90)",
+    )
+    parser.add_argument(
+        "--allow-localhost", action="store_true", help="Permite scan em localhost/IPs privados (red-teaming consentido)"
+    )
     return parser
 
 
@@ -2226,8 +2378,11 @@ def build_parser() -> argparse.ArgumentParser:
 # SCAN PRINCIPAL
 # ═══════════════════════════════════════════════════════════════════════════════
 def run_scan(
-    target: str, plugins_only: bool = False, no_notify: bool = False,
-    output_format: str = "md", global_timeout: int = 90,
+    target: str,
+    plugins_only: bool = False,
+    no_notify: bool = False,
+    output_format: str = "md",
+    global_timeout: int = 90,
 ) -> None:
     """Executa o scan completo contra o target."""
     mission_start = time.time()
@@ -2240,13 +2395,20 @@ def run_scan(
     print_tools_status(available)
 
     timeouts = {
-        "subfinder": min(60, global_timeout), "amass": min(60, global_timeout),
-        "httpx": min(30, global_timeout), "nmap": min(120, global_timeout),
-        "ffuf": min(45, global_timeout), "gobuster": min(45, global_timeout),
-        "naabu": min(30, global_timeout), "nuclei": min(90, global_timeout),
-        "curl": min(10, global_timeout), "katana": min(60, global_timeout),
-        "gau": min(60, global_timeout), "dnsx": min(20, global_timeout),
-        "nikto": min(120, global_timeout), "wafw00f": min(20, global_timeout),
+        "subfinder": min(60, global_timeout),
+        "amass": min(60, global_timeout),
+        "httpx": min(30, global_timeout),
+        "nmap": min(120, global_timeout),
+        "ffuf": min(45, global_timeout),
+        "gobuster": min(45, global_timeout),
+        "naabu": min(30, global_timeout),
+        "nuclei": min(90, global_timeout),
+        "curl": min(10, global_timeout),
+        "katana": min(60, global_timeout),
+        "gau": min(60, global_timeout),
+        "dnsx": min(20, global_timeout),
+        "nikto": min(120, global_timeout),
+        "wafw00f": min(20, global_timeout),
     }
 
     wordlist = get_wordlist()
@@ -2275,10 +2437,13 @@ def run_scan(
         banners = grab_banners(target, open_ports)
         report.append(f"\n### Banners\n```json\n{json.dumps(banners, indent=2, ensure_ascii=False)}\n```")
     else:
-        console.print(Panel(
-            f"[{S_YELLOW}]⚡ Modo --plugins-only: apenas plugins internos[/]",
-            border_style="yellow", box=box.ROUNDED,
-        ))
+        console.print(
+            Panel(
+                f"[{S_YELLOW}]⚡ Modo --plugins-only: apenas plugins internos[/]",
+                border_style="yellow",
+                box=box.ROUNDED,
+            )
+        )
         console.print()
 
     # Plugins
@@ -2291,16 +2456,19 @@ def run_scan(
     elif output_format == "pdf":
         try:
             from report_generator import generate_pdf_report
+
             pdf_vulns = []
             for r in plugin_results:
                 cls, _, _ = _classify(r)
                 if cls == "vuln":
-                    pdf_vulns.append({
-                        "plugin": r.get("plugin", "unknown"),
-                        "severity": r.get("severidade", "INFO"),
-                        "details": r.get("resultados", ""),
-                        "remediation": r.get("correcao", ""),
-                    })
+                    pdf_vulns.append(
+                        {
+                            "plugin": r.get("plugin", "unknown"),
+                            "severity": r.get("severidade", "INFO"),
+                            "details": r.get("resultados", ""),
+                            "remediation": r.get("correcao", ""),
+                        }
+                    )
             scan_data = {
                 "vulns": pdf_vulns,
                 "tools_count": sum(1 for v in detect_tools().values() if v),
@@ -2317,8 +2485,7 @@ def run_scan(
 
     # Dashboard
     total_findings = sum(
-        sum(_count_sev(r.get("resultados", "")).values())
-        for r in plugin_results if _classify(r)[0] == "vuln"
+        sum(_count_sev(r.get("resultados", "")).values()) for r in plugin_results if _classify(r)[0] == "vuln"
     )
     print_dashboard(target, ip, plugin_results, elapsed_total, report_path)
 
@@ -2339,10 +2506,13 @@ def _install_global() -> None:
     Cross-platform: Linux, macOS, Windows (Git Bash/WSL).
     Configura PATH permanente no shell profile do usuário.
     """
-    console.print(Panel(
-        f"[{S_GREEN}]⚡ CASCAVEL — INSTALAÇÃO GLOBAL[/]",
-        border_style="green", box=box.HEAVY,
-    ))
+    console.print(
+        Panel(
+            f"[{S_GREEN}]⚡ CASCAVEL — INSTALAÇÃO GLOBAL[/]",
+            border_style="green",
+            box=box.HEAVY,
+        )
+    )
     console.print()
 
     # Detecta se pip install -e . é viável
@@ -2356,14 +2526,18 @@ def _install_global() -> None:
     try:
         result = subprocess.run(
             [sys.executable, "-m", "pip", "install", "-e", BASE_PATH, "--no-cache-dir"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         if result.returncode != 0:
             # Fallback: tenta sem -e (install normal)
             console.print(f"  [{S_YELLOW}]⚠ Editable mode falhou. Tentando install padrão...[/]")
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "install", BASE_PATH, "--no-cache-dir"],
-                capture_output=True, text=True, timeout=120,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
             if result.returncode != 0:
                 console.print(f"  [{S_RED}]✗ pip install falhou:[/]")
@@ -2400,6 +2574,7 @@ def _install_global() -> None:
     pip_scripts_dir = ""
     try:
         import sysconfig
+
         pip_scripts_dir = sysconfig.get_path("scripts")
     except Exception:
         pass
@@ -2409,7 +2584,9 @@ def _install_global() -> None:
     try:
         user_scripts_dir = subprocess.run(
             [sys.executable, "-m", "site", "--user-base"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         ).stdout.strip()
         if user_scripts_dir:
             if sys.platform == "win32":
@@ -2452,7 +2629,8 @@ def _configure_path_export(scripts_dir: str) -> None:
             if scripts_dir.lower() not in current_path.lower():
                 subprocess.run(
                     ["setx", "PATH", f"{scripts_dir};{current_path}"],
-                    capture_output=True, timeout=10,
+                    capture_output=True,
+                    timeout=10,
                 )
                 console.print(f"  [{S_GREEN}]✓ PATH atualizado via setx: {scripts_dir}[/]")
             else:
@@ -2494,7 +2672,7 @@ def _configure_path_export(scripts_dir: str) -> None:
             # Verifica se já está configurado
             existing = ""
             if os.path.isfile(profile):
-                with open(profile, "r", encoding="utf-8", errors="replace") as f:
+                with open(profile, encoding="utf-8", errors="replace") as f:
                     existing = f.read()
 
             if scripts_dir in existing:
@@ -2557,18 +2735,20 @@ def main() -> None:
         sys.exit(0)
 
     # Target — resolve com retry loop
-    allow_self = getattr(args, 'allow_localhost', False)
+    allow_self = getattr(args, "allow_localhost", False)
 
     if raw_target:
         target = validate_target(raw_target, allow_self=allow_self)
         if not target:
             # validate_target retornou vazio — pede de novo
             console.print(f"  [{S_YELLOW}]⚠ Target inválido fornecido. Informe novamente:[/]")
+
             def _target_validator(val: str) -> str:
                 result = validate_target(val, allow_self=allow_self)
                 if not result:
                     return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
                 return ""
+
             raw_input = inputx("Target (IP/domain): ", validator=_target_validator)
             target = validate_target(raw_input, allow_self=allow_self)
     else:
@@ -2578,6 +2758,7 @@ def main() -> None:
             if not result:
                 return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
             return ""
+
         raw_input = inputx("Target (IP/domain): ", validator=_target_validator)
         target = validate_target(raw_input, allow_self=allow_self)
 
@@ -2587,16 +2768,23 @@ def main() -> None:
 
     out_fmt = "pdf" if args.pdf else args.output_format
     run_scan(
-        target, plugins_only=args.plugins_only, no_notify=(args.no_notify or quiet),
-        output_format=out_fmt, global_timeout=args.timeout,
+        target,
+        plugins_only=args.plugins_only,
+        no_notify=(args.no_notify or quiet),
+        output_format=out_fmt,
+        global_timeout=args.timeout,
     )
 
     # Final
     console.print(Rule(f"[{S_GREEN}]🐍 CASCAVEL — Missão Concluída[/]", style="bright_green"))
-    console.print(Align.center(Text.from_markup(
-        f"[{S_GREEN}]github.com/glferreira-devsecops/Cascavel[/]\n"
-        f"[{S_DIM}]Making the web safer, one target at a time.[/]\n"
-    )))
+    console.print(
+        Align.center(
+            Text.from_markup(
+                f"[{S_GREEN}]github.com/glferreira-devsecops/Cascavel[/]\n"
+                f"[{S_DIM}]Making the web safer, one target at a time.[/]\n"
+            )
+        )
+    )
 
 
 if __name__ == "__main__":

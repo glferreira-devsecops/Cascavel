@@ -1,6 +1,4 @@
 # plugins/ssh_brute.py
-import socket
-
 
 try:
     import paramiko
@@ -33,12 +31,17 @@ def run(target, ip, open_ports, banners):
                     client = paramiko.SSHClient()
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                     client.connect(
-                        target, port=porta, username=user, password=senha,
-                        timeout=5, allow_agent=False, look_for_keys=False,
+                        target,
+                        port=porta,
+                        username=user,
+                        password=senha,
+                        timeout=5,
+                        allow_agent=False,
+                        look_for_keys=False,
                     )
                     encontrados.append({"porta": porta, "usuario": user, "senha": senha})
                     client.close()
-                except (paramiko.AuthenticationException, paramiko.ssh_exception.SSHException, socket.error):
+                except (OSError, paramiko.AuthenticationException, paramiko.ssh_exception.SSHException):
                     continue
                 except Exception:
                     continue

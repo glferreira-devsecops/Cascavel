@@ -9,18 +9,37 @@ multipart upload endpoint detection, dangerous extension acceptance test.
 ZERO FALSO POSITIVO: Não envia nenhum payload malicioso. Testa apenas se
 o servidor aceita o MÉTODO PUT/PATCH e quais extensões ele permite.
 """
+
 import requests
 
-
 UPLOAD_PATHS = [
-    "/upload", "/uploads", "/api/upload", "/api/v1/upload",
-    "/files", "/media", "/assets", "/wp-content/uploads",
-    "/images", "/documents", "/static", "/public",
+    "/upload",
+    "/uploads",
+    "/api/upload",
+    "/api/v1/upload",
+    "/files",
+    "/media",
+    "/assets",
+    "/wp-content/uploads",
+    "/images",
+    "/documents",
+    "/static",
+    "/public",
 ]
 
 DANGEROUS_EXTENSIONS = [
-    ".php", ".php5", ".phtml", ".asp", ".aspx", ".jsp",
-    ".jspx", ".cgi", ".pl", ".py", ".rb", ".sh",
+    ".php",
+    ".php5",
+    ".phtml",
+    ".asp",
+    ".aspx",
+    ".jsp",
+    ".jspx",
+    ".cgi",
+    ".pl",
+    ".py",
+    ".rb",
+    ".sh",
 ]
 
 
@@ -46,7 +65,10 @@ def _check_put_method(url, timeout):
     try:
         # Envia corpo vazio com Content-Length: 0 — INOFENSIVO
         r = requests.put(
-            url, data=b"", timeout=timeout, allow_redirects=False,
+            url,
+            data=b"",
+            timeout=timeout,
+            allow_redirects=False,
             headers={"Content-Length": "0", "Content-Type": "text/plain"},
         )
         # Só conta como vulnerável se o servidor aceita (2xx)
@@ -74,7 +96,10 @@ def _check_extension_acceptance(base_url, timeout):
         test_url = f"{base_url}/cascavel_test_9f8a7b{ext}"
         try:
             r = requests.put(
-                test_url, data=b"", timeout=timeout, allow_redirects=False,
+                test_url,
+                data=b"",
+                timeout=timeout,
+                allow_redirects=False,
                 headers={"Content-Length": "0", "Content-Type": "text/plain"},
             )
             if r.status_code in (200, 201, 204):
@@ -106,26 +131,38 @@ def run(target, ip, open_ports, banners):
     if options_root:
         intel["root_options"] = options_root
         if options_root.get("put_allowed"):
-            vulns.append({
-                "tipo": "PUT_METHOD_ALLOWED", "severidade": "ALTO",
-                "path": "/", "evidence": options_root.get("allow", ""),
-                "descricao": "Servidor root aceita método PUT via OPTIONS header",
-            })
+            vulns.append(
+                {
+                    "tipo": "PUT_METHOD_ALLOWED",
+                    "severidade": "ALTO",
+                    "path": "/",
+                    "evidence": options_root.get("allow", ""),
+                    "descricao": "Servidor root aceita método PUT via OPTIONS header",
+                }
+            )
         if options_root.get("webdav"):
-            vulns.append({
-                "tipo": "WEBDAV_ENABLED", "severidade": "ALTO",
-                "path": "/", "evidence": options_root.get("dav", ""),
-                "descricao": "WebDAV habilitado — risco de upload/delete de arquivos",
-            })
+            vulns.append(
+                {
+                    "tipo": "WEBDAV_ENABLED",
+                    "severidade": "ALTO",
+                    "path": "/",
+                    "evidence": options_root.get("dav", ""),
+                    "descricao": "WebDAV habilitado — risco de upload/delete de arquivos",
+                }
+            )
 
     # 2. PUT test no root (corpo vazio = inofensivo)
     put_root = _check_put_method(base, timeout)
     if put_root and put_root.get("accepted"):
-        vulns.append({
-            "tipo": "PUT_UPLOAD_ACCEPTED", "severidade": "CRITICO",
-            "path": "/", "status_code": put_root["status_code"],
-            "descricao": "PUT aceito no root com corpo vazio — upload arbitrário possível!",
-        })
+        vulns.append(
+            {
+                "tipo": "PUT_UPLOAD_ACCEPTED",
+                "severidade": "CRITICO",
+                "path": "/",
+                "status_code": put_root["status_code"],
+                "descricao": "PUT aceito no root com corpo vazio — upload arbitrário possível!",
+            }
+        )
     intel["methods_checked"] += 1
 
     # 3. Scan upload paths
@@ -134,38 +171,51 @@ def run(target, ip, open_ports, banners):
         intel["paths_tested"] += 1
         put_result = _check_put_method(url, timeout)
         if put_result and put_result.get("accepted"):
-            vulns.append({
-                "tipo": "PUT_UPLOAD_ACCEPTED", "severidade": "CRITICO",
-                "path": path, "status_code": put_result["status_code"],
-                "descricao": f"PUT aceito em {path} — upload path exposto!",
-            })
+            vulns.append(
+                {
+                    "tipo": "PUT_UPLOAD_ACCEPTED",
+                    "severidade": "CRITICO",
+                    "path": path,
+                    "status_code": put_result["status_code"],
+                    "descricao": f"PUT aceito em {path} — upload path exposto!",
+                }
+            )
         elif put_result and put_result.get("auth_required"):
-            vulns.append({
-                "tipo": "PUT_AUTH_REQUIRED", "severidade": "MEDIO",
-                "path": path, "status_code": 401,
-                "descricao": f"PUT requer autenticação em {path} — endpoint existe mas protegido",
-            })
+            vulns.append(
+                {
+                    "tipo": "PUT_AUTH_REQUIRED",
+                    "severidade": "MEDIO",
+                    "path": path,
+                    "status_code": 401,
+                    "descricao": f"PUT requer autenticação em {path} — endpoint existe mas protegido",
+                }
+            )
 
     # 4. Extension acceptance (só testa se PUT foi aceito em algum lugar)
     if any(v["tipo"] == "PUT_UPLOAD_ACCEPTED" for v in vulns):
         dangerous_path = next(
-            (v["path"] for v in vulns if v["tipo"] == "PUT_UPLOAD_ACCEPTED"), "/",
+            (v["path"] for v in vulns if v["tipo"] == "PUT_UPLOAD_ACCEPTED"),
+            "/",
         )
         accepted_exts = _check_extension_acceptance(
-            f"{base}{dangerous_path}" if dangerous_path != "/" else base, timeout,
+            f"{base}{dangerous_path}" if dangerous_path != "/" else base,
+            timeout,
         )
         if accepted_exts:
-            vulns.append({
-                "tipo": "DANGEROUS_EXTENSIONS_ACCEPTED", "severidade": "CRITICO",
-                "extensions": accepted_exts,
-                "descricao": f"Servidor aceita upload de extensões perigosas: {', '.join(accepted_exts)}",
-            })
+            vulns.append(
+                {
+                    "tipo": "DANGEROUS_EXTENSIONS_ACCEPTED",
+                    "severidade": "CRITICO",
+                    "extensions": accepted_exts,
+                    "descricao": f"Servidor aceita upload de extensões perigosas: {', '.join(accepted_exts)}",
+                }
+            )
             intel["dangerous_extensions_accepted"] = accepted_exts
 
     return {
-        "plugin": "fast_webshell", "versao": "2026.1",
-        "tecnicas": ["options_method", "put_acceptance", "webdav_detection",
-                      "extension_test", "upload_path_enum"],
+        "plugin": "fast_webshell",
+        "versao": "2026.1",
+        "tecnicas": ["options_method", "put_acceptance", "webdav_detection", "extension_test", "upload_path_enum"],
         "resultados": {
             "vulns": vulns,
             "intel": intel,

@@ -37,12 +37,14 @@ def run(target, ip, open_ports, banners):
 
         if metodos_aceitos:
             achados_perigosos = [m for m in metodos_aceitos if m in perigosos]
-            resultados.append({
-                "path": path,
-                "metodos_aceitos": metodos_aceitos,
-                "perigosos": achados_perigosos if achados_perigosos else None,
-                "severidade": "ALTO" if achados_perigosos else "INFO",
-            })
+            resultados.append(
+                {
+                    "path": path,
+                    "metodos_aceitos": metodos_aceitos,
+                    "perigosos": achados_perigosos if achados_perigosos else None,
+                    "severidade": "ALTO" if achados_perigosos else "INFO",
+                }
+            )
 
     return {
         "plugin": "http_methods",

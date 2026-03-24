@@ -1,13 +1,23 @@
 # plugins/mass_assignment.py — Cascavel 2026 Intelligence
-import requests
 import json
 
+import requests
 
 ENDPOINTS = [
-    "/api/users", "/api/v1/users", "/api/register", "/api/signup",
-    "/api/profile", "/api/v1/profile", "/api/account", "/api/v1/account",
-    "/api/settings", "/api/v1/settings", "/api/me", "/api/v1/me",
-    "/api/user/update", "/api/v1/user/update",
+    "/api/users",
+    "/api/v1/users",
+    "/api/register",
+    "/api/signup",
+    "/api/profile",
+    "/api/v1/profile",
+    "/api/account",
+    "/api/v1/account",
+    "/api/settings",
+    "/api/v1/settings",
+    "/api/me",
+    "/api/v1/me",
+    "/api/user/update",
+    "/api/v1/user/update",
 ]
 
 # ──────────── DANGEROUS FIELDS (2026 Expanded) ────────────
@@ -60,17 +70,22 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                 body = resp.json()
                 if field in json.dumps(body):
                     return {
-                        "tipo": "MASS_ASSIGNMENT", "endpoint": endpoint,
-                        "campo": field, "valor_injetado": str(value)[:30],
-                        "severidade": severity, "metodo": "POST",
+                        "tipo": "MASS_ASSIGNMENT",
+                        "endpoint": endpoint,
+                        "campo": field,
+                        "valor_injetado": str(value)[:30],
+                        "severidade": severity,
+                        "metodo": "POST",
                         "descricao": f"{desc} — campo '{field}' aceito e refletido!",
                     }
             except (json.JSONDecodeError, ValueError):
                 pass
         if resp.status_code == 422:
             return {
-                "tipo": "MASS_ASSIGN_FIELD_KNOWN", "endpoint": endpoint,
-                "campo": field, "severidade": "MEIO",
+                "tipo": "MASS_ASSIGN_FIELD_KNOWN",
+                "endpoint": endpoint,
+                "campo": field,
+                "severidade": "MEIO",
                 "descricao": f"Campo '{field}' reconhecido (422) — validação parcial",
             }
 
@@ -81,9 +96,12 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                 body = resp.json()
                 if field in json.dumps(body):
                     return {
-                        "tipo": "MASS_ASSIGNMENT_PATCH", "endpoint": endpoint,
-                        "campo": field, "valor_injetado": str(value)[:30],
-                        "severidade": severity, "metodo": "PATCH",
+                        "tipo": "MASS_ASSIGNMENT_PATCH",
+                        "endpoint": endpoint,
+                        "campo": field,
+                        "valor_injetado": str(value)[:30],
+                        "severidade": severity,
+                        "metodo": "PATCH",
                         "descricao": f"{desc} via PATCH!",
                     }
             except Exception:
@@ -96,9 +114,12 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                 body = resp.json()
                 if field in json.dumps(body):
                     return {
-                        "tipo": "MASS_ASSIGNMENT_PUT", "endpoint": endpoint,
-                        "campo": field, "valor_injetado": str(value)[:30],
-                        "severidade": severity, "metodo": "PUT",
+                        "tipo": "MASS_ASSIGNMENT_PUT",
+                        "endpoint": endpoint,
+                        "campo": field,
+                        "valor_injetado": str(value)[:30],
+                        "severidade": severity,
+                        "metodo": "PUT",
                         "descricao": f"{desc} via PUT!",
                     }
             except Exception:
@@ -130,8 +151,14 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "mass_assignment",
         "versao": "2026.1",
-        "tecnicas": ["post_assign", "patch_assign", "put_assign",
-                      "privilege_escalation", "verification_bypass",
-                      "financial_manipulation", "multi_tenant_bypass"],
+        "tecnicas": [
+            "post_assign",
+            "patch_assign",
+            "put_assign",
+            "privilege_escalation",
+            "verification_bypass",
+            "financial_manipulation",
+            "multi_tenant_bypass",
+        ],
         "resultados": vulns if vulns else "Nenhum mass assignment detectado",
     }

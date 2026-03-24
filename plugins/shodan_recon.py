@@ -3,6 +3,7 @@ import os
 
 try:
     import shodan as _shodan
+
     _HAS_SHODAN = True
 except ImportError:
     _HAS_SHODAN = False
@@ -23,7 +24,9 @@ def run(target, ip, open_ports, banners):
     if not api_key:
         return {
             "plugin": "shodan_recon",
-            "resultados": {"aviso": "SHODAN_API_KEY não definida no ambiente. Defina com: export SHODAN_API_KEY=sua_chave"},
+            "resultados": {
+                "aviso": "SHODAN_API_KEY não definida no ambiente. Defina com: export SHODAN_API_KEY=sua_chave"
+            },
         }
 
     resultado = {}
@@ -44,13 +47,15 @@ def run(target, ip, open_ports, banners):
 
         servicos = []
         for item in host.get("data", [])[:10]:
-            servicos.append({
-                "porta": item.get("port"),
-                "protocolo": item.get("transport", "tcp"),
-                "produto": item.get("product", "N/A"),
-                "versao": item.get("version", "N/A"),
-                "banner": item.get("data", "")[:200],
-            })
+            servicos.append(
+                {
+                    "porta": item.get("port"),
+                    "protocolo": item.get("transport", "tcp"),
+                    "produto": item.get("product", "N/A"),
+                    "versao": item.get("version", "N/A"),
+                    "banner": item.get("data", "")[:200],
+                }
+            )
         resultado["servicos"] = servicos
 
     except Exception as e:

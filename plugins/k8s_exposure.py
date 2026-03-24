@@ -1,6 +1,7 @@
 # plugins/k8s_exposure.py — Cascavel 2026 Intelligence
 import requests
 import urllib3
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -51,8 +52,11 @@ def _probe_k8s_api(target, port):
             resp = requests.get(url, timeout=5, verify=False)
             if resp.status_code == 200:
                 vuln = {
-                    "tipo": tipo, "porta": port, "path": path,
-                    "severidade": sev, "amostra": resp.text[:200],
+                    "tipo": tipo,
+                    "porta": port,
+                    "path": path,
+                    "severidade": sev,
+                    "amostra": resp.text[:200],
                     "descricao": f"K8s API {path} acessível sem auth em :{port}!",
                 }
                 # Extract version info
@@ -71,11 +75,15 @@ def _probe_k8s_api(target, port):
                         pass
                 vulns.append(vuln)
             elif resp.status_code == 403:
-                vulns.append({
-                    "tipo": f"{tipo}_FORBIDDEN", "porta": port, "path": path,
-                    "severidade": "BAIXO",
-                    "descricao": f"K8s API {path} existe mas retorna 403 — auth bypass possível!",
-                })
+                vulns.append(
+                    {
+                        "tipo": f"{tipo}_FORBIDDEN",
+                        "porta": port,
+                        "path": path,
+                        "severidade": "BAIXO",
+                        "descricao": f"K8s API {path} existe mas retorna 403 — auth bypass possível!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -96,15 +104,18 @@ def _check_kubelet(target):
         scheme = "https" if port == 10250 else "http"
         for path, tipo in kubelet_paths.items():
             try:
-                resp = requests.get(f"{scheme}://{target}:{port}{path}",
-                                    timeout=5, verify=False)
+                resp = requests.get(f"{scheme}://{target}:{port}{path}", timeout=5, verify=False)
                 if resp.status_code == 200 and len(resp.text) > 10:
                     sev = "CRITICO" if path in ("/pods", "/runningpods/", "/stats/summary") else "ALTO"
-                    vulns.append({
-                        "tipo": tipo, "porta": port, "path": path,
-                        "severidade": sev,
-                        "descricao": f"Kubelet {path} exposto em :{port} — RCE em pods possível!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": tipo,
+                            "porta": port,
+                            "path": path,
+                            "severidade": sev,
+                            "descricao": f"Kubelet {path} exposto em :{port} — RCE em pods possível!",
+                        }
+                    )
             except Exception:
                 continue
     return vulns
@@ -116,15 +127,16 @@ def _check_dashboard(target):
     for port in [443, 8443, 8001, 30000]:
         for path in DASHBOARD_PATHS:
             try:
-                resp = requests.get(f"https://{target}:{port}{path}",
-                                    timeout=5, verify=False)
-                if resp.status_code == 200 and any(k in resp.text.lower()
-                                                    for k in ["dashboard", "kubernetes"]):
-                    vulns.append({
-                        "tipo": "K8S_DASHBOARD_UNAUTH", "porta": port,
-                        "severidade": "CRITICO",
-                        "descricao": "Kubernetes Dashboard sem auth — cluster takeover!",
-                    })
+                resp = requests.get(f"https://{target}:{port}{path}", timeout=5, verify=False)
+                if resp.status_code == 200 and any(k in resp.text.lower() for k in ["dashboard", "kubernetes"]):
+                    vulns.append(
+                        {
+                            "tipo": "K8S_DASHBOARD_UNAUTH",
+                            "porta": port,
+                            "severidade": "CRITICO",
+                            "descricao": "Kubernetes Dashboard sem auth — cluster takeover!",
+                        }
+                    )
             except Exception:
                 continue
     return vulns
@@ -135,27 +147,34 @@ def _check_etcd(target):
     vulns = []
     for port in ETCD_PORTS:
         try:
-            resp = requests.get(f"http://{target}:{port}/v2/keys/",
-                                timeout=5)
+            resp = requests.get(f"http://{target}:{port}/v2/keys/", timeout=5)
             if resp.status_code == 200 and "node" in resp.text:
-                vulns.append({
-                    "tipo": "ETCD_EXPOSED", "porta": port,
-                    "severidade": "CRITICO",
-                    "descricao": "etcd exposto sem auth — todos os secrets K8s acessíveis!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "ETCD_EXPOSED",
+                        "porta": port,
+                        "severidade": "CRITICO",
+                        "descricao": "etcd exposto sem auth — todos os secrets K8s acessíveis!",
+                    }
+                )
         except Exception:
             pass
         # v3 API
         try:
-            resp = requests.post(f"http://{target}:{port}/v3/kv/range",
-                                 json={"key": "AA=="},  # empty key
-                                 timeout=5)
+            resp = requests.post(
+                f"http://{target}:{port}/v3/kv/range",
+                json={"key": "AA=="},  # empty key
+                timeout=5,
+            )
             if resp.status_code == 200:
-                vulns.append({
-                    "tipo": "ETCD_V3_EXPOSED", "porta": port,
-                    "severidade": "CRITICO",
-                    "descricao": "etcd v3 API exposta — key-value dump possível!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "ETCD_V3_EXPOSED",
+                        "porta": port,
+                        "severidade": "CRITICO",
+                        "descricao": "etcd v3 API exposta — key-value dump possível!",
+                    }
+                )
         except Exception:
             pass
     return vulns
@@ -180,8 +199,8 @@ def run(target, ip, open_ports, banners):
     vulns.extend(_check_etcd(target))
 
     return {
-        "plugin": "k8s_exposure", "versao": "2026.1",
-        "tecnicas": ["k8s_api", "kubelet", "dashboard", "etcd",
-                      "rbac_enum", "version_disclosure"],
+        "plugin": "k8s_exposure",
+        "versao": "2026.1",
+        "tecnicas": ["k8s_api", "kubelet", "dashboard", "etcd", "rbac_enum", "version_disclosure"],
         "resultados": vulns if vulns else "Nenhuma exposição K8s detectada",
     }

@@ -1,15 +1,42 @@
 # plugins/rce_scanner.py — Cascavel 2026 Intelligence
-import requests
 import time
 import urllib.parse
 
+import requests
 
 PARAMS = [
-    "cmd", "exec", "command", "run", "ping", "query", "jump",
-    "code", "reg", "do", "func", "arg", "option", "load",
-    "process", "step", "read", "feature", "exe", "module",
-    "payload", "input", "ip", "host", "target", "file",
-    "path", "dir", "daemon", "upload", "log", "email",
+    "cmd",
+    "exec",
+    "command",
+    "run",
+    "ping",
+    "query",
+    "jump",
+    "code",
+    "reg",
+    "do",
+    "func",
+    "arg",
+    "option",
+    "load",
+    "process",
+    "step",
+    "read",
+    "feature",
+    "exe",
+    "module",
+    "payload",
+    "input",
+    "ip",
+    "host",
+    "target",
+    "file",
+    "path",
+    "dir",
+    "daemon",
+    "upload",
+    "log",
+    "email",
 ]
 
 # ──────────── OUTPUT-BASED PAYLOADS ────────────
@@ -88,12 +115,13 @@ def _test_output_rce(target, param):
         for headers in BYPASS_HEADERS_LIST[:2]:
             url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
             try:
-                resp = requests.get(url, timeout=8,
-                                    headers={**{"User-Agent": "Cascavel/2.0"}, **headers})
+                resp = requests.get(url, timeout=8, headers={**{"User-Agent": "Cascavel/2.0"}, **headers})
                 if indicator and indicator in resp.text:
                     return {
-                        "tipo": "RCE_OUTPUT", "metodo": method,
-                        "parametro": param, "severidade": "CRITICO",
+                        "tipo": "RCE_OUTPUT",
+                        "metodo": method,
+                        "parametro": param,
+                        "severidade": "CRITICO",
                         "descricao": f"Command execution confirmada via {method}!",
                         "amostra": resp.text[:300],
                         "bypass_header": list(headers.keys())[0] if headers else None,
@@ -113,14 +141,18 @@ def _test_time_rce(target, param):
             elapsed = time.time() - start
             if elapsed > threshold:
                 return {
-                    "tipo": "RCE_TIME_BASED", "metodo": method,
-                    "parametro": param, "severidade": "CRITICO",
+                    "tipo": "RCE_TIME_BASED",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": "CRITICO",
                     "tempo": round(elapsed, 2),
                 }
         except requests.Timeout:
             return {
-                "tipo": "RCE_TIME_BASED", "metodo": method,
-                "parametro": param, "severidade": "ALTO",
+                "tipo": "RCE_TIME_BASED",
+                "metodo": method,
+                "parametro": param,
+                "severidade": "ALTO",
                 "timeout": True,
             }
         except Exception:
@@ -131,7 +163,7 @@ def _test_time_rce(target, param):
 def _test_post_rce(target, param):
     """Testa RCE via POST body (JSON + form-data)."""
     for payload, indicator, method in OUTPUT_PAYLOADS[:8]:
-        for content_type, data_fn in [
+        for content_type, _data_fn in [
             ("application/json", lambda p, v: None),
             ("application/x-www-form-urlencoded", lambda p, v: None),
         ]:
@@ -142,8 +174,10 @@ def _test_post_rce(target, param):
                     resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
                 if indicator and indicator in resp.text:
                     return {
-                        "tipo": "RCE_POST_BODY", "metodo": method,
-                        "parametro": param, "severidade": "CRITICO",
+                        "tipo": "RCE_POST_BODY",
+                        "metodo": method,
+                        "parametro": param,
+                        "severidade": "CRITICO",
                         "content_type": content_type,
                     }
             except Exception:
@@ -163,8 +197,10 @@ def _test_header_injection(target):
             resp = requests.get(f"http://{target}/", headers={header: payload}, timeout=6)
             if indicator in resp.text:
                 return {
-                    "tipo": "RCE_HEADER_INJECTION", "metodo": method,
-                    "header": header, "severidade": "CRITICO",
+                    "tipo": "RCE_HEADER_INJECTION",
+                    "metodo": method,
+                    "header": header,
+                    "severidade": "CRITICO",
                     "descricao": f"RCE via header {header}!",
                 }
         except Exception:
@@ -177,14 +213,14 @@ def _inject_oob(target, param):
     injected = []
     for payload, method in OOB_PAYLOADS:
         try:
-            requests.get(f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}",
-                          timeout=5)
+            requests.get(f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}", timeout=5)
             injected.append({"metodo": method, "payload": payload[:50]})
         except Exception:
             continue
     if injected:
         return {
-            "tipo": "RCE_OOB_INJECTED", "parametro": param,
+            "tipo": "RCE_OOB_INJECTED",
+            "parametro": param,
             "severidade": "ALTO",
             "descricao": "OOB RCE payloads injetados — verificar DNS/HTTP callback",
             "payloads": injected,
@@ -240,7 +276,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "rce_scanner",
         "versao": "2026.1",
-        "tecnicas": ["output_based", "time_based", "oob_callback", "header_injection",
-                      "post_body", "waf_bypass", "wildcard_glob", "base64_pipe"],
+        "tecnicas": [
+            "output_based",
+            "time_based",
+            "oob_callback",
+            "header_injection",
+            "post_body",
+            "waf_bypass",
+            "wildcard_glob",
+            "base64_pipe",
+        ],
         "resultados": vulns if vulns else "Nenhum RCE detectado",
     }

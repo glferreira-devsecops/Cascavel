@@ -1,20 +1,31 @@
 # plugins/websocket_scanner.py — Cascavel 2026 Intelligence
-import socket
 import base64
 import os
-import json
-
+import socket
 
 WS_PATHS = [
-    "/ws", "/websocket", "/socket.io/", "/sockjs/", "/cable",
-    "/hub", "/signalr", "/api/ws", "/api/v1/ws", "/realtime",
-    "/live", "/stream", "/chat", "/notifications", "/events",
-    "/graphql/ws", "/api/graphql/subscriptions",
+    "/ws",
+    "/websocket",
+    "/socket.io/",
+    "/sockjs/",
+    "/cable",
+    "/hub",
+    "/signalr",
+    "/api/ws",
+    "/api/v1/ws",
+    "/realtime",
+    "/live",
+    "/stream",
+    "/chat",
+    "/notifications",
+    "/events",
+    "/graphql/ws",
+    "/api/graphql/subscriptions",
 ]
 
 # ──────────── XSS/INJECTION PAYLOADS ────────────
 WS_INJECTION_PAYLOADS = [
-    '<script>alert(1)</script>',
+    "<script>alert(1)</script>",
     '{"type":"subscribe","payload":"<img src=x onerror=alert(1)>"}',
     '{"__proto__":{"admin":true}}',
     "'; DROP TABLE users; --",
@@ -53,37 +64,49 @@ def _analyze_ws_response(response, path, origin):
         return vulns
 
     # Endpoint found
-    vulns.append({
-        "tipo": "WEBSOCKET_ENDPOINT", "path": path,
-        "severidade": "INFO",
-        "descricao": f"WebSocket endpoint ativo: {path}",
-    })
+    vulns.append(
+        {
+            "tipo": "WEBSOCKET_ENDPOINT",
+            "path": path,
+            "severidade": "INFO",
+            "descricao": f"WebSocket endpoint ativo: {path}",
+        }
+    )
 
     # CSWSH — Cross-Site WebSocket Hijacking
     if "evil.com" in origin.lower():
-        vulns.append({
-            "tipo": "WEBSOCKET_CSWSH", "path": path,
-            "severidade": "CRITICO",
-            "descricao": "WebSocket aceita Origin evil.com — CSWSH (Cross-Site WebSocket Hijacking)!",
-        })
+        vulns.append(
+            {
+                "tipo": "WEBSOCKET_CSWSH",
+                "path": path,
+                "severidade": "CRITICO",
+                "descricao": "WebSocket aceita Origin evil.com — CSWSH (Cross-Site WebSocket Hijacking)!",
+            }
+        )
 
     # Check for missing auth
     if "sec-websocket-accept" in response.lower():
         # Handshake successful without auth tokens
-        vulns.append({
-            "tipo": "WEBSOCKET_NO_AUTH", "path": path,
-            "severidade": "ALTO",
-            "descricao": "WebSocket handshake sem autenticação — acesso não autorizado!",
-        })
+        vulns.append(
+            {
+                "tipo": "WEBSOCKET_NO_AUTH",
+                "path": path,
+                "severidade": "ALTO",
+                "descricao": "WebSocket handshake sem autenticação — acesso não autorizado!",
+            }
+        )
 
     # Check extensions
     if "sec-websocket-extensions" in response.lower():
         if "permessage-deflate" in response.lower():
-            vulns.append({
-                "tipo": "WEBSOCKET_COMPRESSION", "path": path,
-                "severidade": "BAIXO",
-                "descricao": "WebSocket com permessage-deflate — possível CRIME/BREACH attack",
-            })
+            vulns.append(
+                {
+                    "tipo": "WEBSOCKET_COMPRESSION",
+                    "path": path,
+                    "severidade": "BAIXO",
+                    "descricao": "WebSocket com permessage-deflate — possível CRIME/BREACH attack",
+                }
+            )
 
     return vulns
 
@@ -102,11 +125,15 @@ def _test_multiple_origins(target, path):
         response, _ = _attempt_ws_handshake(target, path, origin=origin)
         if "101 Switching Protocols" in response:
             if method != "LOCALHOST_ORIGIN":
-                vulns.append({
-                    "tipo": f"WEBSOCKET_CSWSH_{method}", "path": path,
-                    "origin": origin, "severidade": "CRITICO" if method != "EMPTY_ORIGIN" else "ALTO",
-                    "descricao": f"WebSocket aceita Origin: {origin} — CSWSH via {method}!",
-                })
+                vulns.append(
+                    {
+                        "tipo": f"WEBSOCKET_CSWSH_{method}",
+                        "path": path,
+                        "origin": origin,
+                        "severidade": "CRITICO" if method != "EMPTY_ORIGIN" else "ALTO",
+                        "descricao": f"WebSocket aceita Origin: {origin} — CSWSH via {method}!",
+                    }
+                )
                 break
     return vulns
 
@@ -140,7 +167,8 @@ def _test_ws_smuggling(target, path, port=80):
 
             if "200 OK" in smuggle_resp or "admin" in smuggle_resp.lower():
                 return {
-                    "tipo": "WEBSOCKET_SMUGGLING", "path": path,
+                    "tipo": "WEBSOCKET_SMUGGLING",
+                    "path": path,
                     "severidade": "CRITICO",
                     "descricao": "WebSocket smuggling — HTTP request smuggled via WS tunnel!",
                 }
@@ -155,16 +183,20 @@ def _test_socketio_info(target):
     """Testa exposição de informação do Socket.IO."""
     vulns = []
     import requests as req
+
     for path in ["/socket.io/?EIO=4&transport=polling", "/socket.io/?EIO=3&transport=polling"]:
         try:
             resp = req.get(f"http://{target}{path}", timeout=5)
             if resp.status_code == 200 and "sid" in resp.text:
-                vulns.append({
-                    "tipo": "SOCKETIO_EXPOSED", "path": path,
-                    "severidade": "MEDIO",
-                    "descricao": "Socket.IO endpoint exposto — session ID obtido!",
-                    "amostra": resp.text[:100],
-                })
+                vulns.append(
+                    {
+                        "tipo": "SOCKETIO_EXPOSED",
+                        "path": path,
+                        "severidade": "MEDIO",
+                        "descricao": "Socket.IO endpoint exposto — session ID obtido!",
+                        "amostra": resp.text[:100],
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -201,7 +233,6 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "websocket_scanner",
         "versao": "2026.1",
-        "tecnicas": ["cswsh", "multi_origin", "ws_smuggling",
-                      "socketio_exposure", "compression_attack", "no_auth"],
+        "tecnicas": ["cswsh", "multi_origin", "ws_smuggling", "socketio_exposure", "compression_attack", "no_auth"],
         "resultados": vulns if vulns else "Nenhum WebSocket vulnerável detectado",
     }

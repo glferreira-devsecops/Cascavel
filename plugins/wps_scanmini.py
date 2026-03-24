@@ -9,9 +9,17 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
 
     endpoints = [
-        "/wp-login.php", "/xmlrpc.php", "/wp-admin/", "/.git/config",
-        "/wp-content/", "/wp-includes/", "/license.txt", "/readme.html",
-        "/wp-json/wp/v2/users", "/wp-json/", "/wp-cron.php",
+        "/wp-login.php",
+        "/xmlrpc.php",
+        "/wp-admin/",
+        "/.git/config",
+        "/wp-content/",
+        "/wp-includes/",
+        "/license.txt",
+        "/readme.html",
+        "/wp-json/wp/v2/users",
+        "/wp-json/",
+        "/wp-cron.php",
     ]
     encontrados = []
 

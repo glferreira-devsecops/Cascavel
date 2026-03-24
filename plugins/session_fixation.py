@@ -1,19 +1,34 @@
 # plugins/session_fixation.py — Cascavel 2026 Intelligence
-import requests
 import math
-import re
 
+import requests
 
 LOGIN_PATHS = [
-    "/login", "/signin", "/auth/login", "/api/auth/login",
-    "/api/v1/auth/login", "/user/login", "/account/login",
-    "/api/login", "/api/v1/login", "/admin/login",
+    "/login",
+    "/signin",
+    "/auth/login",
+    "/api/auth/login",
+    "/api/v1/auth/login",
+    "/user/login",
+    "/account/login",
+    "/api/login",
+    "/api/v1/login",
+    "/admin/login",
 ]
 
 SESSION_COOKIE_NAMES = [
-    "session", "sessionid", "sess", "jsessionid", "phpsessid",
-    "connect.sid", "sid", "asp.net_sessionid", "laravel_session",
-    "ci_session", "_session_id", "flask_session",
+    "session",
+    "sessionid",
+    "sess",
+    "jsessionid",
+    "phpsessid",
+    "connect.sid",
+    "sid",
+    "asp.net_sessionid",
+    "laravel_session",
+    "ci_session",
+    "_session_id",
+    "flask_session",
 ]
 
 
@@ -48,7 +63,8 @@ def _check_session_rotation(target, path, pre_cookies):
         resp = session.post(
             f"http://{target}{path}",
             data={"username": "test", "password": "test"},
-            timeout=8, allow_redirects=False,
+            timeout=8,
+            allow_redirects=False,
         )
         post_cookies = session.cookies.get_dict()
         return post_cookies, resp.status_code
@@ -64,11 +80,15 @@ def _analyze_fixation(path, pre_cookies, post_cookies, post_status):
 
     for name in pre_cookies:
         if name in post_cookies and pre_cookies[name] == post_cookies[name]:
-            vulns.append({
-                "tipo": "SESSION_FIXATION", "endpoint": path,
-                "cookie": name, "severidade": "CRITICO",
-                "descricao": f"Cookie '{name}' não rotacionada após login — session fixation!",
-            })
+            vulns.append(
+                {
+                    "tipo": "SESSION_FIXATION",
+                    "endpoint": path,
+                    "cookie": name,
+                    "severidade": "CRITICO",
+                    "descricao": f"Cookie '{name}' não rotacionada após login — session fixation!",
+                }
+            )
     return vulns
 
 
@@ -85,29 +105,41 @@ def _check_cookie_flags(set_cookie_header, path):
             continue
 
         if "httponly" not in lower:
-            vulns.append({
-                "tipo": "SESSION_NO_HTTPONLY", "endpoint": path,
-                "severidade": "ALTO",
-                "descricao": "Cookie de sessão sem HttpOnly — XSS session theft!",
-            })
+            vulns.append(
+                {
+                    "tipo": "SESSION_NO_HTTPONLY",
+                    "endpoint": path,
+                    "severidade": "ALTO",
+                    "descricao": "Cookie de sessão sem HttpOnly — XSS session theft!",
+                }
+            )
         if "secure" not in lower:
-            vulns.append({
-                "tipo": "SESSION_NO_SECURE", "endpoint": path,
-                "severidade": "MEDIO",
-                "descricao": "Cookie de sessão sem Secure — transmissão HTTP plaintext!",
-            })
+            vulns.append(
+                {
+                    "tipo": "SESSION_NO_SECURE",
+                    "endpoint": path,
+                    "severidade": "MEDIO",
+                    "descricao": "Cookie de sessão sem Secure — transmissão HTTP plaintext!",
+                }
+            )
         if "samesite=none" in lower:
-            vulns.append({
-                "tipo": "SESSION_SAMESITE_NONE", "endpoint": path,
-                "severidade": "ALTO",
-                "descricao": "Cookie com SameSite=None — CSRF bypass!",
-            })
+            vulns.append(
+                {
+                    "tipo": "SESSION_SAMESITE_NONE",
+                    "endpoint": path,
+                    "severidade": "ALTO",
+                    "descricao": "Cookie com SameSite=None — CSRF bypass!",
+                }
+            )
         elif "samesite" not in lower:
-            vulns.append({
-                "tipo": "SESSION_NO_SAMESITE", "endpoint": path,
-                "severidade": "MEDIO",
-                "descricao": "Cookie sem SameSite — default Lax (parcial)",
-            })
+            vulns.append(
+                {
+                    "tipo": "SESSION_NO_SAMESITE",
+                    "endpoint": path,
+                    "severidade": "MEDIO",
+                    "descricao": "Cookie sem SameSite — default Lax (parcial)",
+                }
+            )
 
         # Check path restriction
         if "path=/" in lower and "path=/api" not in lower:
@@ -125,19 +157,27 @@ def _check_session_entropy(cookies, path):
         if any(sn in name_lower for sn in SESSION_COOKIE_NAMES):
             entropy = _calculate_entropy(value)
             if entropy < 3.5:
-                vulns.append({
-                    "tipo": "SESSION_LOW_ENTROPY", "endpoint": path,
-                    "cookie": name, "entropia": round(entropy, 2),
-                    "severidade": "CRITICO",
-                    "descricao": f"Session token com entropia baixa ({entropy:.2f}) — previsível!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "SESSION_LOW_ENTROPY",
+                        "endpoint": path,
+                        "cookie": name,
+                        "entropia": round(entropy, 2),
+                        "severidade": "CRITICO",
+                        "descricao": f"Session token com entropia baixa ({entropy:.2f}) — previsível!",
+                    }
+                )
             if len(value) < 16:
-                vulns.append({
-                    "tipo": "SESSION_SHORT_TOKEN", "endpoint": path,
-                    "cookie": name, "tamanho": len(value),
-                    "severidade": "ALTO",
-                    "descricao": f"Session token curto ({len(value)} chars) — brute-force possível!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "SESSION_SHORT_TOKEN",
+                        "endpoint": path,
+                        "cookie": name,
+                        "tamanho": len(value),
+                        "severidade": "ALTO",
+                        "descricao": f"Session token curto ({len(value)} chars) — brute-force possível!",
+                    }
+                )
     return vulns
 
 
@@ -163,7 +203,8 @@ def _check_session_predictability(target, path):
                 break
         if prefix_len > len(tokens[0]) * 0.7:
             return {
-                "tipo": "SESSION_SEQUENTIAL", "endpoint": path,
+                "tipo": "SESSION_SEQUENTIAL",
+                "endpoint": path,
                 "prefix_comum": tokens[0][:prefix_len],
                 "severidade": "CRITICO",
                 "descricao": "Session tokens com prefixo sequencial — prediction attack!",
@@ -188,14 +229,18 @@ def _check_session_logout(target):
         # Check if old session still works
         for check_path in ["/profile", "/dashboard", "/api/me", "/api/v1/me"]:
             resp = requests.get(
-                f"http://{target}{check_path}", timeout=5,
+                f"http://{target}{check_path}",
+                timeout=5,
                 cookies=pre_cookies,
             )
             if resp.status_code == 200 and any(k in resp.text.lower() for k in ["email", "username", "profile"]):
-                vulns.append({
-                    "tipo": "SESSION_NOT_INVALIDATED", "severidade": "ALTO",
-                    "descricao": "Sessão não invalidada após logout — session riding!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "SESSION_NOT_INVALIDATED",
+                        "severidade": "ALTO",
+                        "descricao": "Sessão não invalidada após logout — session riding!",
+                    }
+                )
                 break
     except Exception:
         pass
@@ -238,7 +283,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "session_fixation",
         "versao": "2026.1",
-        "tecnicas": ["fixation", "cookie_flags", "entropy_analysis",
-                      "predictability", "sequential_detection", "logout_invalidation"],
+        "tecnicas": [
+            "fixation",
+            "cookie_flags",
+            "entropy_analysis",
+            "predictability",
+            "sequential_detection",
+            "logout_invalidation",
+        ],
         "resultados": vulns if vulns else "Nenhuma falha de sessão detectada",
     }

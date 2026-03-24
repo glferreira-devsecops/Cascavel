@@ -1,17 +1,27 @@
 # plugins/password_policy.py — Cascavel 2026 Intelligence
-import requests
-import time
 
+import requests
 
 REGISTRATION_PATHS = [
-    "/register", "/signup", "/api/register", "/api/v1/register",
-    "/api/auth/register", "/api/v1/auth/signup", "/create-account",
-    "/api/v2/register", "/api/auth/signup", "/api/users",
+    "/register",
+    "/signup",
+    "/api/register",
+    "/api/v1/register",
+    "/api/auth/register",
+    "/api/v1/auth/signup",
+    "/create-account",
+    "/api/v2/register",
+    "/api/auth/signup",
+    "/api/users",
 ]
 
 LOGIN_PATHS = [
-    "/login", "/signin", "/api/login", "/api/auth/login",
-    "/api/v1/login", "/api/v1/auth/login",
+    "/login",
+    "/signin",
+    "/api/login",
+    "/api/auth/login",
+    "/api/v1/login",
+    "/api/v1/auth/login",
 ]
 
 # ──────────── WEAK PASSWORDS (NIST SP 800-63B) ────────────
@@ -53,14 +63,16 @@ def _test_password(target, path, password, label):
         )
         if resp.status_code in (200, 201):
             return {
-                "tipo": f"WEAK_PASSWORD_{label}", "endpoint": path,
+                "tipo": f"WEAK_PASSWORD_{label}",
+                "endpoint": path,
                 "senha_testada": password if len(password) <= 6 else password[:3] + "***",
                 "severidade": "ALTO",
                 "descricao": f"Senha fraca aceita ({label}) — policy insuficiente!",
             }
         if resp.status_code == 422 and "password" not in resp.text.lower():
             return {
-                "tipo": f"PASSWORD_NO_VALIDATION_{label}", "endpoint": path,
+                "tipo": f"PASSWORD_NO_VALIDATION_{label}",
+                "endpoint": path,
                 "severidade": "MEDIO",
                 "descricao": "422 sem menção a password — validação parcial",
             }
@@ -81,7 +93,8 @@ def _check_rate_limit_registration(target, path):
             if resp.status_code == 429:
                 return None
         return {
-            "tipo": "REGISTRATION_NO_RATE_LIMIT", "endpoint": path,
+            "tipo": "REGISTRATION_NO_RATE_LIMIT",
+            "endpoint": path,
             "severidade": "MEDIO",
             "descricao": "Sem rate limit no registro — enumeration/abuse possível!",
         }
@@ -104,7 +117,8 @@ def _check_rate_limit_login(target, path):
                 break
         if not blocked:
             return {
-                "tipo": "LOGIN_NO_RATE_LIMIT", "endpoint": path,
+                "tipo": "LOGIN_NO_RATE_LIMIT",
+                "endpoint": path,
                 "severidade": "ALTO",
                 "descricao": "Sem rate limit no login — brute-force/credential stuffing possível!",
             }
@@ -131,17 +145,21 @@ def _check_rate_limit_bypass(target, path):
                 resp = requests.post(
                     f"http://{target}{path}",
                     json={"email": "bypass@test.com", "password": "wrong"},
-                    timeout=3, headers=headers,
+                    timeout=3,
+                    headers=headers,
                 )
                 if resp.status_code != 429:
                     success_count += 1
             if success_count == 5:
-                vulns.append({
-                    "tipo": "RATE_LIMIT_BYPASS", "endpoint": path,
-                    "header": list(headers.keys())[0],
-                    "severidade": "ALTO",
-                    "descricao": f"Rate limit bypass via {list(headers.keys())[0]}!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "RATE_LIMIT_BYPASS",
+                        "endpoint": path,
+                        "header": list(headers.keys())[0],
+                        "severidade": "ALTO",
+                        "descricao": f"Rate limit bypass via {list(headers.keys())[0]}!",
+                    }
+                )
                 break
         except Exception:
             continue
@@ -158,12 +176,18 @@ def _check_credential_stuffing(target, path):
                 json={"email": email, "password": password, "username": email.split("@")[0]},
                 timeout=5,
             )
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in ["token", "session", "dashboard", "welcome"]):
-                vulns.append({
-                    "tipo": "CREDENTIAL_STUFFING_SUCCESS", "endpoint": path,
-                    "email": email, "severidade": "CRITICO",
-                    "descricao": f"Login com credenciais breached ({email}) — conta comprometida!",
-                })
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["token", "session", "dashboard", "welcome"]
+            ):
+                vulns.append(
+                    {
+                        "tipo": "CREDENTIAL_STUFFING_SUCCESS",
+                        "endpoint": path,
+                        "email": email,
+                        "severidade": "CRITICO",
+                        "descricao": f"Login com credenciais breached ({email}) — conta comprometida!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -184,13 +208,15 @@ def _check_username_enumeration(target, path):
         )
         if r_valid.status_code != r_invalid.status_code or len(r_valid.text) != len(r_invalid.text):
             return {
-                "tipo": "USERNAME_ENUMERATION", "endpoint": path,
+                "tipo": "USERNAME_ENUMERATION",
+                "endpoint": path,
                 "severidade": "MEDIO",
                 "descricao": "Respostas diferentes para email válido vs. inválido — enumeration!",
             }
         if r_valid.elapsed.total_seconds() - r_invalid.elapsed.total_seconds() > 0.5:
             return {
-                "tipo": "USERNAME_ENUMERATION_TIMING", "endpoint": path,
+                "tipo": "USERNAME_ENUMERATION_TIMING",
+                "endpoint": path,
                 "severidade": "MEDIO",
                 "descricao": "Timing difference para email válido vs. inválido — timing enumeration!",
             }
@@ -202,8 +228,13 @@ def _check_username_enumeration(target, path):
 def _check_password_reset(target):
     """Verifica vulnerabilidades no fluxo de password reset."""
     vulns = []
-    reset_paths = ["/reset-password", "/forgot-password", "/api/auth/reset-password",
-                    "/api/v1/auth/forgot-password", "/password/reset"]
+    reset_paths = [
+        "/reset-password",
+        "/forgot-password",
+        "/api/auth/reset-password",
+        "/api/v1/auth/forgot-password",
+        "/password/reset",
+    ]
 
     for path in reset_paths:
         try:
@@ -217,11 +248,14 @@ def _check_password_reset(target):
                 if resp.status_code == 429:
                     break
             else:
-                vulns.append({
-                    "tipo": "RESET_NO_RATE_LIMIT", "endpoint": path,
-                    "severidade": "MEDIO",
-                    "descricao": "Sem rate limit no password reset — email bombing!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "RESET_NO_RATE_LIMIT",
+                        "endpoint": path,
+                        "severidade": "MEDIO",
+                        "descricao": "Sem rate limit no password reset — email bombing!",
+                    }
+                )
 
             # Test host header injection on reset
             resp = requests.post(
@@ -231,11 +265,14 @@ def _check_password_reset(target):
                 timeout=5,
             )
             if resp.status_code in (200, 302):
-                vulns.append({
-                    "tipo": "RESET_HOST_INJECTION", "endpoint": path,
-                    "severidade": "ALTO",
-                    "descricao": "Password reset aceita Host header injection — token theft!",
-                })
+                vulns.append(
+                    {
+                        "tipo": "RESET_HOST_INJECTION",
+                        "endpoint": path,
+                        "severidade": "ALTO",
+                        "descricao": "Password reset aceita Host header injection — token theft!",
+                    }
+                )
         except Exception:
             continue
     return vulns
@@ -286,9 +323,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "password_policy",
         "versao": "2026.1",
-        "tecnicas": ["weak_password", "credential_stuffing", "rate_limit",
-                      "rate_limit_bypass", "username_enumeration",
-                      "timing_enumeration", "password_reset_abuse",
-                      "host_header_injection"],
+        "tecnicas": [
+            "weak_password",
+            "credential_stuffing",
+            "rate_limit",
+            "rate_limit_bypass",
+            "username_enumeration",
+            "timing_enumeration",
+            "password_reset_abuse",
+            "host_header_injection",
+        ],
         "resultados": vulns if vulns else "Password policy adequada",
     }

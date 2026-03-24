@@ -1,6 +1,7 @@
 # plugins/http2_smuggle.py — Cascavel 2026 Intelligence
-import requests
 import warnings
+
+import requests
 
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
@@ -44,12 +45,15 @@ def _test_h2_headers(target, path):
             try:
                 resp = requests.get(url, headers=headers, timeout=8, verify=False)
                 if resp.status_code in (200, 301, 302):
-                    vulns.append({
-                        "tipo": f"H2_{attack_name}", "path": path,
-                        "severidade": "ALTO",
-                        "status": resp.status_code,
-                        "descricao": f"HTTP/2 header {attack_name} não bloqueado!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": f"H2_{attack_name}",
+                            "path": path,
+                            "severidade": "ALTO",
+                            "status": resp.status_code,
+                            "descricao": f"HTTP/2 header {attack_name} não bloqueado!",
+                        }
+                    )
                     break
                 elif resp.status_code == 400:
                     # Server rejected — good security posture
@@ -67,23 +71,33 @@ def _test_h2_desync(target, path, tests, test_type):
             url = f"{scheme}://{target}{path}"
             try:
                 resp = requests.request(
-                    test["method"], url,
+                    test["method"],
+                    url,
                     headers=test["headers"],
                     data=test.get("body", ""),
-                    timeout=8, verify=False,
+                    timeout=8,
+                    verify=False,
                 )
                 if resp.status_code == 400:
-                    vulns.append({
-                        "tipo": f"H2_DESYNC_{test_type}", "path": path,
-                        "severidade": "ALTO", "status": resp.status_code,
-                        "descricao": f"HTTP/2 {test_type} desync — backend processou diferente!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": f"H2_DESYNC_{test_type}",
+                            "path": path,
+                            "severidade": "ALTO",
+                            "status": resp.status_code,
+                            "descricao": f"HTTP/2 {test_type} desync — backend processou diferente!",
+                        }
+                    )
                 elif resp.status_code == 500:
-                    vulns.append({
-                        "tipo": f"H2_DESYNC_{test_type}_ERROR", "path": path,
-                        "severidade": "CRITICO", "status": resp.status_code,
-                        "descricao": f"HTTP/2 {test_type} causou 500 — desync confirmado!",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": f"H2_DESYNC_{test_type}_ERROR",
+                            "path": path,
+                            "severidade": "CRITICO",
+                            "status": resp.status_code,
+                            "descricao": f"HTTP/2 {test_type} causou 500 — desync confirmado!",
+                        }
+                    )
                 break
             except Exception:
                 continue
@@ -104,15 +118,21 @@ def _test_h2c_upgrade(target):
             timeout=8,
         )
         if resp.status_code == 101:
-            vulns.append({
-                "tipo": "H2C_UPGRADE_ACCEPTED", "severidade": "CRITICO",
-                "descricao": "h2c cleartext upgrade aceito — bypass de TLS restrictions!",
-            })
+            vulns.append(
+                {
+                    "tipo": "H2C_UPGRADE_ACCEPTED",
+                    "severidade": "CRITICO",
+                    "descricao": "h2c cleartext upgrade aceito — bypass de TLS restrictions!",
+                }
+            )
         elif "upgrade" in resp.headers.get("Connection", "").lower():
-            vulns.append({
-                "tipo": "H2C_UPGRADE_POSSIBLE", "severidade": "ALTO",
-                "descricao": "Servidor indica suporte a h2c upgrade!",
-            })
+            vulns.append(
+                {
+                    "tipo": "H2C_UPGRADE_POSSIBLE",
+                    "severidade": "ALTO",
+                    "descricao": "Servidor indica suporte a h2c upgrade!",
+                }
+            )
     except Exception:
         pass
     return vulns
@@ -127,7 +147,8 @@ def _test_websocket_h2(target):
                 ":protocol": "websocket",
                 "Sec-WebSocket-Version": "13",
             },
-            timeout=5, verify=False,
+            timeout=5,
+            verify=False,
         )
         if resp.status_code == 200:
             return {
@@ -169,7 +190,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "http2_smuggle",
         "versao": "2026.1",
-        "tecnicas": ["h2_header_injection", "h2cl_desync", "h2te_desync",
-                      "h2c_upgrade", "websocket_h2", "authority_override"],
+        "tecnicas": [
+            "h2_header_injection",
+            "h2cl_desync",
+            "h2te_desync",
+            "h2c_upgrade",
+            "websocket_h2",
+            "authority_override",
+        ],
         "resultados": vulns if vulns else "Nenhum HTTP/2 smuggling detectado",
     }
