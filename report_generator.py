@@ -17,6 +17,7 @@ and RET Tecnologia branding.
 import os
 import datetime
 import hashlib
+import html as html_mod
 from typing import Any
 
 from reportlab.lib import colors
@@ -78,6 +79,21 @@ FONT_MONO = "Courier"
 VERSION = "2.1.0"
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_PATH, "cascavel_logo.png")
+
+
+def _sanitize_html(text: str) -> str:
+    """Sanitiza texto não confiável para uso em reportlab Paragraph.
+
+    CVE-2023-33733: reportlab Paragraph()/rl_safe_eval permite RCE via
+    HTML injection em atributos como color/src de tags <img>/<font>.
+    Essa função escapa TODAS as entidades HTML, prevenindo injeção.
+    """
+    if not isinstance(text, str):
+        text = str(text)
+    # Escape HTML entities: < > & " '
+    safe = html_mod.escape(text, quote=True)
+    # Truncar para evitar PDFs gigantes com output malicioso
+    return safe[:5000]
 
 # ═══════════════════════════════════════════════════════════════════════
 # COMPANY BRANDING
@@ -708,25 +724,26 @@ def generate_pdf_report(
             card.append(title_table)
 
             if owasp_cat:
-                card.append(Paragraph(f"<b>OWASP:</b> {owasp_cat}", styles["BodySmall"]))
+                card.append(Paragraph(f"<b>OWASP:</b> {_sanitize_html(owasp_cat)}", styles["BodySmall"]))
 
             if details:
                 card.append(Paragraph("<b>Descrição:</b>", styles["BodySmall"]))
-                card.append(Paragraph(str(details), styles["Body"]))
+                card.append(Paragraph(_sanitize_html(str(details)), styles["Body"]))
 
             if evidence:
                 card.append(Paragraph("<b>Evidência:</b>", styles["BodySmall"]))
-                card.append(Paragraph(str(evidence), styles["Code"]))
+                card.append(Paragraph(_sanitize_html(str(evidence)), styles["Code"]))
 
             if remediation:
                 card.append(Paragraph("<b>Remediação Recomendada:</b>", styles["BodySmall"]))
-                card.append(Paragraph(str(remediation), styles["Body"]))
+                card.append(Paragraph(_sanitize_html(str(remediation)), styles["Body"]))
 
             if refs:
                 card.append(Paragraph("<b>Referências:</b>", styles["BodySmall"]))
                 for ref in refs[:5]:
+                    safe_ref = _sanitize_html(str(ref))
                     card.append(Paragraph(
-                        f'• <a href="{ref}" color="#0066CC">{ref}</a>',
+                        f'• <a href="{safe_ref}" color="#0066CC">{safe_ref}</a>',
                         styles["Legal"],
                     ))
 
