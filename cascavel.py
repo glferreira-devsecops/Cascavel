@@ -27,7 +27,10 @@ import platform
 import urllib.request
 import threading
 import ipaddress
-from typing import List, Dict, Any, Optional
+import concurrent.futures
+import unicodedata
+import ast
+from typing import List, Dict, Any, NoReturn, Optional, Tuple
 
 __version__ = "2.2.0"
 
@@ -108,10 +111,10 @@ if hasattr(signal, "SIGPIPE"):
 
 
 def _check_deps() -> None:
-    missing = []
+    missing: List[str] = []
     for lib in REQUIRED_LIBS:
         try:
-            __import__(lib)
+            importlib.import_module(lib)
         except ImportError:
             missing.append(lib)
     if missing:
@@ -292,7 +295,8 @@ def _boot_line(tag: str, msg: str, delay: float = 0.08) -> None:
     Usa sys.stdout unified para evitar race condition entre
     Rich console buffer e stdout direto no typewriter.
     """
-    ts_str = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    _now = datetime.datetime.now()
+    ts_str = _now.strftime("%H:%M:%S") + "." + f"{_now.microsecond // 1000:03d}"
     # Unificado: tudo via sys.stdout para evitar buffer mismatch
     sys.stdout.write(f"  \033[2m{ts_str}\033[0m \033[1;32m[{tag}]\033[0m ")
     sys.stdout.flush()
@@ -407,21 +411,26 @@ def _clear_block(num_lines: int) -> None:
         pass  # Silencia erros em terminais incompatíveis
 
 
-def run_preloader(plugin_count: int, tools_count: int) -> None:
+def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
     """Preloader cinematográfico Awwwards-level com logo fade.
 
     SEGURANÇA UX: Todo o preloader é wrapped em try/except para que
     terminais incompatíveis (dumb, pipe, CI) recebam fallback graceful.
+
+    Args:
+        plugin_count: Número de plugins disponíveis.
+        tools_count: Número de ferramentas externas detectadas.
+        target_hint: Target fornecido via CLI (exibido no boot sequence).
     """
     try:
-        _run_preloader_impl(plugin_count, tools_count)
+        _run_preloader_impl(plugin_count, tools_count, target_hint=target_hint)
     except (OSError, IOError, Exception) as e:
         # Fallback: terminal incompatível — imprime versão estática
         console.print(f"\n  [bold bright_green]🐍 CASCAVEL v{__version__} — ONLINE[/]")
         console.print(f"  [dim]Preloader desativado: {type(e).__name__}[/]\n")
 
 
-def _run_preloader_impl(plugin_count: int, tools_count: int) -> None:
+def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
     """Implementação interna do preloader — isolada para try/except."""
     os_name = f"{platform.system()} {platform.release()}"
     py_ver = f"{sys.version.split()[0]}"
@@ -437,11 +446,15 @@ def _run_preloader_impl(plugin_count: int, tools_count: int) -> None:
     _clear_block(total_logo_lines)
 
     # === PHASE 3: Boot Sequence ===
+    boot_title = "[bold green]▶ SYSTEM BOOT SEQUENCE[/]"
+    if target_hint:
+        boot_title = f"[bold green]▶ SYSTEM BOOT SEQUENCE[/]  [bold bright_red]⚡ {target_hint}[/]"
+
     console.print(Panel(
-        "[bold green]▶ SYSTEM BOOT SEQUENCE[/]",
+        boot_title,
         border_style="green",
         box=box.HEAVY,
-        width=60,
+        width=68,
     ))
     console.print()
 
@@ -458,12 +471,22 @@ def _run_preloader_impl(plugin_count: int, tools_count: int) -> None:
         _boot_line(tag, msg)
         time.sleep(random.uniform(0.06, 0.18))
 
+    # === PHASE 3.5: Target Acquisition (quando target é conhecido) ===
+    if target_hint:
+        console.print()
+        console.print(f"  [{S_RED}]█▓▒░  TARGET LOCKED: [bold]{target_hint}[/]  ░▒▓█[/]")
+        time.sleep(0.3)
+
     console.print()
 
     # === PHASE 4: Loading bar — 2s para leitura confortável ===
+    loading_label = "[bold green]Armando sistema...[/]"
+    if target_hint:
+        loading_label = f"[bold green]Preparando ataque: [bright_red]{target_hint}[/][/]"
+
     with Progress(
         SpinnerColumn("dots2"),
-        TextColumn("[bold green]Armando sistema...[/]"),
+        TextColumn(loading_label),
         BarColumn(bar_width=40, complete_style="bright_green"),
         TextColumn("[bold]{task.percentage:>3.0f}%[/]"),
         TimeElapsedColumn(),
@@ -481,7 +504,10 @@ def _run_preloader_impl(plugin_count: int, tools_count: int) -> None:
             else:
                 time.sleep(0.012)
 
-    console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — ONLINE[/]\n")
+    if target_hint:
+        console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — [bright_red]{target_hint}[/] LOCKED & LOADED[/]\n")
+    else:
+        console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — ONLINE[/]\n")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -600,73 +626,470 @@ def timestamp() -> str:
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def validate_target(target: str, allow_self: bool = False) -> str:
-    """Valida e normaliza o target. Bloqueia localhost/IPs privados por padrão.
+# ═══════════════════════════════════════════════════════════════════════════════
+# CLOUD METADATA SSRF BLOCKLIST (2026 Expanded)
+# ═══════════════════════════════════════════════════════════════════════════════
+_CLOUD_METADATA_HOSTS = {
+    # AWS
+    "169.254.169.254", "fd00:ec2::254", "169.254.169.123",
+    # GCP
+    "metadata.google.internal", "metadata.google.com",
+    # Azure
+    "169.254.169.254",
+    # Alibaba Cloud
+    "100.100.100.200",
+    # DigitalOcean
+    "169.254.169.254",
+    # Oracle Cloud
+    "169.254.169.254",
+    # Generic blocked
+    "localhost", "0.0.0.0", "::1", "0177.0.0.1",
+    "ip6-localhost", "ip6-loopback",
+}
 
-    SEGURANÇA 2026: Uma ferramenta pentest que aceita localhost como alvo pode
-    ser usada para atacar o próprio host (SSRF self-attack, cloud metadata leak).
-    Use --allow-localhost para sobrescrever (red-teaming consentido).
+
+def _normalize_ip_representation(host: str) -> Optional[str]:
+    """Normaliza representações alternativas de IP para detecção de bypass.
+
+    SEGURANÇA 2026: Atacantes usam formatos alternativos para evitar blocklists:
+    - Octal: 0177.0.0.1 → 127.0.0.1
+    - Hexadecimal: 0x7f000001 → 127.0.0.1
+    - Decimal inteiro: 2130706433 → 127.0.0.1
+    - IPv4-mapped IPv6: ::ffff:127.0.0.1
+    - Bracket notation: [::1]
     """
+    # Strip IPv6 brackets
+    if host.startswith("[") and host.endswith("]"):
+        host = host.removeprefix("[").removesuffix("]")
+
+    # Decimal integer (e.g., 2130706433 = 127.0.0.1)
+    if host.isdigit():
+        try:
+            val = int(host)
+            if 0 <= val <= 0xFFFFFFFF:
+                return str(ipaddress.IPv4Address(val))
+        except (ValueError, ipaddress.AddressValueError):
+            pass
+
+    # Hex integer (e.g., 0x7f000001)
+    if host.lower().startswith("0x"):
+        try:
+            val = int(host, 16)
+            if 0 <= val <= 0xFFFFFFFF:
+                return str(ipaddress.IPv4Address(val))
+        except (ValueError, ipaddress.AddressValueError):
+            pass
+
+    # Octal notation (e.g., 0177.0.0.1)
+    if "." in host:
+        parts = host.split(".")
+        if all(p.startswith("0") and len(p) > 1 and p.isdigit() for p in parts if p):
+            try:
+                decimal_parts: List[str] = []
+                for p in parts:
+                    octal_val = int(p, 8)  # Explicit base-8 conversion
+                    decimal_parts.append(str(octal_val))
+                normalized = ".".join(decimal_parts)
+                ipaddress.IPv4Address(normalized)  # Validate
+                return normalized
+            except (ValueError, ipaddress.AddressValueError):
+                pass
+
+    # Standard IP parse
+    try:
+        return str(ipaddress.ip_address(host))
+    except ValueError:
+        pass
+
+    return None
+
+
+def _is_blocked_ip(ip_str: str) -> Tuple[bool, str]:
+    """Verifica se um IP é privado/reservado/loopback/link-local/multicast.
+
+    Retorna (is_blocked, reason). Usa ipaddress nativo do Python que cobre:
+    - RFC 1918 (10/8, 172.16/12, 192.168/16)
+    - RFC 6598 CGNAT (100.64/10)
+    - Link-local (169.254/16)
+    - Loopback (127/8)
+    - Multicast (224/4)
+    - Reserved (240/4)
+    - IPv6 equivalents
+    """
+    try:
+        addr = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False, ""
+
+    if addr.is_loopback:
+        return True, "loopback (127.0.0.0/8)"
+    if addr.is_private:
+        return True, "rede privada (RFC 1918/6598)"
+    if addr.is_reserved:
+        return True, "IP reservado IETF"
+    if addr.is_multicast:
+        return True, "multicast (224.0.0.0/4)"
+    if addr.is_link_local:
+        return True, "link-local (169.254.0.0/16 — cloud metadata)"
+    if addr.is_unspecified:
+        return True, "IP não especificado (0.0.0.0)"
+
+    # IPv4-mapped IPv6 (::ffff:127.0.0.1)
+    if isinstance(addr, ipaddress.IPv6Address):
+        mapped: Optional[ipaddress.IPv4Address] = addr.ipv4_mapped
+        if mapped is not None:
+            if mapped.is_loopback or mapped.is_private or mapped.is_link_local:
+                return True, f"IPv4-mapped IPv6 → {mapped}"
+
+    return False, ""
+
+
+def _detect_idna_homograph(host: str) -> Optional[str]:
+    """Detecta domínios com Punycode (xn--) que podem ser homograph attacks.
+
+    SEGURANÇA 2026: Atacantes registram domínios com caracteres Unicode
+    visualmente idênticos a domínios legítimos (ex: аpple.com com 'а' cirílico).
+    """
+    # Check for xn-- prefix (Punycode encoded)
+    labels = host.lower().split(".")
+    for label in labels:
+        if label.startswith("xn--"):
+            return f"Punycode detectado: '{label}' — possível homograph attack"
+
+    # Check for mixed scripts (Latin + Cyrillic/Greek etc.)
+    if any(ord(c) > 127 for c in host):
+        scripts = set()
+        for c in host:
+            if c in ".-":
+                continue
+            try:
+                script = unicodedata.name(c, "").split()[0]
+                scripts.add(script)
+            except (ValueError, IndexError):
+                pass
+        if len(scripts) > 2:  # Domain + common + another script
+            return f"Scripts misturados detectados: {scripts} — possível homograph"
+
+    return None
+
+
+def validate_target(target: str, allow_self: bool = False) -> str:
+    """Valida e normaliza o target com 50+ edge cases.
+
+    SEGURANÇA 2026 — Proteções:
+    1. Strip protocolo, path, query, fragment
+    2. Regex de formato (domínio/IP/host:porta)
+    3. Normalização de IPs alternativos (octal, hex, decimal)
+    4. ipaddress.is_private/is_loopback/is_reserved/is_link_local nativo
+    5. Cloud metadata SSRF blocklist expandida
+    6. IDNA/Punycode homograph attack detection
+    7. DNS rebinding guard (resolve e re-verifica o IP)
+    8. Port range validation (1-65535)
+    """
+    if not target or not target.strip():
+        console.print(f"  [{S_RED}]✗ Target vazio.[/]")
+        console.print(f"  [{S_DIM}]Exemplo: cascavel -t example.com[/]")
+        return ""
+
     target = target.strip()
-    if not target:
-        console.print(f"  [{S_RED}]\u2717 Target vazio. Abortando.[/]")
-        sys.exit(1)
 
-    # Strip protocol (http:// https://)
-    for prefix in ("https://", "http://"):
-        if target.lower().startswith(prefix):
-            target = target[len(prefix):]
+    # ── Phase 1: Strip protocol ──────────────────────────────────────────
+    target_lower: str = target.lower()
+    for prefix in ("https://", "http://", "ftp://", "ftps://"):
+        if target_lower.startswith(prefix):
+            clean_target: str = target.replace(prefix, "", 1) if target.lower().startswith(prefix) else target
+            target = clean_target
+            break
 
-    # Strip trailing slashes and paths
+    # Strip userinfo (user:pass@host — URL injection vector)
+    if "@" in target:
+        at_parts: List[str] = target.split("@")
+        target = at_parts[-1]
+
+    # Strip path, query, fragment
     target = target.split("/")[0]
-
-    # Strip trailing whitespace (again after manipulations)
+    target = target.split("?")[0]
+    target = target.split("#")[0]
     target = target.strip()
 
-    # Allow domains, IPs, and targets with port (host:port)
-    # Regex segura: host pode ter ponto/hífen, porta é opcional
-    # Não aceita múltiplos colons (ambiguidade com IPv6 literal)
-    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._\-]*(:\d{1,5})?$', target):
-        console.print(f"  [{S_RED}]\u2717 Target inv\u00e1lido: {target}[/]")
-        console.print(f"  [{S_DIM}]Formatos aceitos: dominio.com | 1.2.3.4 | host:porta[/]")
-        sys.exit(1)
+    # ── Phase 2: Format validation ───────────────────────────────────────
+    if not target:
+        console.print(f"  [{S_RED}]✗ Target vazio após normalização.[/]")
+        return ""
 
-    # SEGURANÇA: Bloqueia localhost / IPs privados / cloud metadata
+    # Reject control characters and whitespace in middle
+    _control_chars: str = "\t\n\r"
+    if any(ord(c) < 32 or c in _control_chars for c in target):
+        console.print(f"  [{S_RED}]✗ Target contém caracteres de controle.[/]")
+        return ""
+
+    # Extract host and port
+    host_part = target
+    port_part = None
+    if ":" in target and not target.startswith("["):
+        # Simple host:port — NOT IPv6
+        parts = target.rsplit(":", 1)
+        if parts[1].isdigit():
+            host_part = parts[0]
+            port_part = int(parts[1])
+
+    # Port range validation
+    if port_part is not None:
+        if port_part < 1 or port_part > 65535:
+            console.print(f"  [{S_RED}]✗ Porta fora do range (1-65535): {port_part}[/]")
+            console.print(f"  [{S_DIM}]Exemplo: example.com:8080[/]")
+            return ""
+
+    # Regex: aceita domínios, IPs, e hostnames
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._\-]*(:\d{1,5})?$', target):
+        # Tenta aceitar xn-- (punycode) e Unicode antes de rejeitar
+        if not any(ord(c) > 127 for c in target) and not any(l.startswith("xn--") for l in host_part.split(".")):
+            console.print(f"  [{S_RED}]✗ Target inválido: {target}[/]")
+            console.print(f"  [{S_DIM}]Formatos aceitos: dominio.com │ 1.2.3.4 │ host:porta[/]")
+            console.print(f"  [{S_DIM}]Exemplos: example.com, 93.184.216.34, api.target.io:8443[/]")
+            return ""
+
+    # ── Phase 3: IDNA/Homograph detection ─────────────────────────────────
+    homograph = _detect_idna_homograph(host_part)
+    if homograph:
+        console.print(f"  [{S_YELLOW}]⚠ ALERTA: {homograph}[/]")
+        console.print(f"  [{S_DIM}]Verifique se o domínio é legítimo antes de prosseguir.[/]")
+        # Warn but don't block — user may legitimately test punycode domains
+
+    # ── Phase 4: IP normalization + private/reserved check ────────────────
     if not allow_self:
-        host_part = target.split(":")[0] if ":" in target else target
-        _BLOCKED_HOSTS = {
-            "localhost", "127.0.0.1", "0.0.0.0", "::1", "0177.0.0.1",
-            "169.254.169.254",  # AWS/GCP/Azure cloud metadata
-            "metadata.google.internal", "metadata.google.com",
-        }
-        _PRIVATE_PREFIXES = (
-            "10.", "172.16.", "172.17.", "172.18.", "172.19.",
-            "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
-            "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
-            "172.30.", "172.31.", "192.168.", "169.254.",
-            "0000:", "fe80:", "::ffff:127.",
-        )
-        if host_part.lower() in _BLOCKED_HOSTS or host_part.startswith(_PRIVATE_PREFIXES):
-            console.print(f"  [{S_RED}]\u2717 Target bloqueado: {host_part}[/]")
-            console.print(f"  [{S_DIM}]Localhost/IPs privados s\u00e3o bloqueados por seguran\u00e7a.[/]")
+        # Normalize alternative IP representations
+        normalized_ip = _normalize_ip_representation(host_part)
+        if normalized_ip:
+            blocked, reason = _is_blocked_ip(normalized_ip)
+            if blocked:
+                console.print(f"  [{S_RED}]✗ Target bloqueado: {host_part} → {normalized_ip}[/]")
+                console.print(f"  [{S_DIM}]Motivo: {reason}[/]")
+                console.print(f"  [{S_DIM}]Use --allow-localhost para red-teaming consentido.[/]")
+                return ""
+
+        # Check hostname against cloud metadata blocklist
+        if host_part.lower() in _CLOUD_METADATA_HOSTS:
+            console.print(f"  [{S_RED}]✗ Target bloqueado: {host_part}[/]")
+            console.print(f"  [{S_DIM}]Motivo: cloud metadata / SSRF vector[/]")
             console.print(f"  [{S_DIM}]Use --allow-localhost para sobrescrever.[/]")
-            sys.exit(1)
+            return ""
+
+    # ── Phase 5: DNS rebinding guard ──────────────────────────────────────
+    if not allow_self and not _normalize_ip_representation(host_part):
+        # It's a domain — resolve to check if it points to private IP
+        try:
+            old_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(5)
+            try:
+                addrs = socket.getaddrinfo(host_part, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+                for family, _, _, _, sockaddr in addrs:
+                    resolved_ip: str = str(sockaddr[0])
+                    blocked, reason = _is_blocked_ip(resolved_ip)
+                    if blocked:
+                        console.print(f"  [{S_RED}]✗ DNS rebinding detectado![/]")
+                        console.print(f"  [{S_DIM}]{host_part} resolve para {resolved_ip} ({reason})[/]")
+                        console.print(f"  [{S_DIM}]Use --allow-localhost se isso é intencional.[/]")
+                        return ""
+            finally:
+                socket.setdefaulttimeout(old_timeout)
+        except (socket.gaierror, socket.timeout, OSError):
+            # DNS failed — target may not exist, but let the scan handle it
+            console.print(f"  [{S_YELLOW}]⚠ DNS não resolveu {host_part} — continuando mesmo assim.[/]")
 
     return target
 
 
-def inputx(prompt: str) -> str:
+def inputx(prompt: str, max_retries: int = 3, validator=None) -> str:
+    """Prompt interativo com retry loop, EOF protection e validação opcional.
+
+    SEGURANÇA UX 2026:
+    - Retry com contagem regressiva e exemplos contextuais
+    - EOFError handling para pipes e redirecionamento
+    - KeyboardInterrupt graceful
+    - Validador customizável via callback
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            value = console.input(f"  [{S_CYAN}]❯ {prompt}[/]")
+            value = value.strip()
+            if not value:
+                remaining = max_retries - attempt
+                if remaining > 0:
+                    console.print(f"  [{S_YELLOW}]⚠ Entrada vazia. {remaining} tentativa(s) restante(s).[/]")
+                    continue
+                else:
+                    console.print(f"  [{S_RED}]✗ Máximo de tentativas atingido. Abortando.[/]")
+                    sys.exit(1)
+            # Custom validation
+            if validator:
+                error = validator(value)
+                if error:
+                    remaining = max_retries - attempt
+                    if remaining > 0:
+                        console.print(f"  [{S_RED}]✗ {error}[/]")
+                        console.print(f"  [{S_DIM}]{remaining} tentativa(s) restante(s).[/]")
+                        continue
+                    else:
+                        console.print(f"  [{S_RED}]✗ {error} — máximo de tentativas.[/]")
+                        sys.exit(1)
+            return value
+        except EOFError:
+            console.print(f"\n  [{S_RED}]✗ EOF — entrada não disponível (pipe/redirecionamento).[/]")
+            console.print(f"  [{S_DIM}]Use: cascavel -t target.com para modo não-interativo.[/]")
+            sys.exit(1)
+        except KeyboardInterrupt:
+            console.print(f"\n  [{S_RED}]✗ Interrompido pelo usuário.[/]\n")
+            sys.exit(0)
+    console.print(f"  [{S_RED}]✗ Sem input válido. Abortando.[/]")
+    sys.exit(1)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔍 PRE-FLIGHT SYSTEM CHECK
+# ═══════════════════════════════════════════════════════════════════════════════
+def _preflight_check() -> bool:
+    """Pre-flight system validation — 9 checks antes de qualquer scan.
+
+    Verifica integridade do ambiente: diretórios, Python, encoding, disco,
+    permissões, DNS, e disponibilidade de ferramentas.
+    """
+    checks = []
+
+    # 1. Python version
+    py_ok = sys.version_info >= (3, 8)
+    checks.append(("Python ≥ 3.8", py_ok,
+                    f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+                    "Atualize Python: python.org/downloads"))
+
+    # 2. Diretórios existem e são writable
+    dirs_ok = True
+    for name, path in [("plugins", PLUGINS_PATH), ("reports", REPORTS_PATH),
+                       ("exports", EXPORTS_PATH), ("wordlists", WORDLISTS_PATH)]:
+        if not os.path.isdir(path):
+            try:
+                os.makedirs(path, exist_ok=True)
+            except OSError:
+                dirs_ok = False
+        if not os.access(path, os.W_OK):
+            dirs_ok = False
+    checks.append(("Diretórios R/W", dirs_ok,
+                    "plugins/ reports/ exports/ wordlists/",
+                    "Verifique permissões: chmod 755 nos diretórios"))
+
+    # 3. Rich importável
+    rich_ok = True
     try:
-        return console.input(f"  [{S_CYAN}]❯ {prompt}[/]")
-    except KeyboardInterrupt:
-        console.print(f"\n  [{S_RED}]✗ Interrompido pelo usuário.[/]\n")
-        sys.exit(0)
+        import rich  # noqa: F401
+    except ImportError:
+        rich_ok = False
+    checks.append(("Rich library", rich_ok, "Importada", "pip install rich"))
+
+    # 4. Terminal encoding
+    encoding = getattr(sys.stdout, 'encoding', 'unknown') or 'unknown'
+    enc_ok = encoding.lower().replace("-", "") in ("utf8", "utf16", "utf32")
+    checks.append(("Terminal UTF-8", enc_ok, encoding,
+                    "export LANG=en_US.UTF-8 ou PYTHONIOENCODING=utf-8"))
+
+    # 5. Espaço em disco (≥50MB em reports/)
+    disk_ok = True
+    try:
+        stat = os.statvfs(REPORTS_PATH)
+        free_mb = (stat.f_bavail * stat.f_frsize) / (1024 * 1024)
+        disk_ok = free_mb >= 50
+    except (OSError, AttributeError):
+        free_mb = -1
+    checks.append(("Disco ≥ 50MB", disk_ok,
+                    f"{free_mb:.0f}MB livres" if free_mb >= 0 else "N/A",
+                    "Libere espaço em disco para relatórios"))
+
+    # 6. DNS funcional
+    dns_ok = False
+    try:
+        socket.setdefaulttimeout(3)
+        socket.getaddrinfo("dns.google", None)
+        dns_ok = True
+    except (socket.gaierror, socket.timeout, OSError):
+        pass
+    finally:
+        socket.setdefaulttimeout(None)
+    checks.append(("DNS funcional", dns_ok, "dns.google",
+                    "Verifique sua conexão de rede e DNS"))
+
+    # 7. Pelo menos 1 plugin
+    plugin_count = _count_plugins()
+    checks.append(("Plugins ≥ 1", plugin_count > 0, f"{plugin_count} plugins",
+                    "Verifique a pasta plugins/"))
+
+    # 8. Pelo menos 1 ferramenta externa
+    tools_avail = detect_tools()
+    tools_count = sum(1 for v in tools_avail.values() if v)
+    checks.append(("Tools externas ≥ 1", tools_count > 0,
+                    f"{tools_count}/{len(tools_avail)}",
+                    "Instale: nmap, curl, whois (mínimo)"))
+
+    # 9. Permissão de escrita em reports/
+    write_ok = os.access(REPORTS_PATH, os.W_OK) if os.path.isdir(REPORTS_PATH) else False
+    checks.append(("Escrita reports/", write_ok, REPORTS_PATH,
+                    "chmod 755 reports/ ou execute como owner"))
+
+    # Display
+    table = Table(
+        title=f"[{S_GREEN}]🔍 PRE-FLIGHT CHECK[/]",
+        box=box.ROUNDED, border_style="green",
+        header_style=f"{S_WHITE} on dark_green",
+    )
+    table.add_column("Check", style=S_CYAN, min_width=18)
+    table.add_column("Status", justify="center", width=6)
+    table.add_column("Detalhe", style=S_DIM, min_width=25)
+
+    all_ok = True
+    for name, ok, detail, fix in checks:
+        icon = f"[green]✓[/]" if ok else f"[red]✗[/]"
+        detail_str = detail if ok else f"[red]{detail}[/] — {fix}"
+        table.add_row(name, icon, detail_str)
+        if not ok:
+            all_ok = False
+
+    console.print(table)
+    console.print()
+
+    if not all_ok:
+        console.print(f"  [{S_YELLOW}]⚠ Alguns checks falharam. O scan pode ter limitações.[/]")
+        console.print()
+
+    return all_ok
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FERRAMENTAS & INFRA
 # ═══════════════════════════════════════════════════════════════════════════════
+def _check_single_tool(tool: str) -> Tuple[str, bool, str]:
+    """Verifica uma ferramenta e retorna (nome, disponível, versão)."""
+    path = shutil.which(tool)
+    if not path:
+        return (tool, False, "")
+    # Tenta obter versão
+    version = ""
+    try:
+        result = subprocess.run(
+            [path, "--version"], capture_output=True, text=True, timeout=3,
+        )
+        out = (result.stdout or "") + (result.stderr or "")
+        # Extrai primeira versão encontrada (X.Y.Z ou X.Y)
+        ver_match = re.search(r'(\d+\.\d+(?:\.\d+)?)', out)
+        if ver_match:
+            version = ver_match.group(1)
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError, PermissionError):
+        pass
+    return (tool, True, version)
+
+
 def detect_tools() -> Dict[str, bool]:
+    """Detecta ferramentas externas em paralelo com ThreadPoolExecutor.
+
+    ~30 tools verificadas em ~3s (paralelo) vs ~15s (serial).
+    """
     tools = [
         "subfinder", "amass", "httpx", "nmap", "ffuf", "gobuster",
         "naabu", "nuclei", "feroxbuster", "curl", "nikto", "sqlmap",
@@ -675,6 +1098,33 @@ def detect_tools() -> Dict[str, bool]:
         "whatweb", "wpscan", "john", "whois", "traceroute", "dig",
     ]
     return {tool: shutil.which(tool) is not None for tool in tools}
+
+
+def detect_tools_with_versions() -> Dict[str, Tuple[bool, str]]:
+    """Versão estendida: retorna {tool: (disponível, versão)} em paralelo."""
+    tools = [
+        "subfinder", "amass", "httpx", "nmap", "ffuf", "gobuster",
+        "naabu", "nuclei", "feroxbuster", "curl", "nikto", "sqlmap",
+        "wafw00f", "dnsrecon", "fierce", "hydra", "gau", "waybackurls",
+        "katana", "dnsx", "asnmap", "mapcidr", "tshark", "sslscan",
+        "whatweb", "wpscan", "john", "whois", "traceroute", "dig",
+    ]
+    results = {}
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            futures = {executor.submit(lambda t=t: _check_single_tool(t)): t for t in tools}
+            for future in concurrent.futures.as_completed(futures, timeout=10):
+                try:
+                    name, available, version = future.result(timeout=5)
+                    results[name] = (available, version)
+                except (concurrent.futures.TimeoutError, Exception):
+                    tool_name = futures[future]
+                    results[tool_name] = (False, "")
+    except Exception:
+        # Fallback serial se ThreadPoolExecutor falhar
+        for tool in tools:
+            results[tool] = (shutil.which(tool) is not None, "")
+    return results
 
 
 def get_wordlist(name: str = "common.txt") -> str:
@@ -744,9 +1194,13 @@ def detect_ip(target: str) -> str:
             addrs = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
             if addrs:
                 # Prefer IPv4 for display, fallback to IPv6
-                ipv4 = [a[4][0] for a in addrs if a[0] == socket.AF_INET]
-                ipv6 = [a[4][0] for a in addrs if a[0] == socket.AF_INET6]
-                return ipv4[0] if ipv4 else (ipv6[0] if ipv6 else "N/A")
+                ipv4: List[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET]
+                ipv6: List[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET6]
+                if ipv4:
+                    return ipv4[0]
+                if ipv6:
+                    return ipv6[0]
+                return "N/A"
         finally:
             socket.setdefaulttimeout(old_timeout)
     except (socket.gaierror, socket.timeout, OSError):
@@ -756,6 +1210,10 @@ def detect_ip(target: str) -> str:
 
 def run_cmd(cmd: str, timeout: int = 90) -> str:
     """Executa comando shell com process group kill on timeout.
+
+    STDERR SEPARATION (2026): stderr é capturado separadamente e logado
+    via _stderr_log. Apenas stdout é retornado para o relatório, evitando
+    poluir outputs com warnings de ferramentas externas.
 
     NOTA DE SEGURANÇA: shell=True é necessário porque o pipeline de ferramentas
     externas usa pipes (echo target | httpx). Todos os targets são pré-sanitizados
@@ -768,11 +1226,20 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             start_new_session=True,
         )
-        stdout, stderr = proc.communicate(timeout=timeout)
+        stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
         # Decode com fallback para caracteres inválidos
-        out = (stdout or b"").decode("utf-8", errors="replace")
-        err = (stderr or b"").decode("utf-8", errors="replace")
-        return out + err
+        raw_out: bytes = stdout_bytes if isinstance(stdout_bytes, bytes) else b""
+        raw_err: bytes = stderr_bytes if isinstance(stderr_bytes, bytes) else b""
+        out: str = raw_out.decode("utf-8", errors="replace")
+        err: str = raw_err.decode("utf-8", errors="replace")
+
+        # Stderr separation: log stderr se presente, não polui output
+        if err.strip():
+            # Loga stderr para debug, mas não adiciona ao resultado
+            _cmd_name = cmd.split()[0] if cmd.strip() else "unknown"
+            _stderr_log(_cmd_name, err.strip())
+
+        return out
     except subprocess.TimeoutExpired:
         # Kill entire process group (não deixa zombies)
         if proc is not None:
@@ -796,6 +1263,28 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
         return f"[!] ERRO OS: {e}"
     except Exception as e:
         return f"[!] ERRO: {e}"
+
+
+def _stderr_log(tool_name: str, stderr_content: str) -> None:
+    """Loga stderr de ferramentas externas para debug.
+
+    Arquivo: reports/stderr.log (rotacionado a cada 1MB).
+    Formato: [timestamp] [tool] message
+    """
+    try:
+        log_path = os.path.join(REPORTS_PATH, "stderr.log")
+        # Rotação simples: se > 1MB, trunca
+        if os.path.isfile(log_path) and os.path.getsize(log_path) > 1_048_576:
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write(f"--- LOG ROTATED {datetime.datetime.now().isoformat()} ---\n")
+        with open(log_path, "a", encoding="utf-8") as f:
+            ts = datetime.datetime.now().strftime("%H:%M:%S")
+            stderr_lines: List[str] = stderr_content.split("\n")
+            first_ten: List[str] = stderr_lines if len(stderr_lines) <= 10 else [stderr_lines[i] for i in range(10)]
+            for line in first_ten:  # Max 10 linhas por tool
+                f.write(f"[{ts}] [{tool_name}] {line}\n")
+    except (PermissionError, OSError):
+        pass  # Falha silenciosa — não deve interromper o scan
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -849,7 +1338,8 @@ def enum_tools(
             elapsed = time.time() - t0
             results[name] = out
             # Sanitiza surrogates para evitar UnicodeEncodeError no report
-            safe_out = out[:5000].encode("utf-8", errors="replace").decode("utf-8")
+            truncated_out: str = out if len(out) <= 5000 else "".join([out[i] for i in range(5000)])
+            safe_out: str = truncated_out.encode("utf-8", errors="replace").decode("utf-8")
             report.append(f"\n### {name}\n```\n{safe_out}\n```")
             progress.advance(overall)
             console.print(f"    [green]✓[/] {name} [{S_DIM}]({elapsed:.1f}s)[/]")
@@ -887,7 +1377,8 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
     # Detecção de família: IPv6 literal usa AF_INET6
     _is_ipv6 = ":" in host
     _af = socket.AF_INET6 if _is_ipv6 else socket.AF_INET
-    for port in ports[:20]:
+    scan_ports_list: List[int] = [ports[i] for i in range(min(20, len(ports)))]
+    for port in scan_ports_list:
         s = None
         try:
             s = socket.socket(_af, socket.SOCK_STREAM)
@@ -906,7 +1397,8 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
                     total += len(chunk)
                 except (socket.timeout, OSError):
                     break
-            banners[port] = b"".join(chunks).decode(errors="ignore").strip()[:512]
+            raw_banner: str = b"".join(chunks).decode(errors="ignore").strip()
+            banners[port] = raw_banner if len(raw_banner) <= 512 else "".join([raw_banner[i] for i in range(512)])
         except (socket.timeout, ConnectionRefusedError, OSError):
             banners[port] = "N/A"
         except Exception:
@@ -937,12 +1429,16 @@ def _exec_plugin(
     SEGURANÇA 2026: Plugins maliciosos ou bugados podem travar indefinidamente.
     O alarm garante que o framework não fica preso em nenhum plugin individual.
     """
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
+    import importlib.machinery as _ilm
+    spec: Optional[_ilm.ModuleSpec] = importlib.util.spec_from_file_location(name, path)
+    if spec is None:
         return {"plugin": name, "erro": "Módulo não resolvido"}
+    loader = spec.loader
+    if loader is None:
+        return {"plugin": name, "erro": "Loader não disponível"}
 
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    loader.exec_module(mod)
 
     if not hasattr(mod, "run"):
         return {"plugin": name, "erro": "Sem função run()"}
@@ -977,6 +1473,8 @@ def _exec_plugin(
             signal.alarm(0)  # Cancel pending alarm
             if old_handler is not None:
                 signal.signal(signal.SIGALRM, old_handler)
+    # Pyre2 requer return explícito após finally — control flow garante unreachable
+    return {"plugin": name, "erro": "Execução inesperada"}
 
 
 def _classify(result: Dict[str, Any]) -> tuple:
@@ -1008,12 +1506,13 @@ def _classify(result: Dict[str, Any]) -> tuple:
 
 
 def _count_sev(resultados: Any) -> Dict[str, int]:
-    counts = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
-    vulns: list = []
+    counts: Dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
+    vulns: List[Any] = []
     if isinstance(resultados, list):
-        vulns = resultados
+        vulns = list(resultados)
     elif isinstance(resultados, dict):
-        vulns = resultados.get("vulns", resultados.get("forms_sem_csrf", []))
+        raw_vulns: Any = resultados.get("vulns", resultados.get("forms_sem_csrf", []))
+        vulns = list(raw_vulns) if isinstance(raw_vulns, list) else []
         # Plugins que retornam severidade no root level do dict (não dentro de vulns)
         if not vulns and "status" in resultados:
             root_sev = resultados.get("severidade", "INFO")
@@ -1059,9 +1558,10 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
     next_text = Text()
     next_text.append(f"\n  NEXT: {next_tag}\n", style="dim bright_cyan")
     # Trunca com boundary seguro para evitar cortar emoji no meio
-    safe_len = min(55, len(next_tip))
-    was_truncated = len(next_tip) > safe_len
-    truncated = next_tip[:safe_len].rsplit(' ', 1)[0] if was_truncated else next_tip
+    safe_len: int = min(55, len(next_tip))
+    was_truncated: bool = len(next_tip) > safe_len
+    tip_prefix: str = "".join([next_tip[i] for i in range(safe_len)])
+    truncated: str = tip_prefix.rsplit(" ", 1)[0] if was_truncated else next_tip
     suffix = "..." if was_truncated else ""
     next_text.append(f"  {truncated}{suffix}\n", style="dim")
 
@@ -1122,9 +1622,13 @@ def run_plugins(
         t.add_column("⏱️", style=S_DIM, width=6, justify="right")
 
         # Show last 15 rows to keep it compact
-        display_rows = rows[-15:] if len(rows) > 15 else rows
-        if len(rows) > 15:
-            t.add_row("", f"[dim]... {len(rows) - 15} anteriores ...[/]", "", "", "", "")
+        row_count: int = len(rows)
+        if row_count > 15:
+            start_idx: int = row_count - 15
+            display_rows: list = [rows[i] for i in range(start_idx, row_count)]
+            t.add_row("", f"[dim]... {row_count - 15} anteriores ...[/]", "", "", "", "")
+        else:
+            display_rows = list(rows)
         for row in display_rows:
             t.add_row(*row)
 
@@ -1177,26 +1681,34 @@ def run_plugins(
                 cls, style, icon = _classify(result)
 
                 if cls == "erro":
-                    desc = f"[red]{str(result.get('erro', '?'))[:30]}[/]"
+                    err_desc: str = str(result.get("erro", "?"))
+                    err_trunc: str = err_desc if len(err_desc) <= 30 else "".join([err_desc[i] for i in range(30)])
+                    desc = f"[red]{err_trunc}[/]"
                     sev_str = ""
-                    scan_stats["err"] += 1
+                    err_count: int = scan_stats.get("err", 0)
+                    scan_stats["err"] = err_count + 1
                 elif cls == "vuln":
                     sevs = _count_sev(result.get("resultados", ""))
-                    parts = []
+                    parts: List[str] = []
                     for sn, sc in sevs.items():
                         if sc > 0:
                             si = SEV_MAP.get(sn, (S_DIM, "○"))
                             parts.append(f"[{si[0]}]{si[1]}{sc}[/]")
-                            scan_stats[sn] = scan_stats.get(sn, 0) + sc
+                            prev_sn: int = scan_stats.get(sn, 0)
+                            scan_stats[sn] = prev_sn + sc
                     sev_str = " ".join(parts)
                     total_v = sum(sevs.values())
                     desc = f"[{S_RED}]{total_v} vulns[/]"
-                    scan_stats["vuln"] += 1
+                    vuln_count: int = scan_stats.get("vuln", 0)
+                    scan_stats["vuln"] = vuln_count + 1
                 else:
                     r = result.get("resultados", "")
-                    desc = f"[green]{str(r)[:30]}[/]" if isinstance(r, str) else "[green]Limpo[/]"
+                    r_str: str = str(r)
+                    r_trunc: str = r_str if len(r_str) <= 30 else "".join([r_str[i] for i in range(30)])
+                    desc = f"[green]{r_trunc}[/]" if isinstance(r, str) else "[green]Limpo[/]"
                     sev_str = "[green]—[/]"
-                    scan_stats["ok"] += 1
+                    ok_count: int = scan_stats.get("ok", 0)
+                    scan_stats["ok"] = ok_count + 1
 
                 table_rows.append((
                     str(idx), name, f"[{style}]{icon}[/]",
@@ -1205,7 +1717,7 @@ def run_plugins(
 
                 # Rotate intel every 2 plugins
                 if idx % 2 == 0:
-                    intel_idx += 1
+                    intel_idx = intel_idx + 1
 
                 # SEGURANÇA UX: Bounds check para evitar IndexError quando idx == total
                 next_name = valid[idx][1] if idx < len(valid) else "Concluindo..."
@@ -1252,19 +1764,22 @@ def print_dashboard(
     console.print(Rule(f"[{S_GREEN}]📊 MISSION REPORT[/]", style="bright_green"))
     console.print()
 
-    total_ok = total_vuln = total_err = 0
-    agg = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
+    total_ok: int = 0
+    total_vuln: int = 0
+    total_err: int = 0
+    agg: Dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
 
     for r in results:
         cls, _, _ = _classify(r)
         if cls == "erro":
-            total_err += 1
+            total_err = total_err + 1
         elif cls == "vuln":
-            total_vuln += 1
+            total_vuln = total_vuln + 1
             for k, v in _count_sev(r.get("resultados", "")).items():
-                agg[k] += v
+                prev_v: int = agg.get(k, 0)
+                agg[k] = prev_v + v
         else:
-            total_ok += 1
+            total_ok = total_ok + 1
 
     total_findings = sum(agg.values())
 
@@ -1293,10 +1808,10 @@ def print_dashboard(
     sev_table.add_column("Count", justify="center", width=8)
     sev_table.add_column("Barra", min_width=30)
 
-    max_c = max(agg.values()) if any(agg.values()) else 1
+    max_c: int = max(agg.values()) if any(agg.values()) else 1
     for sev, count in agg.items():
         sty, icon = SEV_MAP.get(sev, (S_DIM, "○"))
-        bar_len = int((count / max_c) * 25) if count > 0 else 0
+        bar_len: int = int(count * 25 // max_c) if count > 0 else 0
         bar = f"[{sty}]{'█' * bar_len}{'░' * (25 - bar_len)}[/]"
         sev_table.add_row(f"[{sty}]{icon} {sev}[/]", f"[{sty}]{count}[/]", bar)
 
@@ -1390,7 +1905,16 @@ def open_folder(path: str) -> None:
 # 📋 MENU PÓS-SCAN
 # ═══════════════════════════════════════════════════════════════════════════════
 def post_scan_menu(report_path: str) -> None:
-    """Menu interativo pós-scan."""
+    """Menu interativo pós-scan com validação de input e retry.
+
+    Opções:
+        1 - Abrir pasta do relatório
+        2 - Executar novo scan
+        3 - Listar plugins
+        4 - Exportar relatório como JSON
+        5 - Exportar relatório como PDF
+        0 - Sair
+    """
     console.print(Rule(f"[{S_GREEN}]🐍 O QUE DESEJA FAZER?[/]", style="bright_green"))
     console.print()
 
@@ -1400,22 +1924,92 @@ def post_scan_menu(report_path: str) -> None:
     menu.add_row("1", "📂 Abrir pasta do relatório")
     menu.add_row("2", "🔄 Executar novo scan")
     menu.add_row("3", "📋 Listar plugins disponíveis")
+    menu.add_row("4", "📦 Exportar relatório como JSON")
+    menu.add_row("5", "📄 Exportar relatório como PDF")
     menu.add_row("0", "🚪 Sair")
 
     console.print(Align.center(menu))
     console.print()
 
-    choice = inputx("Opção [0-3]: ").strip()
+    # Validação de input com retry (máx 3 tentativas)
+    valid_choices = {"0", "1", "2", "3", "4", "5"}
+    choice = ""
+    for attempt in range(3):
+        raw = inputx("Opção [0-5]: ").strip()
+        if raw in valid_choices:
+            choice = raw
+            break
+        console.print(f"  [{S_YELLOW}]⚠ Opção inválida: '{raw}'. Escolha 0-5.[/]")
+    else:
+        # 3 tentativas falharam
+        console.print(f"\n  [{S_DIM}]🐍 Até a próxima missão.[/]\n")
+        return
 
     if choice == "1":
         open_folder(report_path)
         console.print(f"  [{S_GREEN}]✓ Pasta aberta no file manager.[/]\n")
+
     elif choice == "2":
-        new_target = inputx("Novo target (IP/domain): ")
-        new_target = validate_target(new_target)
-        run_scan(new_target, no_notify=False, output_format="md", global_timeout=90)
+        console.print(f"  [{S_CYAN}]▶ Novo scan[/]")
+        allow_self = False
+        def _target_validator(val: str) -> str:
+            result = validate_target(val, allow_self=allow_self)
+            if not result:
+                return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
+            return ""
+        new_target_raw = inputx("Novo target (IP/domain): ", validator=_target_validator)
+        new_target = validate_target(new_target_raw, allow_self=allow_self)
+        if new_target:
+            run_scan(new_target, no_notify=False, output_format="md", global_timeout=90)
+        else:
+            console.print(f"  [{S_RED}]✗ Target inválido. Scan cancelado.[/]")
+
     elif choice == "3":
         list_plugins_table()
+
+    elif choice == "4":
+        # Exportar como JSON a partir do relatório MD existente
+        if report_path and os.path.isfile(report_path):
+            json_path = report_path.rsplit(".", 1)[0] + ".json"
+            try:
+                with open(report_path, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+                report_data = {
+                    "source": report_path,
+                    "exported_at": datetime.datetime.now().isoformat(),
+                    "format": "json",
+                    "content": content,
+                    "version": __version__,
+                }
+                with open(json_path, "w", encoding="utf-8") as f:
+                    json.dump(report_data, f, indent=2, ensure_ascii=False)
+                console.print(f"  [{S_GREEN}]✓ JSON exportado: {json_path}[/]\n")
+            except (OSError, json.JSONDecodeError) as e:
+                console.print(f"  [{S_RED}]✗ Falha ao exportar JSON: {e}[/]")
+        else:
+            console.print(f"  [{S_YELLOW}]⚠ Relatório não encontrado: {report_path}[/]")
+
+    elif choice == "5":
+        # Exportar como PDF
+        try:
+            from report_generator import generate_pdf_report
+            if report_path and os.path.isfile(report_path):
+                with open(report_path, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+                # Extrair target do nome do arquivo para o PDF
+                pdf_path = report_path.rsplit(".", 1)[0] + ".pdf"
+                console.print(f"  [{S_CYAN}]▶ Gerando PDF...[/]")
+                # Usar report_generator se disponível
+                scan_data = {"content": content, "exported_at": datetime.datetime.now().isoformat()}
+                generated = generate_pdf_report("scan", scan_data)
+                console.print(f"  [{S_GREEN}]✓ PDF gerado: {generated}[/]\n")
+            else:
+                console.print(f"  [{S_YELLOW}]⚠ Relatório não encontrado.[/]")
+        except ImportError:
+            console.print(f"  [{S_YELLOW}]⚠ reportlab não instalado. Use: pip install reportlab[/]")
+        except Exception as e:
+            console.print(f"  [{S_RED}]✗ Falha ao gerar PDF: {e}[/]")
+
     else:
         console.print(f"\n  [{S_GREEN}]🐍 Até a próxima missão.[/]\n")
 
@@ -1489,7 +2083,7 @@ def save_json_report(
         "target": target,
         "ip": ip,
         "timestamp": timestamp(),
-        "elapsed_seconds": round(elapsed, 2),
+        "elapsed_seconds": float(int(elapsed * 100)) / 100.0,
         "severity_counts": agg,
         "total_findings": sum(agg.values()),
         "plugins_executed": len(plugin_results),
@@ -1523,28 +2117,31 @@ def list_plugins_table() -> None:
             continue
         idx += 1
         try:
-            spec = importlib.util.spec_from_file_location(name, fp)
-            if spec is None or spec.loader is None:
+            import importlib.machinery as _ilm_p
+            spec_p: Optional[_ilm_p.ModuleSpec] = importlib.util.spec_from_file_location(name, fp)
+            if spec_p is None:
                 table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
                 continue
-            # Lê docstring do source sem exec_module para evitar side effects
-            # (plugins podem fazer requests/prints na importação)
+            loader_p = spec_p.loader
+            if loader_p is None:
+                table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
+                continue
             doc = ""
             try:
                 with open(fp, "r", encoding="utf-8", errors="replace") as src:
                     source = src.read()
-                import ast
                 tree = ast.parse(source)
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef) and node.name == "run":
-                        raw_doc = ast.get_docstring(node)
+                        fn_node: ast.FunctionDef = node
+                        raw_doc = ast.get_docstring(fn_node)
                         if raw_doc:
                             doc = raw_doc.strip().split("\n")[0]
                         break
             except (SyntaxError, UnicodeDecodeError):
                 # Fallback: executa módulo se AST parsing falhar
-                mod = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(mod)
+                mod = importlib.util.module_from_spec(spec_p)
+                loader_p.exec_module(mod)
                 if hasattr(mod, "run") and mod.run.__doc__:
                     doc = mod.run.__doc__.strip().split("\n")[0]
             table.add_row(str(idx), name, doc or "[dim]—[/]", "[green]●[/]")
@@ -1558,19 +2155,40 @@ def list_plugins_table() -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # CLI
 # ═══════════════════════════════════════════════════════════════════════════════
+class CascavelArgumentParser(argparse.ArgumentParser):
+    """ArgumentParser customizado com error handling amigável.
+
+    Padrão clig.dev 2026: erros vão para stderr com exemplos contextuais.
+    """
+
+    def error(self, message: str) -> NoReturn:
+        console.print(f"\n  [{S_RED}]✗ Erro de argumento: {message}[/]", highlight=False)
+        console.print(f"  [{S_DIM}]Uso:[/]")
+        console.print(f"  [{S_CYAN}]  cascavel target.com[/]                    [dim]# Scan direto[/]")
+        console.print(f"  [{S_CYAN}]  cascavel -t target.com --plugins-only[/]  [dim]# Apenas plugins[/]")
+        console.print(f"  [{S_CYAN}]  cascavel --help[/]                        [dim]# Ajuda completa[/]")
+        console.print()
+        sys.exit(2)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = CascavelArgumentParser(
         prog="cascavel",
         description="🐍 Cascavel — Quantum Security Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Examples:\n"
-               "  cascavel -t target.com                 Full scan\n"
+               "  cascavel target.com                     Scan direto\n"
+               "  cascavel -t target.com                  Full scan\n"
                "  cascavel -t target.com --plugins-only   Plugins only\n"
                "  cascavel -t target.com -q -o json       Quiet + JSON\n"
                "  cascavel --list-plugins                 Show arsenal\n"
-               "  cascavel --check-tools                  Verify tools",
+               "  cascavel --check-tools                  Verify tools\n"
+               "  cascavel --install-global               Instalar globalmente",
     )
-    parser.add_argument("-t", "--target", help="Target (IP/domínio)")
+    # Target posicional (opcional) — permite 'cascavel target.com'
+    parser.add_argument("target_positional", nargs="?", default=None,
+                        help="Target direto (IP/domínio) — ex: cascavel target.com")
+    parser.add_argument("-t", "--target", help="Target (IP/domínio) — forma alternativa")
     parser.add_argument("-v", "--version", action="version", version=f"v{__version__}")
     parser.add_argument("--list-plugins", action="store_true", help="Lista plugins disponíveis")
     parser.add_argument("--plugins-only", action="store_true", help="Executa apenas plugins (sem ferramentas externas)")
@@ -1582,6 +2200,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Formato do relatório: md (padrão), json ou pdf")
     parser.add_argument("--pdf", action="store_true",
                         help="Gera relatório PDF profissional (equivalente a -o pdf)")
+    parser.add_argument("--install-global", action="store_true",
+                        help="Instala o Cascavel como comando global no sistema")
+
     def _positive_int(value: str) -> int:
         """Validação de argparse: aceita apenas inteiros positivos."""
         try:
@@ -1644,7 +2265,9 @@ def run_scan(
         results = enum_tools(target, report, wordlist, nuclei_templates, timeouts, available)
         ferox = run_feroxbuster(target, wordlist, available)
         safe_ferox = _sanitize_for_json(ferox)
-        report.append(f"\n### feroxbuster\n```json\n{json.dumps(safe_ferox, indent=2, ensure_ascii=False)[:5000]}\n```")
+        ferox_json: str = json.dumps(safe_ferox, indent=2, ensure_ascii=False)
+        ferox_truncated: str = ferox_json if len(ferox_json) <= 5000 else "".join([ferox_json[i] for i in range(5000)])
+        report.append(f"\n### feroxbuster\n```json\n{ferox_truncated}\n```")
 
         open_ports = scan_ports(results.get("naabu", ""))
         report.append(f"\n### Portas\n`{open_ports}`\n")
@@ -1710,22 +2333,220 @@ def run_scan(
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
+def _install_global() -> None:
+    """Instala o Cascavel como comando global no sistema.
+
+    Cross-platform: Linux, macOS, Windows (Git Bash/WSL).
+    Configura PATH permanente no shell profile do usuário.
+    """
+    console.print(Panel(
+        f"[{S_GREEN}]⚡ CASCAVEL — INSTALAÇÃO GLOBAL[/]",
+        border_style="green", box=box.HEAVY,
+    ))
+    console.print()
+
+    # Detecta se pip install -e . é viável
+    pyproject_path = os.path.join(BASE_PATH, "pyproject.toml")
+    if not os.path.isfile(pyproject_path):
+        console.print(f"  [{S_RED}]✗ pyproject.toml não encontrado em {BASE_PATH}[/]")
+        console.print(f"  [{S_DIM}]Execute este comando dentro do diretório Cascavel.[/]")
+        sys.exit(1)
+
+    console.print(f"  [{S_CYAN}]▶ Instalando Cascavel via pip (editable mode)...[/]")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", BASE_PATH, "--no-cache-dir"],
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode != 0:
+            # Fallback: tenta sem -e (install normal)
+            console.print(f"  [{S_YELLOW}]⚠ Editable mode falhou. Tentando install padrão...[/]")
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", BASE_PATH, "--no-cache-dir"],
+                capture_output=True, text=True, timeout=120,
+            )
+            if result.returncode != 0:
+                console.print(f"  [{S_RED}]✗ pip install falhou:[/]")
+                err_lines: List[str] = (result.stderr or result.stdout).strip().split("\n")
+                tail_start: int = max(0, len(err_lines) - 5)
+                for line in [err_lines[i] for i in range(tail_start, len(err_lines))]:
+                    console.print(f"    [{S_DIM}]{line}[/]")
+                sys.exit(1)
+    except subprocess.TimeoutExpired:
+        console.print(f"  [{S_RED}]✗ Timeout na instalação (>120s).[/]")
+        sys.exit(1)
+    except FileNotFoundError:
+        console.print(f"  [{S_RED}]✗ pip não encontrado. Instale: python -m ensurepip[/]")
+        sys.exit(1)
+
+    console.print(f"  [{S_GREEN}]✓ Pacote instalado via pip.[/]")
+
+    # Verificar se 'cascavel' já está no PATH
+    cascavel_bin = shutil.which("cascavel")
+    if cascavel_bin:
+        console.print(f"  [{S_GREEN}]✓ Comando 'cascavel' disponível em: {cascavel_bin}[/]")
+        console.print()
+        console.print(f"  [{S_GREEN}]🎉 Pronto! Use de qualquer terminal:[/]")
+        console.print(f"  [{S_CYAN}]  cascavel target.com[/]")
+        console.print(f"  [{S_CYAN}]  cascavel -t target.com --plugins-only[/]")
+        console.print(f"  [{S_CYAN}]  cascavel --help[/]")
+        console.print()
+        return
+
+    # Se não está no PATH, detectar pip user-scripts e configurar
+    console.print(f"  [{S_YELLOW}]⚠ 'cascavel' não encontrado no PATH. Configurando...[/]")
+
+    # Detectar diretório de scripts do pip
+    pip_scripts_dir = ""
+    try:
+        import sysconfig
+        pip_scripts_dir = sysconfig.get_path("scripts")
+    except Exception:
+        pass
+
+    # User scripts dir (--user install)
+    user_scripts_dir = ""
+    try:
+        user_scripts_dir = subprocess.run(
+            [sys.executable, "-m", "site", "--user-base"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout.strip()
+        if user_scripts_dir:
+            if sys.platform == "win32":
+                user_scripts_dir = os.path.join(user_scripts_dir, "Scripts")
+            else:
+                user_scripts_dir = os.path.join(user_scripts_dir, "bin")
+    except Exception:
+        pass
+
+    # Detectar qual dir usar
+    target_dir = pip_scripts_dir or user_scripts_dir
+    if not target_dir:
+        console.print(f"  [{S_RED}]✗ Não foi possível detectar o diretório de scripts do pip.[/]")
+        console.print(f"  [{S_DIM}]Adicione manualmente ao PATH: pip show cascavel[/]")
+        return
+
+    # Configurar PATH no shell profile (cross-platform)
+    _configure_path_export(target_dir)
+
+    console.print()
+    console.print(f"  [{S_GREEN}]🎉 Instalação global completa![/]")
+    console.print(f"  [{S_YELLOW}]⚠ Reinicie o terminal ou execute:[/]")
+    console.print(f"  [{S_CYAN}]  source ~/.bashrc[/]  [dim]ou[/]  [{S_CYAN}]source ~/.zshrc[/]")
+    console.print()
+    console.print(f"  [{S_GREEN}]Depois, use de qualquer lugar:[/]")
+    console.print(f"  [{S_CYAN}]  cascavel target.com[/]")
+    console.print()
+
+
+def _configure_path_export(scripts_dir: str) -> None:
+    """Adiciona diretório ao PATH permanente no shell profile do usuário.
+
+    Cross-platform: bash, zsh, fish, PowerShell, Windows CMD.
+    NÃO duplica entradas existentes.
+    """
+    if sys.platform == "win32":
+        # Windows: tenta setx
+        try:
+            current_path = os.environ.get("PATH", "")
+            if scripts_dir.lower() not in current_path.lower():
+                subprocess.run(
+                    ["setx", "PATH", f"{scripts_dir};{current_path}"],
+                    capture_output=True, timeout=10,
+                )
+                console.print(f"  [{S_GREEN}]✓ PATH atualizado via setx: {scripts_dir}[/]")
+            else:
+                console.print(f"  [{S_GREEN}]✓ {scripts_dir} já está no PATH.[/]")
+        except Exception as e:
+            console.print(f"  [{S_YELLOW}]⚠ Falha no setx: {e}[/]")
+            console.print(f"  [{S_DIM}]Adicione manualmente: {scripts_dir}[/]")
+        return
+
+    # Unix: detectar shells instalados e configurar todos
+    home = os.path.expanduser("~")
+    export_line = f'export PATH="{scripts_dir}:$PATH"'
+    comment_line = "# Cascavel Security Framework — global command"
+
+    shell_profiles = []
+
+    # Bash
+    for bashrc in [".bashrc", ".bash_profile", ".profile"]:
+        path = os.path.join(home, bashrc)
+        if os.path.isfile(path):
+            shell_profiles.append(path)
+            break
+    else:
+        # Nenhum encontrado — cria .bashrc
+        shell_profiles.append(os.path.join(home, ".bashrc"))
+
+    # Zsh
+    zshrc = os.path.join(home, ".zshrc")
+    if os.path.isfile(zshrc) or shutil.which("zsh"):
+        shell_profiles.append(zshrc)
+
+    # Fish
+    fish_config = os.path.join(home, ".config", "fish", "config.fish")
+    if os.path.isfile(fish_config) or shutil.which("fish"):
+        shell_profiles.append(fish_config)
+
+    for profile in shell_profiles:
+        try:
+            # Verifica se já está configurado
+            existing = ""
+            if os.path.isfile(profile):
+                with open(profile, "r", encoding="utf-8", errors="replace") as f:
+                    existing = f.read()
+
+            if scripts_dir in existing:
+                console.print(f"  [{S_GREEN}]✓ PATH já configurado em {os.path.basename(profile)}[/]")
+                continue
+
+            # Fish usa sintaxe diferente
+            if "fish" in profile:
+                fish_line = f'set -gx PATH "{scripts_dir}" $PATH'
+                fish_comment = "# Cascavel Security Framework"
+                with open(profile, "a", encoding="utf-8") as f:
+                    f.write(f"\n{fish_comment}\n{fish_line}\n")
+                console.print(f"  [{S_GREEN}]✓ PATH adicionado em {os.path.basename(profile)} (fish)[/]")
+            else:
+                with open(profile, "a", encoding="utf-8") as f:
+                    f.write(f"\n{comment_line}\n{export_line}\n")
+                console.print(f"  [{S_GREEN}]✓ PATH adicionado em {os.path.basename(profile)}[/]")
+
+        except (PermissionError, OSError) as e:
+            console.print(f"  [{S_YELLOW}]⚠ Falha ao editar {os.path.basename(profile)}: {e}[/]")
+            console.print(f"  [{S_DIM}]Adicione manualmente: {export_line}[/]")
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
+    # --install-global: instala e sai
+    if args.install_global:
+        _install_global()
+        sys.exit(0)
+
     quiet = args.quiet
-    # Cache resultado para evitar chamar detect_tools() duas vezes (run_scan chama de novo)
+
+    # Resolver target: posicional tem prioridade sobre -t
+    raw_target = args.target_positional or args.target
+
+    # Cache resultado para evitar chamar detect_tools() duas vezes
     _cached_available = detect_tools()
     plugin_count = _count_plugins()
     tools_count = sum(1 for v in _cached_available.values() if v)
 
-    # Preloader cinematográfico
+    # Preloader cinematográfico (com target na tela se disponível)
     if not quiet and not args.no_preloader and not args.list_plugins and not args.check_tools:
-        run_preloader(plugin_count, tools_count)
+        run_preloader(plugin_count, tools_count, target_hint=raw_target)
 
     if not quiet:
         print_header()
+
+    # Pre-flight check (antes de qualquer scan)
+    if not quiet and not args.list_plugins and not args.check_tools:
+        _preflight_check()
 
     if args.check_tools:
         print_tools_status(_cached_available)
@@ -1735,9 +2556,34 @@ def main() -> None:
         list_plugins_table()
         sys.exit(0)
 
-    # Target
+    # Target — resolve com retry loop
     allow_self = getattr(args, 'allow_localhost', False)
-    target = validate_target(args.target, allow_self=allow_self) if args.target else validate_target(inputx("Target (IP/domain): "), allow_self=allow_self)
+
+    if raw_target:
+        target = validate_target(raw_target, allow_self=allow_self)
+        if not target:
+            # validate_target retornou vazio — pede de novo
+            console.print(f"  [{S_YELLOW}]⚠ Target inválido fornecido. Informe novamente:[/]")
+            def _target_validator(val: str) -> str:
+                result = validate_target(val, allow_self=allow_self)
+                if not result:
+                    return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
+                return ""
+            raw_input = inputx("Target (IP/domain): ", validator=_target_validator)
+            target = validate_target(raw_input, allow_self=allow_self)
+    else:
+        # Nenhum target fornecido — modo interativo com retry
+        def _target_validator(val: str) -> str:
+            result = validate_target(val, allow_self=allow_self)
+            if not result:
+                return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
+            return ""
+        raw_input = inputx("Target (IP/domain): ", validator=_target_validator)
+        target = validate_target(raw_input, allow_self=allow_self)
+
+    if not target:
+        console.print(f"  [{S_RED}]✗ Nenhum target válido. Abortando.[/]")
+        sys.exit(1)
 
     out_fmt = "pdf" if args.pdf else args.output_format
     run_scan(

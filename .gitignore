@@ -73,6 +73,8 @@ $RECYCLE.BIN/
 .hypothesis/
 .pytype/
 .pyre/
+.pyre_configuration
+stubs/
 
 # ── Coverage ─────────────────────────────────
 .coverage
