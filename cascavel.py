@@ -320,10 +320,12 @@ def _fade_in_logo() -> None:
     use_cursor_movement = term_height >= total_needed + 4
 
     try:
-        # Phase 1: Cobra art — cada linha aparece com cor progressiva (escuro → verde)
+        # Phase 1: Cobra art — cada linha com cor progressiva (verde escuro → bright green)
+        # Palette 256-color: 22=darkgreen, 28, 34, 35, 40, 41, 46=bright green
+        green_ramp = [22, 22, 28, 28, 34, 34, 35, 40, 41, 46, 46]
         for i, line in enumerate(COBRA_ART):
-            brightness = int(22 + (i / max(cobra_count - 1, 1)) * 6)  # 22-28 (verde no 256-color)
-            color = f"\033[38;5;{brightness}m"
+            ci = green_ramp[i] if i < len(green_ramp) else 46
+            color = f"\033[38;5;{ci}m"
             sys.stdout.write(f"{color}{line}\033[0m\n")
             sys.stdout.flush()
             time.sleep(0.05)
@@ -1092,7 +1094,7 @@ def run_plugins(
             t.add_row(*row)
 
         # Current plugin indicator
-        if current_idx <= total:
+        if current_idx < total:
             t.add_row(
                 str(current_idx), f"[bold yellow]▶ {current_name}[/]",
                 "[yellow]⋯[/]", "[yellow]Executando...[/]", "", "",

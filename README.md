@@ -1,411 +1,385 @@
 <p align="center">
-  <img src="docs/cascavel_banner.png" alt="Cascavel — Quantum Security Framework" width="900" />
+  <img src="docs/cascavel_banner.png" alt="Cascavel" width="800" />
 </p>
 
-<h1 align="center">CASCAVEL</h1>
-<h3 align="center">Quantum Security Framework</h3>
+<h1 align="center">
+  <code>🐍 CASCAVEL</code>
+</h1>
+
+<h3 align="center">Quantum Security Framework — Red Team Intelligence Engine</h3>
 
 <p align="center">
-  <strong>Automated offensive security at industrial scale.</strong><br />
-  <em>84 plugins · 30+ external tools · PDF/MD/JSON reports · Zero-config · Cross-platform</em>
-</p>
-
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=for-the-badge" alt="MIT License" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8%2B-blue.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.8+" /></a>
-  <img src="https://img.shields.io/badge/Plugins-84-blueviolet.svg?style=for-the-badge" alt="84 Plugins" />
-  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-0D1B2A.svg?style=for-the-badge" alt="Cross-Platform" />
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Version-2.1.0-C89F5D.svg?style=for-the-badge" alt="v2.1.0" /></a>
-  <img src="https://img.shields.io/badge/Reports-PDF%20%7C%20MD%20%7C%20JSON-28A745.svg?style=for-the-badge" alt="Reports" />
+  <strong>85 security plugins · 30+ recon tools · CLI-first · Cross-platform · PDF reports</strong><br />
+  One command to enumerate, scan, attack, analyze, and generate enterprise-grade pentest reports.
 </p>
 
 <p align="center">
-  <a href="#-one-command-install">Install</a> · 
-  <a href="#-live-demo">Demo</a> · 
-  <a href="#-what-cascavel-does">Features</a> · 
-  <a href="#-plugin-arsenal-84">Plugins</a> · 
-  <a href="#-usage">CLI</a> · 
-  <a href="#-pdf-reports">Reports</a> · 
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=flat-square" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
+  <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v2.2.0-C89F5D.svg?style=flat-square" /></a>
+  <img src="https://img.shields.io/badge/Reports-PDF%20|%20MD%20|%20JSON-28A745.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Security-Hardened%202026-critical?style=flat-square" />
+</p>
+
+<p align="center">
+  <a href="#-install">Install</a> · 
+  <a href="#-what-makes-cascavel-different">Why Cascavel</a> · 
   <a href="#-architecture">Architecture</a> · 
+  <a href="#-plugin-arsenal-85">Plugins</a> · 
+  <a href="#-cli-reference">CLI</a> · 
+  <a href="#-pdf-reports">Reports</a> · 
+  <a href="#-security-hardening">Security</a> · 
   <a href="#-contributing">Contributing</a>
 </p>
 
-<br />
+---
 
-> **Cascavel** (Portuguese for *rattlesnake*) is a Red Team automation framework built by [**RET Tecnologia**](https://rettecnologia.org). It orchestrates 84 security plugins and 30+ external tools into a single pipeline that scans, attacks, analyzes, and delivers professional PDF reports — all from one command.
+## 🎬 Demo
 
-<br />
+<p align="center">
+  <img src="docs/cascavel_scan.png" width="700" />
+</p>
+
+<p align="center">
+  <sub><strong>Cinematic boot sequence</strong> · Auto-detects 30+ tools · Preloader with security intel tips</sub>
+</p>
+
+<p align="center">
+  <img src="docs/cascavel_results.png" width="700" />
+</p>
+
+<p align="center">
+  <sub><strong>Split-screen live dashboard</strong> · Real-time severity tracking · Rotating security intelligence</sub>
+</p>
 
 ---
 
-## 🎬 Live Demo
+## 💡 What Makes Cascavel Different
 
-<p align="center">
-  <img src="docs/cascavel_scan.png" alt="Cascavel — Scan in progress" width="720" />
-</p>
-<p align="center"><sub>▲ Target acquisition · external tools detection (27/30) · 84-plugin engine executing against live target</sub></p>
+Most pentest workflows involve **20+ separate tools**, each with its own syntax, output format, and report style. You manually merge results, format reports, and lose hours to context-switching.
 
-<br />
+**Cascavel replaces the entire workflow:**
 
-<p align="center">
-  <img src="docs/cascavel_results.png" alt="Cascavel — Results dashboard" width="720" />
-</p>
-<p align="center"><sub>▲ Real-time severity dashboard · Security Intel breakdown · auto-generated PDF/Markdown reports</sub></p>
+```
+┌─────────────────────────────────────────────────────────┐
+│  $ python3 cascavel.py -t target.com --pdf              │
+│                                                         │
+│  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ DISCOVER │→ │ PROBE  │→ │  ATTACK  │→ │ ANALYZE  │  │
+│  └──────────┘  └────────┘  └──────────┘  └──────────┘  │
+│   Subdomains    Ports       XSS,SQLi      JWT,CORS     │
+│   DNS,WHOIS     Banners     SSRF,RCE      CSP,CSRF     │
+│   Cloud enum    Headers     SSTI,XXE      OAuth,IDOR    │
+│                                                         │
+│  ┌──────────┐  ┌──────────────────────────────────────┐ │
+│  │  DETECT  │→ │         REPORT (PDF/MD/JSON)         │ │
+│  └──────────┘  └──────────────────────────────────────┘ │
+│   Docker,K8s    CVSS v4.0 · OWASP · PTES · LGPD        │
+│   Redis,S3      Legal disclaimers · SHA-256 integrity   │
+│   CI/CD         Compliance mapping · Risk matrix        │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Capability | Cascavel | Other Tools |
+|:---|:---|:---|
+| **Unified pipeline** | 85 plugins + 30 tools in one command | Fragmented scripts |
+| **Live dashboard** | Split-screen with real-time stats + intel | No live feedback |
+| **PDF reports** | 12 legal disclaimers, CVSS v4.0, PTES | Manual formatting |
+| **Terminal UX** | Cinematic preloader, fade animations | Plain stdout |
+| **Security hardening** | ANSI sanitizer, plugin sandboxing | Trust all output |
+| **Zero-config** | `install.sh` handles everything | Manual dependency hell |
 
 ---
 
-## ⚡ One-Command Install
+## ⚡ Install
+
+**One command — works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), and WSL:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
 ```
 
-> ⚙️ **Detects your OS** (macOS · Ubuntu · Debian · Kali · Parrot · Fedora · RHEL · CentOS · Arch · Manjaro · Alpine · SUSE · Windows WSL), installs Python 3.8+, creates virtualenv, installs pip dependencies, downloads Go tools (subfinder, httpx, nuclei, katana, naabu, dnsx...), Rust tools (feroxbuster), and configures everything. Just paste and wait.
+The installer v2.2.0 includes **12 security hardenings**: `trap` cleanup, `mktemp` isolation, install lock, SHA-256 hash verification, CVE checks on critical dependencies (PyJWT ≥2.12.0, ReportLab ≥3.6.13, Requests ≥2.31.0), umask 077, and strict file permissions.
 
 <details>
-<summary><strong>💻 Manual installation</strong></summary>
+<summary><strong>Manual installation</strong></summary>
 
 ```bash
 git clone https://github.com/glferreira-devsecops/Cascavel.git
 cd Cascavel
-python3 -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python3 cascavel.py -t target.com
 ```
+
 </details>
-
----
-
-## 🐍 What Cascavel Does
-
-Most security tools are **single-purpose** — Nmap scans ports, Nuclei finds CVEs, SQLMap tests SQLi. You juggle 20+ tools, merge outputs by hand, and format reports manually.
-
-**Cascavel replaces that entire workflow.**
-
-```
-                   ┌─── subfinder · amass · dnsx ───┐
-                   │                                  │
-  TARGET ──▶ ──▶   ├─── nmap · naabu · httpx  ───────┤
-                   │                                  │
-  1 command        ├─── nuclei · nikto · sqlmap ──────┤ ──▶  PDF REPORT
-                   │                                  │      (12 legal disclaimers)
-                   ├─── 84 custom plugins ────────────┤      (CVSS scoring)
-                   │                                  │      (compliance mapping)
-                   └─── katana · feroxbuster · gau ───┘
-```
-
-### The pipeline
-
-| Phase | What happens | Tools |
-|:---:|---|---|
-| **🔍 Discover** | Subdomains, DNS, WHOIS/RDAP, cloud providers, surface area | subfinder, amass, dnsx, whois |
-| **📡 Probe** | Ports, banners, HTTP headers, TLS certificates, tech stack | nmap, naabu, httpx, wappalyzer |
-| **💉 Attack** | XSS, SQLi, SSRF, LFI, RCE, SSTI, XXE, NoSQL, prototype pollution | 84 plugins + sqlmap + nuclei |
-| **🔐 Analyze** | JWT, OAuth, CORS, CSP, CSRF, session fixation, IDOR, race conditions | Custom analysis engine |
-| **🏗️ Detect** | Exposed Docker/K8s/Redis/MongoDB, CI/CD leaks, cloud metadata, S3 | Infrastructure plugins |
-| **📄 Report** | Professional PDF with CVSS scores, compliance mapping, legal disclaimers | reportlab Platypus engine |
-
----
-
-## 📄 PDF Reports
-
-Cascavel generates **enterprise-grade PDF reports** signed by RET Tecnologia with:
-
-- **Cover page** with logo, target metadata, report ID, classification level
-- **12 legal disclaimers** — Confidentiality/NDA, Scope/SOW, Authorization (LGPD, Marco Civil, Art. 154-A, Bill 4752/2025), Liability Limitation, No Warranties, Client Remediation Responsibility, Inherent Risks, Regulatory Compliance, Data Protection (LGPD Art. 48), Evidence Retention (NIST SP 800-88), Intellectual Property, Final Legal Notice
-- **Executive summary** with dynamic posture badge (5 severity levels)
-- **CVSS v4.0 severity breakdown** with color-coded table
-- **Visual risk matrix** (bar chart)
-- **Detailed findings** with OWASP Top 10 mapping, evidence, remediation
-- **Compliance mapping** — 9 frameworks (OWASP, CVSS, NIST, ISO 27001/27005, PCI DSS, LGPD, Marco Civil, PTES)
-- **5-phase PTES methodology** documentation
-- **Signature page** with SHA-256 integrity hash
-
-```bash
-# Generate PDF report
-python3 cascavel.py -t target.com --pdf
-
-# Or with output format flag
-python3 cascavel.py -t target.com -o pdf
-```
-
----
-
-## 🔌 Plugin Arsenal (84)
-
-Every plugin follows a standardized interface, returns structured output, and operates with **zero false positive** tolerance.
-
-<table>
-<tr><td>
-
-### 💉 Injection & Code Execution (7)
-`xss_scanner` · `sqli_scanner` · `ssti_scanner` · `rce_scanner` · `blind_rce` · `nosql_scanner` · `cve_2021_44228_scanner`
-
-### 🌐 Server-Side (4)
-`ssrf_scanner` · `xxe_scanner` · `lfi_scanner` · `path_traversal`
-
-### 🔐 Auth & AuthZ (6)
-`jwt_analyzer` · `oauth_scanner` · `csrf_detector` · `idor_scanner` · `session_fixation` · `password_policy`
-
-### 🔄 Protocol (4)
-`http_smuggling` · `http2_smuggle` · `websocket_scanner` · `grpc_scanner`
-
-### 🛡️ Defense Bypass (7)
-`cors_checker` · `csp_bypass` · `clickjacking_check` · `host_header_injection` · `web_cache_poison` · `rate_limit_check` · `waf_bypass`
-
-### 🎯 API Security (4)
-`graphql_probe` · `graphql_injection` · `api_enum` · `api_versioning`
-
-### 💣 Advanced Web (6)
-`mass_assignment` · `race_condition` · `prototype_pollution` · `deserialization_scan` · `open_redirect` · `crlf_scanner`
-
-</td><td>
-
-### 🏗️ Infrastructure (8)
-`docker_exposure` · `k8s_exposure` · `redis_unauth` · `mongodb_unauth` · `elastic_exposure` · `cicd_exposure` · `cloud_metadata` · `cloud_enum`
-
-### 🔍 Recon & OSINT (11)
-`subdomain_hunter` · `subdomain_takeou` · `dns_deep` · `dns_rebinding` · `network_mapper` · `email_harvester` · `email_spoof_check` · `shodan_recon` · `wayback_enum` · `whois_recon` · `traceroute_mapper`
-
-### 🕵️ Info Gathering (7)
-`tech_fingerprint` · `js_analyzer` · `param_miner` · `info_disclosure` · `secrets_scraper` · `git_dumper` · `admin_finder`
-
-### 🌐 Web Scanning (7)
-`dir_bruteforce` · `nikto_scanner` · `katana_crawler` · `http_methods` · `wps_scanmini` · `nuclei_scanner` · `fast_webshell`
-
-### ☁️ Cloud (2)
-`s3_bucket` · `saml_scanner`
-
-### 📊 Analysis (5)
-`ssl_check` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
-
-### 🔐 Brute Force (6)
-`ssh_brute` · `ftp_brute` · `smb_ad` · `smpt_enum` · `heartbleed_scanner` · `domain_transf`
-
-</td></tr>
-</table>
-
-> 📖 **Full documentation**: [PLUGINS.md](PLUGINS.md) — techniques, bypass research, and dependencies for each plugin.
-
----
-
-## 💡 Usage
-
-```bash
-# Full auto-scan
-python3 cascavel.py -t example.com
-
-# Interactive mode (prompts for target)
-python3 cascavel.py
-
-# Plugins-only (skip external tools)
-python3 cascavel.py -t example.com --plugins-only
-
-# PDF report
-python3 cascavel.py -t example.com --pdf
-
-# JSON output (CI/CD pipelines)
-python3 cascavel.py -t example.com -q -o json
-
-# Custom timeout
-python3 cascavel.py -t example.com --timeout 120
-
-# List all plugins
-python3 cascavel.py --list-plugins
-
-# Check installed tools
-python3 cascavel.py --check-tools
-```
-
-### CLI Reference
-
-| Flag | Description |
-|:---|:---|
-| `-t`, `--target` | Target IP or domain |
-| `-q`, `--quiet` | Suppress preloader and animations |
-| `-o`, `--output-format` | Report format: `md` / `json` / `pdf` |
-| `--pdf` | Shorthand for `-o pdf` |
-| `--timeout` | Global timeout in seconds (default: 90) |
-| `--plugins-only` | Run only internal plugins |
-| `--check-tools` | Show which external tools are installed |
-| `--list-plugins` | List all 84 plugins |
-| `--no-preloader` | Skip cinematic boot animation |
-| `--no-notify` | Disable desktop notification |
-| `-v`, `--version` | Show version |
-
----
-
-## 🛠️ External Tools (30+)
-
-All optional — Cascavel gracefully skips any tool not in `$PATH`.
-
-| Category | Tools |
-|:---|:---|
-| **Reconnaissance** | subfinder · amass · dnsx · fierce · dnsrecon · whois |
-| **Web Scanning** | httpx · nikto · katana · feroxbuster · ffuf · gobuster |
-| **Port Scanning** | nmap · naabu |
-| **Vulnerability** | nuclei · sqlmap |
-| **OSINT** | shodan · gau · waybackurls · asnmap · mapcidr |
-| **WAF Detection** | wafw00f |
-| **Network** | traceroute · dig · tshark |
-| **Crypto** | sslscan |
-| **CMS** | wpscan · whatweb |
-| **Brute Force** | hydra · john |
-
-<details>
-<summary><strong>📦 macOS (Homebrew)</strong></summary>
-
-```bash
-brew install nmap nikto sqlmap feroxbuster hydra john-jumbo wafw00f dnsrecon fierce tshark whois
-```
-</details>
-
-<details>
-<summary><strong>📦 Linux (Debian/Ubuntu/Kali)</strong></summary>
-
-```bash
-sudo apt install nmap nikto sqlmap hydra john sslscan dnsrecon fierce tshark whois traceroute
-cargo install feroxbuster
-pip install wafw00f
-```
-</details>
-
-<details>
-<summary><strong>📦 Go-based tools (ProjectDiscovery)</strong></summary>
-
-```bash
-go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
-go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-go install -v github.com/projectdiscovery/katana/cmd/katana@latest
-go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
-go install -v github.com/projectdiscovery/asnmap/cmd/asnmap@latest
-go install -v github.com/projectdiscovery/mapcidr/cmd/mapcidr@latest
-go install -v github.com/owasp-amass/amass/v3/...@master
-go install -v github.com/ffuf/ffuf@latest
-go install -v github.com/OJ/gobuster/v3@latest
-go install -v github.com/lc/gau/v2/cmd/gau@latest
-go install -v github.com/tomnomnom/waybackurls@latest
-```
-</details>
-
-> 💡 Or just run `install.sh` — it handles everything automatically.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                     CASCAVEL ENGINE v2.1.0                    │
-│                                                               │
-│  ┌───────────┐  ┌────────────┐  ┌───────────┐  ┌──────────┐ │
-│  │ CLI       │  │ Preloader  │  │ Target    │  │ Report   │ │
-│  │ Parser    │  │ (Awwwards) │  │ Resolver  │  │ Engine   │ │
-│  └─────┬─────┘  └────────────┘  └─────┬─────┘  └────┬─────┘ │
-│        │                               │              │       │
-│  ┌─────▼───────────────────────────────▼──────────────┘     │
-│  │                                                           │
-│  │          EXTERNAL TOOLS PIPELINE (30+ tools)              │
-│  │   subfinder · nmap · nuclei · katana · gau · nikto       │
-│  │   ffuf · gobuster · feroxbuster · wafw00f · dnsx         │
-│  │   whois · traceroute · dig · amass · httpx · naabu       │
-│  │                                                           │
-│  └──────────────────────┬────────────────────────────────────┘
-│                         │                                     │
-│  ┌──────────────────────▼────────────────────────────────┐   │
-│  │                                                        │   │
-│  │              PLUGIN ENGINE (84 plugins)                 │   │
-│  │     Auto-discovery · Standardized interface             │   │
-│  │     Parallel execution · Severity classification        │   │
-│  │                                                        │   │
-│  │  Injection(7) · ServerSide(4) · Auth(6) · Protocol(4) │   │
-│  │  Defense(7) · API(4) · WebAttack(6) · Infra(8)        │   │
-│  │  Recon(11) · InfoGather(7) · WebScan(7) · Cloud(2)    │   │
-│  │  Analysis(5) · BruteForce(6)                          │   │
-│  │                                                        │   │
-│  └──────────────────────┬────────────────────────────────┘   │
-│                         │                                     │
-│  ┌──────────────────────▼────────────────────────────────┐   │
-│  │                                                        │   │
-│  │        REPORT GENERATOR (reportlab Platypus)           │   │
-│  │   PDF · Markdown · JSON                                │   │
-│  │   CVSS v4.0 · OWASP mapping · 12 disclaimers          │   │
-│  │   Risk matrix · Compliance mapping · Signatures        │   │
-│  │                                                        │   │
-│  └────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────┘
+cascavel.py (1700+ lines)
+├── ANSI Escape Sanitizer ──── Blocks CSI/OSC/DCS injection from plugins
+├── Preloader Engine ────────── 4-phase cinematic boot (logo fade → boot seq → progress → online)
+├── Plugin Orchestrator ──────── Dynamic loading, timeout (SIGALRM), output sanitization
+├── Split-Screen Dashboard ──── Rich Live layout (scan table + security intel panel)
+├── External Tools Pipeline ── 30+ tools with shlex.quote() safety
+├── Report Engine ───────────── PDF (ReportLab Platypus), Markdown, JSON
+└── Signal Handler ──────────── Async-signal-safe SIGINT (os.write, no deadlocks)
 ```
 
-### Project Structure
+### Terminal UX Engine (21 Hardenings)
+
+| Protection | What it does |
+|:---|:---|
+| `_get_terminal_height()` | POSIX fallback for headless/pipe terminals |
+| `_fade_in_logo` term detection | Skips cursor manipulation on terminals < 20 rows |
+| `_clear_block` safety clamp | Never moves cursor beyond terminal boundaries |
+| `run_preloader` try/except wrapper | Graceful fallback for CI/pipe/dumb terminals |
+| `_typewriter` KeyboardInterrupt | Guarantees newline before SIGINT propagation |
+| `_boot_line` unified stdout | Eliminates Rich/stdout buffer race condition |
+| Cobra `green_ramp` palette | True 256-color green gradient (22→46) |
+| Progress bar variable speed | Comfortable 2s pacing with `TimeElapsedColumn` |
+| `_build_table` pct max 100 | Prevents >100% display on final iteration |
+| ANSI escape sanitizer | Blocks CSI/OSC/DCS terminal injection from plugins |
+| Fallback stat tracking | Accurate dashboard even when Live layout crashes |
+
+---
+
+## 📄 PDF Reports
+
+Enterprise-grade reports signed by **RET Tecnologia**, compliant with Brazilian and international frameworks:
+
+- **Cover** — logo, target, report ID, confidentiality classification
+- **12 legal disclaimers** — NDA, LGPD, Marco Civil, Art. 154-A, Bill 4752/2025, ISO 27001, PCI DSS v4.0, NIST SP 800-115, OWASP Testing Guide, CVSS v4.0
+- **Executive summary** — dynamic severity posture badge
+- **CVSS v4.0 scoring** — color-coded severity table with risk matrix
+- **Detailed findings** — OWASP mapping, evidence, remediation steps
+- **Compliance mapping** — 9 international frameworks
+- **PTES methodology** — 5-phase pentest documentation
+- **Signature page** — SHA-256 integrity hash
+
+```bash
+python3 cascavel.py -t target.com --pdf    # Generate PDF
+python3 cascavel.py -t target.com -o json  # JSON for CI/CD
+```
+
+---
+
+## 🔌 Plugin Arsenal (85)
+
+Zero false-positive tolerance. Standardized `run()` interface. Each plugin returns structured results with severity classification.
+
+### 💉 Injection & Code Execution (7)
+
+`xss_scanner` · `sqli_scanner` · `ssti_scanner` · `rce_scanner` · `blind_rce` · `nosql_scanner` · `cve_2021_44228_scanner`
+
+### 🌐 Server-Side Attacks (4)
+
+`ssrf_scanner` · `xxe_scanner` · `lfi_scanner` · `path_traversal`
+
+### 🔐 Auth & Authorization (6)
+
+`jwt_analyzer` · `oauth_scanner` · `csrf_detector` · `idor_scanner` · `session_fixation` · `password_policy`
+
+### 🔄 Protocol-Level (4)
+
+`http_smuggling` · `http2_smuggle` · `websocket_scanner` · `grpc_scanner`
+
+### 🛡️ Defense Bypass (7)
+
+`cors_checker` · `csp_bypass` · `clickjacking_check` · `host_header_injection` · `web_cache_poison` · `rate_limit_check` · `waf_bypass`
+
+### 🎯 API Security (4)
+
+`graphql_probe` · `graphql_injection` · `api_enum` · `api_versioning`
+
+### 💣 Advanced Web (6)
+
+`mass_assignment` · `race_condition` · `prototype_pollution` · `deserialization_scan` · `open_redirect` · `crlf_scanner`
+
+### 🏗️ Infrastructure (8)
+
+`docker_exposure` · `k8s_exposure` · `redis_unauth` · `mongodb_unauth` · `elastic_exposure` · `cicd_exposure` · `cloud_metadata` · `cloud_enum`
+
+### 🔍 Recon & OSINT (11)
+
+`subdomain_hunter` · `subdomain_takeou` · `dns_deep` · `dns_rebinding` · `network_mapper` · `email_harvester` · `email_spoof_check` · `shodan_recon` · `wayback_enum` · `whois_recon` · `traceroute_mapper`
+
+### 🕵️ Info Gathering (7)
+
+`tech_fingerprint` · `js_analyzer` · `param_miner` · `info_disclosure` · `secrets_scraper` · `git_dumper` · `admin_finder`
+
+### 🌐 Web Scanning (7)
+
+`dir_bruteforce` · `nikto_scanner` · `katana_crawler` · `http_methods` · `wps_scanmini` · `nuclei_scanner` · `fast_webshell`
+
+### ☁️ Cloud (2)
+
+`s3_bucket` · `saml_scanner`
+
+### 📊 Analysis (5)
+
+`ssl_check` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
+
+### 🔐 Brute Force (7)
+
+`ssh_brute` · `ftp_brute` · `smb_ad` · `smpt_enum` · `heartbleed_scanner` · `domain_transf` · `dns_zone_transfer`
+
+> 📖 Full documentation: [PLUGINS.md](PLUGINS.md)
+
+---
+
+## 💻 CLI Reference
+
+```bash
+python3 cascavel.py -t example.com           # Full scan (all plugins + tools)
+python3 cascavel.py                           # Interactive mode
+python3 cascavel.py -t example.com --pdf      # Generate PDF report
+python3 cascavel.py -t example.com -o json    # JSON output (CI/CD integration)
+python3 cascavel.py -t example.com -q         # Quiet mode (no animations)
+python3 cascavel.py --plugins-only            # Skip external tools
+python3 cascavel.py --list-plugins            # List all 85 plugins
+python3 cascavel.py --check-tools             # Check installed tools
+```
+
+| Flag | Description |
+|:---|:---|
+| `-t TARGET` | Target domain or IP |
+| `-q` | Suppress animations and preloader |
+| `-o FORMAT` | Output format: `md` / `json` / `pdf` |
+| `--pdf` | Shorthand for `-o pdf` |
+| `--timeout N` | Per-tool timeout in seconds (default: 90) |
+| `--plugins-only` | Run internal plugins only, skip external tools |
+| `--check-tools` | Display status of 30+ external tools |
+| `--list-plugins` | List all available plugins |
+| `--no-preloader` | Skip cinematic boot animation |
+| `--no-notify` | Disable desktop notifications |
+| `-v` | Display version |
+
+---
+
+## 🛠️ External Tools (30+)
+
+All optional — Cascavel auto-detects and skips missing tools gracefully.
+
+| Category | Tools |
+|:---|:---|
+| **Recon** | subfinder · amass · dnsx · fierce · dnsrecon · whois |
+| **Web Probing** | httpx · nikto · katana · feroxbuster · ffuf · gobuster |
+| **Port Scanning** | nmap · naabu |
+| **Vulnerability** | nuclei · sqlmap |
+| **OSINT** | shodan · gau · waybackurls · asnmap · mapcidr |
+| **WAF Detection** | wafw00f |
+| **Network** | traceroute · dig · tshark |
+| **Crypto/TLS** | sslscan |
+| **CMS** | wpscan · whatweb |
+| **Brute Force** | hydra · john |
+
+> 💡 `install.sh` detects your OS and installs all available tools automatically.
+
+---
+
+## 🔒 Security Hardening
+
+Cascavel is hardened against modern attack vectors targeting security tools themselves:
+
+### Engine Protections
+
+| Vector | Mitigation |
+|:---|:---|
+| **Terminal injection** (CSI/OSC/DCS) | `_sanitize_output()` strips dangerous ANSI escapes from all plugin output, preserving only SGR color codes |
+| **Plugin timeout** | `SIGALRM`-based enforcement prevents plugins from hanging indefinitely |
+| **Signal handler deadlock** | SIGINT handler uses `os.write()` (async-signal-safe) instead of `print()`/logging |
+| **Process zombie leak** | `os.killpg()` kills entire process groups on timeout |
+| **Input injection** | All external tool targets sanitized with `shlex.quote()` |
+
+### Installer Protections (v2.2.0)
+
+| Vector | Mitigation |
+|:---|:---|
+| **TOCTOU race** | `mktemp -d` for temporary directories |
+| **Parallel execution** | Lock file prevents concurrent installs |
+| **Supply chain** | SHA-256 hash verification on `requirements.txt` |
+| **Known CVEs** | Version checks for PyJWT, ReportLab, Requests |
+| **Permission escalation** | `umask 077`, `chmod 700/600` on sensitive paths |
+| **Cleanup failure** | `trap` ensures temp directory removal on exit/error |
+
+---
+
+## 📁 Project Structure
 
 ```
 Cascavel/
-├── cascavel.py              # Core engine — CLI, pipeline, plugin runner
-├── report_generator.py      # PDF report generator (Platypus + RET branding)
-├── install.sh               # Universal one-command installer (7+ OSes)
-├── cascavel_logo.png        # Framework logo
-├── plugins/                 # 84 security plugins
-│   ├── __init__.py
-│   ├── xss_scanner.py       # XSS — polyglot, DOM, mutation
-│   ├── sqli_scanner.py      # SQLi — time/error/union-based
-│   ├── ssrf_scanner.py      # SSRF — IMDSv2, DNS rebinding, gopher
-│   ├── jwt_analyzer.py      # JWT — none-alg, key confusion, JWKS
-│   └── ...                  # 80 more plugins
-├── docs/                    # Screenshots & visual assets
-├── wordlists/               # Auto-downloaded fuzzing wordlists
-├── nuclei-templates/        # Nuclei vulnerability templates
-├── exports/                 # External tool raw outputs
-├── reports/                 # Generated scan reports (PDF/MD/JSON)
-├── requirements.txt         # Python dependencies
-├── pyproject.toml           # Build configuration
-├── PLUGINS.md               # Full plugin documentation
-├── CONTRIBUTING.md          # Contribution guide
-├── CHANGELOG.md             # Version history
-├── SECURITY.md              # Vulnerability disclosure policy
-├── CODE_OF_CONDUCT.md       # Community guidelines
-└── LICENSE                  # MIT License
+├── cascavel.py           # Core engine (1700+ lines)
+├── report_generator.py   # PDF reports (ReportLab Platypus)
+├── install.sh            # Universal installer (v2.2.0, 12 hardenings)
+├── plugins/              # 85 security plugins
+│   ├── xss_scanner.py    #   └── Standardized run() interface
+│   ├── jwt_analyzer.py
+│   └── ...
+├── docs/                 # Screenshots and assets
+├── reports/              # Generated reports (auto-created)
+├── exports/              # Exported data (auto-created)
+├── wordlists/            # Fuzzing wordlists
+├── nuclei-templates/     # Custom Nuclei templates
+├── requirements.txt      # Python dependencies
+├── PLUGINS.md            # Full plugin documentation
+├── CONTRIBUTING.md       # Contribution guide
+├── CHANGELOG.md          # Version history
+├── SECURITY.md           # Vulnerability disclosure policy
+└── LICENSE               # MIT
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
-**Plugin interface:**
+**Plugin interface** — drop a file in `plugins/` and it's auto-discovered:
 
 ```python
 def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
-    """One-sentence description of what this plugin does."""
-    results = {}
-    # Your security logic here
-    return {"plugin": "my_plugin", "resultados": results}
+    """
+    Args:
+        target:     Domain or IP being scanned
+        ip:         Resolved IPv4/IPv6 address
+        open_ports: List of open port numbers (from naabu)
+        banners:    Dict mapping port -> banner string
+    
+    Returns:
+        {
+            "plugin": "my_plugin",
+            "resultados": [...],      # Findings list or summary string
+            "severidade": "ALTO",     # CRITICO | ALTO | MEDIO | BAIXO | INFO
+        }
+    """
+    return {"plugin": "my_plugin", "resultados": "Limpo", "severidade": "INFO"}
 ```
-
-Create your file in `plugins/`, restart Cascavel — it auto-discovers new plugins.
 
 ---
 
-## 📋 Changelog
+## 📋 Links
 
-See [CHANGELOG.md](CHANGELOG.md).
-
-## 🔒 Security
-
-Found a vulnerability? See [SECURITY.md](SECURITY.md) for responsible disclosure.
-
-## 📄 License
-
-[MIT](LICENSE) — use it, fork it, break things, fix things.
+| Resource | Description |
+|:---|:---|
+| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
+| [SECURITY.md](SECURITY.md) | Vulnerability disclosure policy |
+| [PLUGINS.md](PLUGINS.md) | Full plugin documentation and techniques |
+| [LICENSE](LICENSE) | MIT License |
 
 ---
 
 <p align="center">
-  <strong>MÉTODO CASCAVEL™</strong><br />
-  <sub>Built by <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva</sub><br />
-  <sub><a href="https://github.com/glferreira-devsecops">Gabriel L. Ferreira</a> · Fundador & DevSecOps Lead</sub>
+  <strong><code>MÉTODO CASCAVEL™</code></strong><br />
+  <sub>
+    <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva<br />
+    <a href="https://github.com/glferreira-devsecops">Gabriel L. Ferreira</a> · Fundador & DevSecOps Lead
+  </sub>
 </p>
 
 <p align="center">
