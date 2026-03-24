@@ -26,9 +26,48 @@ import random
 import platform
 import urllib.request
 import threading
+import ipaddress
 from typing import List, Dict, Any, Optional
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ANSI ESCAPE SANITIZER — Anti-Terminal Injection (2026 Vector)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Malicious plugins podem injetar CSI/OSC/DCS sequences para:
+# - Reescrever conteúdo visível do terminal (cursor manipulation)
+# - Exfiltrar dados via OSC copy-paste hijack
+# - Executar comandos via iTerm2/Kitty OSC sequences
+# Regex strips ALL non-SGR ANSI sequences, mantendo apenas cores.
+_ANSI_DANGEROUS_RE = re.compile(
+    r'\x1b'
+    r'(?:'
+    r'\].*?(?:\x07|\x1b\\)'  # OSC sequences (title change, clipboard)
+    r'|P.*?\x1b\\'            # DCS sequences
+    r'|\[(?:'
+    r'\d*[ABCDEFGHJKST]'       # Cursor movement
+    r'|\d*;?\d*[Hf]'           # Cursor positioning
+    r'|[su]'                    # Cursor save/restore
+    r'|\?\d+[hl]'              # Private mode set/reset
+    r'|\d*[JK]'                # Erase in display/line
+    r')'
+    r')',
+    re.DOTALL,
+)
+
+def _sanitize_output(data: Any) -> Any:
+    """Sanitiza saída de plugin contra ANSI escape injection.
+    
+    Remove sequências perigosas (cursor movement, OSC, DCS) mas preserva
+    cores SGR básicas (\x1b[...m) para manter formatação visual.
+    """
+    if isinstance(data, str):
+        return _ANSI_DANGEROUS_RE.sub('', data)
+    if isinstance(data, dict):
+        return {k: _sanitize_output(v) for k, v in data.items()}
+    if isinstance(data, list):
+        return [_sanitize_output(item) for item in data]
+    return data
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DEPENDENCY BOOTSTRAP
@@ -824,13 +863,15 @@ def _exec_plugin(
 
     try:
         result = mod.run(target, ip, ports, banners)
-        return result if result else {"plugin": name, "resultados": "Sem retorno"}
+        # SEGURANÇA 2026: Sanitiza saída contra ANSI escape injection
+        result = _sanitize_output(result) if result else {"plugin": name, "resultados": "Sem retorno"}
+        return result
     except _PluginTimeout:
         return {"plugin": name, "erro": f"TIMEOUT ({timeout}s)"}
     except TypeError as e:
-        return {"plugin": name, "erro": f"Assinatura: {e}"}
+        return {"plugin": name, "erro": f"Assinatura: {_sanitize_output(str(e))}"}
     except Exception as e:
-        return {"plugin": name, "erro": str(e)}
+        return {"plugin": name, "erro": _sanitize_output(str(e))}
     finally:
         if _has_alarm:
             signal.alarm(0)  # Cancel pending alarm
