@@ -9,13 +9,14 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   lint:
     name: 🔍 Lint (Ruff)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -27,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ruff
+          pip install ruff==0.15.7
           pip install -r requirements.txt
 
       - name: Run ruff check
@@ -39,6 +40,8 @@ jobs:
   compile:
     name: 🐍 Compile Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -61,6 +64,8 @@ jobs:
   test:
     name: 🧪 Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -73,13 +78,13 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest==8.3.5
 
       - name: Run tests
         run: |
           python -m pytest tests/ -v --tb=short 2>/dev/null || \
           python -c "
-          import importlib, sys
+          import importlib, sys, os
           # Smoke tests: verify all core modules import correctly
           modules = ['cascavel', 'report_generator']
           failed = []
@@ -91,7 +96,6 @@ jobs:
                   print(f'  ❌ {mod} failed: {e}')
                   failed.append(mod)
           # Verify plugin count
-          import os
           plugins = [f for f in os.listdir('plugins') if f.endswith('.py') and not f.startswith('__')]
           print(f'  ✅ {len(plugins)} plugins discovered')
           if failed:
@@ -102,6 +106,8 @@ jobs:
   security:
     name: 🔒 Security (Bandit)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -112,7 +118,7 @@ jobs:
           cache: 'pip'
 
       - name: Install bandit
-        run: pip install "bandit[toml]"
+        run: pip install "bandit[toml]==1.9.4"
 
       - name: Run bandit
         run: |
