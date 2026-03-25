@@ -6,20 +6,16 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Weekly deep scan — catches new CVEs in dependencies
     - cron: "0 6 * * 1"
 
-permissions:
-  contents: read
-  security-events: write  # Required for SARIF upload
+permissions: {}
 
 jobs:
-  # ═══════════════════════════════════════════════════
-  # Syntax + Import Validation
-  # ═══════════════════════════════════════════════════
   lint:
     name: "🔍 Syntax & Import Check"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -33,18 +29,18 @@ jobs:
           find plugins/ -name "*.py" -exec python -m py_compile {} \;
           echo "✓ All files compiled successfully"
 
-  # ═══════════════════════════════════════════════════
-  # Bandit — Python SAST (SARIF → GitHub Security Tab)
-  # ═══════════════════════════════════════════════════
   bandit:
     name: "🛡️ Bandit SAST"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.11"
-      - run: pip install "bandit[sarif]"
+      - run: pip install "bandit[sarif]==1.9.4"
       - name: Run Bandit scan
         run: |
           bandit -r cascavel.py report_generator.py plugins/ \
@@ -61,12 +57,12 @@ jobs:
           sarif_file: bandit-results.sarif
           category: bandit
 
-  # ═══════════════════════════════════════════════════
-  # Semgrep — Advanced Pattern Matching (SARIF)
-  # ═══════════════════════════════════════════════════
   semgrep:
     name: "🔬 Semgrep SAST"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     container:
       image: semgrep/semgrep:latest
     steps:
@@ -89,12 +85,11 @@ jobs:
           sarif_file: semgrep-results.sarif
           category: semgrep
 
-  # ═══════════════════════════════════════════════════
-  # Dependency Audit — CVE Check on pip packages
-  # ═══════════════════════════════════════════════════
   dependency-audit:
     name: "📦 Dependency CVE Audit"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -104,12 +99,11 @@ jobs:
       - run: pip install -r requirements.txt
       - name: pip-audit (CVE check)
         run: |
-          pip install pip-audit
+          pip install pip-audit==2.9.0
           pip-audit --format json --output audit-results.json || true
           pip-audit --desc || true
       - name: Check critical CVEs
         run: |
-          # Enforce minimum versions from install.sh
           python3 -c "
           import importlib.metadata as meta
           checks = {
@@ -134,16 +128,15 @@ jobs:
               raise SystemExit(1)
           "
 
-  # ═══════════════════════════════════════════════════
-  # Secret Detection — Gitleaks
-  # ═══════════════════════════════════════════════════
   secrets:
     name: "🔑 Secret Detection"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          fetch-depth: 0  # Full history for comprehensive scan
+          fetch-depth: 0
       - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
