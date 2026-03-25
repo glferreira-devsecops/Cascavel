@@ -2,168 +2,679 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="Referrer-Policy" content="strict-origin" />
-  <meta http-equiv="Permissions-Policy" content="interest-cohort=()" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CASCAVEL — Quantum Security Framework</title>
+  <script>if(window.top!==window.self){window.top.location=window.self.location;}</script>
 
-  <!-- SEO & Compartilhamento -->
-  <meta name="description" content="Framework de segurança ofensiva avançada, modular e multiplataforma com 84 plugins." />
-  <meta name="keywords" content="Cascavel, Pentest, Segurança, Cyber, Quantum, Python, OSINT, Red Team" />
-  <meta name="author" content="DevFerreiraG" />
+  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data:; connect-src 'self'; frame-ancestors 'none';" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="interest-cohort=(), camera=(), microphone=(), geolocation=()" />
+
+  <!-- SEO & Open Graph -->
+  <meta name="description" content="Quantum Security Framework — 85 plugins em 14 categorias de ataque, 30+ ferramentas de reconhecimento, UX cinematográfica, relatórios PDF/MD/JSON. CI/CD hardened. Red Team Intelligence Engine." />
+  <meta name="keywords" content="Cascavel, Pentest, Security, Cyber, Quantum, Python, OSINT, Red Team, DevSecOps, Framework, Vulnerability Scanner" />
+  <meta name="author" content="Gabriel Lima Ferreira" />
   <meta property="og:title" content="CASCAVEL — Quantum Security Framework" />
-  <meta property="og:description" content="Automatize seus testes com inteligência ofensiva, 84 plugins e modularidade real." />
+  <meta property="og:description" content="85 plugins. 14 categorias. 30+ recon tools. Terminal cinematográfico. CI/CD hardened. Red Team Intelligence Engine." />
   <meta property="og:image" content="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
   <meta property="og:url" content="https://glferreira-devsecops.github.io/Cascavel/" />
+  <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CASCAVEL — Quantum Security Framework" />
+  <meta name="twitter:description" content="85 plugins. 14 categorias. 30+ recon tools. Red Team Intelligence Engine." />
 
-  <!-- Visual & Performance -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
 
   <style>
-    :root {
-      --primary: #00ffee;
-      --background: #0c0c0c;
-      --text: #e0e0e0;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --cyan:#00ffe5;--cyan-dim:rgba(0,255,229,.08);--cyan-glow:rgba(0,255,229,.25);--cyan-strong:rgba(0,255,229,.5);
+      --magenta:#ff2d95;--magenta-dim:rgba(255,45,149,.08);--magenta-glow:rgba(255,45,149,.3);
+      --green:#28c840;--yellow:#febc2e;--red:#ff5f57;--purple:#a855f7;
+      --bg:#06060e;--bg-card:rgba(12,12,24,.88);--bg-card-hover:rgba(18,18,36,.95);
+      --text:#c8d6e5;--text-bright:#f0f4f8;--text-dim:rgba(200,214,229,.4);
+      --border:rgba(0,255,229,.1);--border-hover:rgba(0,255,229,.3);
+      --radius:14px;--radius-sm:8px;
+      --transition:all .35s cubic-bezier(.4,0,.2,1);
     }
-    body {
-      background-color: var(--background);
-      color: var(--text);
-      font-family: 'Orbitron', sans-serif;
+
+    html{scroll-behavior:smooth;scroll-padding-top:80px}
+
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:'Inter',system-ui,-apple-system,sans-serif;
+      line-height:1.75;min-height:100vh;overflow-x:hidden;
     }
-    h1, h2, h3 { color: var(--primary); }
-    img {
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 0 25px rgba(0, 255, 238, 0.1);
-      transition: transform 0.3s ease;
+
+    /* Animated Grid Background */
+    body::before{
+      content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;
+      background-image:
+        linear-gradient(rgba(0,255,229,.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,255,229,.03) 1px,transparent 1px);
+      background-size:60px 60px;
+      animation:gridShift 20s linear infinite;
     }
-    img:hover { transform: rotateY(2deg) scale(1.01); }
-    .terminal {
-      background: #111;
-      color: #0f0;
-      padding: 1rem;
-      font-family: monospace;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      overflow-x: auto;
+    @keyframes gridShift{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+
+    /* Ambient Glow */
+    body::after{
+      content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;z-index:-1;
+      background:radial-gradient(ellipse at 30% 20%,rgba(0,255,229,.04),transparent 50%),
+                 radial-gradient(ellipse at 70% 80%,rgba(255,45,149,.03),transparent 50%);
+      animation:ambientFloat 15s ease-in-out infinite alternate;pointer-events:none;
     }
-    footer {
-      margin-top: 3rem;
-      border-top: 1px solid #333;
-      padding-top: 1rem;
-      text-align: center;
+    @keyframes ambientFloat{0%{transform:translate(0,0)}100%{transform:translate(-30px,20px)}}
+
+    h1,h2,h3,h4{font-family:'Orbitron',monospace;color:var(--cyan);letter-spacing:.5px}
+    a{color:var(--cyan);text-decoration:none;transition:var(--transition)}
+    a:hover{color:var(--magenta);text-shadow:0 0 12px var(--magenta-glow)}
+    .container{max-width:1140px;margin:0 auto;padding:0 1.5rem}
+
+    /* Desktop Top Nav */
+    .top-nav{position:sticky;top:0;z-index:1000;background:rgba(6,6,14,.88);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--border);padding:.75rem 0;transition:var(--transition)}
+    .top-nav.scrolled{box-shadow:0 4px 30px rgba(0,0,0,.4)}
+    .top-nav .container{display:flex;align-items:center;justify-content:space-between}
+    .nav-brand{font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:800;color:var(--cyan);display:flex;align-items:center;gap:.5rem}
+    .nav-brand:hover{color:var(--cyan);text-shadow:0 0 20px var(--cyan-glow)}
+    .nav-links{display:flex;gap:1.2rem;align-items:center;list-style:none}
+    .nav-links a{font-size:.78rem;font-weight:500;text-transform:uppercase;letter-spacing:1.5px;padding:.3rem .1rem;position:relative}
+    .nav-links a::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:var(--cyan);transition:width .3s ease}
+    .nav-links a:hover::after{width:100%}
+    .nav-links a:hover{color:var(--cyan)}
+
+    /* Mobile Bottom Floating Pill Nav */
+    .bottom-nav{display:none;position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(6,6,14,.92);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid var(--border);border-radius:30px;padding:.4rem .6rem;box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 20px var(--cyan-dim)}
+    .bottom-nav a{display:flex;flex-direction:column;align-items:center;padding:.4rem .7rem;font-size:.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;font-family:'Orbitron',monospace;border-radius:20px;transition:var(--transition)}
+    .bottom-nav a .nav-icon{font-size:1.1rem;margin-bottom:.15rem}
+    .bottom-nav a.active,.bottom-nav a:hover{color:var(--cyan);background:var(--cyan-dim)}
+
+    /* Hero */
+    .hero{padding:6rem 0 4rem;text-align:center;position:relative}
+    .hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(0,255,229,.06) 0%,transparent 70%);pointer-events:none}
+
+    .hero h1{font-size:clamp(2.5rem,7vw,4.5rem);font-weight:800;margin-bottom:.3rem;position:relative;display:inline-block}
+    .hero h1 .accent{color:var(--magenta);animation:pulseAccent 2s ease-in-out infinite}
+    @keyframes pulseAccent{0%,100%{opacity:1}50%{opacity:.6}}
+
+    .hero .version-tag{display:inline-block;background:var(--cyan-dim);border:1px solid var(--border);border-radius:24px;padding:.25rem 1rem;font-size:.72rem;font-family:'Orbitron',monospace;color:var(--cyan);margin:.8rem 0 1.2rem;position:relative;overflow:hidden}
+    .hero .version-tag::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,255,229,.15),transparent);animation:shimmer 3s ease-in-out infinite}
+    @keyframes shimmer{0%{left:-100%}100%{left:100%}}
+
+    .tagline{font-size:clamp(.92rem,1.8vw,1.12rem);color:var(--text);max-width:720px;margin:0 auto 2rem;opacity:.8;font-weight:300;line-height:1.8}
+
+    .hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.5rem}
+    .hero-badges img{height:20px;border-radius:3px;transition:var(--transition)}
+    .hero-badges img:hover{transform:scale(1.1);filter:brightness(1.2)}
+
+    .hero-stats{display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+    .stat{text-align:center;position:relative}
+    .stat-number{font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:800;color:var(--cyan);display:block;text-shadow:0 0 30px var(--cyan-dim)}
+    .stat-label{font-size:.65rem;text-transform:uppercase;letter-spacing:2.5px;opacity:.45;margin-top:.2rem}
+    .stat::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:var(--border-hover);border-radius:1px}
+
+    /* Terminal Window */
+    .terminal-window{background:rgba(10,10,22,.95);border:1px solid var(--border);border-radius:var(--radius);max-width:720px;margin:0 auto;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.6),0 0 50px var(--cyan-dim),inset 0 1px 0 rgba(255,255,255,.03)}
+    .terminal-header{background:rgba(0,255,229,.04);padding:.55rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border)}
+    .dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:inset 0 -1px 2px rgba(0,0,0,.3)}
+    .dot-r{background:var(--red)}.dot-y{background:var(--yellow)}.dot-g{background:var(--green)}
+    .terminal-title{font-size:.68rem;color:var(--text-dim);margin-left:.6rem;font-family:'JetBrains Mono',monospace}
+    .terminal-body{padding:1.3rem 1.6rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2}
+    .prompt{color:var(--cyan)}.cmd{color:var(--text-bright)}.comment{color:#444;font-style:italic}
+    .cursor{display:inline-block;width:8px;height:16px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;border-radius:1px}
+    @keyframes blink{50%{opacity:0}}
+
+    /* CTA Buttons */
+    .cta-group{display:flex;gap:1rem;justify-content:center;margin-top:2.5rem;flex-wrap:wrap}
+    .cta{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.6rem;border-radius:30px;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;transition:var(--transition);position:relative;overflow:hidden}
+    .cta-primary{background:linear-gradient(135deg,var(--cyan),#00b4d8);color:var(--bg);box-shadow:0 4px 20px var(--cyan-glow)}
+    .cta-primary:hover{transform:translateY(-2px);box-shadow:0 8px 35px var(--cyan-strong);color:var(--bg)}
+    .cta-secondary{background:transparent;border:1px solid var(--border-hover);color:var(--cyan)}
+    .cta-secondary:hover{background:var(--cyan-dim);border-color:var(--cyan);transform:translateY(-2px);color:var(--cyan)}
+
+    /* Sections */
+    section{padding:5rem 0;position:relative}
+    .section-title{font-size:1.5rem;margin-bottom:.5rem;position:relative;display:inline-block}
+    .section-title::after{content:'';position:absolute;bottom:-6px;left:0;width:50px;height:3px;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:2px}
+    .section-subtitle{font-family:'Inter',sans-serif;font-size:.88rem;opacity:.5;margin:.8rem 0 2.5rem;max-width:550px;line-height:1.7}
+
+    /* Scroll Reveal */
+    .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .reveal-delay-1{transition-delay:.1s}
+    .reveal-delay-2{transition-delay:.2s}
+    .reveal-delay-3{transition-delay:.3s}
+    .reveal-delay-4{transition-delay:.4s}
+
+    /* Feature Cards */
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem}
+    .feature-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem 1.6rem;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(10px)}
+    .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .4s}
+    .feature-card::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at center,rgba(0,255,229,.04),transparent 60%);opacity:0;transition:opacity .4s;pointer-events:none}
+    .feature-card:hover{border-color:var(--border-hover);transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.3),0 0 30px var(--cyan-dim)}
+    .feature-card:hover::before{opacity:1}
+    .feature-card:hover::after{opacity:1}
+    .feature-icon{font-size:1.8rem;margin-bottom:.8rem;display:block;filter:drop-shadow(0 0 8px rgba(0,255,229,.3))}
+    .feature-card h3{font-size:.88rem;margin-bottom:.5rem}
+    .feature-card p{font-size:.82rem;opacity:.6;line-height:1.7}
+
+    /* Plugin Table */
+    .table-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-card)}
+    .plugin-table{width:100%;border-collapse:collapse;font-size:.82rem}
+    .plugin-table th{text-align:left;padding:.7rem 1rem;background:rgba(0,255,229,.04);color:var(--cyan);font-family:'Orbitron',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;border-bottom:2px solid var(--border-hover)}
+    .plugin-table td{padding:.6rem 1rem;border-bottom:1px solid rgba(0,255,229,.05);transition:background .2s}
+    .plugin-table tr:hover td{background:rgba(0,255,229,.04)}
+    .plugin-table .cat-icon{margin-right:.4rem}
+    .badge-count{background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border);border-radius:14px;padding:.15rem .6rem;font-size:.68rem;font-family:'Orbitron',monospace;font-weight:600;display:inline-block}
+    .plugin-table .techniques{opacity:.55;font-size:.78rem}
+
+    /* Integration Tags */
+    .integrations{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:1.5rem}
+    .integration-tag{background:var(--bg-card);border:1px solid var(--border);border-radius:22px;padding:.4rem 1rem;font-size:.78rem;color:var(--text);transition:var(--transition);cursor:default}
+    .integration-tag:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,255,229,.1)}
+
+    /* Intel Carousel */
+    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+    .intel-card{min-width:310px;max-width:360px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.4rem;scroll-snap-align:start;flex-shrink:0;transition:var(--transition)}
+    .intel-card:hover{border-color:var(--border-hover);transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .intel-tag{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--magenta);margin-bottom:.5rem;display:block;text-shadow:0 0 10px var(--magenta-dim)}
+    .intel-text{font-size:.82rem;opacity:.65;line-height:1.7}
+
+    /* Install Box */
+    .install-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;backdrop-filter:blur(10px)}
+    .install-box code{display:block;background:rgba(6,6,14,.9);padding:1.2rem 1.5rem;border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:.84rem;color:var(--cyan);border:1px solid rgba(0,255,229,.06);line-height:2;overflow-x:auto}
+    .install-note{margin-top:1.2rem;font-size:.82rem;opacity:.45;line-height:1.8}
+    .install-note em{color:var(--text);opacity:.7}
+
+    /* Roadmap */
+    .roadmap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+    .roadmap-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:var(--transition)}
+    .roadmap-card:hover{border-color:var(--border-hover);transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .roadmap-card h4{font-size:.85rem;margin-bottom:1rem}
+    .roadmap-card ul{list-style:none;padding:0}
+    .roadmap-card li{font-size:.8rem;padding:.35rem 0;opacity:.65;position:relative;padding-left:1.2rem}
+    .roadmap-card li::before{content:'›';position:absolute;left:0;color:var(--cyan);font-weight:bold;font-size:1rem}
+    .version-label{display:inline-block;border-radius:6px;padding:.15rem .6rem;font-size:.62rem;font-family:'Orbitron',monospace;margin-bottom:.8rem;letter-spacing:1px}
+    .version-label.current{background:rgba(40,200,64,.1);color:var(--green);border:1px solid rgba(40,200,64,.2)}
+    .version-label.next{background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border)}
+    .version-label.future{background:var(--magenta-dim);color:var(--magenta);border:1px solid rgba(255,45,149,.15)}
+
+    /* Architecture Section */
+    .arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.5rem}
+    .arch-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;text-align:center;transition:var(--transition)}
+    .arch-item:hover{border-color:var(--border-hover);transform:translateY(-3px)}
+    .arch-item .arch-icon{font-size:2rem;margin-bottom:.5rem;display:block}
+    .arch-item h4{font-size:.75rem;margin-bottom:.3rem}
+    .arch-item p{font-size:.72rem;opacity:.5}
+
+    /* Governance */
+    .gov-grid{display:flex;flex-wrap:wrap;gap:.7rem}
+    .gov-link{display:inline-flex;align-items:center;gap:.4rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:.8rem;transition:var(--transition)}
+    .gov-link:hover{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);transform:translateY(-2px)}
+
+    /* Footer */
+    footer{border-top:1px solid var(--border);padding:3rem 0;text-align:center;position:relative}
+    footer::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+    .footer-links{display:flex;gap:1.5rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap}
+    footer p{font-size:.75rem;opacity:.35;line-height:2}
+    footer a{opacity:.6}footer a:hover{opacity:1}
+
+    /* Back to Top */
+    .back-to-top{position:fixed;bottom:2rem;right:2rem;width:44px;height:44px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;opacity:0;transform:translateY(20px);transition:var(--transition);z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+    .back-to-top.visible{opacity:1;transform:translateY(0)}
+    .back-to-top:hover{background:var(--cyan-dim);border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 8px 30px var(--cyan-dim)}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:6px;height:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--border-hover)}
+
+    /* Responsive */
+    @media(max-width:768px){
+      .top-nav .nav-links{display:none}
+      .bottom-nav{display:flex;gap:.2rem}
+      .hero{padding:4rem 0 3rem}
+      .hero h1{font-size:2.5rem}
+      .hero-stats{gap:1.5rem}.stat-number{font-size:1.6rem}
+      .features-grid,.roadmap-grid{grid-template-columns:1fr}
+      .arch-grid{grid-template-columns:repeat(2,1fr)}
+      section{padding:3.5rem 0}
+      .cta-group{flex-direction:column;align-items:center}
+      .back-to-top{bottom:5rem;right:1rem}
+      footer{padding-bottom:5rem}
     }
-    a[rel~="noopener"]::after {
-      content: " ↗";
-      font-size: 0.8rem;
-      color: var(--primary);
+    @media(max-width:480px){
+      .arch-grid{grid-template-columns:1fr}
+      .stat::after{display:none}
+      .hero-stats{gap:1rem}
+      .bottom-nav a{padding:.35rem .5rem;font-size:.5rem}
+      .bottom-nav a .nav-icon{font-size:.9rem}
     }
-    .lang-switcher {
-      display: inline-flex;
-      gap: 0.5rem;
-      font-size: 1.2rem;
-    }
-    .linkedin-icon {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .linkedin-icon svg { vertical-align: middle; }
   </style>
 </head>
 <body>
 
-  <!-- Navegação -->
-  <nav class="container-fluid" aria-label="Navegação principal">
-    <ul>
-      <li><strong>🐍 CASCAVEL</strong></li>
-    </ul>
-    <ul>
-      <li><a href="#" aria-current="page">Início</a></li>
-      <li class="lang-switcher"><a href="en/" title="English">🇺🇸</a></li>
-      <li><a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">GitHub</a></li>
-    </ul>
+  <!-- Desktop Top Nav -->
+  <nav class="top-nav" id="navbar" aria-label="Desktop Navigation">
+    <div class="container">
+      <a href="#" class="nav-brand">🐍 CASCAVEL</a>
+      <ul class="nav-links">
+        <li><a href="#arsenal">Arsenal</a></li>
+        <li><a href="#plugins">Plugins</a></li>
+        <li><a href="#architecture">Arquitetura</a></li>
+        <li><a href="#install">Instalação</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="en/" title="English">🇺🇸</a></li>
+        <li><a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">GitHub ↗</a></li>
+      </ul>
+    </div>
   </nav>
 
-  <!-- Conteúdo Principal -->
-  <main class="container">
-    <div class="grid">
-      <section>
-        <hgroup>
-          <h2>Quantum Security Framework</h2>
-          <h3>Desenvolvido para Red Teams exigentes</h3>
-        </hgroup>
+  <!-- Mobile Bottom Floating Pill Nav -->
+  <nav class="bottom-nav" id="bottomNav" aria-label="Mobile Navigation">
+    <a href="#arsenal"><span class="nav-icon">⚔️</span>Arsenal</a>
+    <a href="#plugins"><span class="nav-icon">🔌</span>Plugins</a>
+    <a href="#architecture"><span class="nav-icon">🧬</span>Arq</a>
+    <a href="#install"><span class="nav-icon">⚡</span>Install</a>
+    <a href="#roadmap"><span class="nav-icon">🗺️</span>Roadmap</a>
+    <a href="en/"><span class="nav-icon">🇺🇸</span>EN</a>
+  </nav>
 
-        <p>
-          O <strong>Cascavel</strong> é um framework de segurança ofensiva modular e extensível, com <strong>84 plugins</strong> e integração com ferramentas OSINT avançadas como Shodan, Katana, Nuclei e mais. Automatize pentests de alta complexidade com relatórios completos em Markdown.
-        </p>
+  <!-- Hero -->
+  <header class="hero">
+    <div class="container">
+      <h1 class="reveal">CASCAVEL<span class="accent">.</span></h1>
+      <div class="reveal reveal-delay-1">
+        <span class="version-tag">v2.2.0 — Red Team Intelligence Engine</span>
+      </div>
+      <p class="tagline reveal reveal-delay-1">
+        Framework de segurança ofensiva quantum-grade para Red Teams exigentes.
+        Modular, extensível e brutalmente eficiente.
+        Zero tracking. Zero telemetria. Código 100% auditável.
+      </p>
 
-        <figure>
-          <img src="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png"
-               alt="Logotipo do projeto Cascavel"
-               loading="lazy" />
-          <figcaption>
-            <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">Ver projeto no GitHub</a>
-          </figcaption>
-        </figure>
+      <div class="hero-badges reveal reveal-delay-2">
+        <a href="https://www.bestpractices.dev/projects/12255"><img src="https://www.bestpractices.dev/projects/12255/badge" alt="OpenSSF Best Practices" /></a>
+        <img src="https://img.shields.io/badge/Python-3.10%2B-00ffe5?style=flat&logo=python&logoColor=white" alt="Python 3.10+" />
+        <img src="https://img.shields.io/badge/License-MIT-ff2d95?style=flat" alt="MIT License" />
+        <img src="https://img.shields.io/badge/Plugins-85-00ffe5?style=flat" alt="85 Plugins" />
+        <img src="https://img.shields.io/badge/CI%2FCD-Hardened-28c840?style=flat&logo=githubactions&logoColor=white" alt="CI/CD Hardened" />
+        <img src="https://img.shields.io/badge/SAST-Bandit%20%2B%20CodeQL%20%2B%20Semgrep-a855f7?style=flat" alt="SAST Stack" />
+      </div>
 
-        <h3>Instalação</h3>
-        <div class="terminal">
-          git clone https://github.com/glferreira-devsecops/Cascavel.git<br />
-          cd Cascavel<br />
-          python3 -m venv venv && source venv/bin/activate<br />
-          pip install -r requirements.txt
+      <div class="hero-stats reveal reveal-delay-2">
+        <div class="stat"><span class="stat-number">85</span><span class="stat-label">Security Plugins</span></div>
+        <div class="stat"><span class="stat-number">14</span><span class="stat-label">Attack Categories</span></div>
+        <div class="stat"><span class="stat-number">30+</span><span class="stat-label">Recon Tools</span></div>
+        <div class="stat"><span class="stat-number">3</span><span class="stat-label">Report Formats</span></div>
+        <div class="stat"><span class="stat-number">2.8K</span><span class="stat-label">Lines of Core</span></div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="terminal-window reveal reveal-delay-3">
+        <div class="terminal-header">
+          <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+          <span class="terminal-title">cascavel — v2.2.0 — zsh</span>
         </div>
-
-        <h3>Execução</h3>
-        <div class="terminal">
-          python3 cascavel.py -t exemplo.com<br />
-          python3 cascavel.py --list-plugins<br />
-          python3 cascavel.py --check-tools
+        <div class="terminal-body">
+          <span class="comment"># Scan completo em um alvo</span><br/>
+          <span class="prompt">❯ </span><span class="cmd">python3 cascavel.py -t target.com</span><br/>
+          <span class="comment"># Listar 85 plugins disponíveis</span><br/>
+          <span class="prompt">❯ </span><span class="cmd">python3 cascavel.py --list-plugins</span><br/>
+          <span class="comment"># Verificar ferramentas externas</span><br/>
+          <span class="prompt">❯ </span><span class="cmd">python3 cascavel.py --check-tools</span><br/>
+          <span class="comment"># Modo CI/CD silencioso com JSON</span><br/>
+          <span class="prompt">❯ </span><span class="cmd">python3 cascavel.py -t target.com --quiet --json</span><span class="cursor"></span>
         </div>
+      </div>
 
-        <h3>Recursos</h3>
-        <ul>
-          <li>🔌 84 plugins de segurança (rede, web, cloud, OSINT, auth, wireless, Red Team Elite 2026)</li>
-          <li>🛠️ Integração com Nmap, Subfinder, Amass, Katana, Shodan e mais</li>
-          <li>📁 Wordlists e templates prontos para Nuclei</li>
-          <li>📝 Geração automática de relatórios em Markdown</li>
-          <li>🖥️ CLI completa com argparse (modo interativo e batch)</li>
-        </ul>
-
-        <p><em>Zero rastreamento. Zero coleta. Apenas código seguro, estático e auditável.</em></p>
-      </section>
+      <!-- CTA -->
+      <div class="cta-group reveal reveal-delay-4">
+        <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener" class="cta cta-primary">⚡ Ver no GitHub</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md" target="_blank" rel="noopener" class="cta cta-secondary">📖 Plugin Docs</a>
+      </div>
     </div>
-  </main>
+  </header>
 
-  <!-- Rodapé -->
-  <footer class="container">
-    <small>
-      <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">GitHub</a> •
-      <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> •
-      Desenvolvido por
-      <a href="https://www.linkedin.com/in/DevFerreiraG" target="_blank" rel="noopener" class="linkedin-icon" aria-label="LinkedIn DevFerreiraG">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#00ffee" viewBox="0 0 16 16">
-          <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513
-          16 1.146v13.708c0 .633-.526 1.146-1.175
-          1.146H1.175C.526 16 0 15.487 0
-          14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837
-          0 1.358-.554 1.358-1.248-.015-.709-.521-1.248-1.341-1.248-.82
-          0-1.359.54-1.359 1.248 0 .694.521 1.248
-          1.327 1.248h.015zm4.908 8.212V9.359c0-.215.016-.43.079-.584.173-.43.568-.874
-          1.231-.874.869 0 1.216.66 1.216 1.628v3.865h2.4V9.25c0-2.22-1.183-3.252-2.762-3.252-1.274
-          0-1.845.7-2.165 1.192v.025h-.015a5.54 5.54 0 0
-          1 .015-.025V6.169h-2.4c.03.681 0 7.225 0
-          7.225h2.4z"/>
-        </svg>
-        DevFerreiraG
-      </a>
-    </small>
+  <!-- Arsenal -->
+  <section id="arsenal">
+    <div class="container">
+      <h2 class="section-title reveal">Arsenal</h2>
+      <p class="section-subtitle reveal">Capacidades de elite para reconhecimento, exploração e reportagem automatizada.</p>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <span class="feature-icon">🔌</span>
+          <h3>85 Security Plugins</h3>
+          <p>14 categorias de ataque cobrindo injection, server-side, auth bypass, protocol-level, API, infrastructure e mais. Interface padronizada <code>run(target, ip, ports, banners)</code>.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <span class="feature-icon">🛰️</span>
+          <h3>30+ Recon Tools</h3>
+          <p>Integração nativa com Nmap, Subfinder, Amass, Katana, Nuclei, Shodan, Nikto, WHOIS/RDAP, Traceroute e todo ecossistema OSINT moderno.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <span class="feature-icon">🖥️</span>
+          <h3>Cinematic Terminal UX</h3>
+          <p>Boot sequence cinematográfico com ASCII art fade-in, typewriter effects, barras de progresso Rich, painel Live e Security Intel tips durante scans.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <span class="feature-icon">📊</span>
+          <h3>Multi-Format Reports</h3>
+          <p>Relatórios automáticos em PDF (ReportLab), Markdown e JSON com findings categorizados por severidade — CRÍTICO, ALTO, MÉDIO, BAIXO, INFO.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <span class="feature-icon">🔒</span>
+          <h3>CI/CD Hardened</h3>
+          <p>Pipeline blindado: Bandit SAST, CodeQL, Ruff, pip-audit, Semgrep, OpenSSF Scorecard, pre-commit hooks. Token permissions e dependências pinadas.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <span class="feature-icon">🧠</span>
+          <h3>Intelligence Engine</h3>
+          <p>ANSI escape sanitizer anti-terminal-injection, graceful shutdown (SIGINT/SIGTERM/SIGPIPE), correlação de findings e deduplicação inteligente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plugin Categories -->
+  <section id="plugins">
+    <div class="container">
+      <h2 class="section-title reveal">Plugin Categories</h2>
+      <p class="section-subtitle reveal">85 plugins organizados em 14 categorias especializadas de ataque.</p>
+      <div class="table-wrapper reveal">
+        <table class="plugin-table">
+          <thead>
+            <tr><th>Categoria</th><th style="text-align:center">Plugins</th><th>Técnicas Principais</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="cat-icon">💉</span>Injection & Code Execution</td><td style="text-align:center"><span class="badge-count">7</span></td><td class="techniques">XSS polyglot, SQLi (time/error/union/blind), SSTI multi-engine, RCE, NoSQL ($gt/$ne/$regex), Log4Shell (12 headers + 5 WAF bypass)</td></tr>
+            <tr><td><span class="cat-icon">🌐</span>Server-Side Attacks</td><td style="text-align:center"><span class="badge-count">4</span></td><td class="techniques">SSRF (IMDSv2, DNS rebinding, gopher://), XXE OOB exfiltration, LFI wrapper protocols, Path Traversal encoding bypass</td></tr>
+            <tr><td><span class="cat-icon">🔐</span>Authentication & Authorization</td><td style="text-align:center"><span class="badge-count">6</span></td><td class="techniques">JWT none/key confusion/JWKS, OAuth PKCE/state/redirect, CSRF SameSite, IDOR sequential/UUID, Session Fixation</td></tr>
+            <tr><td><span class="cat-icon">🔄</span>Protocol-Level Attacks</td><td style="text-align:center"><span class="badge-count">4</span></td><td class="techniques">HTTP Smuggling (CL-TE/TE-CL/TE-TE), HTTP/2 desync + HPACK injection, WebSocket CSWSH, gRPC reflection</td></tr>
+            <tr><td><span class="cat-icon">🛡️</span>Defense Analysis & Bypass</td><td style="text-align:center"><span class="badge-count">7</span></td><td class="techniques">CORS wildcard/null origin, CSP unsafe-inline/eval bypass, Clickjacking, Host Header, Cache Poison, Rate Limit, WAF bypass</td></tr>
+            <tr><td><span class="cat-icon">🎯</span>API Security</td><td style="text-align:center"><span class="badge-count">4</span></td><td class="techniques">GraphQL introspection/batch/alias overload, API endpoint discovery, version detection, OpenAPI exposure</td></tr>
+            <tr><td><span class="cat-icon">💣</span>Advanced Web Attacks</td><td style="text-align:center"><span class="badge-count">6</span></td><td class="techniques">Mass Assignment isAdmin, Race Condition TOCTOU, Prototype Pollution __proto__, Deserialization multi-lang, Open Redirect, CRLF</td></tr>
+            <tr><td><span class="cat-icon">🏗️</span>Infrastructure Exposure</td><td style="text-align:center"><span class="badge-count">8</span></td><td class="techniques">Docker 2375/2376, K8s API/etcd/kubelet, Redis unauth RCE, MongoDB no-auth, Elastic/Kibana, CI/CD artifacts, Cloud IMDS</td></tr>
+            <tr><td><span class="cat-icon">🔍</span>Reconnaissance & OSINT</td><td style="text-align:center"><span class="badge-count">11</span></td><td class="techniques">Subdomains CT/DNS brute/zone transfer, DNS deep (12 record types), WHOIS/RDAP, Shodan, Wayback, Email spoof SPF/DKIM/DMARC, Traceroute</td></tr>
+            <tr><td><span class="cat-icon">🕵️</span>Information Gathering</td><td style="text-align:center"><span class="badge-count">7</span></td><td class="techniques">Tech fingerprint Wappalyzer-style, JS API key extraction, Param miner, Info disclosure (.env/.git), Secrets scraper regex, Git dumper</td></tr>
+            <tr><td><span class="cat-icon">🌐</span>Web Scanning</td><td style="text-align:center"><span class="badge-count">7</span></td><td class="techniques">Dir bruteforce wordlist, Nikto integration, Katana deep crawler, HTTP methods (OPTIONS/TRACE/PUT), WordPress, Nuclei templates</td></tr>
+            <tr><td><span class="cat-icon">☁️</span>Cloud & Storage</td><td style="text-align:center"><span class="badge-count">2</span></td><td class="techniques">S3 bucket public ACL misconfiguration, SAML signature wrapping + assertion injection</td></tr>
+            <tr><td><span class="cat-icon">📊</span>Analysis & Profiling</td><td style="text-align:center"><span class="badge-count">5</span></td><td class="techniques">SSL/TLS cert + cipher audit, WAF fingerprint 30+ products, Nmap advanced scripts + OS fingerprint, Auto exploit CVE matching</td></tr>
+            <tr><td><span class="cat-icon">🔐</span>Brute Force & Auth Testing</td><td style="text-align:center"><span class="badge-count">6</span></td><td class="techniques">SSH/FTP/SMB/SMTP brute force, Heartbleed CVE-2014-0160, DNS zone transfer AXFR</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section id="architecture">
+    <div class="container">
+      <h2 class="section-title reveal">Arquitetura</h2>
+      <p class="section-subtitle reveal">Projetado com princípios de segurança defensiva em cada camada.</p>
+      <div class="arch-grid">
+        <div class="arch-item reveal">
+          <span class="arch-icon">🧬</span>
+          <h4>ANSI Sanitizer</h4>
+          <p>Anti-terminal injection: strip OSC/DCS/cursor sequences, preserva SGR cores</p>
+        </div>
+        <div class="arch-item reveal reveal-delay-1">
+          <span class="arch-icon">⚡</span>
+          <h4>Signal Handling</h4>
+          <p>Graceful shutdown SIGINT/SIGTERM/SIGPIPE com os.write() async-signal-safe</p>
+        </div>
+        <div class="arch-item reveal reveal-delay-2">
+          <span class="arch-icon">🔌</span>
+          <h4>Plugin API</h4>
+          <p>Interface padrão run(target, ip, ports, banners) → dict com schema validado</p>
+        </div>
+        <div class="arch-item reveal reveal-delay-3">
+          <span class="arch-icon">🎬</span>
+          <h4>Cinematic Boot</h4>
+          <p>Fade-in logo com 256-color ramp, TTY detection, fallback para pipes/CI</p>
+        </div>
+        <div class="arch-item reveal">
+          <span class="arch-icon">📦</span>
+          <h4>Dependency Bootstrap</h4>
+          <p>Auto-check de libs no import, mensagem de erro amigável, zero crash</p>
+        </div>
+        <div class="arch-item reveal reveal-delay-1">
+          <span class="arch-icon">🔐</span>
+          <h4>Supply Chain Security</h4>
+          <p>Deps pinadas por versão, pip-audit CI, pre-commit hooks, Scorecard 10/10</p>
+        </div>
+        <div class="arch-item reveal reveal-delay-2">
+          <span class="arch-icon">📊</span>
+          <h4>Severity Engine</h4>
+          <p>5 níveis — CRÍTICO 💀 ALTO 🔴 MÉDIO 🟡 BAIXO 🔵 INFO ⚪ — com ícones visuais</p>
+        </div>
+        <div class="arch-item reveal reveal-delay-3">
+          <span class="arch-icon">🧪</span>
+          <h4>Security Intel</h4>
+          <p>40+ tips e facts de threat intelligence exibidos durante waits dos scans</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Integrations -->
+  <section>
+    <div class="container">
+      <h2 class="section-title reveal">Integrações</h2>
+      <p class="section-subtitle reveal">Ferramentas externas com integração nativa para máxima cobertura de ataque.</p>
+      <div class="integrations reveal">
+        <span class="integration-tag">🔍 Nmap</span>
+        <span class="integration-tag">🌐 Subfinder</span>
+        <span class="integration-tag">🗺️ Amass</span>
+        <span class="integration-tag">🕷️ Katana</span>
+        <span class="integration-tag">⚡ Nuclei</span>
+        <span class="integration-tag">📡 Shodan</span>
+        <span class="integration-tag">🔒 Nikto</span>
+        <span class="integration-tag">📋 WHOIS/RDAP</span>
+        <span class="integration-tag">🛤️ Traceroute</span>
+        <span class="integration-tag">⏪ Wayback Machine</span>
+        <span class="integration-tag">🛡️ Bandit SAST</span>
+        <span class="integration-tag">🔬 CodeQL</span>
+        <span class="integration-tag">🧠 Semgrep</span>
+        <span class="integration-tag">✨ Ruff</span>
+        <span class="integration-tag">🔎 pip-audit</span>
+        <span class="integration-tag">📄 ReportLab PDF</span>
+        <span class="integration-tag">🎨 Rich Terminal</span>
+        <span class="integration-tag">🔤 pyfiglet</span>
+        <span class="integration-tag">🪝 pre-commit</span>
+        <span class="integration-tag">🏆 OpenSSF Scorecard</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Intel -->
+  <section>
+    <div class="container">
+      <h2 class="section-title reveal">Security Intel</h2>
+      <p class="section-subtitle reveal">Motor de inteligência integrado — 40+ tips e facts exibidos durante scans em tempo real.</p>
+      <div class="intel-carousel reveal">
+        <div class="intel-card"><span class="intel-tag">💀 FACT</span><span class="intel-text">Hackers comprometem 93% das redes corporativas em 2 dias. O custo médio de um data breach é $4.88M (2024).</span></div>
+        <div class="intel-card"><span class="intel-tag">🔐 TIP</span><span class="intel-text">Sempre valide JWT com algoritmo fixo — nunca confie no header 'alg'. None algorithm = bypass total de autenticação.</span></div>
+        <div class="intel-card"><span class="intel-tag">⚡ FACT</span><span class="intel-text">O Log4Shell (CVE-2021-44228) teve 10M+ tentativas de exploit por hora. 86% dos ataques exploram vulns com patches disponíveis.</span></div>
+        <div class="intel-card"><span class="intel-tag">🛡️ TIP</span><span class="intel-text">Redis sem auth = RCE via CONFIG SET + crontab/SSH key injection. IMDSv2 no AWS previne SSRF para credenciais EC2.</span></div>
+        <div class="intel-card"><span class="intel-tag">🧬 TIP</span><span class="intel-text">Race conditions: use single-packet attack para bypass de rate limiting. Prototype Pollution em Node.js escala para RCE via gadget chains.</span></div>
+        <div class="intel-card"><span class="intel-tag">📡 FACT</span><span class="intel-text">Shodan indexa 7+ bilhões de dispositivos. 95% dos incidentes de segurança em cloud são causados por misconfiguration.</span></div>
+        <div class="intel-card"><span class="intel-tag">💣 TIP</span><span class="intel-text">GraphQL batching pode brute force queries autenticadas. Docker --privileged + docker.sock = container escape trivial.</span></div>
+        <div class="intel-card"><span class="intel-tag">🕷️ FACT</span><span class="intel-text">O SolarWinds hack comprometeu 18.000 organizações via supply chain. Zero-days em iOS valem até $2M no mercado.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section id="install">
+    <div class="container">
+      <h2 class="section-title reveal">Instalação Rápida</h2>
+      <p class="section-subtitle reveal">Setup em 60 segundos. Requer Python 3.10+. Compatível com Linux, macOS e WSL.</p>
+      <div class="install-box reveal">
+        <code>
+<span style="color:#555"># Clone e configure</span><br/>
+git clone https://github.com/glferreira-devsecops/Cascavel.git<br/>
+cd Cascavel<br/>
+python3 -m venv venv && source venv/bin/activate<br/>
+pip install -r requirements.txt<br/><br/>
+<span style="color:#555"># Execute</span><br/>
+python3 cascavel.py --help<br/>
+python3 cascavel.py -t target.com
+        </code>
+        <p class="install-note">
+          Instalador automatizado disponível: <code style="display:inline;background:transparent;border:none;padding:0;color:var(--cyan)">bash install.sh</code> — 15+ verificações de ambiente incluindo Python version, venv, ferramentas externas, conectividade.<br/>
+          <em>Zero rastreamento. Zero coleta de dados. Zero telemetria. Código 100% auditável. MIT License.</em>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roadmap -->
+  <section id="roadmap">
+    <div class="container">
+      <h2 class="section-title reveal">Roadmap</h2>
+      <p class="section-subtitle reveal">Direção técnica do projeto — aberto a contribuições e feedback da comunidade.</p>
+      <div class="roadmap-grid">
+        <div class="roadmap-card reveal">
+          <span class="version-label current">v2.2.0 — STABLE</span>
+          <h4>✅ Atual</h4>
+          <ul>
+            <li>85+ plugins com inteligência 2026-grade</li>
+            <li>Relatórios JSON, Markdown e PDF</li>
+            <li>UX cinematográfica com TTY detection</li>
+            <li>Modo --quiet para CI/CD pipelines</li>
+            <li>Installer com 15+ edge case checks</li>
+            <li>Governance open-source completa</li>
+            <li>OpenSSF Best Practices Badge</li>
+          </ul>
+        </div>
+        <div class="roadmap-card reveal reveal-delay-1">
+          <span class="version-label next">v3.0.0 — Q4 2026</span>
+          <h4>🚀 Próximo</h4>
+          <ul>
+            <li>Plugin API v2 com CVSS scoring nativo</li>
+            <li>Saída SARIF para IDE integration</li>
+            <li>Docker image oficial (ghcr.io)</li>
+            <li>Async plugin engine (3-5x speed)</li>
+            <li>API mode --serve (REST/SOAR)</li>
+            <li>Custom scan profiles YAML</li>
+            <li>Plugin test suite com pytest</li>
+          </ul>
+        </div>
+        <div class="roadmap-card reveal reveal-delay-2">
+          <span class="version-label future">v4.0.0 — 2027</span>
+          <h4>🧠 Futuro</h4>
+          <ul>
+            <li>AI-assisted triage com LLM severity</li>
+            <li>Distributed multi-node scanning</li>
+            <li>Compliance mapping OWASP/NIST/PCI-DSS</li>
+            <li>SBOM generation automático</li>
+            <li>GitHub App (PR one-click audit)</li>
+            <li>Plugin marketplace comunitário</li>
+            <li>Man page nativo</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Governance -->
+  <section>
+    <div class="container">
+      <h2 class="section-title reveal">Governance & Community</h2>
+      <p class="section-subtitle reveal">Projeto open-source com governança transparente, compliance total e community-driven.</p>
+      <div class="gov-grid reveal">
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" class="gov-link">📋 Contributing</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/SECURITY.md" target="_blank" rel="noopener" class="gov-link">🔒 Security Policy</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener" class="gov-link">🤝 Code of Conduct</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/GOVERNANCE.md" target="_blank" rel="noopener" class="gov-link">🏛️ Governance</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="gov-link">📝 Changelog</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/ROADMAP.md" target="_blank" rel="noopener" class="gov-link">🗺️ Roadmap</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/SUPPORT.md" target="_blank" rel="noopener" class="gov-link">💬 Support</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/CITATION.cff" target="_blank" rel="noopener" class="gov-link">📖 Citation</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/AUTHORS" target="_blank" rel="noopener" class="gov-link">👥 Authors</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/LICENSE" target="_blank" rel="noopener" class="gov-link">⚖️ MIT License</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md" target="_blank" rel="noopener" class="gov-link">🔌 Plugin Docs</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md" target="_blank" rel="noopener">Plugins</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/issues" target="_blank" rel="noopener">Issues</a>
+        <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/ROADMAP.md" target="_blank" rel="noopener">Roadmap</a>
+      </div>
+      <p>
+        Desenvolvido por <a href="https://www.linkedin.com/in/DevFerreiraG" target="_blank" rel="noopener">Gabriel Lima Ferreira</a>
+        · Mantido por <a href="https://rettecnologia.org" target="_blank" rel="noopener">RET Tecnologia</a><br/>
+        © 2026 CASCAVEL — Quantum Security Framework · MIT License
+      </p>
+    </div>
   </footer>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" id="backToTop" aria-label="Voltar ao topo">↑</button>
+
+  <!-- Scripts -->
+  <script>
+    // Scroll Reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    reveals.forEach(el => observer.observe(el));
+
+    // Nav scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+      const btn = document.getElementById('backToTop');
+      btn.classList.toggle('visible', window.scrollY > 600);
+    }, { passive: true });
+
+    // Back to top
+    document.getElementById('backToTop').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Active nav link (both desktop + mobile bottom pill)
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+    const bottomLinks = document.querySelectorAll('#bottomNav a[href^="#"]');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const top = section.offsetTop - 120;
+        if (scrollY >= top) current = section.getAttribute('id');
+      });
+      navLinks.forEach(link => {
+        link.style.color = link.getAttribute('href') === '#' + current ? 'var(--cyan)' : '';
+      });
+      bottomLinks.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+      });
+    }, { passive: true });
+  </script>
 
 </body>
 </html>
