@@ -9,7 +9,7 @@
 <h3 align="center">Offensive Security Framework — Red Team Intelligence Engine</h3>
 
 <p align="center">
-  <strong>85 security plugins · 30+ recon tools · OWASP 2025 · CVSS v4.0 · PDF/MD/JSON reports</strong><br />
+  <strong>84 security plugins · 30+ recon tools · OWASP 2025 · CVSS v4.0 · PDF/MD/JSON reports</strong><br />
   One command to enumerate, scan, exploit, analyze, and generate compliance-ready pentest reports.<br />
   Built for red teamers, bug bounty hunters, and DevSecOps engineers.
 </p>
@@ -22,7 +22,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=flat-square" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
-  <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Plugins-84-blueviolet.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v2.2.0-C89F5D.svg?style=flat-square" /></a>
   <img src="https://img.shields.io/badge/Reports-PDF%20|%20MD%20|%20JSON-28A745.svg?style=flat-square" />
@@ -43,7 +43,7 @@
   <a href="#-install">Install</a> · 
   <a href="#-what-makes-cascavel-different">Why Cascavel</a> · 
   <a href="#-architecture">Architecture</a> · 
-  <a href="#-plugin-arsenal-85">Plugins</a> · 
+  <a href="#-plugin-arsenal-84">Plugins</a> · 
   <a href="#-cli-reference">CLI</a> · 
   <a href="#-pdf-reports-v220">Reports</a> · 
   <a href="#-security-hardening">Security</a> · 
@@ -100,7 +100,7 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 
 | Capability | Cascavel | Other Tools |
 |:---|:---|:---|
-| **Unified pipeline** | 85 plugins + 30 tools in one command | Fragmented scripts |
+| **Unified pipeline** | 84 plugins + 30 tools in one command | Fragmented scripts |
 | **Live dashboard** | Split-screen with real-time stats + intel | No live feedback |
 | **PDF reports** | 12 legal disclaimers, CVSS v4.0, PTES | Manual formatting |
 | **Terminal UX** | Cinematic preloader, fade animations | Plain stdout |
@@ -151,11 +151,11 @@ python3 cascavel.py -t target.com
 ## 🏗️ Architecture
 
 ```
-cascavel.py (1700+ lines)                    report_generator.py (1400+ lines)
+cascavel.py (2800+ lines)                    report_generator.py (1400+ lines)
 ├── ANSI Escape Sanitizer                     ├── _NumberedCanvas (two-pass "Page X of Y")
 │   └── Blocks CSI/OSC/DCS injection          ├── Diagonal "CONFIDENCIAL" watermark
 ├── Preloader Engine                          ├── QR Code → rettecnologia.org
-│   └── 4-phase cinematic boot                ├── Widows/orphans paragraph control
+│   └── 5-stage cinematic boot                ├── Widows/orphans paragraph control
 ├── Plugin Orchestrator                       ├── Table splitOn + repeatRows=1
 │   └── Dynamic load, SIGALRM timeout         ├── Risk Matrix (5×5 heat map)
 ├── Split-Screen Dashboard                    ├── 9 compliance frameworks
@@ -212,7 +212,7 @@ cascavel -t target.com -o md       # Markdown for documentation
 
 ---
 
-## 🔌 Plugin Arsenal (85)
+## 🔌 Plugin Arsenal (84)
 
 Zero false-positive tolerance. Standardized `run()` interface. Each plugin returns structured results with severity classification.
 
@@ -268,9 +268,9 @@ Zero false-positive tolerance. Standardized `run()` interface. Each plugin retur
 
 `ssl_check` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
 
-### 🔐 Brute Force (7)
+### 🔐 Brute Force (6)
 
-`ssh_brute` · `ftp_brute` · `smb_ad` · `smpt_enum` · `heartbleed_scanner` · `domain_transf` · `dns_zone_transfer`
+`ssh_brute` · `ftp_brute` · `smb_ad` · `smpt_enum` · `heartbleed_scanner` · `domain_transf`
 
 > 📖 Full documentation: [PLUGINS.md](PLUGINS.md)
 
@@ -285,7 +285,7 @@ python3 cascavel.py -t example.com --pdf      # Generate PDF report
 python3 cascavel.py -t example.com -o json    # JSON output (CI/CD integration)
 python3 cascavel.py -t example.com -q         # Quiet mode (no animations)
 python3 cascavel.py --plugins-only            # Skip external tools
-python3 cascavel.py --list-plugins            # List all 85 plugins
+python3 cascavel.py --list-plugins            # List all 84 plugins
 python3 cascavel.py --check-tools             # Check installed tools
 ```
 
@@ -366,10 +366,10 @@ Cascavel is hardened against modern attack vectors targeting security tools them
 
 ```
 Cascavel/
-├── cascavel.py           # Core engine (1700+ lines)
+├── cascavel.py           # Core engine (2800+ lines)
 ├── report_generator.py   # PDF reports (ReportLab Platypus)
-├── install.sh            # Universal installer (v2.2.0, 12 hardenings)
-├── plugins/              # 85 security plugins
+├── install.sh            # Universal installer (v2.3.0, 15 hardenings)
+├── plugins/              # 84 security plugins
 │   ├── xss_scanner.py    #   └── Standardized run() interface
 │   ├── jwt_analyzer.py
 │   └── ...
