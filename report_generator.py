@@ -25,7 +25,6 @@ SPDX-License-Identifier: MIT
 """
 
 import datetime
-import hashlib
 import html as html_mod
 import io
 import os
@@ -42,7 +41,6 @@ from reportlab.platypus import (
     HRFlowable,
     Image,
     KeepTogether,
-    KeepInFrame,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -255,7 +253,7 @@ class _NumberedCanvas(canvas.Canvas):
         super().__init__(*args, **kwargs)
         self._saved_page_states: list = []
 
-    def showPage(self):
+    def showPage(self):  # noqa: N802 — ReportLab override
         self._saved_page_states.append(dict(self.__dict__))
         super().showPage()
 
@@ -344,11 +342,12 @@ class _PremiumPageTemplate:
 
         c.setFillColor(ICE_BLUE)
         c.setFont(FONT_REG, 6)
-        c.drawString(
-            12 * mm,
-            8 * mm,
-            f"© {datetime.datetime.now().year} {COMPANY_NAME} — https://{COMPANY_SITE} — Documento {self.classification}",
+        footer_txt = (
+            f"© {datetime.datetime.now().year} {COMPANY_NAME}"
+            f" — https://{COMPANY_SITE}"
+            f" — Documento {self.classification}"
         )
+        c.drawString(12 * mm, 8 * mm, footer_txt)
         # Note: "Página X de Y" is stamped by _NumberedCanvas.draw_page_number()
 
         c.restoreState()
@@ -1146,26 +1145,97 @@ def generate_pdf_report(
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     glossary = [
-        ("CVSS", "Common Vulnerability Scoring System — sistema padronizado do FIRST.org para atribuir scores (0.0–10.0) a vulnerabilidades."),
-        ("OWASP", "Open Worldwide Application Security Project — comunidade global que produz metodologias, ferramentas e documentação sobre segurança."),
-        ("PTES", "Penetration Testing Execution Standard — padrão que define as fases e práticas para testes de intrusão profissionais."),
-        ("NIST", "National Institute of Standards and Technology — agência dos EUA que publica frameworks de segurança (SP 800-xxx)."),
-        ("LGPD", "Lei Geral de Proteção de Dados (Lei nº 13.709/2018) — legislação brasileira de proteção de dados pessoais."),
-        ("RCE", "Remote Code Execution — execução remota de código, permitindo ao atacante executar comandos no servidor."),
-        ("XSS", "Cross-Site Scripting — injeção de scripts maliciosos em páginas web visualizadas por outros usuários."),
-        ("SQLi", "SQL Injection — injeção de comandos SQL via input não sanitizado para acessar ou manipular banco de dados."),
-        ("SSRF", "Server-Side Request Forgery — técnica que faz o servidor executar requisições HTTP maliciosas."),
-        ("CORS", "Cross-Origin Resource Sharing — mecanismo de segurança do navegador que controla requisições entre domínios."),
-        ("HSTS", "HTTP Strict Transport Security — header que força o uso exclusivo de HTTPS."),
-        ("CSP", "Content Security Policy — header que restringe quais recursos um navegador pode carregar."),
-        ("WAF", "Web Application Firewall — firewall de camada 7 que filtra tráfego HTTP malicioso."),
-        ("SAST", "Static Application Security Testing — análise de segurança do código-fonte sem execução."),
-        ("DAST", "Dynamic Application Security Testing — análise de segurança com a aplicação em execução."),
-        ("PCI DSS", "Payment Card Industry Data Security Standard — padrão de segurança para organizações que lidam com dados de cartão."),
-        ("ISO 27001", "Padrão internacional para Sistemas de Gestão de Segurança da Informação (SGSI)."),
-        ("Zero Trust", "Modelo de segurança que assume violação e verifica cada requisição como se viesse de uma rede não confiável."),
-        ("Red Team", "Equipe que simula ataques reais contra uma organização para testar defesas e resposta a incidentes."),
-        ("SARIF", "Static Analysis Results Interchange Format — formato JSON padronizado para resultados de ferramentas SAST."),
+        (
+            "CVSS",
+            "Common Vulnerability Scoring System — sistema padronizado"
+            " do FIRST.org para atribuir scores (0.0–10.0) a vulnerabilidades.",
+        ),
+        (
+            "OWASP",
+            "Open Worldwide Application Security Project — comunidade"
+            " global que produz metodologias, ferramentas e documentação"
+            " sobre segurança.",
+        ),
+        (
+            "PTES",
+            "Penetration Testing Execution Standard — padrão que define"
+            " as fases e práticas para testes de intrusão profissionais.",
+        ),
+        (
+            "NIST",
+            "National Institute of Standards and Technology — agência"
+            " dos EUA que publica frameworks de segurança (SP 800-xxx).",
+        ),
+        (
+            "LGPD",
+            "Lei Geral de Proteção de Dados (Lei nº 13.709/2018) —"
+            " legislação brasileira de proteção de dados pessoais.",
+        ),
+        (
+            "RCE",
+            "Remote Code Execution — execução remota de código, permitindo ao atacante executar comandos no servidor.",
+        ),
+        (
+            "XSS",
+            "Cross-Site Scripting — injeção de scripts maliciosos em páginas web visualizadas por outros usuários.",
+        ),
+        (
+            "SQLi",
+            "SQL Injection — injeção de comandos SQL via input não"
+            " sanitizado para acessar ou manipular banco de dados.",
+        ),
+        (
+            "SSRF",
+            "Server-Side Request Forgery — técnica que faz o servidor executar requisições HTTP maliciosas.",
+        ),
+        (
+            "CORS",
+            "Cross-Origin Resource Sharing — mecanismo de segurança"
+            " do navegador que controla requisições entre domínios.",
+        ),
+        (
+            "HSTS",
+            "HTTP Strict Transport Security — header que força o uso exclusivo de HTTPS.",
+        ),
+        (
+            "CSP",
+            "Content Security Policy — header que restringe quais recursos um navegador pode carregar.",
+        ),
+        (
+            "WAF",
+            "Web Application Firewall — firewall de camada 7 que filtra tráfego HTTP malicioso.",
+        ),
+        (
+            "SAST",
+            "Static Application Security Testing — análise de segurança do código-fonte sem execução.",
+        ),
+        (
+            "DAST",
+            "Dynamic Application Security Testing — análise de segurança com a aplicação em execução.",
+        ),
+        (
+            "PCI DSS",
+            "Payment Card Industry Data Security Standard — padrão de"
+            " segurança para organizações que lidam com dados de cartão.",
+        ),
+        (
+            "ISO 27001",
+            "Padrão internacional para Sistemas de Gestão de Segurança da Informação (SGSI).",
+        ),
+        (
+            "Zero Trust",
+            "Modelo de segurança que assume violação e verifica cada"
+            " requisição como se viesse de uma rede não confiável.",
+        ),
+        (
+            "Red Team",
+            "Equipe que simula ataques reais contra uma organização para testar defesas e resposta a incidentes.",
+        ),
+        (
+            "SARIF",
+            "Static Analysis Results Interchange Format — formato JSON"
+            " padronizado para resultados de ferramentas SAST.",
+        ),
     ]
 
     glossary_data = [["Termo", "Definição"]]
@@ -1297,26 +1367,26 @@ def generate_pdf_report(
     story.append(HRFlowable(width="100%", thickness=1.5, color=NAVY, spaceAfter=4))
     story.append(
         Paragraph(
-            f'<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel '
-            f'Quantum Security Framework v{VERSION}, produto de {company} '
+            f"<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel "
+            f"Quantum Security Framework v{VERSION}, produto de {company} "
             f'(<a href="https://{COMPANY_SITE}" color="#0066CC">{COMPANY_SITE}</a>). '
-            f'As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente '
-            f'ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada '
-            f'é proibida nos termos da legislação vigente. Caso tenha recebido este documento por '
-            f'engano, notifique imediatamente o remetente e destrua todas as cópias.',
+            f"As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente "
+            f"ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada "
+            f"é proibida nos termos da legislação vigente. Caso tenha recebido este documento por "
+            f"engano, notifique imediatamente o remetente e destrua todas as cópias.",
             styles["Legal"],
         )
     )
     story.append(Spacer(1, 3 * mm))
     story.append(
         Paragraph(
-            f'© {now.year} {company}. Todos os direitos reservados. '
-            f'MÉTODO CASCAVEL™ é marca registrada de '
+            f"© {now.year} {company}. Todos os direitos reservados. "
+            f"MÉTODO CASCAVEL™ é marca registrada de "
             f'<a href="https://{COMPANY_SITE}" color="#0066CC">RET Tecnologia</a>. '
-            f'Cascavel Framework é licenciado sob MIT. '
-            f'O uso desta ferramenta para atividades ilegais ou não autorizadas é expressa '
-            f'e irrevogavelmente proibido. Qualquer uso em desacordo com a legislação vigente '
-            f'é de responsabilidade exclusiva do executor.',
+            f"Cascavel Framework é licenciado sob MIT. "
+            f"O uso desta ferramenta para atividades ilegais ou não autorizadas é expressa "
+            f"e irrevogavelmente proibido. Qualquer uso em desacordo com a legislação vigente "
+            f"é de responsabilidade exclusiva do executor.",
             styles["Legal"],
         )
     )

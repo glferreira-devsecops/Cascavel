@@ -27,12 +27,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: '3.12'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install atheris==2.3.0
+          pip install atheris
           pip install -r requirements.txt
 
       - name: Run fuzzing (time-limited)
