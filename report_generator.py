@@ -1,27 +1,39 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════╗
-║  CASCAVEL v2.1.0 — Professional PDF Report Generator                ║
-║  Product of RET Tecnologia (rettecnologia.org)                      ║
-║  Enterprise-grade pentest reporting with legal compliance            ║
+║  CASCAVEL v2.2.0 — Elite PDF Report Generator                        ║
+║  Product of RET Tecnologia (https://rettecnologia.org)               ║
+║  Enterprise-grade pentest reporting with legal compliance             ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
 Architecture: reportlab Platypus engine with custom page templates,
 CVSS v4.0 scoring, OWASP Top 10 mapping, risk matrix visualization,
 12-clause legal disclaimer (LGPD/Marco Civil/ISO 27001/PCI DSS/NIST),
-and RET Tecnologia branding.
+RET Tecnologia branding, and 2026 Elite features:
+  • Intelligent page breaks with table splitting & header repeat
+  • Widows/orphans typographic control
+  • Diagonal CONFIDENCIAL watermark on all internal pages
+  • "Página X de Y" footer with total page count (two-pass render)
+  • QR Code on cover linking to rettecnologia.org
+  • Glossary of security terms
+  • Revision history table
+  • Prioritized remediation summary
+  • Clickable rettecnologia.org links throughout the document
 
 © 2026 RET Tecnologia. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import datetime
+import hashlib
 import html as html_mod
+import io
 import os
 from typing import Any
 
 from reportlab.graphics.shapes import Drawing, Rect, String
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -30,6 +42,7 @@ from reportlab.platypus import (
     HRFlowable,
     Image,
     KeepTogether,
+    KeepInFrame,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -37,6 +50,15 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+# Optional: QR Code (graceful degradation if not installed)
+try:
+    import qrcode
+    import qrcode.image.pil
+
+    HAS_QRCODE = True
+except ImportError:
+    HAS_QRCODE = False
 
 # ═══════════════════════════════════════════════════════════════════════
 # DESIGN SYSTEM — 2026 Premium Palette
@@ -78,7 +100,7 @@ FONT_BOLD = "Helvetica-Bold"
 FONT_REG = "Helvetica"
 FONT_MONO = "Courier"
 
-VERSION = "2.1.0"
+VERSION = "2.2.0"
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_PATH, "docs", "cascavel_logo.png")
 
@@ -143,7 +165,7 @@ def _build_styles():
     )
     _add("SectionH2", fontName=FONT_BOLD, fontSize=12, textColor=STEEL, spaceBefore=12, spaceAfter=6, leading=16)
 
-    # Body
+    # Body — with widows/orphans control
     _add(
         "Body",
         fontName=FONT_REG,
@@ -153,6 +175,8 @@ def _build_styles():
         spaceBefore=3,
         spaceAfter=3,
         leading=13,
+        allowWidows=0,
+        allowOrphans=0,
     )
     _add(
         "BodySmall",
@@ -163,9 +187,11 @@ def _build_styles():
         spaceBefore=2,
         spaceAfter=2,
         leading=11,
+        allowWidows=0,
+        allowOrphans=0,
     )
 
-    # Legal
+    # Legal — with widows/orphans control
     _add(
         "Legal",
         fontName=FONT_REG,
@@ -175,6 +201,20 @@ def _build_styles():
         spaceBefore=1,
         spaceAfter=1,
         leading=9.5,
+        allowWidows=0,
+        allowOrphans=0,
+    )
+
+    # Links — clickable style for URLs
+    _add(
+        "Link",
+        fontName=FONT_REG,
+        fontSize=8,
+        textColor=colors.HexColor("#0066CC"),
+        alignment=TA_LEFT,
+        spaceBefore=1,
+        spaceAfter=1,
+        leading=10,
     )
     _add("LegalTitle", fontName=FONT_BOLD, fontSize=8, textColor=NAVY, spaceBefore=6, spaceAfter=2, leading=10)
 
@@ -204,8 +244,49 @@ def _build_styles():
 # ═══════════════════════════════════════════════════════════════════════
 
 
+class _NumberedCanvas(canvas.Canvas):
+    """Canvas subclass that tracks total page count for 'Page X of Y' footer.
+
+    Uses the two-pass technique: first pass renders all pages,
+    second pass stamps total count on each page.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states: list = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        super().showPage()
+
+    def save(self):
+        total = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(total)
+            super().showPage()
+        super().save()
+
+    def draw_page_number(self, total: int):
+        """Stamp 'Página X de Y' on each page (overwrites placeholder)."""
+        w, _ = A4
+        self.saveState()
+        self.setFillColor(ICE_BLUE)
+        self.setFont(FONT_REG, 6)
+        self.drawRightString(w - 12 * mm, 8 * mm, f"Página {self._pageNumber} de {total}")
+        self.restoreState()
+
+
 class _PremiumPageTemplate:
-    """Custom header/footer rendering for every page (except cover)."""
+    """Custom header/footer rendering for every page (except cover).
+
+    2026 Elite features:
+      • Header bar with CASCAVEL branding + target info
+      • Gold classification stripe
+      • Diagonal CONFIDENCIAL watermark (50% opacity)
+      • Footer with copyright + clickable rettecnologia.org link
+      • 'Página X de Y' via _NumberedCanvas two-pass
+    """
 
     def __init__(self, target: str, report_id: str, classification: str = "CONFIDENCIAL"):
         self.target = target
@@ -220,6 +301,15 @@ class _PremiumPageTemplate:
         """Premium header + footer with classification watermark."""
         c.saveState()
         w, h = A4
+
+        # ── Diagonal watermark ──
+        c.saveState()
+        c.setFillColor(colors.Color(0.85, 0.85, 0.85, alpha=0.15))
+        c.setFont(FONT_BOLD, 60)
+        c.translate(w / 2, h / 2)
+        c.rotate(45)
+        c.drawCentredString(0, 0, self.classification)
+        c.restoreState()
 
         # ── Header bar ──
         c.setFillColor(NAVY)
@@ -257,9 +347,9 @@ class _PremiumPageTemplate:
         c.drawString(
             12 * mm,
             8 * mm,
-            f"© {datetime.datetime.now().year} {COMPANY_NAME} — {COMPANY_SITE} — Documento {self.classification}",
+            f"© {datetime.datetime.now().year} {COMPANY_NAME} — https://{COMPANY_SITE} — Documento {self.classification}",
         )
-        c.drawRightString(w - 12 * mm, 8 * mm, f"Página {doc.page}")
+        # Note: "Página X de Y" is stamped by _NumberedCanvas.draw_page_number()
 
         c.restoreState()
 
@@ -529,35 +619,39 @@ def generate_pdf_report(
     # ═══════════════════════════════════════════════════════════════════
     # PAGE 1: COVER
     # ═══════════════════════════════════════════════════════════════════
-    story.append(Spacer(1, 40 * mm))
+    story.append(Spacer(1, 30 * mm))
 
     # Logo
     if os.path.exists(LOGO_PATH):
         try:
-            logo = Image(LOGO_PATH, width=60 * mm, height=60 * mm)
+            logo = Image(LOGO_PATH, width=55 * mm, height=55 * mm)
             logo.hAlign = "CENTER"
             story.append(logo)
-            story.append(Spacer(1, 10 * mm))
+            story.append(Spacer(1, 8 * mm))
         except Exception:
             pass
 
     story.append(Paragraph("CASCAVEL", styles["CoverTitle"]))
     story.append(Paragraph("Quantum Security Framework", styles["CoverSub"]))
-    story.append(Spacer(1, 5 * mm))
+    story.append(Spacer(1, 4 * mm))
 
-    story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON, spaceAfter=8, hAlign="CENTER"))
+    story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON, spaceAfter=6, hAlign="CENTER"))
 
     story.append(Paragraph("RELATÓRIO DE ANÁLISE DE SEGURANÇA", styles["CoverSub"]))
-    story.append(Spacer(1, 12 * mm))
+    story.append(Spacer(1, 8 * mm))
 
-    # Meta table
+    # Meta table — with clickable rettecnologia.org link
+    empresa_link = Paragraph(
+        f'{company} — <a href="https://{COMPANY_SITE}" color="#0066CC">{COMPANY_SITE}</a>',
+        styles["Link"],
+    )
     cover_rows = [
         ["Alvo", target],
         ["Report ID", report_id],
         ["Classificação", classification],
         ["Data", now.strftime("%d/%m/%Y — %H:%M:%S BRT")],
         ["Analista", f"{analyst_name}"],
-        ["Empresa", f"{company} — {COMPANY_SITE}"],
+        ["Empresa", empresa_link],
         ["Framework", f"Cascavel v{VERSION}"],
         ["Plugins Executados", str(plugins_count)],
         ["Ferramentas Externas", str(tools_count)],
@@ -584,6 +678,29 @@ def generate_pdf_report(
     cover_table.hAlign = "CENTER"
     story.append(cover_table)
 
+    # QR Code linking to rettecnologia.org (graceful degradation)
+    if HAS_QRCODE:
+        try:
+            qr = qrcode.QRCode(version=1, box_size=4, border=2)
+            qr.add_data(f"https://{COMPANY_SITE}")
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="#0D1B2A", back_color="white")
+            qr_buffer = io.BytesIO()
+            qr_img.save(qr_buffer, format="PNG")
+            qr_buffer.seek(0)
+            qr_flowable = Image(qr_buffer, width=22 * mm, height=22 * mm)
+            qr_flowable.hAlign = "CENTER"
+            story.append(Spacer(1, 4 * mm))
+            story.append(qr_flowable)
+            story.append(
+                Paragraph(
+                    f'<a href="https://{COMPANY_SITE}" color="#0066CC">{COMPANY_SITE}</a>',
+                    styles["Link"],
+                )
+            )
+        except Exception:
+            pass
+
     story.append(PageBreak())
 
     # ═══════════════════════════════════════════════════════════════════
@@ -598,10 +715,13 @@ def generate_pdf_report(
         "2. Sumário Executivo",
         "3. Matriz de Risco e Severidade",
         "4. Achados Detalhados",
-        "5. Mapeamento de Compliance",
-        "6. Metodologia",
-        "7. Ferramentas Utilizadas",
-        "8. Assinatura e Validação",
+        "5. Sumário de Remediação Priorizado",
+        "6. Mapeamento de Compliance",
+        "7. Metodologia",
+        "8. Ferramentas Utilizadas",
+        "9. Glossário de Termos de Segurança",
+        "10. Histórico de Revisões",
+        "11. Assinatura e Validação",
     ]
     for item in toc_items:
         story.append(Paragraph(item, styles["Body"]))
@@ -694,7 +814,7 @@ def generate_pdf_report(
         color, cvss_range, desc = SEVERITY_MAP[sev_name]
         sev_data.append([sev_name, cvss_range, str(count), desc])
 
-    sev_table = Table(sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm])
+    sev_table = Table(sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm], repeatRows=1)
     sev_style = [
         ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
@@ -822,19 +942,86 @@ def generate_pdf_report(
             )
         )
 
+    # ═══════════════════════════════════════════════════════════════════
+    # SECTION 5: PRIORITIZED REMEDIATION SUMMARY
+    # ═══════════════════════════════════════════════════════════════════
+    story.append(PageBreak())
+    story.append(Paragraph("5. SUMÁRIO DE REMEDIAÇÃO PRIORIZADO", styles["SectionH1"]))
+    story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
+
+    story.append(
+        Paragraph(
+            "Tabela consolidada de ações de remediação ordenadas por severidade "
+            "(CRÍTICO → INFO), com estimativa de esforço e prazo recomendado.",
+            styles["Body"],
+        )
+    )
+    story.append(Spacer(1, 4 * mm))
+
+    remediation_header = ["#", "Achado", "Severidade", "Ação Recomendada", "Esforço", "Prazo"]
+    remediation_rows = [remediation_header]
+
+    effort_map = {"CRITICO": "Alto", "ALTO": "Alto", "MEDIO": "Médio", "BAIXO": "Baixo", "INFO": "Mínimo"}
+    deadline_map = {"CRITICO": "24h", "ALTO": "72h", "MEDIO": "2 semanas", "BAIXO": "30 dias", "INFO": "Backlog"}
+
+    # Sort vulns by severity priority
+    sev_priority = {"CRITICO": 0, "ALTO": 1, "MEDIO": 2, "BAIXO": 3, "INFO": 4}
+    sorted_vulns = sorted(vulns, key=lambda v: sev_priority.get(v.get("severity", "INFO").upper(), 4))
+
+    for idx, vuln in enumerate(sorted_vulns, 1):
+        name = vuln.get("plugin", vuln.get("name", f"Achado #{idx}"))
+        severity = vuln.get("severity", "INFO").upper()
+        remediation = vuln.get("remediation", vuln.get("fix", "Avaliar e corrigir."))
+        effort = effort_map.get(severity, "Médio")
+        deadline = deadline_map.get(severity, "30 dias")
+        # Truncate remediation text for table cell
+        rem_short = str(remediation)[:120] + ("..." if len(str(remediation)) > 120 else "")
+        remediation_rows.append([str(idx), name[:30], severity, rem_short, effort, deadline])
+
+    if not vulns:
+        remediation_rows.append(["—", "Nenhum achado", "—", "N/A", "—", "—"])
+
+    rem_table = Table(
+        remediation_rows,
+        colWidths=[8 * mm, 30 * mm, 20 * mm, 80 * mm, 18 * mm, 18 * mm],
+        repeatRows=1,
+    )
+    rem_style = [
+        ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ALIGN", (0, 0), (0, -1), "CENTER"),
+        ("ALIGN", (4, 0), (5, -1), "CENTER"),
+    ]
+    # Color-code severity column
+    for row_idx in range(1, len(remediation_rows)):
+        sev_val = remediation_rows[row_idx][2]
+        if sev_val in SEVERITY_MAP:
+            sev_color = SEVERITY_MAP[sev_val][0]
+            rem_style.append(("TEXTCOLOR", (2, row_idx), (2, row_idx), sev_color))
+            rem_style.append(("FONTNAME", (2, row_idx), (2, row_idx), FONT_BOLD))
+    rem_table.setStyle(TableStyle(rem_style))
+    story.append(rem_table)
+
     story.append(PageBreak())
 
     # ═══════════════════════════════════════════════════════════════════
     # COMPLIANCE MAPPING
     # ═══════════════════════════════════════════════════════════════════
-    story.append(Paragraph("5. MAPEAMENTO DE COMPLIANCE", styles["SectionH1"]))
+    story.append(Paragraph("6. MAPEAMENTO DE COMPLIANCE", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     comp_data = [["Framework", "Referência", "Aplicação"]]
     for fw, ref, app in COMPLIANCE_FRAMEWORKS:
         comp_data.append([fw, ref, app])
 
-    comp_table = Table(comp_data, colWidths=[40 * mm, 42 * mm, 100 * mm])
+    comp_table = Table(comp_data, colWidths=[40 * mm, 42 * mm, 100 * mm], repeatRows=1)
     comp_table.setStyle(
         TableStyle(
             [
@@ -857,7 +1044,7 @@ def generate_pdf_report(
     # ═══════════════════════════════════════════════════════════════════
     # METHODOLOGY
     # ═══════════════════════════════════════════════════════════════════
-    story.append(Paragraph("6. METODOLOGIA", styles["SectionH1"]))
+    story.append(Paragraph("7. METODOLOGIA", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     phases = [
@@ -932,7 +1119,7 @@ def generate_pdf_report(
     for t in tools_list:
         tools_rows.append(list(t))
 
-    tools_table = Table(tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm])
+    tools_table = Table(tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm], repeatRows=1)
     tools_table.setStyle(
         TableStyle(
             [
@@ -953,9 +1140,103 @@ def generate_pdf_report(
     story.append(PageBreak())
 
     # ═══════════════════════════════════════════════════════════════════
+    # SECTION 9: GLOSSARY — Security Terms
+    # ═══════════════════════════════════════════════════════════════════
+    story.append(Paragraph("9. GLOSSÁRIO DE TERMOS DE SEGURANÇA", styles["SectionH1"]))
+    story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
+
+    glossary = [
+        ("CVSS", "Common Vulnerability Scoring System — sistema padronizado do FIRST.org para atribuir scores (0.0–10.0) a vulnerabilidades."),
+        ("OWASP", "Open Worldwide Application Security Project — comunidade global que produz metodologias, ferramentas e documentação sobre segurança."),
+        ("PTES", "Penetration Testing Execution Standard — padrão que define as fases e práticas para testes de intrusão profissionais."),
+        ("NIST", "National Institute of Standards and Technology — agência dos EUA que publica frameworks de segurança (SP 800-xxx)."),
+        ("LGPD", "Lei Geral de Proteção de Dados (Lei nº 13.709/2018) — legislação brasileira de proteção de dados pessoais."),
+        ("RCE", "Remote Code Execution — execução remota de código, permitindo ao atacante executar comandos no servidor."),
+        ("XSS", "Cross-Site Scripting — injeção de scripts maliciosos em páginas web visualizadas por outros usuários."),
+        ("SQLi", "SQL Injection — injeção de comandos SQL via input não sanitizado para acessar ou manipular banco de dados."),
+        ("SSRF", "Server-Side Request Forgery — técnica que faz o servidor executar requisições HTTP maliciosas."),
+        ("CORS", "Cross-Origin Resource Sharing — mecanismo de segurança do navegador que controla requisições entre domínios."),
+        ("HSTS", "HTTP Strict Transport Security — header que força o uso exclusivo de HTTPS."),
+        ("CSP", "Content Security Policy — header que restringe quais recursos um navegador pode carregar."),
+        ("WAF", "Web Application Firewall — firewall de camada 7 que filtra tráfego HTTP malicioso."),
+        ("SAST", "Static Application Security Testing — análise de segurança do código-fonte sem execução."),
+        ("DAST", "Dynamic Application Security Testing — análise de segurança com a aplicação em execução."),
+        ("PCI DSS", "Payment Card Industry Data Security Standard — padrão de segurança para organizações que lidam com dados de cartão."),
+        ("ISO 27001", "Padrão internacional para Sistemas de Gestão de Segurança da Informação (SGSI)."),
+        ("Zero Trust", "Modelo de segurança que assume violação e verifica cada requisição como se viesse de uma rede não confiável."),
+        ("Red Team", "Equipe que simula ataques reais contra uma organização para testar defesas e resposta a incidentes."),
+        ("SARIF", "Static Analysis Results Interchange Format — formato JSON padronizado para resultados de ferramentas SAST."),
+    ]
+
+    glossary_data = [["Termo", "Definição"]]
+    for term, definition in glossary:
+        glossary_data.append([term, definition])
+
+    glossary_table = Table(glossary_data, colWidths=[28 * mm, 154 * mm], repeatRows=1)
+    glossary_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 1), (0, -1), FONT_BOLD),
+                ("TEXTCOLOR", (0, 1), (0, -1), NAVY),
+                ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+    story.append(glossary_table)
+
+    story.append(PageBreak())
+
+    # ═══════════════════════════════════════════════════════════════════
+    # SECTION 10: REVISION HISTORY
+    # ═══════════════════════════════════════════════════════════════════
+    story.append(Paragraph("10. HISTÓRICO DE REVISÕES", styles["SectionH1"]))
+    story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
+
+    revision_data = [
+        ["Versão", "Data", "Autor", "Descrição"],
+        ["1.0", now.strftime("%d/%m/%Y"), analyst_name, "Primeira versão do relatório — scan automatizado completo."],
+    ]
+    revision_table = Table(revision_data, colWidths=[18 * mm, 24 * mm, 40 * mm, 100 * mm], repeatRows=1)
+    revision_table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.3, ICE_BLUE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, CREAM]),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
+    story.append(revision_table)
+
+    story.append(Spacer(1, 6 * mm))
+    story.append(
+        Paragraph(
+            "Revisões futuras devem ser registradas nesta tabela com incremento de versão, "
+            "data da revisão, nome do responsável e descrição das alterações realizadas.",
+            styles["BodySmall"],
+        )
+    )
+
+    story.append(PageBreak())
+
+    # ═══════════════════════════════════════════════════════════════════
     # SIGNATURE PAGE
     # ═══════════════════════════════════════════════════════════════════
-    story.append(Paragraph("8. ASSINATURA E VALIDAÇÃO", styles["SectionH1"]))
+    story.append(Paragraph("11. ASSINATURA E VALIDAÇÃO", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     story.append(Spacer(1, 8 * mm))
@@ -1016,35 +1297,38 @@ def generate_pdf_report(
     story.append(HRFlowable(width="100%", thickness=1.5, color=NAVY, spaceAfter=4))
     story.append(
         Paragraph(
-            f"<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel "
-            f"Quantum Security Framework v{VERSION}, produto de {company} ({COMPANY_SITE}). "
-            f"As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente "
-            f"ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada "
-            f"é proibida nos termos da legislação vigente. Caso tenha recebido este documento por "
-            f"engano, notifique imediatamente o remetente e destrua todas as cópias.",
+            f'<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel '
+            f'Quantum Security Framework v{VERSION}, produto de {company} '
+            f'(<a href="https://{COMPANY_SITE}" color="#0066CC">{COMPANY_SITE}</a>). '
+            f'As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente '
+            f'ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada '
+            f'é proibida nos termos da legislação vigente. Caso tenha recebido este documento por '
+            f'engano, notifique imediatamente o remetente e destrua todas as cópias.',
             styles["Legal"],
         )
     )
     story.append(Spacer(1, 3 * mm))
     story.append(
         Paragraph(
-            f"© {now.year} {company}. Todos os direitos reservados. "
-            f"MÉTODO CASCAVEL™ é marca registrada de RET Tecnologia. "
-            f"Cascavel Framework é licenciado sob MIT para uso não-comercial. "
-            f"O uso desta ferramenta para atividades ilegais ou não autorizadas é expressa "
-            f"e irrevogavelmente proibido. Qualquer uso em desacordo com a legislação vigente "
-            f"é de responsabilidade exclusiva do executor.",
+            f'© {now.year} {company}. Todos os direitos reservados. '
+            f'MÉTODO CASCAVEL™ é marca registrada de '
+            f'<a href="https://{COMPANY_SITE}" color="#0066CC">RET Tecnologia</a>. '
+            f'Cascavel Framework é licenciado sob MIT. '
+            f'O uso desta ferramenta para atividades ilegais ou não autorizadas é expressa '
+            f'e irrevogavelmente proibido. Qualquer uso em desacordo com a legislação vigente '
+            f'é de responsabilidade exclusiva do executor.',
             styles["Legal"],
         )
     )
 
     # ═══════════════════════════════════════════════════════════════════
-    # BUILD PDF
+    # BUILD PDF — Two-pass render for "Página X de Y" via _NumberedCanvas
     # ═══════════════════════════════════════════════════════════════════
     doc.build(
         story,
         onFirstPage=page_tpl.on_first_page,
         onLaterPages=page_tpl.on_later_pages,
+        canvasmaker=_NumberedCanvas,
     )
 
     return os.path.abspath(output_path)

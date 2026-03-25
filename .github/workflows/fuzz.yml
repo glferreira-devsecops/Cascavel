@@ -1,0 +1,46 @@
+# Fuzzing — Atheris (Google's Python fuzzer)
+# Cascavel Security Framework | RET Tecnologia
+# Purpose: Satisfies OpenSSF Scorecard "Fuzzing" check
+
+name: Fuzzing
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "15 7 * * 1"
+
+permissions: {}
+
+jobs:
+  fuzz:
+    name: 🧬 Atheris Fuzzing
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install atheris==2.3.0
+          pip install -r requirements.txt
+
+      - name: Run fuzzing (time-limited)
+        run: |
+          python tests/fuzz_sanitizer.py -atheris_runs=100000 -max_total_time=120
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+
+      - name: Fuzzing complete
+        if: success()
+        run: echo "✅ Fuzzing completed — no crashes found"
