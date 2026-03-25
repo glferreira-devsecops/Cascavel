@@ -125,16 +125,53 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 > [!NOTE]
 > The installer automatically enforces these minimum versions and runs `pip-audit` post-install. Manual installs should verify with `pip list | grep -iE 'requests|pyopenssl|dnspython|pyjwt|reportlab'`.
 
-**One command — works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), and WSL:**
+### 🚀 Quick Install (one command — zero dependencies required)
+
+**Works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), and WSL2.**
+The installer auto-detects your OS, installs `git`/`python3` if missing, clones the repo, sets up a venv, installs all 30+ tools, and configures the `cascavel` global command. **Nothing else needed.**
 
 ```bash
+# Option 1: curl (most common)
 curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
+
+# Option 2: wget (if curl is not available)
+wget -qO- https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
+
+# Option 3: fetch (FreeBSD)
+fetch -qo - https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
 ```
 
-The installer v2.3.0 includes **15 security hardenings**: `trap` cleanup, `mktemp -d` TOCTOU isolation, anti-symlink lock, SHA-256 `requirements.txt` integrity, CVE version enforcement (6 packages), `umask 077`, PATH prefix sanitization (rejects `.` and relative paths), container detection (Docker/Podman/LXC), WSL2 kernel detection, Python `ssl` module verification, stale venv recovery, `chmod 700/600` on sensitive paths, GOPATH/GOBIN export validation, locale UTF-8 enforcement, and absolute paths for critical binaries.
+> [!TIP]
+> **No git? No python? No problem.** The installer automatically installs `git` and `python3` on any supported OS before proceeding. It also falls back to tarball download via `curl`/`wget` if `git` is unavailable.
 
 <details>
-<summary><strong>Manual installation</strong></summary>
+<summary><strong>📋 All installation methods</strong></summary>
+
+#### Method 1 — Git clone (recommended for developers)
+
+```bash
+git clone https://github.com/glferreira-devsecops/Cascavel.git
+cd Cascavel
+bash install.sh
+```
+
+#### Method 2 — Download ZIP (no git required)
+
+```bash
+curl -fsSL https://github.com/glferreira-devsecops/Cascavel/archive/refs/heads/main.tar.gz | tar xz
+cd Cascavel-main
+bash install.sh
+```
+
+#### Method 3 — Docker (isolated environment)
+
+```bash
+docker run -it --rm -v "$(pwd)/reports:/app/reports" \
+  python:3.12-slim bash -c \
+  "apt update && apt install -y git && git clone https://github.com/glferreira-devsecops/Cascavel.git /app && cd /app && bash install.sh"
+```
+
+#### Method 4 — Manual setup (full control)
 
 ```bash
 git clone https://github.com/glferreira-devsecops/Cascavel.git
@@ -145,6 +182,8 @@ python3 cascavel.py -t target.com
 ```
 
 </details>
+
+The installer v2.3.0 includes **15 security hardenings**: `trap` cleanup, `mktemp -d` TOCTOU isolation, anti-symlink lock, SHA-256 `requirements.txt` integrity, CVE version enforcement (6 packages), `umask 077`, PATH prefix sanitization (rejects `.` and relative paths), container detection (Docker/Podman/LXC), WSL2 kernel detection, Python `ssl` module verification, stale venv recovery, `chmod 700/600` on sensitive paths, GOPATH/GOBIN export validation, locale UTF-8 enforcement, and absolute paths for critical binaries.
 
 ---
 
