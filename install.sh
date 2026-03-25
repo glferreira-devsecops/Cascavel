@@ -199,7 +199,7 @@ show_logo() {
     echo -e "${Y}          ${G}◆◆◆◆${N}"
     echo -e "${Y}           ${G}◆◆${N}"
     echo ""
-    echo -e "  ${B}CASCAVEL${N} — ${D}Instalador Universal v2.3.0 (Hardened 2026)${N}"
+    echo -e "  ${B}CASCAVEL${N} — ${D}Instalador Universal v2.4.0 (Bulletproof 2026)${N}"
     echo -e "  ${D}Detecta SO, instala dependências, configura comando global.${N}"
     echo ""
 }
@@ -348,9 +348,21 @@ preflight_checks() {
 
     # 6. Verificar conectividade de rede
     if command -v curl &>/dev/null; then
-        if ! curl -sS --connect-timeout 5 https://pypi.org/simple/ &>/dev/null; then
+        if ! curl -sS --connect-timeout 5 --max-time 10 https://pypi.org/simple/ &>/dev/null; then
             warn "Sem acesso ao PyPI. Dependências podem falhar."
+            dimlog "Verifique: DNS, proxy, firewall (porta 443)"
+            _log "NETWORK: PyPI unreachable"
+        else
+            info "Conectividade OK (PyPI acessível)."
         fi
+    elif command -v wget &>/dev/null; then
+        if ! wget -q --timeout=10 --spider https://pypi.org/simple/ 2>/dev/null; then
+            warn "Sem acesso ao PyPI. Dependências podem falhar."
+        else
+            info "Conectividade OK (PyPI acessível)."
+        fi
+    else
+        warn "Nem curl nem wget encontrados. Não foi possível verificar conectividade."
     fi
 
     # 7. Detecção de container (Docker/Podman/LXC)
@@ -537,22 +549,28 @@ check_python() {
 }
 
 install_python() {
+    _spinner_start "Instalando Python 3..."
     case "$PKG_MANAGER" in
-        brew)   brew install python3 ;;
-        apt)    sudo apt update && sudo apt install -y python3 python3-pip python3-venv ;;
-        dnf)    sudo dnf install -y python3 python3-pip ;;
-        yum)    sudo yum install -y python3 python3-pip ;;
-        pacman) sudo pacman -Sy --noconfirm python python-pip ;;
-        zypper) sudo zypper install -y python3 python3-pip ;;
-        apk)    sudo apk add python3 py3-pip ;;
-        *)      error "Não foi possível instalar Python. Instale manualmente: https://www.python.org/" ;;
+        brew)   brew install python3 >>"$INSTALL_LOG" 2>&1 ;;
+        apt)
+            sudo apt-get update -qq >>"$INSTALL_LOG" 2>&1
+            sudo apt-get install -y -qq python3 python3-pip python3-venv python3-dev >>"$INSTALL_LOG" 2>&1
+            ;;
+        dnf)    sudo dnf install -y python3 python3-pip python3-devel >>"$INSTALL_LOG" 2>&1 ;;
+        yum)    sudo yum install -y python3 python3-pip >>"$INSTALL_LOG" 2>&1 ;;
+        pacman) sudo pacman -Sy --noconfirm python python-pip >>"$INSTALL_LOG" 2>&1 ;;
+        zypper) sudo zypper install -y python3 python3-pip >>"$INSTALL_LOG" 2>&1 ;;
+        apk)    sudo apk add python3 py3-pip python3-dev >>"$INSTALL_LOG" 2>&1 ;;
+        *)      _spinner_stop; error "Não foi possível instalar Python. Instale manualmente: https://www.python.org/" ;;
     esac
+    _spinner_stop
 
     # Re-check after install
     for cmd in python3 python; do
         if command -v "$cmd" &>/dev/null; then
             PYTHON_CMD="$cmd"
             info "Python instalado: $(${cmd} --version)"
+            _log "PYTHON: Installed $(${cmd} --version 2>&1)"
             return
         fi
     done
@@ -564,13 +582,20 @@ setup_venv() {
     step "Configurando ambiente virtual..."
 
     if [ -d "venv" ]; then
-        # Stale venv detection: verifica se o Python binary dentro do venv ainda existe
-        if [ -f "venv/bin/python" ] || [ -f "venv/Scripts/python.exe" ]; then
-            # Verifica se o Python do venv ainda funciona (pode ter sido atualizado/removido)
-            if ! venv/bin/python -c 'print(1)' 2>/dev/null && ! venv/Scripts/python.exe -c 'print(1)' 2>/dev/null; then
+        # Stale venv detection: verifica se o Python binary dentro do venv ainda funciona
+        local VENV_PYTHON="venv/bin/python"
+        if [ -f "$VENV_PYTHON" ]; then
+            if ! "$VENV_PYTHON" -c 'print(1)' 2>/dev/null; then
                 warn "Venv existente está corrompido (Python binary não funciona). Recriando..."
                 $RM -rf venv
-                $PYTHON_CMD -m venv venv
+                $PYTHON_CMD -m venv venv || {
+                    warn "Falha ao recriar venv. Instalando python3-venv..."
+                    case "$PKG_MANAGER" in
+                        apt) sudo apt-get install -y -qq python3-venv >>"$INSTALL_LOG" 2>&1 && $PYTHON_CMD -m venv venv ;;
+                        dnf|yum) sudo $PKG_MANAGER install -y python3-devel >>"$INSTALL_LOG" 2>&1 && $PYTHON_CMD -m venv venv ;;
+                        *)   $PYTHON_CMD -m ensurepip 2>/dev/null; $PYTHON_CMD -m venv venv ;;
+                    esac
+                }
                 info "Venv recriado."
             else
                 info "Venv existente verificado e funcional."
@@ -578,15 +603,31 @@ setup_venv() {
         else
             warn "Venv existente não contém Python binary. Recriando..."
             $RM -rf venv
-            $PYTHON_CMD -m venv venv
+            $PYTHON_CMD -m venv venv 2>/dev/null || {
+                warn "Falha no venv. Instalando python3-venv..."
+                case "$PKG_MANAGER" in
+                    apt) sudo apt-get install -y -qq python3-venv >>"$INSTALL_LOG" 2>&1 && $PYTHON_CMD -m venv venv ;;
+                    *)   $PYTHON_CMD -m ensurepip 2>/dev/null; $PYTHON_CMD -m venv venv ;;
+                esac
+            }
             info "Venv recriado."
         fi
     else
-        $PYTHON_CMD -m venv venv || {
+        $PYTHON_CMD -m venv venv 2>/dev/null || {
             warn "Falha no venv. Instalando python3-venv..."
             case "$PKG_MANAGER" in
-                apt) sudo apt install -y python3-venv && $PYTHON_CMD -m venv venv ;;
-                *)   $PYTHON_CMD -m ensurepip && $PYTHON_CMD -m venv venv ;;
+                apt)
+                    sudo apt-get install -y -qq python3-venv >>"$INSTALL_LOG" 2>&1
+                    $PYTHON_CMD -m venv venv || error "Falha crítica: não foi possível criar venv mesmo após instalar python3-venv"
+                    ;;
+                dnf|yum)
+                    sudo $PKG_MANAGER install -y python3-devel >>"$INSTALL_LOG" 2>&1
+                    $PYTHON_CMD -m venv venv || error "Falha crítica: não foi possível criar venv"
+                    ;;
+                *)
+                    $PYTHON_CMD -m ensurepip 2>/dev/null
+                    $PYTHON_CMD -m venv venv || error "Falha crítica: não foi possível criar venv. Instale python3-venv manualmente."
+                    ;;
             esac
         }
         info "Venv criado."
@@ -904,8 +945,11 @@ install_external_tools() {
 # ─── Directories ─────────────────────────────────────────────────────
 setup_dirs() {
     step "Verificando diretórios..."
-    for dir in reports exports wordlists nuclei-templates docs plugins; do
-        $MKDIR -p "$dir"
+    for dir in reports exports wordlists nuclei-templates docs plugins output logs; do
+        if [ ! -d "$dir" ]; then
+            $MKDIR -p "$dir"
+            dimlog "Criado: $dir/"
+        fi
     done
 
     # Permissões seguras nos diretórios de output
