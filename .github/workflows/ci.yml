@@ -1,4 +1,4 @@
-# Cascavel CI — Lint + Security + Release Drafter
+# Cascavel CI — Lint + Format + Compile + Release Drafter
 # RET Tecnologia | https://rettecnologia.org
 
 name: CI
@@ -16,7 +16,6 @@ jobs:
   lint:
     name: 🔍 Lint (Ruff)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v6
 
@@ -26,19 +25,42 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: Install ruff
-        run: pip install ruff
+      - name: Install dependencies
+        run: |
+          pip install ruff
+          pip install -r requirements.txt
 
       - name: Run ruff check
-        run: ruff check cascavel.py plugins/ --output-format=github || true
+        run: ruff check cascavel.py report_generator.py plugins/ --output-format=github
 
       - name: Run ruff format check
-        run: ruff format --check cascavel.py plugins/ || true
+        run: ruff format --check cascavel.py report_generator.py plugins/
+
+  compile:
+    name: 🐍 Compile Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile all Python files
+        run: |
+          python -m py_compile cascavel.py
+          python -m py_compile report_generator.py
+          find plugins/ -name "*.py" -exec python -m py_compile {} \;
+          echo "✅ All Python files compiled successfully"
 
   security:
     name: 🔒 Security (Bandit)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v6
 
@@ -52,11 +74,11 @@ jobs:
         run: pip install "bandit[toml]"
 
       - name: Run bandit
-        run: bandit -r cascavel.py plugins/ -c pyproject.toml -f json -o bandit-report.json || true
+        run: bandit -r cascavel.py report_generator.py plugins/ -c pyproject.toml -f json -o bandit-report.json
 
       - name: Upload Bandit Report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: bandit-security-report
           path: bandit-report.json

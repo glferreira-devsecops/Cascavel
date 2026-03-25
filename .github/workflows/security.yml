@@ -47,13 +47,12 @@ jobs:
       - run: pip install "bandit[sarif]"
       - name: Run Bandit scan
         run: |
-          bandit -r cascavel.py plugins/ \
+          bandit -r cascavel.py report_generator.py plugins/ \
             -f sarif \
             -o bandit-results.sarif \
             --severity-level medium \
             --confidence-level medium \
-            -x "**/test_*" \
-            || true  # Don't fail CI — upload results for review
+            -x "**/test_*"
       - name: Upload Bandit SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v4
@@ -81,8 +80,7 @@ jobs:
             --sarif \
             --output semgrep-results.sarif \
             --exclude "test_*" \
-            --exclude "*.md" \
-            || true
+            --exclude "*.md"
       - name: Upload Semgrep SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v4

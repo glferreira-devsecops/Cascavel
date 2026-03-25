@@ -80,7 +80,7 @@ FONT_MONO = "Courier"
 
 VERSION = "2.1.0"
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-LOGO_PATH = os.path.join(BASE_PATH, "cascavel_logo.png")
+LOGO_PATH = os.path.join(BASE_PATH, "docs", "cascavel_logo.png")
 
 
 def _sanitize_html(text: str) -> str:
