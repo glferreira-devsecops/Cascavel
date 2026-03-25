@@ -69,6 +69,46 @@ YELLOW='\033[1;33m'
 BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
+MAGENTA='\033[0;35m'
+
+# ─── TTY Detection (pipe vs interactive) ─────────────────────────────
+IS_TTY="false"
+[ -t 1 ] && IS_TTY="true"
+
+# ─── Step Counter ────────────────────────────────────────────────────
+CURRENT_STEP=0
+TOTAL_STEPS=12
+_next_step() {
+    ((CURRENT_STEP++))
+}
+
+# ─── Spinner (visual feedback for long operations) ───────────────────
+_SPINNER_PID=""
+_spinner_start() {
+    local msg="${1:-Processando...}"
+    if [ "$IS_TTY" = "true" ]; then
+        (
+            local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+            local i=0
+            while true; do
+                local frame="${frames:i%${#frames}:1}"
+                printf "\r  ${CYAN}%s${NC} %s" "$frame" "$msg"
+                i=$((i + 1))
+                sleep 0.1
+            done
+        ) &
+        _SPINNER_PID=$!
+        disown $_SPINNER_PID 2>/dev/null
+    fi
+}
+_spinner_stop() {
+    if [ -n "$_SPINNER_PID" ] && kill -0 "$_SPINNER_PID" 2>/dev/null; then
+        kill "$_SPINNER_PID" 2>/dev/null
+        wait "$_SPINNER_PID" 2>/dev/null || true
+        _SPINNER_PID=""
+        printf "\r%-60s\r" " "  # Clear spinner line
+    fi
+}
 
 # ─── Lock File (anti-execução paralela + anti-symlink) ───────────────
 LOCK_FILE="/tmp/.cascavel_install.lock"
@@ -107,6 +147,7 @@ _create_tmpdir() {
 # ─── Trap Cleanup ──────────────────────────────────────────────────
 _cleanup() {
     local exit_code=$?
+    _spinner_stop
     if [ -n "$INSTALL_TMPDIR" ] && [ -d "$INSTALL_TMPDIR" ]; then
         $RM -rf "$INSTALL_TMPDIR"
     fi
@@ -114,6 +155,7 @@ _cleanup() {
     if [ $exit_code -ne 0 ]; then
         echo -e "\n  ${RED}✗ Instalação falhou (exit code: $exit_code)${NC}"
         echo -e "  ${DIM}Log salvo em: ${INSTALL_LOG:-/dev/null}${NC}"
+        echo -e "  ${DIM}Reporte: https://github.com/glferreira-devsecops/Cascavel/issues${NC}"
     fi
 }
 trap _cleanup EXIT INT TERM HUP
@@ -163,10 +205,15 @@ show_logo() {
 }
 
 # ─── Logging ─────────────────────────────────────────────────────────
-info()    { echo -e "  ${GREEN}✓${NC} $1"; _log "INFO: $1"; }
-warn()    { echo -e "  ${YELLOW}⚠${NC} $1"; _log "WARN: $1"; }
-error()   { echo -e "  ${RED}✗${NC} $1"; _log "ERROR: $1"; exit 1; }
-step()    { echo -e "  ${CYAN}▶${NC} ${BOLD}$1${NC}"; _log "STEP: $1"; }
+info()    { _spinner_stop; echo -e "  ${GREEN}✓${NC} $1"; _log "INFO: $1"; }
+warn()    { _spinner_stop; echo -e "  ${YELLOW}⚠${NC} $1"; _log "WARN: $1"; }
+error()   { _spinner_stop; echo -e "  ${RED}✗${NC} $1"; _log "ERROR: $1"; exit 1; }
+step()    {
+    _spinner_stop
+    _next_step
+    echo -e "\n  ${MAGENTA}[${CURRENT_STEP}/${TOTAL_STEPS}]${NC} ${CYAN}▶${NC} ${BOLD}$1${NC}"
+    _log "STEP [${CURRENT_STEP}/${TOTAL_STEPS}]: $1"
+}
 dimlog()  { echo -e "    ${DIM}$1${NC}"; }
 
 # ─── Auto-Clone (suporte a curl | bash) ─────────────────────────────
@@ -225,8 +272,9 @@ _auto_clone_if_needed() {
 
     # Método 1: Git clone (prefcerido)
     if command -v git &>/dev/null || _auto_install_git; then
-        info "Clonando $REPO_URL ..."
-        if git clone --depth 1 "$REPO_URL" "$CLONE_DIR" 2>&1 | tee -a "$INSTALL_LOG"; then
+        _spinner_start "Clonando repositório..."
+        if git clone --depth 1 "$REPO_URL" "$CLONE_DIR" >>"$INSTALL_LOG" 2>&1; then
+            _spinner_stop
             cd "$CLONE_DIR" || error "Falha ao entrar no diretório clonado"
             INSTALL_LOG="$(pwd)/install.log"
             info "Repositório clonado com sucesso em $(pwd)"
@@ -238,16 +286,16 @@ _auto_clone_if_needed() {
 
     # Método 2: Curl/wget tarball (fallback — não precisa de git)
     if command -v curl &>/dev/null || command -v wget &>/dev/null; then
-        info "Baixando tarball do repositório..."
         local TMP_TAR
         TMP_TAR=$(mktemp "${TMPDIR:-/tmp}/cascavel-XXXXXXXX.tar.gz")
-
+        _spinner_start "Baixando tarball do repositório..."
         if command -v curl &>/dev/null; then
             curl -fsSL "$TARBALL_URL" -o "$TMP_TAR" 2>/dev/null
         else
             wget -q "$TARBALL_URL" -O "$TMP_TAR" 2>/dev/null
         fi
 
+        _spinner_stop
         if [ -s "$TMP_TAR" ]; then
             $MKDIR -p "$CLONE_DIR"
             tar xzf "$TMP_TAR" --strip-components=1 -C "$CLONE_DIR" 2>/dev/null
@@ -569,15 +617,25 @@ install_python_deps() {
     fi
 
     # Pip com flags de segurança: --no-cache-dir evita cache envenenado
+    _spinner_start "Atualizando pip..."
     pip install --upgrade pip --no-cache-dir -q 2>/dev/null || warn "Falha ao atualizar pip"
+    _spinner_stop
+    _spinner_start "Instalando dependências Python (requirements.txt)..."
     pip install -r requirements.txt --no-cache-dir -q 2>/dev/null || {
+        _spinner_stop
         warn "Falha na instalação via requirements.txt. Tentando uma-a-uma..."
+        local dep_count=0
+        local dep_total
+        dep_total=$(grep -cvE '^\s*$|^\s*#' requirements.txt 2>/dev/null || echo "0")
         while IFS= read -r dep || [ -n "$dep" ]; do
-            # Ignora linhas vazias e comentários
             [[ -z "$dep" || "$dep" == \#* ]] && continue
+            ((dep_count++))
+            _spinner_start "Instalando [$dep_count/$dep_total] $dep..."
             pip install "$dep" --no-cache-dir -q 2>/dev/null || warn "Falha: $dep"
+            _spinner_stop
         done < requirements.txt
     }
+    _spinner_stop
 
     # Verificar dependências de segurança (versões mínimas)
     _check_dep_versions
@@ -917,30 +975,192 @@ setup_global_command() {
     fi
 }
 
+# ─── Post-Install Deep Health Check ──────────────────────────────────
+post_install_health_check() {
+    step "Validação pós-instalação profunda..."
+
+    local HEALTH_PASS=0
+    local HEALTH_FAIL=0
+    local HEALTH_WARN=0
+
+    _health_ok()  { ((HEALTH_PASS++)); echo -e "    ${GREEN}✓${NC} $1"; }
+    _health_fail(){ ((HEALTH_FAIL++)); echo -e "    ${RED}✗${NC} $1"; }
+    _health_warn(){ ((HEALTH_WARN++)); echo -e "    ${YELLOW}⚠${NC} $1"; }
+
+    # 1. Core files exist
+    for f in cascavel.py requirements.txt install.sh pyproject.toml; do
+        [ -f "$f" ] && _health_ok "$f existe" || _health_fail "$f NÃO ENCONTRADO"
+    done
+
+    # 2. Directories exist with correct permissions
+    for d in reports exports plugins wordlists docs; do
+        if [ -d "$d" ]; then
+            _health_ok "$d/ criado"
+        else
+            _health_fail "$d/ NÃO EXISTE"
+        fi
+    done
+
+    # 3. reports/ and exports/ have 700
+    for d in reports exports; do
+        if [ -d "$d" ]; then
+            local perms
+            perms=$(stat -f '%Lp' "$d" 2>/dev/null || stat -c '%a' "$d" 2>/dev/null || echo "???")
+            if [ "$perms" = "700" ]; then
+                _health_ok "$d/ permissões corretas (700)"
+            else
+                _health_warn "$d/ permissões: $perms (esperado: 700)"
+            fi
+        fi
+    done
+
+    # 4. Virtual environment functional
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        _health_ok "Venv ativo: $VIRTUAL_ENV"
+    else
+        _health_warn "Venv não está ativo na sessão atual"
+    fi
+
+    # 5. Python can import core modules
+    local CORE_IMPORTS="rich requests pyfiglet"
+    for mod in $CORE_IMPORTS; do
+        if $PYTHON_CMD -c "import $mod" 2>/dev/null; then
+            _health_ok "Python import $mod OK"
+        else
+            _health_fail "Python import $mod FALHOU"
+        fi
+    done
+
+    # 6. cascavel.py syntax check
+    if $PYTHON_CMD -c "import py_compile; py_compile.compile('cascavel.py', doraise=True)" 2>/dev/null; then
+        _health_ok "cascavel.py sintaxe válida"
+    else
+        _health_fail "cascavel.py ERRO DE SINTAXE"
+    fi
+
+    # 7. Plugins count and syntax
+    local PLUGIN_COUNT
+    PLUGIN_COUNT=$(find plugins -name '*.py' ! -name '__init__*' 2>/dev/null | wc -l | tr -d ' ')
+    if [ "${PLUGIN_COUNT:-0}" -gt 0 ]; then
+        _health_ok "${PLUGIN_COUNT} plugins encontrados"
+    else
+        _health_warn "Nenhum plugin encontrado em plugins/"
+    fi
+
+    # 8. Global command 'cascavel' reachable
+    if command -v cascavel &>/dev/null; then
+        _health_ok "Comando cascavel no PATH: $(command -v cascavel)"
+    else
+        _health_warn "cascavel não está no PATH (reinicie o terminal)"
+    fi
+
+    # 9. Nuclei templates updated (if nuclei exists)
+    if command -v nuclei &>/dev/null; then
+        if [ -d "${HOME}/nuclei-templates" ] || [ -d "nuclei-templates" ]; then
+            _health_ok "Nuclei templates presentes"
+        else
+            _health_warn "Nuclei templates não encontrados (execute: nuclei -ut)"
+        fi
+    fi
+
+    # 10. install.log writable
+    if [ -f "$INSTALL_LOG" ] && [ -w "$INSTALL_LOG" ]; then
+        _health_ok "Log de instalação gravável: $INSTALL_LOG"
+    else
+        _health_warn "Log de instalação não acessível"
+    fi
+
+    echo ""
+    local HEALTH_TOTAL=$((HEALTH_PASS + HEALTH_FAIL + HEALTH_WARN))
+    if [ "$HEALTH_FAIL" -eq 0 ]; then
+        echo -e "  ${GREEN}${BOLD}━━━ HEALTH CHECK: ${HEALTH_PASS}/${HEALTH_TOTAL} PASSED${NC} ${GREEN}(✓ SAUDÁVEL)${NC}"
+    else
+        echo -e "  ${RED}${BOLD}━━━ HEALTH CHECK: ${HEALTH_PASS}/${HEALTH_TOTAL} PASSED${NC} ${RED}(${HEALTH_FAIL} FALHAS)${NC}"
+    fi
+    if [ "$HEALTH_WARN" -gt 0 ]; then
+        echo -e "  ${YELLOW}${DIM}${HEALTH_WARN} aviso(s) — não críticos${NC}"
+    fi
+    _log "HEALTH: pass=$HEALTH_PASS fail=$HEALTH_FAIL warn=$HEALTH_WARN"
+}
+
 # ─── Summary ─────────────────────────────────────────────────────────
 show_summary() {
+    local elapsed_time=""
+    if [ -n "${INSTALL_START_TIME:-}" ]; then
+        local end_time
+        end_time=$(${DATE} +%s)
+        local diff=$((end_time - INSTALL_START_TIME))
+        elapsed_time="${diff}s"
+    fi
+
     echo ""
-    echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║${NC}  ${BOLD}🐍 CASCAVEL INSTALADO COM SUCESSO!${NC}                           ${GREEN}║${NC}"
-    echo -e "${GREEN}╠═══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  ${BOLD}Uso global (qualquer terminal):${NC}                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}cascavel target.com${NC}                                          ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}cascavel -t target.com --plugins-only${NC}                        ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  ${BOLD}Se ainda não funciona:${NC}                                        ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}source ~/.bashrc${NC}  ou  ${CYAN}source ~/.zshrc${NC}                       ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --install-global${NC}                                    ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  Mais opções:                                                 ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --help${NC}                                              ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --check-tools${NC}                                       ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}    ${CYAN}cascavel --list-plugins${NC}                                      ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  ${DIM}Log: install.log | Permissões: reports/ (700)${NC}               ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  ${DIM}Mantido por RET Tecnologia — rettecnologia.org${NC}              ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}                                                               ${GREEN}║${NC}"
-    echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}╔═════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}🐍 CASCAVEL INSTALADO COM SUCESSO!${NC}                         ${GREEN}║${NC}"
+    if [ -n "$elapsed_time" ]; then
+        echo -e "${GREEN}║${NC}  ${DIM}Tempo total: ${elapsed_time}${NC}                                       ${GREEN}║${NC}"
+    fi
+    echo -e "${GREEN}╠═════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}Quick Start:${NC}                                               ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel target.com${NC}                                    ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel -t target.com --plugins-only${NC}                  ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}Se não funciona imediatamente:${NC}                              ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${DIM}source ~/.bashrc  ou  source ~/.zshrc${NC}                    ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}Exploração:${NC}                                                ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel --help${NC}                                        ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel --check-tools${NC}                                 ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel --list-plugins${NC}                                ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${DIM}Log: install.log │ Versão: v2.3.0${NC}                         ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${DIM}RET Tecnologia — rettecnologia.org${NC}                        ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
+    echo -e "${GREEN}╚═════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+}
+
+# ─── First-Run Wizard (opc. interativo) ──────────────────────────────
+first_run_wizard() {
+    # Só roda em modo interativo (não em curl | bash)
+    if [ "$IS_TTY" != "true" ]; then
+        return 0
+    fi
+
+    echo -e "  ${MAGENTA}✨${NC} ${BOLD}Deseja executar um scan de demonstração agora?${NC}"
+    echo -e "    ${DIM}Digite o domínio alvo ou pressione Enter para pular:${NC}"
+    echo ""
+    printf "  ${CYAN}❯${NC} "
+    read -r TARGET_INPUT </dev/tty 2>/dev/null || TARGET_INPUT=""
+
+    if [ -n "$TARGET_INPUT" ]; then
+        # Validação básica do input
+        TARGET_INPUT=$(echo "$TARGET_INPUT" | sed 's|^https\?://||;s|/$||;s/ //g')
+
+        # Verifica formato mínimo de domínio
+        if [[ ! "$TARGET_INPUT" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            warn "Formato inválido: '$TARGET_INPUT'. Use: exemplo.com.br"
+            echo -e "  ${DIM}Você pode executar depois: cascavel $TARGET_INPUT${NC}"
+            return 0
+        fi
+
+        echo ""
+        echo -e "  ${GREEN}🚀${NC} ${BOLD}Iniciando scan em ${CYAN}${TARGET_INPUT}${NC}${BOLD}...${NC}"
+        echo -e "  ${DIM}(Ctrl+C para cancelar)${NC}"
+        echo ""
+
+        # Tenta executar via comando global ou diretamente
+        if command -v cascavel &>/dev/null; then
+            cascavel "$TARGET_INPUT" || warn "Scan finalizado com avisos."
+        elif [ -f "cascavel.py" ]; then
+            $PYTHON_CMD cascavel.py -t "$TARGET_INPUT" || warn "Scan finalizado com avisos."
+        else
+            warn "Não foi possível iniciar o scan. Execute manualmente após reiniciar o terminal."
+        fi
+    else
+        echo -e "  ${DIM}Sem problemas! Execute quando quiser:${NC}"
+        echo -e "    ${CYAN}❯ cascavel seu-alvo.com.br${NC}"
+    fi
     echo ""
 }
 
@@ -949,6 +1169,9 @@ show_summary() {
 # ═════════════════════════════════════════════════════════════════════
 main() {
     clear 2>/dev/null || true
+
+    # Timer
+    INSTALL_START_TIME=$(${DATE} +%s)
 
     # Security: acquire lock first
     _acquire_lock
@@ -959,28 +1182,49 @@ main() {
     _log "=== CASCAVEL INSTALL START ==="
     _log "PWD: $(pwd)"
     _log "USER: $(whoami)"
+    _log "SHELL: ${SHELL:-unknown}"
+    _log "TERM: ${TERM:-unknown}"
+    _log "IS_TTY: $IS_TTY"
     _log "ARGV: $*"
 
+    # ─── Step 1: Pre-flight
     preflight_checks
-    echo ""
+
+    # ─── Step 2: OS Detection
     detect_os
-    echo ""
+
+    # ─── Step 3: Python
     check_python
-    echo ""
+
+    # ─── Step 4: Venv
     setup_venv
-    echo ""
+
+    # ─── Step 5: Python deps
     install_python_deps
-    echo ""
+
+    # ─── Step 6: Directories
     setup_dirs
-    echo ""
+
+    # ─── Step 7: Permissions
     harden_permissions
-    echo ""
+
+    # ─── Step 8: External tools
     install_external_tools
-    echo ""
+
+    # ─── Step 9: Verification
     verify_installation
-    echo ""
+
+    # ─── Step 10: Global command
     setup_global_command
+
+    # ─── Step 11: Deep Health Check
+    post_install_health_check
+
+    # ─── Step 12: Summary
     show_summary
+
+    # ─── First-Run Wizard (interactive only)
+    first_run_wizard
 
     _log "=== CASCAVEL INSTALL SUCCESS ==="
 }
