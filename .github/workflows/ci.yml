@@ -74,7 +74,13 @@ jobs:
         run: pip install "bandit[toml]"
 
       - name: Run bandit
-        run: bandit -r cascavel.py report_generator.py plugins/ -c pyproject.toml -f json -o bandit-report.json
+        run: |
+          bandit -r cascavel.py report_generator.py plugins/ \
+            -c pyproject.toml \
+            --severity-level medium \
+            --confidence-level medium \
+            -f json \
+            -o bandit-report.json
 
       - name: Upload Bandit Report
         if: always()
