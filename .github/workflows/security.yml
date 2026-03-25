@@ -48,6 +48,7 @@ jobs:
       - name: Run Bandit scan
         run: |
           bandit -r cascavel.py report_generator.py plugins/ \
+            -c pyproject.toml \
             -f sarif \
             -o bandit-results.sarif \
             --severity-level medium \

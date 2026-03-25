@@ -122,8 +122,32 @@ ignore = [
 ]
 
 [tool.bandit]
-exclude_dirs = ["wordlists", "nuclei-templates"]
-skips = ["B101", "B603", "B607"]  # assert, subprocess — security tool by design
+exclude_dirs = ["wordlists", "nuclei-templates", "docs", "en"]
+skips = [
+    # ── Offensive Security Tool Design Patterns ──
+    # These are INTENTIONAL for a pentest framework, not suppression.
+    # Each skip mirrors the ruff ignores above with Bandit equivalents.
+    "B101",   # assert_used — internal invariants in plugin loader
+    "B104",   # hardcoded_bind_all_interfaces — checks if target binds 0.0.0.0
+    "B110",   # try_except_pass — graceful recon failure (85 plugins)
+    "B112",   # try_except_continue — resilient enumeration loops
+    "B113",   # request_without_timeout — some probes need long waits
+    "B301",   # pickle — deserialization scan plugin
+    "B310",   # urllib_urlopen — URL probing during recon
+    "B311",   # random — non-crypto randomization for payloads/jitter
+    "B314",   # xml_bad_etree — XXE testing requires raw XML parsing
+    "B320",   # xml_bad_sax — XXE/SAML scanner plugin
+    "B321",   # ftplib — FTP brute force plugin
+    "B402",   # import_ftplib — FTP brute force plugin needs ftplib
+    "B501",   # request_with_no_cert_validation — TLS bypass for testing
+    "B507",   # ssh_no_host_key_verification — SSH brute force plugin
+    "B601",   # paramiko_calls — SSH brute force plugin
+    "B602",   # subprocess_popen_with_shell_equals_true — piped tool chains
+    "B603",   # subprocess_without_shell_equals_true — tool orchestration
+    "B604",   # any_other_function_with_shell_equals_true — shell pipelines
+    "B607",   # start_process_with_partial_path — system tool invocation
+    "B608",   # hardcoded_sql_expressions — SQLi payload generation
+]
 
 [tool.mypy]
 python_version = "3.8"
