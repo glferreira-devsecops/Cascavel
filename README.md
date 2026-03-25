@@ -125,60 +125,34 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 > [!NOTE]
 > The installer automatically enforces these minimum versions and runs `pip-audit` post-install. Manual installs should verify with `pip list | grep -iE 'requests|pyopenssl|dnspython|pyjwt|reportlab'`.
 
-### 🚀 Quick Install (one command — zero dependencies required)
-
-**Works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), and WSL2.**
-The installer auto-detects your OS, installs `git`/`python3` if missing, clones the repo, sets up a venv, installs all 30+ tools, and configures the `cascavel` global command. **Nothing else needed.**
+### 🚀 Quick Install
 
 ```bash
-# Option 1: curl (most common)
 curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
-
-# Option 2: wget (if curl is not available)
-wget -qO- https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
-
-# Option 3: fetch (FreeBSD)
-fetch -qo - https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
 ```
+
+**One command. That's it.** Works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), WSL2, and Docker. The installer auto-detects your OS, installs `git` + `python3` if missing, clones the repo, creates a venv, installs all 84 plugins + 30 tools, and registers the `cascavel` global command. **Zero manual steps.**
 
 > [!TIP]
-> **No git? No python? No problem.** The installer automatically installs `git` and `python3` on any supported OS before proceeding. It also falls back to tarball download via `curl`/`wget` if `git` is unavailable.
+> No `curl`? Use `wget -qO- https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash`
 
 <details>
-<summary><strong>📋 All installation methods</strong></summary>
-
-#### Method 1 — Git clone (recommended for developers)
+<summary><strong>📋 Alternative methods (git clone, Docker, manual)</strong></summary>
 
 ```bash
-git clone https://github.com/glferreira-devsecops/Cascavel.git
-cd Cascavel
-bash install.sh
-```
+# Git clone
+git clone https://github.com/glferreira-devsecops/Cascavel.git && cd Cascavel && bash install.sh
 
-#### Method 2 — Download ZIP (no git required)
+# Download tarball (no git needed)
+curl -fsSL https://github.com/glferreira-devsecops/Cascavel/archive/main.tar.gz | tar xz && cd Cascavel-main && bash install.sh
 
-```bash
-curl -fsSL https://github.com/glferreira-devsecops/Cascavel/archive/refs/heads/main.tar.gz | tar xz
-cd Cascavel-main
-bash install.sh
-```
+# Docker (isolated)
+docker run -it --rm python:3.12-slim bash -c "apt update && apt install -y git && git clone https://github.com/glferreira-devsecops/Cascavel.git /app && cd /app && bash install.sh"
 
-#### Method 3 — Docker (isolated environment)
-
-```bash
-docker run -it --rm -v "$(pwd)/reports:/app/reports" \
-  python:3.12-slim bash -c \
-  "apt update && apt install -y git && git clone https://github.com/glferreira-devsecops/Cascavel.git /app && cd /app && bash install.sh"
-```
-
-#### Method 4 — Manual setup (full control)
-
-```bash
-git clone https://github.com/glferreira-devsecops/Cascavel.git
-cd Cascavel
+# Manual
+git clone https://github.com/glferreira-devsecops/Cascavel.git && cd Cascavel
 python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-python3 cascavel.py -t target.com
+pip install -r requirements.txt && python3 cascavel.py -t target.com
 ```
 
 </details>
