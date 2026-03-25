@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ╔═══════════════════════════════════════════════════════════════════╗
 # ║  CASCAVEL — Quantum Security Framework                           ║
-# ║  One-Command Universal Installer v2.2.0 (Hardened 2026)          ║
+# ║  One-Command Universal Installer v2.3.0 (Hardened 2026)          ║
 # ║  By RET Tecnologia (https://rettecnologia.org)                   ║
 # ║  Maintainer: DevFerreiraG <devferreirag@proton.me>               ║
 # ║                                                                   ║
@@ -126,16 +126,40 @@ _log() {
 
 # ─── Logo ────────────────────────────────────────────────────────────
 show_logo() {
+    local Y='\033[1;33m'   # Yellow (scales)
+    local G='\033[0;32m'   # Green (body)
+    local R='\033[0;31m'   # Red (tongue/eyes)
+    local C='\033[0;36m'   # Cyan (accent)
+    local W='\033[1;37m'   # White bold
+    local D='\033[2m'      # Dim
+    local B='\033[1m'      # Bold
+    local N='\033[0m'      # Reset
+
     echo ""
-    echo -e "${GREEN}"
-    echo "        ____"
-    echo "       / . .\\"
-    echo "       \\  ---<<<    ${BOLD}CASCAVEL${NC}${GREEN}"
-    echo "        \\  /        ${DIM}Quantum Security Framework${NC}${GREEN}"
-    echo "      __/ /"
-    echo "     /.  /"
-    echo "     \\__/"
-    echo -e "${NC}"
+    echo -e "${Y}          ▄▄▄▄▄▄▄▄▄▄▄                                              ${N}"
+    echo -e "${Y}       ▄█▀${R}≈≈≈≈≈≈≈≈≈${Y}▀█▄        ${W}╔═══════════════════════════════╗${N}"
+    echo -e "${Y}     ▄█▀${R} ◉${Y}▓▓▓▓▓▓▓${R}◉ ${Y}▀█▄      ${W}║${N}  ${C}█▀▀ █▀█ █▀▀ █▀▀ █▀█ █ █ █▀▀ █${N}  ${W}║${N}"
+    echo -e "${Y}    █▀${G}▄▄${Y}▓▓▓▓${G}▄▄▄${Y}▓▓▓▓${G}▄▄${Y}▀█     ${W}║${N}  ${C}█   █▀█ ▀▀█ █   █▀█ ▀▄▀ █▀▀ █${N}  ${W}║${N}"
+    echo -e "${Y}   █${G}▓▓${Y}▓▓▓▓▓${G}▓▓▓${Y}▓▓▓▓▓${G}▓▓${Y}█     ${W}║${N}  ${C}▀▀▀ ▀ ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀  ▀▀▀ ▀▀${N} ${W}║${N}"
+    echo -e "${Y}   █${G}▓${Y}▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓${G}▓${Y}█     ${W}╠═══════════════════════════════╣${N}"
+    echo -e "${Y}   █▄${G}▓▓${Y}▓▓▓▓▓▓▓▓▓▓▓${G}▓▓${Y}▄█     ${W}║${N}  ${D}Offensive Security Framework${N}   ${W}║${N}"
+    echo -e "${Y}    ▀█▄${G}▓▓${Y}▓▓▓▓▓▓▓${G}▓▓${Y}▄█▀      ${W}║${N}  ${D}by RET Tecnologia  © 2026${N}     ${W}║${N}"
+    echo -e "${Y}      ▀▀█▄▄${G}▓▓▓${Y}▄▄█▀▀        ${W}╚═══════════════════════════════╝${N}"
+    echo -e "${Y}      ${R}  ╱${Y}▀▀▀▀▀▀▀${R}╲${N}"
+    echo -e "${Y}     ${R} ╱╱${Y}         ${R}╲╲${N}"
+    echo -e "${R}    ≺≺≺${Y}    ▄▄▄    ${R}≻≻≻        ${G}┌─────────────────────────────┐${N}"
+    echo -e "${Y}    ╲╲${Y}  ▄█▀ ▀█▄  ${R}╱╱${N}         ${G}│${N} ${B}84${N} plugins · ${B}30+${N} tools · CVSS ${G}│${N}"
+    echo -e "${Y}     ╲${Y}▄█▀     ▀█▄${R}╱${N}          ${G}│${N} PDF/MD/JSON · OWASP · LGPD   ${G}│${N}"
+    echo -e "${Y}      █${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}█           ${G}│${N} Python 3.12+ · MIT License   ${G}│${N}"
+    echo -e "${Y}      █${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}█           ${G}└─────────────────────────────┘${N}"
+    echo -e "${Y}       ▀█${G}◆◆◆◆${Y}█▀${N}"
+    echo -e "${Y}         ▀████▀${N}"
+    echo -e "${Y}          ${G}◆◆◆◆${N}"
+    echo -e "${Y}           ${G}◆◆${N}"
+    echo ""
+    echo -e "  ${B}CASCAVEL${N} — ${D}Instalador Universal v2.3.0 (Hardened 2026)${N}"
+    echo -e "  ${D}Detecta SO, instala dependências, configura comando global.${N}"
+    echo ""
 }
 
 # ─── Logging ─────────────────────────────────────────────────────────
@@ -145,13 +169,109 @@ error()   { echo -e "  ${RED}✗${NC} $1"; _log "ERROR: $1"; exit 1; }
 step()    { echo -e "  ${CYAN}▶${NC} ${BOLD}$1${NC}"; _log "STEP: $1"; }
 dimlog()  { echo -e "    ${DIM}$1${NC}"; }
 
+# ─── Auto-Clone (suporte a curl | bash) ─────────────────────────────
+_auto_install_git() {
+    # Tenta instalar git automaticamente em qualquer SO
+    warn "Git não encontrado. Tentando instalar automaticamente..."
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get update -qq && sudo apt-get install -y -qq git 2>/dev/null
+    elif command -v brew &>/dev/null; then
+        brew install git 2>/dev/null
+    elif command -v dnf &>/dev/null; then
+        sudo dnf install -y -q git 2>/dev/null
+    elif command -v yum &>/dev/null; then
+        sudo yum install -y -q git 2>/dev/null
+    elif command -v pacman &>/dev/null; then
+        sudo pacman -Sy --noconfirm git 2>/dev/null
+    elif command -v apk &>/dev/null; then
+        sudo apk add git 2>/dev/null
+    elif command -v zypper &>/dev/null; then
+        sudo zypper install -y git 2>/dev/null
+    fi
+
+    if command -v git &>/dev/null; then
+        info "Git instalado com sucesso: $(git --version)"
+        return 0
+    fi
+    return 1
+}
+
+_auto_clone_if_needed() {
+    if [ -f "cascavel.py" ]; then
+        return 0
+    fi
+
+    # Detecta se já estamos dentro de um clone parcial/corrompido
+    if [ -d ".git" ] && [ ! -f "cascavel.py" ]; then
+        error "Repositório corrompido: .git existe mas cascavel.py não encontrado. Re-clone manualmente."
+    fi
+
+    # Não estamos no diretório do Cascavel — auto-clone
+    step "cascavel.py não encontrado — clonando repositório automaticamente..."
+    _log "AUTO-CLONE: cascavel.py não encontrado em $(pwd)"
+
+    local CLONE_DIR="Cascavel"
+    local REPO_URL="https://github.com/glferreira-devsecops/Cascavel.git"
+    local TARBALL_URL="https://github.com/glferreira-devsecops/Cascavel/archive/refs/heads/main.tar.gz"
+
+    # Se o diretório Cascavel já existe, tentar entrar nele
+    if [ -d "$CLONE_DIR" ] && [ -f "$CLONE_DIR/cascavel.py" ]; then
+        info "Diretório Cascavel/ encontrado — entrando."
+        cd "$CLONE_DIR" || error "Falha ao entrar no diretório $CLONE_DIR"
+        INSTALL_LOG="$(pwd)/install.log"
+        _log "AUTO-CLONE: Usando diretório existente $CLONE_DIR"
+        return 0
+    fi
+
+    # Método 1: Git clone (prefcerido)
+    if command -v git &>/dev/null || _auto_install_git; then
+        info "Clonando $REPO_URL ..."
+        if git clone --depth 1 "$REPO_URL" "$CLONE_DIR" 2>&1 | tee -a "$INSTALL_LOG"; then
+            cd "$CLONE_DIR" || error "Falha ao entrar no diretório clonado"
+            INSTALL_LOG="$(pwd)/install.log"
+            info "Repositório clonado com sucesso em $(pwd)"
+            _log "AUTO-CLONE: Clonado via git em $(pwd)"
+            return 0
+        fi
+        warn "Git clone falhou. Tentando download via tarball..."
+    fi
+
+    # Método 2: Curl/wget tarball (fallback — não precisa de git)
+    if command -v curl &>/dev/null || command -v wget &>/dev/null; then
+        info "Baixando tarball do repositório..."
+        local TMP_TAR
+        TMP_TAR=$(mktemp "${TMPDIR:-/tmp}/cascavel-XXXXXXXX.tar.gz")
+
+        if command -v curl &>/dev/null; then
+            curl -fsSL "$TARBALL_URL" -o "$TMP_TAR" 2>/dev/null
+        else
+            wget -q "$TARBALL_URL" -O "$TMP_TAR" 2>/dev/null
+        fi
+
+        if [ -s "$TMP_TAR" ]; then
+            $MKDIR -p "$CLONE_DIR"
+            tar xzf "$TMP_TAR" --strip-components=1 -C "$CLONE_DIR" 2>/dev/null
+            $RM -f "$TMP_TAR"
+            cd "$CLONE_DIR" || error "Falha ao entrar no diretório extraído"
+            INSTALL_LOG="$(pwd)/install.log"
+            info "Repositório baixado e extraído com sucesso em $(pwd)"
+            _log "AUTO-CLONE: Baixado via tarball em $(pwd)"
+            return 0
+        fi
+        $RM -f "$TMP_TAR"
+    fi
+
+    error "Falha ao obter o repositório. Instale git ou curl e tente novamente."
+}
+
 # ─── Pre-flight Checks ──────────────────────────────────────────────
 preflight_checks() {
     step "Verificações de segurança pré-instalação (15+ checks)..."
 
-    # 1. Verificar se estamos no diretório correto (cascavel.py deve existir)
+    # 1. Auto-clone se não estamos no diretório correto
+    _auto_clone_if_needed
     if [ ! -f "cascavel.py" ]; then
-        error "cascavel.py não encontrado. Execute o instalador dentro do diretório Cascavel!"
+        error "cascavel.py não encontrado mesmo após tentativa de clone."
     fi
 
     # 2. Verificar se requirements.txt existe
@@ -835,9 +955,6 @@ main() {
     _create_tmpdir
 
     show_logo
-    echo -e "  ${BOLD}Instalador Universal — v2.3.0 (Hardened 2026)${NC}"
-    echo -e "  ${DIM}Detecta SO, instala dependências, configura comando global.${NC}"
-    echo ""
 
     _log "=== CASCAVEL INSTALL START ==="
     _log "PWD: $(pwd)"
