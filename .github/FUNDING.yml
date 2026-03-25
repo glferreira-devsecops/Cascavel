@@ -1,6 +1,8 @@
-# Cascavel — Quantum Security Framework
-# https://github.com/glferreira-devsecops/Cascavel
-# Maintained by RET Tecnologia (rettecnologia.org)
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  CASCAVEL — Offensive Security Framework                            ║
+# ║  A product of RET Tecnologia (rettecnologia.org)                    ║
+# ║  https://github.com/glferreira-devsecops/Cascavel                   ║
+# ╚══════════════════════════════════════════════════════════════════════╝
 
-github: [glferreira-devsecops]
+# Support the development of Cascavel via RET Tecnologia
 custom: ["https://rettecnologia.org"]

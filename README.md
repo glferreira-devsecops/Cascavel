@@ -6,11 +6,12 @@
   <code>🐍 CASCAVEL</code>
 </h1>
 
-<h3 align="center">Quantum Security Framework — Red Team Intelligence Engine</h3>
+<h3 align="center">Offensive Security Framework — Red Team Intelligence Engine</h3>
 
 <p align="center">
-  <strong>85 security plugins · 30+ recon tools · CLI-first · Cross-platform · PDF reports</strong><br />
-  One command to enumerate, scan, attack, analyze, and generate enterprise-grade pentest reports.
+  <strong>85 security plugins · 30+ recon tools · OWASP 2025 · CVSS v4.0 · PDF/MD/JSON reports</strong><br />
+  One command to enumerate, scan, exploit, analyze, and generate compliance-ready pentest reports.<br />
+  Built for red teamers, bug bounty hunters, and DevSecOps engineers.
 </p>
 
 <p align="center">
@@ -20,7 +21,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=flat-square" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v2.2.0-C89F5D.svg?style=flat-square" /></a>
@@ -38,12 +39,13 @@
 </p>
 
 <p align="center">
+  <a href="https://cascavel.pages.dev">Website</a> · 
   <a href="#-install">Install</a> · 
   <a href="#-what-makes-cascavel-different">Why Cascavel</a> · 
   <a href="#-architecture">Architecture</a> · 
   <a href="#-plugin-arsenal-85">Plugins</a> · 
   <a href="#-cli-reference">CLI</a> · 
-  <a href="#-pdf-reports">Reports</a> · 
+  <a href="#-pdf-reports-v220">Reports</a> · 
   <a href="#-security-hardening">Security</a> · 
   <a href="#-contributing">Contributing</a>
 </p>
@@ -113,13 +115,15 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 
 | Requirement | Minimum | Why |
 |:---|:---|:---|
-| **Python** | 3.8+ | f-strings, `importlib.util`, `shlex.quote` |
+| **Python** | 3.12+ | LTS until 2028 · `importlib.metadata`, typed generics |
+| **requests** | 2.32.4 | GHSA-9hjg — `.netrc` credential leak + TLS verify bypass |
+| **pyOpenSSL** | 25.0.0 | GHSA-5pwr — buffer overflow + unhandled callback bypass |
+| **dnspython** | 2.7.0 | GHSA-3rq5 — TuDoor DNS resolution disruption |
 | **PyJWT** | 2.12.0 | CVE-2022-29217 — algorithm confusion attack |
-| **ReportLab** | 3.6.13 | CVE-2023-33733 — code execution via crafted PDF |
-| **Requests** | 2.31.0 | CVE-2023-32681 — header leak on redirect |
+| **ReportLab** | 3.6.13 | CVE-2023-33733 — RCE via `rl_safe_eval` |
 
 > [!NOTE]
-> The installer automatically enforces these minimum versions. Manual installs should verify with `pip list`.
+> The installer automatically enforces these minimum versions and runs `pip-audit` post-install. Manual installs should verify with `pip list | grep -iE 'requests|pyopenssl|dnspython|pyjwt|reportlab'`.
 
 **One command — works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), and WSL:**
 
@@ -127,7 +131,7 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
 ```
 
-The installer v2.2.0 includes **12 security hardenings**: `trap` cleanup, `mktemp` isolation, install lock, SHA-256 hash verification, CVE checks on critical dependencies (PyJWT ≥2.12.0, ReportLab ≥3.6.13, Requests ≥2.31.0), umask 077, and strict file permissions.
+The installer v2.3.0 includes **15 security hardenings**: `trap` cleanup, `mktemp -d` TOCTOU isolation, anti-symlink lock, SHA-256 `requirements.txt` integrity, CVE version enforcement (6 packages), `umask 077`, PATH prefix sanitization (rejects `.` and relative paths), container detection (Docker/Podman/LXC), WSL2 kernel detection, Python `ssl` module verification, stale venv recovery, `chmod 700/600` on sensitive paths, GOPATH/GOBIN export validation, locale UTF-8 enforcement, and absolute paths for critical binaries.
 
 <details>
 <summary><strong>Manual installation</strong></summary>
@@ -147,50 +151,63 @@ python3 cascavel.py -t target.com
 ## 🏗️ Architecture
 
 ```
-cascavel.py (1700+ lines)
-├── ANSI Escape Sanitizer ──── Blocks CSI/OSC/DCS injection from plugins
-├── Preloader Engine ────────── 4-phase cinematic boot (logo fade → boot seq → progress → online)
-├── Plugin Orchestrator ──────── Dynamic loading, timeout (SIGALRM), output sanitization
-├── Split-Screen Dashboard ──── Rich Live layout (scan table + security intel panel)
-├── External Tools Pipeline ── 30+ tools with shlex.quote() safety
-├── Report Engine ───────────── PDF (ReportLab Platypus), Markdown, JSON
-└── Signal Handler ──────────── Async-signal-safe SIGINT (os.write, no deadlocks)
+cascavel.py (1700+ lines)                    report_generator.py (1400+ lines)
+├── ANSI Escape Sanitizer                     ├── _NumberedCanvas (two-pass "Page X of Y")
+│   └── Blocks CSI/OSC/DCS injection          ├── Diagonal "CONFIDENCIAL" watermark
+├── Preloader Engine                          ├── QR Code → rettecnologia.org
+│   └── 4-phase cinematic boot                ├── Widows/orphans paragraph control
+├── Plugin Orchestrator                       ├── Table splitOn + repeatRows=1
+│   └── Dynamic load, SIGALRM timeout         ├── Risk Matrix (5×5 heat map)
+├── Split-Screen Dashboard                    ├── 9 compliance frameworks
+│   └── Rich Live (scan + intel panel)        ├── 20-term security glossary
+├── External Tools Pipeline                   ├── Prioritized remediation summary
+│   └── 30+ tools, shlex.quote()              └── SHA-256 document integrity
+├── Report Engine (PDF/MD/JSON)
+└── Signal Handler (async-signal-safe)
 ```
 
 ### Terminal UX Engine (21 Hardenings)
 
-| Protection | What it does |
-|:---|:---|
-| `_get_terminal_height()` | POSIX fallback for headless/pipe terminals |
-| `_fade_in_logo` term detection | Skips cursor manipulation on terminals < 20 rows |
-| `_clear_block` safety clamp | Never moves cursor beyond terminal boundaries |
-| `run_preloader` try/except wrapper | Graceful fallback for CI/pipe/dumb terminals |
-| `_typewriter` KeyboardInterrupt | Guarantees newline before SIGINT propagation |
-| `_boot_line` unified stdout | Eliminates Rich/stdout buffer race condition |
-| Cobra `green_ramp` palette | True 256-color green gradient (22→46) |
-| Progress bar variable speed | Comfortable 2s pacing with `TimeElapsedColumn` |
-| `_build_table` pct max 100 | Prevents >100% display on final iteration |
-| ANSI escape sanitizer | Blocks CSI/OSC/DCS terminal injection from plugins |
-| Fallback stat tracking | Accurate dashboard even when Live layout crashes |
+| # | Protection | Implementation |
+|:--|:---|:---|
+| 1 | Terminal height detection | `_get_terminal_height()` — POSIX fallback for headless/pipe |
+| 2 | Logo fade term detection | Skips cursor manipulation on terminals < 20 rows |
+| 3 | Cursor safety clamp | `_clear_block` — never moves cursor beyond boundaries |
+| 4 | Preloader fallback | `try/except` wrapper for CI/pipe/dumb terminals |
+| 5 | Typewriter interrupt | Guarantees newline before SIGINT propagation |
+| 6 | Boot line stdout | Eliminates Rich/stdout buffer race condition |
+| 7 | 256-color gradient | Cobra `green_ramp` palette (22→46) |
+| 8 | Progress pacing | Variable speed with `TimeElapsedColumn` |
+| 9 | Percentage clamping | `_build_table` caps at 100% |
+| 10 | ANSI sanitizer | Strips CSI/OSC/DCS from plugin output, preserves SGR |
+| 11 | Stat fallback | Accurate dashboard even when Rich Live crashes |
 
 ---
 
-## 📄 PDF Reports
+## 📄 PDF Reports (v2.2.0)
 
-Enterprise-grade reports signed by **RET Tecnologia**, compliant with Brazilian and international frameworks:
+Enterprise-grade reports signed by **[RET Tecnologia](https://rettecnologia.org)**, compliant with Brazilian and international frameworks:
 
-- **Cover** — logo, target, report ID, confidentiality classification
-- **12 legal disclaimers** — NDA, LGPD, Marco Civil, Art. 154-A, Bill 4752/2025, ISO 27001, PCI DSS v4.0, NIST SP 800-115, OWASP Testing Guide, CVSS v4.0
-- **Executive summary** — dynamic severity posture badge
-- **CVSS v4.0 scoring** — color-coded severity table with risk matrix
-- **Detailed findings** — OWASP mapping, evidence, remediation steps
-- **Compliance mapping** — 9 international frameworks
-- **PTES methodology** — 5-phase pentest documentation
-- **Signature page** — SHA-256 integrity hash
+| Section | Content |
+|:---|:---|
+| **Cover** | Logo, target, report ID (`CSR-YYYYMMDD-HHMMSS`), QR code → [rettecnologia.org](https://rettecnologia.org) |
+| **Legal Disclaimers** | 12 frameworks: NDA, LGPD, Marco Civil, Art. 154-A, PL 4752/2025, ISO 27001, PCI DSS v4.0, NIST SP 800-115, OWASP Testing Guide v5, CVSS v4.0, SOC 2, HIPAA |
+| **Executive Summary** | Dynamic severity posture badge with traffic-light scoring |
+| **Risk Matrix** | 5×5 heat map with CVSS v4.0 color-coded severity |
+| **Detailed Findings** | OWASP 2025 mapping, evidence, remediation steps |
+| **Compliance Mapping** | 9 international frameworks with gap analysis |
+| **Prioritized Remediation** | Findings sorted by CVSS score with effort estimates |
+| **Glossary** | 20 security terms with definitions |
+| **PTES Methodology** | 5-phase pentest documentation |
+| **Revision History** | Version tracking with author and date |
+| **Signature Page** | SHA-256 document integrity hash |
+
+**Report features:** `"Página X de Y"` two-pass numbering · diagonal `CONFIDENCIAL` watermark · widows/orphans paragraph control · intelligent table splitting with `repeatRows=1` · clickable links to [rettecnologia.org](https://rettecnologia.org) on every page.
 
 ```bash
-python3 cascavel.py -t target.com --pdf    # Generate PDF
-python3 cascavel.py -t target.com -o json  # JSON for CI/CD
+cascavel -t target.com --pdf       # Generate PDF report
+cascavel -t target.com -o json     # JSON output for CI/CD pipelines
+cascavel -t target.com -o md       # Markdown for documentation
 ```
 
 ---
@@ -323,16 +340,25 @@ Cascavel is hardened against modern attack vectors targeting security tools them
 | **Process zombie leak** | `os.killpg()` kills entire process groups on timeout |
 | **Input injection** | All external tool targets sanitized with `shlex.quote()` |
 
-### Installer Protections (v2.2.0)
+### Installer Protections (v2.3.0 — 15 hardenings)
 
-| Vector | Mitigation |
-|:---|:---|
-| **TOCTOU race** | `mktemp -d` for temporary directories |
-| **Parallel execution** | Lock file prevents concurrent installs |
-| **Supply chain** | SHA-256 hash verification on `requirements.txt` |
-| **Known CVEs** | Version checks for PyJWT, ReportLab, Requests |
-| **Permission escalation** | `umask 077`, `chmod 700/600` on sensitive paths |
-| **Cleanup failure** | `trap` ensures temp directory removal on exit/error |
+| # | Vector | Mitigation |
+|:--|:---|:---|
+| 1 | **TOCTOU race** | `mktemp -d` for unique temporary directories |
+| 2 | **Parallel execution** | Lock file + anti-symlink check prevents concurrent installs |
+| 3 | **Supply chain** | SHA-256 hash verification on `requirements.txt` |
+| 4 | **Known CVEs** | Version enforcement for 6 packages (PyJWT, ReportLab, requests, pyOpenSSL, dnspython) |
+| 5 | **Permission escalation** | `umask 077`, `chmod 700/600` on sensitive files and directories |
+| 6 | **Cleanup failure** | `trap` cleanup on EXIT/INT/TERM/HUP ensures temp removal |
+| 7 | **PATH injection** | Strips `.` and relative paths from `$PATH` at startup |
+| 8 | **Binary hijacking** | Uses absolute paths for `mkdir`, `rm`, `cat`, `date`, `uname` |
+| 9 | **Container detection** | Detects Docker, Podman, LXC, cgroup-based containers |
+| 10 | **WSL2 detection** | Identifies WSL kernel for network scan adjustments |
+| 11 | **Stale venv** | Detects corrupted/moved Python binary and recreates venv |
+| 12 | **SSL module check** | Verifies Python `ssl` module availability for pip HTTPS |
+| 13 | **Locale enforcement** | Forces `LC_ALL=en_US.UTF-8` to prevent encoding bugs |
+| 14 | **GOPATH validation** | Exports and validates `GOPATH/GOBIN` for Go tool installs |
+| 15 | **Disk space check** | Warns if < 500MB available before starting install |
 
 ---
 
@@ -362,20 +388,24 @@ Cascavel/
 
 ---
 
-## 🔄 CI/CD Security Pipeline
+## 🔄 CI/CD Security Pipeline (6 workflows)
 
-Cascavel ships with a [GitHub Actions workflow](.github/workflows/security.yml) that enforces security on every push and PR:
+Cascavel ships with **6 GitHub Actions workflows** enforcing security on every push and PR:
 
-| Job | Tool | Output |
-|:----|:-----|:-------|
-| **Syntax Check** | `py_compile` | Validates all `.py` files |
-| **SAST (Bandit)** | [Bandit](https://github.com/PyCQA/bandit) | SARIF → GitHub Security Tab |
-| **SAST (Semgrep)** | [Semgrep](https://semgrep.dev) | Rules: `auto` + `python` + `owasp-top-ten` |
-| **CVE Audit** | `pip-audit` | Enforces PyJWT/ReportLab/Requests minimums |
-| **Secret Detection** | [Gitleaks](https://github.com/gitleaks/gitleaks) | Full commit history scan |
+| Workflow | Jobs | Tools | Output |
+|:---------|:-----|:------|:-------|
+| [**CI**](.github/workflows/ci.yml) | Lint · Compile · Test · Security · Release Draft | Ruff 0.15.7 · py_compile · pytest · Bandit 1.9.4 | SARIF artifacts |
+| [**Security CI**](.github/workflows/security.yml) | Syntax · Bandit SAST · Semgrep SAST · CVE Audit · Secrets | Bandit · Semgrep · pip-audit · Gitleaks | SARIF → Security Tab |
+| [**CodeQL**](.github/workflows/codeql.yml) | Python semantic analysis | GitHub CodeQL | SARIF → Security Tab |
+| [**Fuzzing**](.github/workflows/fuzz.yml) | Atheris fuzzing (100K runs) | Google Atheris (libFuzzer) | Crash detection |
+| [**Scorecard**](.github/workflows/scorecard.yml) | OpenSSF supply-chain audit | OSSF Scorecard | Badge + SARIF |
+| [**Dependabot**](.github/dependabot.yml) | Automated dependency updates | GitHub Dependabot | PRs for pip + actions |
 
 > [!TIP]
-> SARIF results appear directly in the **Security** tab of your GitHub repo — no extra dashboard needed.
+> SARIF results from Bandit, Semgrep, CodeQL, and Scorecard appear directly in the **Security** tab — no extra dashboard needed.
+
+> [!IMPORTANT]
+> All GitHub Actions are **pinned by SHA** (not tag), and all workflows use **least-privilege `permissions: {}`** by default.
 
 ---
 
@@ -424,18 +454,28 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 | Resource | Description |
 |:---|:---|
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
-| [SECURITY.md](SECURITY.md) | Vulnerability disclosure policy |
-| [PLUGINS.md](PLUGINS.md) | Full plugin documentation and techniques |
-| [LICENSE](LICENSE) | MIT License |
+| [SECURITY.md](SECURITY.md) | Vulnerability disclosure policy (GPG key included) |
+| [PLUGINS.md](PLUGINS.md) | Full plugin documentation, techniques, and bypass research |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide with plugin interface spec |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Contributor Covenant v2.1 |
+| [LICENSE](LICENSE) | MIT License (SPDX: `MIT`) |
+| [OpenSSF Scorecard](https://securityscorecards.dev/viewer/?uri=github.com/glferreira-devsecops/Cascavel) | Supply-chain security score |
+| [OpenSSF Best Practices](https://www.bestpractices.dev/projects/12255) | Gold badge compliance |
+| [RET Tecnologia](https://rettecnologia.org) | Company website |
 
 ---
 
 <p align="center">
   <strong><code>MÉTODO CASCAVEL™</code></strong><br />
   <sub>
-    <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva<br />
+    A product of <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva<br />
     <a href="https://github.com/glferreira-devsecops">Gabriel L. Ferreira</a> · Fundador & DevSecOps Lead
   </sub>
+</p>
+
+<p align="center">
+  <a href="https://cascavel.pages.dev"><strong>🌐 cascavel.pages.dev</strong></a> · 
+  <a href="https://rettecnologia.org"><strong>🏢 rettecnologia.org</strong></a>
 </p>
 
 <p align="center">
