@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ╔═══════════════════════════════════════════════════════════════════╗
 # ║  CASCAVEL — Quantum Security Framework                           ║
-# ║  One-Command Universal Installer v2.3.0 (Hardened 2026)          ║
+# ║  One-Command Universal Installer v2.4.0 (Bulletproof 2026)       ║
 # ║  By RET Tecnologia (https://rettecnologia.org)                   ║
 # ║  Maintainer: DevFerreiraG <devferreirag@proton.me>               ║
 # ║                                                                   ║
@@ -77,7 +77,7 @@ IS_TTY="false"
 
 # ─── Step Counter ────────────────────────────────────────────────────
 CURRENT_STEP=0
-TOTAL_STEPS=12
+TOTAL_STEPS=14
 _next_step() {
     ((CURRENT_STEP++))
 }
@@ -254,7 +254,7 @@ _auto_clone_if_needed() {
     fi
 
     # Não estamos no diretório do Cascavel — auto-clone
-    step "cascavel.py não encontrado — clonando repositório automaticamente..."
+    echo -e "\n  ${CYAN}▶${NC} ${BOLD}cascavel.py não encontrado — clonando repositório automaticamente...${NC}"
     _log "AUTO-CLONE: cascavel.py não encontrado em $(pwd)"
 
     local CLONE_DIR="Cascavel"
@@ -444,6 +444,25 @@ detect_os() {
                 PKG_MANAGER="brew"
             else
                 PKG_MANAGER="none"
+                # Auto-install Homebrew no macOS (one-liner oficial)
+                warn "Homebrew não encontrado. Instalando automaticamente..."
+                _spinner_start "Instalando Homebrew (isso pode levar 1-2 minutos)..."
+                if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/null >>"$INSTALL_LOG" 2>&1; then
+                    _spinner_stop
+                    # Adiciona Homebrew ao PATH (Apple Silicon e Intel)
+                    if [ -f "/opt/homebrew/bin/brew" ]; then
+                        eval "$(/opt/homebrew/bin/brew shellenv)"
+                    elif [ -f "/usr/local/bin/brew" ]; then
+                        eval "$(/usr/local/bin/brew shellenv)"
+                    fi
+                    if command -v brew &>/dev/null; then
+                        PKG_MANAGER="brew"
+                        info "Homebrew instalado com sucesso."
+                    fi
+                else
+                    _spinner_stop
+                    warn "Falha ao instalar Homebrew. Algumas ferramentas não serão instaladas."
+                fi
             fi
             ;;
         Linux*)
@@ -617,11 +636,12 @@ install_python_deps() {
     fi
 
     # Pip com flags de segurança: --no-cache-dir evita cache envenenado
+    # --retries 3 e --timeout 30 para resiliência de rede
     _spinner_start "Atualizando pip..."
-    pip install --upgrade pip --no-cache-dir -q 2>/dev/null || warn "Falha ao atualizar pip"
+    pip install --upgrade pip --no-cache-dir --retries 3 --timeout 30 -q 2>/dev/null || warn "Falha ao atualizar pip"
     _spinner_stop
     _spinner_start "Instalando dependências Python (requirements.txt)..."
-    pip install -r requirements.txt --no-cache-dir -q 2>/dev/null || {
+    pip install -r requirements.txt --no-cache-dir --retries 3 --timeout 60 -q 2>/dev/null || {
         _spinner_stop
         warn "Falha na instalação via requirements.txt. Tentando uma-a-uma..."
         local dep_count=0
@@ -631,7 +651,7 @@ install_python_deps() {
             [[ -z "$dep" || "$dep" == \#* ]] && continue
             ((dep_count++))
             _spinner_start "Instalando [$dep_count/$dep_total] $dep..."
-            pip install "$dep" --no-cache-dir -q 2>/dev/null || warn "Falha: $dep"
+            pip install "$dep" --no-cache-dir --retries 3 --timeout 30 -q 2>/dev/null || warn "Falha: $dep"
             _spinner_stop
         done < requirements.txt
     }
@@ -682,6 +702,80 @@ _check_dep_versions() {
     fi
 }
 
+# ─── Auto-Install Go (for ProjectDiscovery tools) ────────────────────
+_auto_install_go() {
+    if command -v go &>/dev/null; then
+        return 0
+    fi
+
+    warn "Go não encontrado. Tentando instalar automaticamente..."
+
+    # Detect OS and Architecture
+    local GO_OS GO_ARCH GO_VERSION
+    case "$($UNAME -s)" in
+        Darwin*) GO_OS="darwin" ;;
+        Linux*)  GO_OS="linux" ;;
+        *)       warn "Auto-install de Go não suportado neste OS."; return 1 ;;
+    esac
+    case "$($UNAME -m)" in
+        x86_64|amd64) GO_ARCH="amd64" ;;
+        arm64|aarch64) GO_ARCH="arm64" ;;
+        armv*)         GO_ARCH="armv6l" ;;
+        *)             warn "Arquitetura $($UNAME -m) não suportada para auto-install Go."; return 1 ;;
+    esac
+
+    # Detect latest stable version from go.dev
+    GO_VERSION=$(curl -fsSL "https://go.dev/VERSION?m=text" 2>/dev/null | head -1 || echo "go1.23.4")
+    local GO_TAR="${GO_VERSION}.${GO_OS}-${GO_ARCH}.tar.gz"
+    local GO_URL="https://go.dev/dl/${GO_TAR}"
+
+    _spinner_start "Baixando Go ${GO_VERSION} (${GO_OS}/${GO_ARCH})..."
+    local TMP_GO
+    TMP_GO=$(mktemp "${TMPDIR:-/tmp}/go-install.XXXXXXXX.tar.gz")
+
+    if curl -fsSL "$GO_URL" -o "$TMP_GO" 2>/dev/null; then
+        _spinner_stop
+        if [ -s "$TMP_GO" ]; then
+            _spinner_start "Instalando Go em /usr/local/go..."
+            # Precisa de sudo para /usr/local
+            if [ "$(id -u)" -eq 0 ]; then
+                $RM -rf /usr/local/go
+                tar -C /usr/local -xzf "$TMP_GO" 2>/dev/null
+            elif command -v sudo &>/dev/null; then
+                sudo $RM -rf /usr/local/go
+                sudo tar -C /usr/local -xzf "$TMP_GO" 2>/dev/null
+            else
+                # Fallback: instala no $HOME/go-sdk
+                local GOROOT_LOCAL="$HOME/go-sdk"
+                $MKDIR -p "$GOROOT_LOCAL"
+                tar -C "$GOROOT_LOCAL" --strip-components=1 -xzf "$TMP_GO" 2>/dev/null
+                export GOROOT="$GOROOT_LOCAL"
+                export PATH="$GOROOT_LOCAL/bin:$PATH"
+            fi
+            _spinner_stop
+
+            # Adicionar Go ao PATH
+            if [ -d "/usr/local/go/bin" ]; then
+                export PATH="/usr/local/go/bin:$PATH"
+            fi
+
+            $RM -f "$TMP_GO"
+
+            if command -v go &>/dev/null; then
+                info "Go instalado: $(go version 2>/dev/null)"
+                _log "GO: Auto-installed $(go version 2>/dev/null)"
+                return 0
+            fi
+        fi
+    fi
+
+    _spinner_stop
+    $RM -f "$TMP_GO" 2>/dev/null
+    warn "Falha ao instalar Go. Ferramentas ProjectDiscovery não serão instaladas."
+    dimlog "Instale manualmente: https://go.dev/dl/"
+    return 1
+}
+
 # ─── External Tools ─────────────────────────────────────────────────
 install_external_tools() {
     step "Instalando ferramentas externas (opcionais)..."
@@ -690,21 +784,32 @@ install_external_tools() {
     case "$PKG_MANAGER" in
         brew)
             BREW_TOOLS="nmap nikto hydra john tshark whois"
+            local brew_count=0
+            local brew_total=0
             for tool in $BREW_TOOLS; do
-                if ! command -v "$tool" &>/dev/null; then
-                    dimlog "Instalando $tool..."
-                    brew install "$tool" 2>/dev/null || warn "Falha: $tool"
-                fi
+                command -v "$tool" &>/dev/null || ((brew_total++))
             done
-            # sqlmap via pip
-            pip install sqlmap -q 2>/dev/null || true
-            # wafw00f via pip
-            pip install wafw00f -q 2>/dev/null || true
+            if [ "$brew_total" -gt 0 ]; then
+                for tool in $BREW_TOOLS; do
+                    if ! command -v "$tool" &>/dev/null; then
+                        ((brew_count++))
+                        _spinner_start "Instalando [$brew_count/$brew_total] $tool..."
+                        brew install "$tool" >>"$INSTALL_LOG" 2>&1 || warn "Falha: $tool"
+                        _spinner_stop
+                    fi
+                done
+            else
+                info "Todas as ferramentas brew já instaladas (idempotent skip)."
+            fi
+            # sqlmap + wafw00f via pip
+            pip install sqlmap wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
         apt)
             APT_TOOLS="nmap nikto sqlmap hydra john sslscan dnsrecon fierce tshark whois traceroute"
-            sudo apt install -y $APT_TOOLS 2>/dev/null || warn "Alguns pacotes APT falharam."
-            pip install wafw00f -q 2>/dev/null || true
+            _spinner_start "Instalando ferramentas APT ($( echo $APT_TOOLS | wc -w | tr -d ' ') pacotes)..."
+            sudo apt install -y $APT_TOOLS >>"$INSTALL_LOG" 2>&1 || warn "Alguns pacotes APT falharam."
+            _spinner_stop
+            pip install wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
         dnf|yum)
             sudo $PKG_MANAGER install -y nmap nikto hydra john nmap-ncat whois traceroute 2>/dev/null || true
@@ -719,9 +824,12 @@ install_external_tools() {
             ;;
     esac
 
-    # Go-based tools (auto-detect Go)
+    # Go-based tools (auto-detect/install Go)
+    if ! command -v go &>/dev/null; then
+        _auto_install_go
+    fi
     if command -v go &>/dev/null; then
-        step "Go encontrado. Instalando ProjectDiscovery suite..."
+        step "Go encontrado ($(go version 2>/dev/null | awk '{print $3}')). Instalando ProjectDiscovery suite..."
 
         # GOPATH/GOBIN validation — garante que binários Go fiquem no PATH
         export GOPATH="${GOPATH:-$HOME/go}"
@@ -754,13 +862,30 @@ install_external_tools() {
                 "github.com/lc/gau/v2/cmd/gau@latest"
                 "github.com/tomnomnom/waybackurls@latest"
             )
+            local go_count=0
+            local go_total=${#GO_TOOLS[@]}
+            local go_installed=0
             for pkg in "${GO_TOOLS[@]}"; do
                 TOOL_NAME=$(basename "${pkg%%@*}")
-                if ! command -v "$TOOL_NAME" &>/dev/null; then
-                    dimlog "go install $TOOL_NAME..."
-                    go install -v "$pkg" 2>/dev/null || warn "Falha: $TOOL_NAME"
+                ((go_count++))
+                if command -v "$TOOL_NAME" &>/dev/null; then
+                    ((go_installed++))
+                else
+                    _spinner_start "[${go_count}/${go_total}] go install ${TOOL_NAME}..."
+                    go install "$pkg" >>"$INSTALL_LOG" 2>&1 || warn "Falha: $TOOL_NAME"
+                    _spinner_stop
+                    command -v "$TOOL_NAME" &>/dev/null && ((go_installed++))
                 fi
             done
+            info "Go tools: ${go_installed}/${go_total} instaladas."
+
+            # Nuclei templates auto-update
+            if command -v nuclei &>/dev/null; then
+                _spinner_start "Atualizando Nuclei templates..."
+                nuclei -ut -silent >>"$INSTALL_LOG" 2>&1 || true
+                _spinner_stop
+                info "Nuclei templates atualizados."
+            fi
         fi
     else
         warn "Go não encontrado. Ferramentas Go-based não instaladas."
@@ -822,7 +947,7 @@ verify_installation() {
     TOOLS=(subfinder amass httpx nmap ffuf gobuster naabu nuclei
            feroxbuster curl nikto sqlmap wafw00f dnsrecon fierce
            hydra gau waybackurls katana dnsx asnmap mapcidr
-           tshark sslscan whatweb wpscan john whois traceroute dig)
+           tshark sslscan john whois traceroute)
 
     FOUND=0
     TOTAL=${#TOOLS[@]}
@@ -1113,7 +1238,7 @@ show_summary() {
     echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel --check-tools${NC}                                 ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}    ${CYAN}❯ cascavel --list-plugins${NC}                                ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}  ${DIM}Log: install.log │ Versão: v2.3.0${NC}                         ${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}  ${DIM}Log: install.log │ Versão: v2.4.0${NC}                         ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}  ${DIM}RET Tecnologia — rettecnologia.org${NC}                        ${GREEN}║${NC}"
     echo -e "${GREEN}║${NC}                                                             ${GREEN}║${NC}"
     echo -e "${GREEN}╚═════════════════════════════════════════════════════════════╝${NC}"
@@ -1137,9 +1262,12 @@ first_run_wizard() {
         # Validação básica do input
         TARGET_INPUT=$(echo "$TARGET_INPUT" | sed 's|^https\?://||;s|/$||;s/ //g')
 
-        # Verifica formato mínimo de domínio
-        if [[ ! "$TARGET_INPUT" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-            warn "Formato inválido: '$TARGET_INPUT'. Use: exemplo.com.br"
+        # Validação de domínio OU endereço IP
+        if [[ "$TARGET_INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # IP address — aceitar
+            true
+        elif [[ ! "$TARGET_INPUT" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]+\.[a-zA-Z]{2,}$ ]]; then
+            warn "Formato inválido: '$TARGET_INPUT'. Use: exemplo.com.br ou 192.168.1.1"
             echo -e "  ${DIM}Você pode executar depois: cascavel $TARGET_INPUT${NC}"
             return 0
         fi
