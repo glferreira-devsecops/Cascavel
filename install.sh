@@ -77,7 +77,7 @@ IS_TTY="false"
 
 # ─── Step Counter ────────────────────────────────────────────────────
 CURRENT_STEP=0
-TOTAL_STEPS=14
+TOTAL_STEPS=11
 _next_step() {
     ((CURRENT_STEP++))
 }
@@ -443,6 +443,7 @@ preflight_checks() {
 
 # ─── OS Detection ───────────────────────────────────────────────────
 detect_os() {
+    step "Detectando sistema operacional..."
     OS="unknown"
     DISTRO="unknown"
     PKG_MANAGER="unknown"
@@ -870,7 +871,7 @@ install_external_tools() {
         _auto_install_go
     fi
     if command -v go &>/dev/null; then
-        step "Go encontrado ($(go version 2>/dev/null | awk '{print $3}')). Instalando ProjectDiscovery suite..."
+        echo -e "\n    ${CYAN}▶${NC} ${BOLD}Go encontrado ($(go version 2>/dev/null | awk '{print $3}')). Instalando ProjectDiscovery suite...${NC}"
 
         # GOPATH/GOBIN validation — garante que binários Go fiquem no PATH
         export GOPATH="${GOPATH:-$HOME/go}"
