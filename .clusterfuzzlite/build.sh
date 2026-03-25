@@ -1,8 +1,14 @@
+#!/bin/bash -eu
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  CASCAVEL — Offensive Security Framework                            ║
-# ║  A product of RET Tecnologia (rettecnologia.org)                    ║
-# ║  https://github.com/glferreira-devsecops/Cascavel                   ║
+# ║  CASCAVEL — ClusterFuzzLite Build Script                            ║
+# ║  Product of RET Tecnologia (rettecnologia.org)                      ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
-# Support the development of Cascavel via RET Tecnologia
-custom: ["https://rettecnologia.org"]
+# Install project dependencies
+pip3 install -r requirements.txt
+pip3 install atheris
+
+# Build fuzz targets
+compile_python_fuzzer tests/fuzz_sanitizer.py \
+    --add-data "plugins:plugins" \
+    --add-data "wordlists:wordlists"
