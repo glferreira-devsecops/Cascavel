@@ -37,6 +37,10 @@
   <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/security.yml?style=flat-square&label=CI%20Security&logo=github" /></a>
   <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/ci.yml?style=flat-square&label=CI&logo=github" /></a>
   <a href="https://securityscorecards.dev/viewer/?uri=github.com/glferreira-devsecops/Cascavel"><img src="https://img.shields.io/ossf-scorecard/github.com/glferreira-devsecops/Cascavel?style=flat-square&label=OpenSSF%20Scorecard" /></a>
+  <a href="https://www.bestpractices.dev/projects/12255"><img src="https://www.bestpractices.dev/projects/12255/badge" alt="OpenSSF Best Practices" /></a>
+  <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/codeql.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/codeql.yml?style=flat-square&label=CodeQL&logo=github" /></a>
+  <a href="https://github.com/glferreira-devsecops/Cascavel/stargazers"><img src="https://img.shields.io/github/stars/glferreira-devsecops/Cascavel?style=flat-square&color=FFD700" /></a>
+  <a href="https://github.com/glferreira-devsecops/Cascavel/network/members"><img src="https://img.shields.io/github/forks/glferreira-devsecops/Cascavel?style=flat-square&color=00D4FF" /></a>
 </p>
 
 ---
