@@ -1,6 +1,5 @@
 # CodeQL Analysis — SAST for Python
 # Cascavel Security Framework | RET Tecnologia
-# Required for OpenSSF Scorecard "SAST" check
 
 name: "CodeQL"
 
@@ -10,12 +9,9 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Weekly deep analysis
     - cron: "30 6 * * 1"
 
-permissions:
-  security-events: write
-  contents: read
+permissions: {}
 
 jobs:
   analyze:
