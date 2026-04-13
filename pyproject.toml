@@ -69,7 +69,7 @@ full = [
     "pyjwt>=2.8.0",
     "boto3>=1.34.0",
     "shodan>=1.31.0",
-    "censys>=2.2.0",
+    "censys>=2.2.19",
     "notify-py>=0.3.42",
 ]
 dev = [
