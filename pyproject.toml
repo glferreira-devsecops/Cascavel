@@ -74,7 +74,7 @@ full = [
 ]
 dev = [
     "bandit>=1.7.7",
-    "semgrep>=1.60.0",
+    "semgrep>=1.136.0",
     "pip-audit>=2.7.0",
     "ruff>=0.3.0",
     "mypy>=1.8.0",
