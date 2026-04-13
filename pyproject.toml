@@ -62,7 +62,7 @@ dependencies = [
 [project.optional-dependencies]
 full = [
     "beautifulsoup4>=4.12.0",
-    "dnspython>=2.6.0",
+    "dnspython>=2.7.0",
     "python-nmap>=0.7.1",
     "pyOpenSSL>=24.0.0",
     "paramiko>=3.4.0",
