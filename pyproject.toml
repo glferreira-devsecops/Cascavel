@@ -54,7 +54,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "requests>=2.31.0",
+    "requests>=2.32.5",
     "rich>=13.7.0",
     "pyfiglet>=1.0.2",
 ]
