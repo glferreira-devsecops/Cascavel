@@ -28,7 +28,7 @@ import datetime
 import html as html_mod
 import io
 import os
-from typing import Any
+from typing import Any, Dict, Optional
 
 from reportlab.graphics.shapes import Drawing, Rect, String
 from reportlab.lib import colors
@@ -552,10 +552,10 @@ COMPLIANCE_FRAMEWORKS = [
 
 def generate_pdf_report(
     target: str,
-    scan_results: dict[str, Any],
-    output_path: str | None = None,
-    analyst_name: str | None = None,
-    company: str | None = None,
+    scan_results: Dict[str, Any],
+    output_path: Optional[str] = None,
+    analyst_name: Optional[str] = None,
+    company: Optional[str] = None,
     classification: str = "CONFIDENCIAL",
 ) -> str:
     """

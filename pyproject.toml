@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cascavel"
-version = "2.1.0"
+version = "2.2.0"
 description = "Quantum Security Framework by RET Tecnologia — Pentest automation with 85+ plugins, Red Team 2026 intelligence"
 readme = "README.md"
 license = {text = "MIT"}
@@ -54,7 +54,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "requests>=2.31.0",
+    "requests>=2.32.4",
     "rich>=13.7.0",
     "pyfiglet>=1.0.2",
 ]
@@ -62,21 +62,21 @@ dependencies = [
 [project.optional-dependencies]
 full = [
     "beautifulsoup4>=4.12.0",
-    "dnspython>=2.6.0",
+    "dnspython>=2.7.0",
     "python-nmap>=0.7.1",
-    "pyOpenSSL>=24.0.0",
+    "pyOpenSSL>=25.0.0",
     "paramiko>=3.4.0",
-    "pyjwt>=2.8.0",
+    "pyjwt>=2.12.0",
     "boto3>=1.34.0",
     "shodan>=1.31.0",
     "censys>=2.2.0",
     "notify-py>=0.3.42",
 ]
 dev = [
-    "bandit>=1.7.7",
+    "bandit>=1.8.0",
     "semgrep>=1.60.0",
     "pip-audit>=2.7.0",
-    "ruff>=0.3.0",
+    "ruff>=0.15.0",
     "mypy>=1.8.0",
 ]
 

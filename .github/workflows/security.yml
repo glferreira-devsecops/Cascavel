@@ -1,3 +1,8 @@
+# ════════════════════════════════════════════════════════════════════════
+# Cascavel Security CI — SAST + Dependency Audit + Secret Detection
+# RET Tecnologia | https://rettecnologia.org
+# ════════════════════════════════════════════════════════════════════════
+
 name: "🐍 Cascavel Security CI"
 
 on:
@@ -16,18 +21,23 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.12']
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.12"
+          python-version: "${{ matrix.python-version }}"
           cache: "pip"
       - run: pip install -r requirements.txt
       - name: Compile check (all .py files)
         run: |
           python -m py_compile cascavel.py
+          python -m py_compile report_generator.py
           find plugins/ -name "*.py" -exec python -m py_compile {} \;
-          echo "✓ All files compiled successfully"
+          echo "✓ All files compiled on Python ${{ matrix.python-version }}"
 
   bandit:
     name: "🛡️ Bandit SAST"
@@ -40,7 +50,7 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
-      - run: pip install "bandit[sarif]==1.9.4"
+      - run: pip install "bandit[sarif]==1.8.6"
       - name: Run Bandit scan
         run: |
           bandit -r cascavel.py report_generator.py plugins/ \
@@ -102,7 +112,7 @@ jobs:
           pip install pip-audit==2.9.0
           pip-audit --format json --output audit-results.json || true
           pip-audit --desc || true
-      - name: Check critical CVEs
+      - name: Check critical CVE floor versions
         run: |
           python3 -c "
           import importlib.metadata as meta
