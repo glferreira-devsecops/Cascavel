@@ -401,17 +401,19 @@ Cascavel/
 
 ---
 
-## 🔄 CI/CD Security Pipeline (6 workflows)
+## 🔄 CI/CD Security Pipeline (8 workflows)
 
-Cascavel ships with **6 GitHub Actions workflows** enforcing security on every push and PR:
+Cascavel ships with **8 GitHub Actions workflows** enforcing security on every push and PR:
 
 | Workflow | Jobs | Tools | Output |
 |:---------|:-----|:------|:-------|
-| [**CI**](.github/workflows/ci.yml) | Lint · Compile · Test · Security · Release Draft | Ruff 0.15.7 · py_compile · pytest · Bandit 1.9.4 | SARIF artifacts |
-| [**Security CI**](.github/workflows/security.yml) | Syntax · Bandit SAST · Semgrep SAST · CVE Audit · Secrets | Bandit · Semgrep · pip-audit · Gitleaks | SARIF → Security Tab |
+| [**CI**](.github/workflows/ci.yml) | Lint · Compile · Test · Security · Version Sync · Release Draft | Ruff 0.15.10 · py_compile · pytest · Bandit 1.8.6 | SARIF artifacts |
+| [**Security CI**](.github/workflows/security.yml) | Syntax · Bandit SAST · Semgrep SAST · CVE Audit · Secrets | Bandit 1.8.6 · Semgrep · pip-audit · Gitleaks | SARIF → Security Tab |
 | [**CodeQL**](.github/workflows/codeql.yml) | Python semantic analysis | GitHub CodeQL | SARIF → Security Tab |
 | [**Fuzzing**](.github/workflows/fuzz.yml) | Atheris fuzzing (100K runs) | Google Atheris (libFuzzer) | Crash detection |
 | [**Scorecard**](.github/workflows/scorecard.yml) | OpenSSF supply-chain audit | OSSF Scorecard | Badge + SARIF |
+| [**Auto-Update**](.github/workflows/update-deps.yml) | Weekly dep audit + auto-PR | `update_deps.py` + pip | Auto PRs |
+| [**Auto-Merge**](.github/workflows/auto-merge.yml) | Dependabot patch auto-merge | GitHub CLI | Hands-free patching |
 | [**Dependabot**](.github/dependabot.yml) | Automated dependency updates | GitHub Dependabot | PRs for pip + actions |
 
 > [!TIP]

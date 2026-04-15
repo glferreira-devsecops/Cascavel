@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "Se você utilizar o Cascavel em sua pesquisa ou trabalho, por favor cite-o conforme abaixo."
 title: "Cascavel — Quantum Security Framework"
 type: software
-version: "2.1.0"
+version: "2.2.0"
 date-released: "2026-03-24"
 license: MIT
 url: "https://github.com/glferreira-devsecops/Cascavel"

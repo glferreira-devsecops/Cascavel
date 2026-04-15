@@ -4,7 +4,7 @@
 
 This document outlines the planned direction for Cascavel. It is a living document and may change based on community feedback, security landscape shifts, and contributor availability.
 
-## Current — v2.1.0 (Stable)
+## Current — v2.2.0 (Stable)
 
 ✅ 85+ security plugins with 2026-grade intelligence
 ✅ JSON + Markdown report generation
