@@ -974,10 +974,10 @@ def _preflight_check() -> bool:
     checks = []
 
     # 1. Python version
-    py_ok = sys.version_info >= (3, 8)
+    py_ok = sys.version_info >= (3, 10)
     checks.append(
         (
-            "Python ≥ 3.8",
+            "Python ≥ 3.10",
             py_ok,
             f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             "Atualize Python: python.org/downloads",

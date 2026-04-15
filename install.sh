@@ -535,7 +535,7 @@ check_python() {
             PY_VER=$("$cmd" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)
             PY_MAJOR=$("$cmd" -c 'import sys; print(sys.version_info.major)' 2>/dev/null)
             PY_MINOR=$("$cmd" -c 'import sys; print(sys.version_info.minor)' 2>/dev/null)
-            if [ "${PY_MAJOR:-0}" -ge 3 ] && [ "${PY_MINOR:-0}" -ge 8 ]; then
+            if [ "${PY_MAJOR:-0}" -ge 3 ] && [ "${PY_MINOR:-0}" -ge 10 ]; then
                 PYTHON_CMD="$cmd"
                 info "Python ${PY_VER} encontrado (${BOLD}$(command -v "$cmd")${NC})"
                 return
@@ -544,7 +544,7 @@ check_python() {
     done
 
     if [ -z "$PYTHON_CMD" ]; then
-        warn "Python 3.8+ não encontrado. Tentando instalar..."
+        warn "Python 3.10+ não encontrado. Tentando instalar..."
         install_python
     fi
 }

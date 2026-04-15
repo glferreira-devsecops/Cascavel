@@ -70,6 +70,12 @@ test: ## Run pytest
 audit: ## Run pip-audit for CVE detection
 	pip-audit --desc || true
 
+update-deps: ## Check for outdated deps (read-only)
+	$(PYTHON) scripts/update_deps.py
+
+update-deps-apply: ## Auto-update requirements.txt with latest versions
+	$(PYTHON) scripts/update_deps.py --update
+
 # ── Version Check ────────────────────────────
 
 version-check: ## Verify version sync across all files

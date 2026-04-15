@@ -27,7 +27,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-00D4FF.svg?style=flat-square" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Plataforma-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v2.2.0-C89F5D.svg?style=flat-square" /></a>
@@ -116,7 +116,7 @@ A maioria dos workflows de pentest envolve **mais de 20 ferramentas separadas**,
 
 | Requisito | Mínimo | Por quê |
 |:---|:---|:---|
-| **Python** | 3.8+ | f-strings, `importlib.util`, `shlex.quote` |
+| **Python** | 3.10+ | `match/case`, typed generics, `importlib.metadata` |
 | **PyJWT** | 2.12.0 | CVE-2022-29217 — ataque de confusão de algoritmo |
 | **ReportLab** | 3.6.13 | CVE-2023-33733 — execução de código via PDF crafted |
 | **Requests** | 2.31.0 | CVE-2023-32681 — vazamento de header em redirect |
