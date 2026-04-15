@@ -84,7 +84,7 @@ return {
 
 ## 📝 Diretrizes de Código
 
-- **Python 3.8+** compatível
+- **Python 3.10+** compatível
 - **Type hints** em funções públicas
 - **Docstrings** descritivas em todas as funções `run()`
 - **snake_case** para funções e variáveis
@@ -118,7 +118,7 @@ wsl --install
 # Dentro do WSL, siga as instruções de Linux acima.
 
 # Opção 2: Nativo (limitado)
-# Instale Python 3.8+ via python.org
+# Instale Python 3.10+ via python.org
 # Algumas ferramentas externas não estão disponíveis no Windows nativo.
 python -m venv venv && venv\Scripts\activate
 pip install -r requirements.txt
