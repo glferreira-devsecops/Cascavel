@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.12']
+        python-version: ['3.10', '3.12']
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -114,31 +114,31 @@ jobs:
           pip-audit --desc || true
       - name: Check critical CVE floor versions
         run: |
-          python3 -c "
+          python3 << 'PYEOF'
           import importlib.metadata as meta
           checks = {
-              'PyJWT': ('2.12.0', 'CVE-2022-29217'),
-              'reportlab': ('3.6.13', 'CVE-2023-33733'),
-              'requests': ('2.32.4', 'GHSA-9hjg-9r4m-mvj7 + GHSA-9wx4-h78v-vm56'),
-              'dnspython': ('2.7.0', 'GHSA-3rq5-2g8h-59hc'),
-              'pyOpenSSL': ('25.0.0', 'GHSA-5pwr-322w-8jr4 + GHSA-vp96-hxj8-p424'),
+              "PyJWT": ("2.12.0", "CVE-2022-29217"),
+              "reportlab": ("3.6.13", "CVE-2023-33733"),
+              "requests": ("2.32.4", "GHSA-9hjg-9r4m-mvj7 + GHSA-9wx4-h78v-vm56"),
+              "dnspython": ("2.7.0", "GHSA-3rq5-2g8h-59hc"),
+              "pyOpenSSL": ("25.0.0", "GHSA-5pwr-322w-8jr4 + GHSA-vp96-hxj8-p424"),
           }
           failed = False
           for pkg, (min_ver, cve) in checks.items():
               try:
                   ver = meta.version(pkg)
-                  parts_cur = [int(x) for x in ver.split('.')]
-                  parts_min = [int(x) for x in min_ver.split('.')]
+                  parts_cur = [int(x) for x in ver.split(".")]
+                  parts_min = [int(x) for x in min_ver.split(".")]
                   if parts_cur < parts_min:
-                      print(f'FAIL: {pkg} {ver} < {min_ver} ({cve})')
+                      print(f"FAIL: {pkg} {ver} < {min_ver} ({cve})")
                       failed = True
                   else:
-                      print(f'  OK: {pkg} {ver} >= {min_ver}')
+                      print(f"  OK: {pkg} {ver} >= {min_ver}")
               except meta.PackageNotFoundError:
-                  print(f'SKIP: {pkg} not installed')
+                  print(f"SKIP: {pkg} not installed")
           if failed:
               raise SystemExit(1)
-          "
+          PYEOF
 
   secrets:
     name: "🔑 Secret Detection"

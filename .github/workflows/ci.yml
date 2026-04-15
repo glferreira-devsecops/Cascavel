@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -129,36 +129,34 @@ jobs:
 
       - name: Verify version consistency
         run: |
-          python3 -c "
+          python3 << 'PYEOF'
           import re, sys
 
-          # Extract versions from all sources
-          with open('cascavel.py') as f:
-              py_match = re.search(r'__version__\s*=\s*[\"'\'']([\d.]+)[\"'\''']', f.read())
-          py_ver = py_match.group(1) if py_match else 'NOT FOUND'
+          with open("cascavel.py") as f:
+              py_match = re.search(r'__version__\s*=\s*"([\d.]+)"', f.read())
+          py_ver = py_match.group(1) if py_match else "NOT FOUND"
 
-          with open('pyproject.toml') as f:
-              toml_match = re.search(r'^version\s*=\s*[\"'\'']([\d.]+)[\"'\''']', f.read(), re.MULTILINE)
-          toml_ver = toml_match.group(1) if toml_match else 'NOT FOUND'
+          with open("pyproject.toml") as f:
+              toml_match = re.search(r'^version\s*=\s*"([\d.]+)"', f.read(), re.MULTILINE)
+          toml_ver = toml_match.group(1) if toml_match else "NOT FOUND"
 
-          with open('report_generator.py') as f:
-              rg_content = f.read()
-              rg_match = re.search(r'VERSION\s*=\s*[\"'\'']([\d.]+)[\"'\''']', rg_content)
-          rg_ver = rg_match.group(1) if rg_match else 'NOT FOUND'
+          with open("report_generator.py") as f:
+              rg_match = re.search(r'VERSION\s*=\s*"([\d.]+)"', f.read())
+          rg_ver = rg_match.group(1) if rg_match else "NOT FOUND"
 
-          print(f'  cascavel.py:        {py_ver}')
-          print(f'  pyproject.toml:     {toml_ver}')
-          print(f'  report_generator:   {rg_ver}')
+          print(f"  cascavel.py:        {py_ver}")
+          print(f"  pyproject.toml:     {toml_ver}")
+          print(f"  report_generator:   {rg_ver}")
 
           versions = {py_ver, toml_ver}
-          if rg_ver != 'NOT FOUND':
+          if rg_ver != "NOT FOUND":
               versions.add(rg_ver)
 
           if len(versions) > 1:
-              print(f'❌ VERSION MISMATCH: {versions}')
+              print(f"❌ VERSION MISMATCH: {versions}")
               sys.exit(1)
-          print(f'✅ All versions synced: {py_ver}')
-          "
+          print(f"✅ All versions synced: {py_ver}")
+          PYEOF
 
   security:
     name: 🔒 Security (Bandit)
