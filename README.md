@@ -496,3 +496,5 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 <p align="center">
   <sub>Making the web safer, one target at a time. 🐍</sub>
 </p>
+---
+Security research powered by DarkForge-X framework.
