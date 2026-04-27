@@ -7,7 +7,7 @@
 requests>=2.32.4
 rich>=13.7.0
 pyfiglet>=1.0.2
-reportlab>=3.6.13
+reportlab>=4.4.10
 qrcode[pil]>=8.0
 
 # Notifications (optional but recommended)
