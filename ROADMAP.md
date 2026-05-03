@@ -4,7 +4,7 @@
 
 This document outlines the planned direction for Cascavel. It is a living document and may change based on community feedback, security landscape shifts, and contributor availability.
 
-## Current — v3.0.0 (Stable)
+## Current — v3.0.1 (Stable)
 
 ✅ 85+ security plugins with 2026-grade intelligence
 ✅ JSON + Markdown + **PDF** report generation
@@ -14,10 +14,12 @@ This document outlines the planned direction for Cascavel. It is a living docume
 ✅ Full open-source governance (CITATION, FUNDING, CODEOWNERS)
 ✅ **Plugin API v2** — Standardized return schema with CVSS v4.0 scoring
 ✅ **SARIF v2.1.0 output** — IDE + CI/CD integration (GitHub, VSCode, Azure DevOps)
-✅ **Pytest test suite** — Plugin discovery, schema validation, core sanitization
+✅ **Pytest test suite** — 211 tests (plugin discovery, schema validation, silent failure coverage)
 ✅ **Docker multi-stage image** — Go tools (nuclei, subfinder, katana) + system tools (nmap, nikto)
 ✅ **Scan profiles (YAML)** — Pre-configured profiles: web, api, cloud, network, full
 ✅ **Python 3.10+ baseline** — Modern type syntax, TaskGroup readiness
+✅ **Silent failure hardening** — `SILENT_ERROR` reporting across all critical plugins
+✅ **Manual dependency control** — No automated dependency bots (supply chain security)
 
 ## Short-Term — v3.1.0 (Q3 2026)
 

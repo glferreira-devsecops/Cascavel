@@ -72,8 +72,14 @@ def _check_certificate(target, port):
                                 "descricao": f"Certificado expira em {days_left} dias!",
                             }
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    vulns.append(
+                        {
+                            "tipo": "SILENT_ERROR",
+                            "severidade": "INFO",
+                            "descricao": f"Falha ao parsear expiração do certificado: {e}",
+                        }
+                    )
 
                 # Protocol check
                 protocol = ssock.version()
@@ -200,8 +206,8 @@ def _check_hsts(target):
                         "descricao": f"HSTS max-age={max_age.group(1)} — recomendado >= 31536000",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as e:
+        vulns.append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha ao verificar HSTS: {e}"})
     return vulns
 
 
@@ -230,8 +236,10 @@ def _check_http_redirect(target):
                     "descricao": "HTTP serve conteúdo sem redirecionar para HTTPS — MITM!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as e:
+        vulns.append(
+            {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha ao verificar redirect HTTP→HTTPS: {e}"}
+        )
     return vulns
 
 

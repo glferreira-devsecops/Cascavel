@@ -413,8 +413,6 @@ Cascavel ships with **8 GitHub Actions workflows** enforcing security on every p
 | [**Fuzzing**](.github/workflows/fuzz.yml) | Atheris fuzzing (100K runs) | Google Atheris (libFuzzer) | Crash detection |
 | [**Scorecard**](.github/workflows/scorecard.yml) | OpenSSF supply-chain audit | OSSF Scorecard | Badge + SARIF |
 | [**Auto-Update**](.github/workflows/update-deps.yml) | Weekly dep audit + auto-PR | `update_deps.py` + pip | Auto PRs |
-| [**Auto-Merge**](.github/workflows/auto-merge.yml) | Dependabot patch auto-merge | GitHub CLI | Hands-free patching |
-| [**Dependabot**](.github/dependabot.yml) | Automated dependency updates | GitHub Dependabot | PRs for pip + actions |
 
 > [!TIP]
 > SARIF results from Bandit, Semgrep, CodeQL, and Scorecard appear directly in the **Security** tab — no extra dashboard needed.

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-05-03
+
+### Added
+- **Silent failure test suite** — `tests/test_silent_failures.py` with 14 tests covering timeout, binary-missing, connection-refused, and malformed-data scenarios across 10 plugins
+- **Engine resilience tests** — `tests/test_engine_resilience.py` validating crash recovery and tool timeout handling at the engine level
+- **`SILENT_ERROR` finding type** — Plugins now report operational failures (network errors, missing binaries, parse failures) as INFO-severity findings instead of silently swallowing them
+
+### Changed
+- **`cors_checker.py`** — Exception handlers in origin, preflight, vary, expose, and max-age checks now report errors via `SILENT_ERROR` findings
+- **`jwt_analyzer.py`** — JWKS fetch and header analysis failures propagate error context
+- **`ssl_check.py`** — Certificate expiry parsing, HSTS verification, and HTTP→HTTPS redirect checks report failures instead of `pass`
+- **`s3_bucket.py`** — ACL check failures now surface as `SILENT_ERROR` with bucket name context
+- **`subdomain_takeou.py`** — CNAME dangling check and HTTP connection failures generate INFO findings
+- **`waf_detec.py`** — Heuristic WAF detection connection failures captured as `ERRO_CONEXAO` indicators
+- **`whois_recon.py`** — WHOIS native and RDAP lookup failures return structured error dictionaries instead of `None`
+
+### Removed
+- **`auto-merge.yml`** — Removed automated PR merge workflow (manual control preferred)
+- **`update-deps.yml`** — Removed automated dependency update workflow (supply chain security)
+- **Dependabot references** — Cleaned from README and CI configuration
+
+### Security
+- Eliminated 12+ `except Exception: pass` silent failure vectors across plugin architecture
+- All high-level exception handlers now preserve error context for audit trail
+
 ## [3.0.0] - 2026-05-03
 
 ### Added

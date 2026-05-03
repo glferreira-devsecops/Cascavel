@@ -74,8 +74,9 @@ def _test_origin_reflection(target, page, origins):
                     }
                 )
                 break
-        except Exception:
-            continue
+        except Exception as e:
+            vulns.append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha na requisicao: {str(e)}"})
+            break
     return vulns
 
 
@@ -117,8 +118,8 @@ def _test_preflight(target, page):
                     "descricao": "CORS permite Authorization header — token exfiltration!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as e:
+        vulns.append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha de preflight: {str(e)}"})
     return vulns
 
 
@@ -135,8 +136,8 @@ def _test_vary_header(target, page):
                 "severidade": "MEDIO",
                 "descricao": "CORS reflete origin sem Vary: Origin — cache poisoning possível!",
             }
-    except Exception:
-        pass
+    except Exception as e:
+        return {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha no teste Vary: {str(e)}"}
     return None
 
 
@@ -156,8 +157,8 @@ def _test_expose_headers(target, page):
                 "severidade": "ALTO",
                 "descricao": f"CORS expõe headers sensíveis: {', '.join(sensitive)}",
             }
-    except Exception:
-        pass
+    except Exception as e:
+        return {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha de exposicao de header: {str(e)}"}
     return None
 
 
@@ -178,8 +179,8 @@ def _test_max_age(target, page):
                 "severidade": "BAIXO",
                 "descricao": f"Preflight cache {max_age}s (> 24h) — mudanças de policy demoram a propagar",
             }
-    except Exception:
-        pass
+    except Exception as e:
+        return {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha no max-age: {str(e)}"}
     return None
 
 
