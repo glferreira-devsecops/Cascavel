@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-05-03
+
+### Added
+- **Silent failure test suite** — `tests/test_silent_failures.py` with 14 tests covering timeout, binary-missing, connection-refused, and malformed-data scenarios across 10 plugins
+- **Engine resilience tests** — `tests/test_engine_resilience.py` validating crash recovery and tool timeout handling at the engine level
+- **`SILENT_ERROR` finding type** — Plugins now report operational failures (network errors, missing binaries, parse failures) as INFO-severity findings instead of silently swallowing them
+
+### Changed
+- **`cors_checker.py`** — Exception handlers in origin, preflight, vary, expose, and max-age checks now report errors via `SILENT_ERROR` findings
+- **`jwt_analyzer.py`** — JWKS fetch and header analysis failures propagate error context
+- **`ssl_check.py`** — Certificate expiry parsing, HSTS verification, and HTTP→HTTPS redirect checks report failures instead of `pass`
+- **`s3_bucket.py`** — ACL check failures now surface as `SILENT_ERROR` with bucket name context
+- **`subdomain_takeou.py`** — CNAME dangling check and HTTP connection failures generate INFO findings
+- **`waf_detec.py`** — Heuristic WAF detection connection failures captured as `ERRO_CONEXAO` indicators
+- **`whois_recon.py`** — WHOIS native and RDAP lookup failures return structured error dictionaries instead of `None`
+
+### Removed
+- **`auto-merge.yml`** — Removed automated PR merge workflow (manual control preferred)
+- **`update-deps.yml`** — Removed automated dependency update workflow (supply chain security)
+- **Dependabot references** — Cleaned from README and CI configuration
+
+### Security
+- Eliminated 12+ `except Exception: pass` silent failure vectors across plugin architecture
+- All high-level exception handlers now preserve error context for audit trail
+
+## [3.0.0] - 2026-05-03
+
+### Added
+- **Plugin API v2** — Standardized return schema via `PluginResult` dataclass with CVSS v4.0 scoring, CWE mapping, and OWASP Top 10 classification
+- **`plugins/schema.py`** — Schema module with `PluginResult`, `from_legacy()` adapter, severity normalization (PT-BR → EN), and CVSS-to-severity derivation
+- **SARIF v2.1.0 output** — `sarif_exporter.py` module for integration with GitHub Code Scanning, VSCode SARIF Viewer, Azure DevOps, and JetBrains Qodana
+- **`--sarif` flag** — CLI shorthand for `--output-format sarif`
+- **`--profile` flag** — Select pre-configured scan profiles: `web`, `api`, `cloud`, `network`, `full`
+- **Scan Profiles (YAML)** — 5 pre-configured profiles in `profiles/` directory:
+  - `web.yaml` — OWASP Top 10 mapped, 44 plugins
+  - `api.yaml` — REST/GraphQL/gRPC focused, 27 plugins
+  - `cloud.yaml` — AWS/GCP/Azure + containers, 23 plugins
+  - `network.yaml` — Ports/services/protocols, 28 plugins
+  - `full.yaml` — All plugins (dynamic `all_plugins: true`)
+- **Dockerfile** — Official multi-stage Docker image with Go tools (subfinder, nuclei, katana, httpx, naabu, dnsx, gau, ffuf, gobuster) and system tools (nmap, nikto, traceroute)
+- **`.dockerignore`** — Optimized layer caching, excludes git/cache/reports
+- **Pytest test suite** — `tests/conftest.py`, `tests/test_plugin_schema.py` (plugin discovery + schema validation), `tests/test_core.py` (ANSI sanitizer + SARIF + profiles)
+- **PyYAML dependency** — Added `pyyaml>=6.0.1` for profile loading with manual fallback parser
+
+### Changed
+- **`cascavel.py`** — Version bumped to `3.0.0`
+- **`pyproject.toml`** — Version synced to `3.0.0`, Python minimum raised to `>=3.10`, development status upgraded to `Production/Stable`
+- **`run_plugins()`** — Added `plugin_filter` parameter for profile-based plugin selection; excludes `schema.py` from execution
+- **`build_parser()`** — Added `--sarif`, `--profile` CLI flags; expanded `--output-format` choices to include `sarif`
+- **`run_scan()`** — Added `profile` parameter; integrated SARIF export pipeline with `sarif_exporter.export_sarif()`
+- **Ruff** — Target version updated from `py38` to `py310`
+- **Mypy** — Target version updated from `3.8` to `3.10`
+- **Setuptools** — `py-modules` expanded to include `sarif_exporter`
+
+### Removed
+- **Python 3.8/3.9 support** — Minimum raised to 3.10 for `match/case`, `X | Y` type syntax, and `TaskGroup` readiness
+
 ## [2.1.0] - 2026-03-24
 
 ### Added

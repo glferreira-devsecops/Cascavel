@@ -1,0 +1,35 @@
+# ============================================================================
+# CASCAVEL Security Framework — HTTP Security Headers (Elite 2026)
+# OWASP Secure Headers Project + NIST SP 800-53 + CIS Benchmark
+# Compatible: Cloudflare Pages / Netlify / Vercel Edge
+# ============================================================================
+
+/*
+  # --- Core Security (OpenSSF hardened_site required) ---
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+
+  # --- Transport Security ---
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+  # --- Privacy & Referrer ---
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()
+
+  # --- Cross-Origin Isolation (OWASP 2026) ---
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  Cross-Origin-Resource-Policy: same-origin
+
+  # --- Legacy XSS (disabled per OWASP recommendation — use CSP instead) ---
+  X-XSS-Protection: 0
+
+  # --- DNS & Cache ---
+  X-DNS-Prefetch-Control: off
+  Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate
+  Pragma: no-cache
+
+  # --- Information Disclosure Prevention ---
+  X-Permitted-Cross-Domain-Policies: none
+  X-Download-Options: noopen

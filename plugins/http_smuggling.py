@@ -71,7 +71,7 @@ def _send_raw(target, payload, port=80, timeout=10):
         response = sock.recv(8192).decode(errors="ignore")
         sock.close()
         return response
-    except socket.timeout:
+    except TimeoutError:
         return "TIMEOUT"
     except Exception:
         return ""

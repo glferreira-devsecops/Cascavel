@@ -60,8 +60,8 @@ def _whois_native(target):
             errors="ignore",
         )
         return proc.stdout if proc.returncode == 0 else None
-    except Exception:
-        return None
+    except Exception as e:
+        return f"WHOIS_ERROR: {str(e)}"
 
 
 def _parse_whois(raw):
@@ -117,9 +117,9 @@ def _rdap_lookup(target):
         resp = requests.get(f"{RDAP_BOOTSTRAP}{target}", timeout=10, headers={"Accept": "application/rdap+json"})
         if resp.status_code == 200:
             return resp.json()
-    except Exception:
-        pass
-    return None
+        return {"error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        return {"error": f"RDAP_LOOKUP_ERROR: {str(e)}"}
 
 
 def _rdap_ip_lookup(ip):
@@ -128,9 +128,9 @@ def _rdap_ip_lookup(ip):
         resp = requests.get(f"{IP_RDAP_BOOTSTRAP}{ip}", timeout=10, headers={"Accept": "application/rdap+json"})
         if resp.status_code == 200:
             return resp.json()
-    except Exception:
-        pass
-    return None
+        return {"error": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        return {"error": f"RDAP_LOOKUP_ERROR: {str(e)}"}
 
 
 def _extract_rdap_info(rdap):
@@ -287,18 +287,25 @@ def run(target, ip, open_ports, banners):
 
     # 1. Domain WHOIS (native)
     raw_whois = _whois_native(target)
-    whois_fields = _parse_whois(raw_whois)
-    resultado["domain_whois"] = whois_fields
+    if isinstance(raw_whois, str) and raw_whois.startswith("WHOIS_ERROR"):
+        resultado["vulns"].append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": raw_whois})
+        whois_fields = {}
+    else:
+        whois_fields = _parse_whois(raw_whois)
+        resultado["domain_whois"] = whois_fields
 
     # 2. RDAP (structured JSON)
     rdap_data = _rdap_lookup(target)
-    rdap_info = _extract_rdap_info(rdap_data)
-    if rdap_info:
-        resultado["rdap"] = rdap_info
-        # Merge missing fields
-        for k, v in rdap_info.items():
-            if k not in whois_fields:
-                whois_fields[k] = v
+    if isinstance(rdap_data, dict) and "error" in rdap_data:
+        resultado["vulns"].append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": rdap_data["error"]})
+    else:
+        rdap_info = _extract_rdap_info(rdap_data)
+        if rdap_info:
+            resultado["rdap"] = rdap_info
+            # Merge missing fields
+            for k, v in rdap_info.items():
+                if k not in whois_fields:
+                    whois_fields[k] = v
 
     # 3. IP WHOIS
     if ip and ip != "N/A":

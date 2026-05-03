@@ -20,13 +20,16 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
       - run: pip install -r requirements.txt
       - name: Compile check (all .py files)
         run: |
           python -m py_compile cascavel.py
+          python -m py_compile sarif_exporter.py
+          python -m py_compile report_generator.py
           find plugins/ -name "*.py" -exec python -m py_compile {} \;
+          find tests/ -name "*.py" ! -name "fuzz_*" -exec python -m py_compile {} \;
           echo "✓ All files compiled successfully"
 
   bandit:
@@ -39,20 +42,20 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - run: pip install "bandit[sarif]==1.9.4"
       - name: Run Bandit scan
         run: |
-          bandit -r cascavel.py report_generator.py plugins/ \
+          bandit -r cascavel.py sarif_exporter.py report_generator.py plugins/ \
             -c pyproject.toml \
             -f sarif \
             -o bandit-results.sarif \
             --severity-level medium \
             --confidence-level medium \
-            -x "**/test_*"
+            -x "**/test_*,**/fuzz_*"
       - name: Upload Bandit SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
+        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
         with:
           sarif_file: bandit-results.sarif
           category: bandit
@@ -64,7 +67,7 @@ jobs:
       contents: read
       security-events: write
     container:
-      image: semgrep/semgrep:latest
+      image: semgrep/semgrep@sha256:3dab091ee3247fce7e4ed3df9f92b3bd72692c083295f53cec3f135b86404db1 # latest 2026-03-17
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run Semgrep scan
@@ -80,7 +83,7 @@ jobs:
             --exclude "*.md"
       - name: Upload Semgrep SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
+        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
         with:
           sarif_file: semgrep-results.sarif
           category: semgrep
@@ -94,7 +97,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
       - run: pip install -r requirements.txt
       - name: pip-audit (CVE check)
@@ -109,7 +112,9 @@ jobs:
           checks = {
               'PyJWT': ('2.12.0', 'CVE-2022-29217'),
               'reportlab': ('3.6.13', 'CVE-2023-33733'),
-              'requests': ('2.31.0', 'CVE-2023-32681'),
+              'requests': ('2.32.4', 'GHSA-9hjg-9r4m-mvj7 + GHSA-9wx4-h78v-vm56'),
+              'dnspython': ('2.7.0', 'GHSA-3rq5-2g8h-59hc'),
+              'pyOpenSSL': ('25.0.0', 'GHSA-5pwr-322w-8jr4 + GHSA-vp96-hxj8-p424'),
           }
           failed = False
           for pkg, (min_ver, cve) in checks.items():

@@ -127,6 +127,9 @@ def _harvest_tokens(target):
                 for val in resp.headers.values():
                     tokens.update(JWT_PATTERN.findall(val))
             except Exception:
+                # O harvest não joga erro pra vulns direto pq não recebe vulns como param
+                # Então injeta um token especial com o erro que será tratado depois
+                # ou a gente loga no loop principal...
                 continue
 
     # Check main page headers/cookies

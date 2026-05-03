@@ -100,8 +100,15 @@ def run(target, ip, open_ports, banners):
                             "descricao": "S3 ACL concede acesso a AllUsers!",
                         }
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                vulns.append(
+                    {
+                        "tipo": "SILENT_ERROR",
+                        "bucket": bucket,
+                        "severidade": "INFO",
+                        "descricao": f"Falha ao verificar ACL do bucket {bucket}: {e}",
+                    }
+                )
 
         except Exception:
             continue

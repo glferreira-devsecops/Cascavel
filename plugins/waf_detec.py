@@ -48,7 +48,8 @@ def run(target, ip, open_ports, banners):
                     break
             if resp.status_code in [403, 406, 501, 999]:
                 deteccoes.append({"url": url, "indicador": f"HTTP_{resp.status_code}", "status": resp.status_code})
-        except Exception:
+        except Exception as e:
+            deteccoes.append({"url": url, "indicador": f"ERRO_CONEXAO: {type(e).__name__}", "status": 0})
             continue
 
     resultado["heuristica"] = deteccoes if deteccoes else "Nenhum WAF detectado via heurística"

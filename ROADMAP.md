@@ -4,30 +4,36 @@
 
 This document outlines the planned direction for Cascavel. It is a living document and may change based on community feedback, security landscape shifts, and contributor availability.
 
-## Current — v2.1.0 (Stable)
+## Current — v3.0.1 (Stable)
 
 ✅ 85+ security plugins with 2026-grade intelligence
-✅ JSON + Markdown report generation
+✅ JSON + Markdown + **PDF** report generation
 ✅ Cinematic terminal UX with TTY detection
 ✅ `--quiet` mode for CI/CD integration
 ✅ Comprehensive installer with 15+ edge case checks
 ✅ Full open-source governance (CITATION, FUNDING, CODEOWNERS)
+✅ **Plugin API v2** — Standardized return schema with CVSS v4.0 scoring
+✅ **SARIF v2.1.0 output** — IDE + CI/CD integration (GitHub, VSCode, Azure DevOps)
+✅ **Pytest test suite** — 211 tests (plugin discovery, schema validation, silent failure coverage)
+✅ **Docker multi-stage image** — Go tools (nuclei, subfinder, katana) + system tools (nmap, nikto)
+✅ **Scan profiles (YAML)** — Pre-configured profiles: web, api, cloud, network, full
+✅ **Python 3.10+ baseline** — Modern type syntax, TaskGroup readiness
+✅ **Silent failure hardening** — `SILENT_ERROR` reporting across all critical plugins
+✅ **Manual dependency control** — No automated dependency bots (supply chain security)
 
-## Short-Term — v2.2.0 (Q2 2026)
-
-- [ ] **Plugin API v2** — Standardized return schema with CVSS scoring
-- [ ] **SARIF output** — Static Analysis Results Interchange Format for IDE integration
-- [ ] **Plugin test suite** — Pytest framework for individual plugin validation
-- [ ] **Docker image** — Official `ghcr.io/glferreira-devsecops/cascavel` container
-- [ ] **Man page** — `man cascavel` via `setup.py` / `pyproject.toml`
-- [ ] **Internationalization (i18n)** — English plugin output (Portuguese kept as default)
-
-## Medium-Term — v3.0.0 (Q4 2026)
+## Short-Term — v3.1.0 (Q3 2026)
 
 - [ ] **Async plugin engine** — `asyncio`-based execution for 3-5x speed improvement
+- [ ] **Man page** — `man cascavel` via `pyproject.toml`
+- [ ] **Internationalization (i18n)** — English plugin output (Portuguese kept as default)
+- [ ] **Official Docker registry** — `ghcr.io/glferreira-devsecops/cascavel` published image
+- [ ] **Plugin migration** — Convert top 20 critical plugins to `PluginResult` schema
+- [ ] **CLI --sarif/--profile integration tests** — E2E validation in CI pipeline
+
+## Medium-Term — v4.0.0 (Q1 2027)
+
 - [ ] **Plugin marketplace** — Community-submitted plugins via separate repo
 - [ ] **API mode** — REST API server (`cascavel --serve`) for integration with SOAR platforms
-- [ ] **Custom scan profiles** — YAML-based target profiles (web, api, cloud, network)
 - [ ] **SBOM generation** — Software Bill of Materials based on scan results
 - [ ] **GitHub App** — One-click security audit from PR comments
 

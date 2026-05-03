@@ -141,15 +141,26 @@ def run(target, ip, open_ports, banners):
         # Check CNAME dangling first
         cname, is_dangling = _check_cname_dangling(sub)
         if is_dangling:
-            takeover.append(
-                {
-                    "subdominio": sub,
-                    "cname": cname,
-                    "indicador": "CNAME_DANGLING",
-                    "severidade": "CRITICO",
-                    "descricao": f"CNAME {cname} não resolve — subdomain takeover confirmado!",
-                }
-            )
+            if isinstance(is_dangling, str):
+                takeover.append(
+                    {
+                        "subdominio": sub,
+                        "cname": cname,
+                        "indicador": "CNAME_ERROR",
+                        "severidade": "INFO",
+                        "descricao": is_dangling,
+                    }
+                )
+            else:
+                takeover.append(
+                    {
+                        "subdominio": sub,
+                        "cname": cname,
+                        "indicador": "CNAME_DANGLING",
+                        "severidade": "CRITICO",
+                        "descricao": f"CNAME {cname} não resolve — subdomain takeover confirmado!",
+                    }
+                )
             continue
 
         # HTTP check
@@ -180,8 +191,15 @@ def run(target, ip, open_ports, banners):
                     "descricao": "Subdomínio unreachable — verificar CNAME manualmente",
                 }
             )
-        except Exception:
-            pass
+        except Exception as e:
+            takeover.append(
+                {
+                    "subdominio": sub,
+                    "indicador": "SILENT_ERROR",
+                    "severidade": "INFO",
+                    "descricao": f"Falha ao checar takeover: {str(e)}",
+                }
+            )
 
     return {
         "plugin": "subdomain_takeou",

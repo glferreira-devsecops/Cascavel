@@ -1,0 +1,12 @@
+# ═══════════════════════════════════════════════════════════════
+# Cascavel v3.0.0 — Full Scan Profile
+# All 84 plugins — maximum coverage
+# ═══════════════════════════════════════════════════════════════
+
+name: "Full Scan"
+description: "Maximum coverage scan using all available plugins. Use for comprehensive security audits."
+category: "full"
+
+# Special flag: load ALL plugins from the plugins/ directory
+# instead of a static list (future-proof for new plugins)
+all_plugins: true

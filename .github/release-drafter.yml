@@ -47,6 +47,15 @@ categories:
     labels:
       - 'deprecated'
 
+  - title: '🐳 Docker'
+    labels:
+      - 'docker'
+
+  - title: '🔌 Plugins'
+    labels:
+      - 'plugin'
+      - 'plugins'
+
 change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
 change-title-escapes: '\<*_&'
 

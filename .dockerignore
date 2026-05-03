@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+venv
+.venv
+.ruff_cache
+.mypy_cache
+.pytest_cache
+.pyre_configuration
+
+# Reports (mount as volume instead)
+reports/
+exports/
+
+# Tests (not needed in runtime)
+tests/
+stubs/
+.clusterfuzzlite
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs (not needed in runtime)
+docs/
+en/
+*.md
+LICENSE
+CITATION.cff
+
+# Makefile / pre-commit (dev only)
+Makefile
+.pre-commit-config.yaml
+.editorconfig
+.gitattributes
+AUTHORS
