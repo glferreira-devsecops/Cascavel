@@ -255,7 +255,7 @@ def _test_content_type_bypass(target, endpoint):
         "text/plain",
         "application/x-www-form-urlencoded",
     ]
-    for payload, ct in zip(payloads_str, content_types):
+    for payload, ct in zip(payloads_str, content_types, strict=False):
         try:
             resp = requests.post(
                 f"http://{target}{endpoint}",

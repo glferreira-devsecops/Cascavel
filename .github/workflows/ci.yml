@@ -1,5 +1,6 @@
-# Cascavel CI — Lint + Format + Compile + Tests + Release Drafter
+# Cascavel CI — Lint + Format + Compile + Tests + Security + Docker + Release
 # RET Tecnologia | https://rettecnologia.org
+# v3.0.0 — Full pipeline coverage
 
 name: CI
 
@@ -32,23 +33,26 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run ruff check
-        run: ruff check cascavel.py report_generator.py plugins/ --output-format=github
+        run: ruff check cascavel.py sarif_exporter.py report_generator.py plugins/ tests/ --output-format=github
 
       - name: Run ruff format check
-        run: ruff format --check cascavel.py report_generator.py plugins/
+        run: ruff format --check cascavel.py sarif_exporter.py report_generator.py plugins/ tests/
 
   compile:
     name: 🐍 Compile Check
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
       - name: Install dependencies
@@ -57,51 +61,53 @@ jobs:
       - name: Compile all Python files
         run: |
           python -m py_compile cascavel.py
+          python -m py_compile sarif_exporter.py
           python -m py_compile report_generator.py
           find plugins/ -name "*.py" -exec python -m py_compile {} \;
-          echo "✅ All Python files compiled successfully"
+          find tests/ -name "*.py" -exec python -m py_compile {} \;
+          echo "✅ All Python files compiled on ${{ matrix.python-version }}"
 
   test:
-    name: 🧪 Tests
+    name: 🧪 Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest==8.3.5
+          pip install pytest==8.3.5 pytest-cov==5.0.0
 
-      - name: Run tests
+      - name: Run Pytest suite
         run: |
-          python -m pytest tests/ -v --tb=short 2>/dev/null || \
-          python -c "
-          import importlib, sys, os
-          # Smoke tests: verify all core modules import correctly
-          modules = ['cascavel', 'report_generator']
-          failed = []
-          for mod in modules:
-              try:
-                  importlib.import_module(mod)
-                  print(f'  ✅ {mod} imported successfully')
-              except Exception as e:
-                  print(f'  ❌ {mod} failed: {e}')
-                  failed.append(mod)
-          # Verify plugin count
-          plugins = [f for f in os.listdir('plugins') if f.endswith('.py') and not f.startswith('__')]
-          print(f'  ✅ {len(plugins)} plugins discovered')
-          if failed:
-              sys.exit(1)
-          print('✅ All smoke tests passed')
-          "
+          python -m pytest tests/ -v --tb=short \
+            --cov=cascavel \
+            --cov=sarif_exporter \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --junitxml=test-results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-results-py${{ matrix.python-version }}
+          path: |
+            test-results.xml
+            coverage.xml
+          if-no-files-found: ignore
 
   security:
     name: 🔒 Security (Bandit)
@@ -122,7 +128,7 @@ jobs:
 
       - name: Run bandit
         run: |
-          bandit -r cascavel.py report_generator.py plugins/ \
+          bandit -r cascavel.py sarif_exporter.py report_generator.py plugins/ \
             -c pyproject.toml \
             --severity-level medium \
             --confidence-level medium \
@@ -136,6 +142,169 @@ jobs:
           name: bandit-security-report
           path: bandit-report.json
           if-no-files-found: ignore
+
+  docker:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198e362a7d2c83 # v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: cascavel:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify Docker image
+        run: |
+          docker run --rm cascavel:ci-${{ github.sha }} --help
+          echo "✅ Docker image built and verified"
+
+      - name: Docker image size
+        run: |
+          docker images cascavel:ci-${{ github.sha }} --format '{{.Size}}'
+
+  profiles:
+    name: 📋 Validate Profiles
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install PyYAML
+        run: pip install pyyaml>=6.0.1
+
+      - name: Validate all YAML profiles
+        run: |
+          python3 -c "
+          import yaml, os, sys, glob
+
+          profiles_dir = 'profiles'
+          required = ['web.yaml', 'api.yaml', 'cloud.yaml', 'network.yaml', 'full.yaml']
+          plugins_dir = 'plugins'
+
+          # Discover available plugins
+          available = {
+              os.path.splitext(f)[0]
+              for f in os.listdir(plugins_dir)
+              if f.endswith('.py') and not f.startswith('__') and f != 'schema.py'
+          }
+          print(f'📦 {len(available)} plugins available')
+
+          errors = []
+          for fname in required:
+              path = os.path.join(profiles_dir, fname)
+              if not os.path.isfile(path):
+                  errors.append(f'MISSING: {fname}')
+                  continue
+
+              with open(path) as f:
+                  data = yaml.safe_load(f)
+
+              if not isinstance(data, dict):
+                  errors.append(f'INVALID: {fname} is not a dict')
+                  continue
+
+              if 'name' not in data:
+                  errors.append(f'SCHEMA: {fname} missing name field')
+
+              # full.yaml uses all_plugins: true
+              if data.get('all_plugins'):
+                  print(f'  ✅ {fname}: all_plugins=true (dynamic)')
+                  continue
+
+              plugins = data.get('plugins', [])
+              if not plugins:
+                  errors.append(f'EMPTY: {fname} has no plugins listed')
+                  continue
+
+              # Check for non-existent plugins
+              missing = [p for p in plugins if p not in available]
+              if missing:
+                  errors.append(f'ORPHAN: {fname} references non-existent plugins: {missing}')
+
+              print(f'  ✅ {fname}: {len(plugins)} plugins, {len(missing)} orphaned')
+
+          if errors:
+              print('\\n❌ ERRORS:')
+              for e in errors:
+                  print(f'  - {e}')
+              sys.exit(1)
+
+          print('\\n✅ All profiles validated successfully')
+          "
+
+  sarif-test:
+    name: 📄 SARIF Output Validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate SARIF output schema
+        run: |
+          python3 -c "
+          import json, sys, tempfile, os
+          sys.path.insert(0, '.')
+          from sarif_exporter import export_sarif
+
+          # Generate test SARIF
+          results = [
+              {'plugin': 'test_ci', 'severity': 'HIGH', 'title': 'CI Test', 'findings': [{'detail': 'test'}]},
+              {'plugin': 'test_ci_low', 'severity': 'LOW', 'title': 'Low Finding', 'description': 'desc'},
+              {'plugin': 'test_error', 'erro': 'Timeout'},
+          ]
+
+          with tempfile.TemporaryDirectory() as tmpdir:
+              path = export_sarif('ci-test.example.com', '127.0.0.1', results, 5.0, output_dir=tmpdir)
+
+              with open(path) as f:
+                  sarif = json.load(f)
+
+              # SARIF v2.1.0 spec compliance checks
+              assert sarif['version'] == '2.1.0', 'Wrong SARIF version'
+              assert '\$schema' in sarif, 'Missing schema URI'
+              assert len(sarif['runs']) == 1, 'Expected exactly 1 run'
+
+              run = sarif['runs'][0]
+              assert run['tool']['driver']['name'] == 'Cascavel', 'Wrong tool name'
+              assert 'version' in run['tool']['driver'], 'Missing tool version'
+              assert 'invocations' in run, 'Missing invocations'
+              assert 'results' in run, 'Missing results'
+
+              # Error results should be filtered out
+              result_plugins = [r['ruleId'] for r in run['results']]
+              assert 'test_error' not in result_plugins, 'Error results should be excluded'
+
+              print(f'✅ SARIF validation passed: {len(run[\"results\"])} results, schema compliant')
+          "
 
   release-drafter:
     name: 📋 Draft Release
