@@ -36,19 +36,26 @@ LABEL org.opencontainers.image.version="3.0.0"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.vendor="RET Tecnologia"
 
-# System dependencies for nmap, nikto, traceroute, whois
+# System dependencies for nmap, traceroute, whois + nikto from source
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         nmap \
-        nikto \
         traceroute \
         whois \
         dnsutils \
         curl \
+        git \
+        perl \
+        libnet-ssleay-perl \
         libpcap-dev \
         ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Nikto from official source (not available in Debian Trixie repos)
+RUN git clone --depth 1 https://github.com/sullo/nikto.git /opt/nikto && \
+    ln -s /opt/nikto/program/nikto.pl /usr/local/bin/nikto && \
+    chmod +x /opt/nikto/program/nikto.pl
 
 # Copy Go binaries from builder stage
 COPY --from=go-builder /go/bin/ /usr/local/bin/
