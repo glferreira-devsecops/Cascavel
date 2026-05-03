@@ -11,12 +11,14 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # ── Stage 1: Go tools builder ────────────────────────────────────────────────
-FROM golang:1.22-alpine AS go-builder
+FROM golang:1.22-bookworm AS go-builder
 
-RUN apk add --no-cache git
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    libpcap-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Go-based security tools statically
-ENV CGO_ENABLED=0
+# Install Go-based security tools
 RUN go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
     go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest && \
