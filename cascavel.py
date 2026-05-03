@@ -411,7 +411,7 @@ def _clear_block(num_lines: int) -> None:
         pass  # Silencia erros em terminais incompatíveis
 
 
-def run_preloader(plugin_count: int, tools_count: int, *, target_hint: Optional[str] = None) -> None:
+def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
     """Preloader cinematográfico Awwwards-level com logo fade.
 
     SEGURANÇA UX: Todo o preloader é wrapped em try/except para que
@@ -430,7 +430,7 @@ def run_preloader(plugin_count: int, tools_count: int, *, target_hint: Optional[
         console.print(f"  [dim]Preloader desativado: {type(e).__name__}[/]\n")
 
 
-def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: Optional[str] = None) -> None:
+def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
     """Implementação interna do preloader — isolada para try/except."""
     os_name = f"{platform.system()} {platform.release()}"
     py_ver = f"{sys.version.split()[0]}"
