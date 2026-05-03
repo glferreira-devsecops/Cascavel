@@ -11,7 +11,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # ── Stage 1: Go tools builder ────────────────────────────────────────────────
-FROM golang:1.22-bookworm AS go-builder
+FROM golang:1.24-bookworm AS go-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
