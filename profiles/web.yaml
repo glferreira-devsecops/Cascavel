@@ -1,0 +1,74 @@
+# ═══════════════════════════════════════════════════════════════
+# Cascavel v3.0.0 — Web Application Scan Profile
+# Focus: OWASP Top 10, injection, auth, client-side
+# ═══════════════════════════════════════════════════════════════
+
+name: "Web Application"
+description: "Full web application security assessment targeting OWASP Top 10 2021 vectors"
+category: "web"
+
+plugins:
+  # A01:2021 — Broken Access Control
+  - idor_scanner
+  - cors_checker
+  - open_redirect
+  - path_traversal
+
+  # A02:2021 — Cryptographic Failures
+  - ssl_check
+  - secrets_scraper
+
+  # A03:2021 — Injection
+  - xss_scanner
+  - sqli_scanner
+  - nosql_scanner
+  - ssti_scanner
+  - crlf_scanner
+  - graphql_injection
+  - xxe_scanner
+  - lfi_scanner
+  - rce_scanner
+  - blind_rce
+
+  # A04:2021 — Insecure Design
+  - race_condition
+  - mass_assignment
+
+  # A05:2021 — Security Misconfiguration
+  - clickjacking_check
+  - http_methods
+  - info_disclosure
+  - csp_bypass
+  - host_header_injection
+
+  # A06:2021 — Vulnerable Components
+  - tech_fingerprint
+  - js_analyzer
+  - cve_2021_44228_scanner
+
+  # A07:2021 — Auth Failures
+  - jwt_analyzer
+  - oauth_scanner
+  - session_fixation
+  - password_policy
+  - csrf_detector
+  - saml_scanner
+
+  # A08:2021 — Software Integrity
+  - prototype_pollution
+  - deserialization_scan
+
+  # A09:2021 — Logging & Monitoring
+  - rate_limit_check
+  - waf_detec
+
+  # A10:2021 — SSRF
+  - ssrf_scanner
+
+  # Supplementary
+  - websocket_scanner
+  - web_cache_poison
+  - http_smuggling
+  - http2_smuggle
+  - param_miner
+  - waf_bypass

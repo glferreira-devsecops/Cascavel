@@ -1,0 +1,49 @@
+# ═══════════════════════════════════════════════════════════════
+# Cascavel v3.0.0 — API Security Scan Profile
+# Focus: REST/GraphQL, auth bypass, data exposure
+# ═══════════════════════════════════════════════════════════════
+
+name: "API Security"
+description: "API-focused security assessment for REST, GraphQL, and gRPC endpoints"
+category: "api"
+
+plugins:
+  # Discovery & Enumeration
+  - api_enum
+  - api_versioning
+  - graphql_probe
+  - grpc_scanner
+
+  # Injection
+  - sqli_scanner
+  - nosql_scanner
+  - graphql_injection
+  - xxe_scanner
+  - ssti_scanner
+  - blind_rce
+
+  # Auth & Access Control
+  - jwt_analyzer
+  - oauth_scanner
+  - idor_scanner
+  - cors_checker
+  - session_fixation
+
+  # Business Logic
+  - race_condition
+  - mass_assignment
+  - rate_limit_check
+
+  # Transport Security
+  - ssl_check
+  - ssrf_scanner
+  - http_smuggling
+  - http2_smuggle
+
+  # Data Exposure
+  - info_disclosure
+  - secrets_scraper
+  - param_miner
+
+  # Deserialization
+  - deserialization_scan

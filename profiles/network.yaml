@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════════════
+# Cascavel v3.0.0 — Network Security Scan Profile
+# Focus: Ports, services, protocols, lateral movement
+# ═══════════════════════════════════════════════════════════════
+
+name: "Network Security"
+description: "Network-level security assessment targeting services, protocols, and infrastructure"
+category: "network"
+
+plugins:
+  # Network Mapping
+  - network_mapper
+  - nmap_advanc
+  - traceroute_mapper
+
+  # DNS
+  - dns_deep
+  - dns_rebinding
+  - domain_transf
+
+  # Service Brute Force
+  - ssh_brute
+  - ftp_brute
+
+  # Service Exposure
+  - elastic_exposure
+  - mongodb_unauth
+  - redis_unauth
+  - docker_exposure
+  - k8s_exposure
+  - smb_ad
+
+  # Email Security
+  - email_harvester
+  - email_spoof_check
+  - smpt_enum
+
+  # TLS/SSL
+  - ssl_check
+  - heartbleed_scanner
+
+  # Recon
+  - whois_recon
+  - shodan_recon
+  - subdomain_hunter
+  - subdomain_takeou
+
+  # WAF
+  - waf_detec
+  - waf_bypass
