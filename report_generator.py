@@ -98,7 +98,7 @@ FONT_BOLD = "Helvetica-Bold"
 FONT_REG = "Helvetica"
 FONT_MONO = "Courier"
 
-VERSION = "3.0.0"
+VERSION = "3.0.1"
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_PATH, "docs", "cascavel_logo.png")
 
