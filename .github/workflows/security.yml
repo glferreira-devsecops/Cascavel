@@ -26,7 +26,10 @@ jobs:
       - name: Compile check (all .py files)
         run: |
           python -m py_compile cascavel.py
+          python -m py_compile sarif_exporter.py
+          python -m py_compile report_generator.py
           find plugins/ -name "*.py" -exec python -m py_compile {} \;
+          find tests/ -name "*.py" ! -name "fuzz_*" -exec python -m py_compile {} \;
           echo "✓ All files compiled successfully"
 
   bandit:
@@ -43,13 +46,13 @@ jobs:
       - run: pip install "bandit[sarif]==1.9.4"
       - name: Run Bandit scan
         run: |
-          bandit -r cascavel.py report_generator.py plugins/ \
+          bandit -r cascavel.py sarif_exporter.py report_generator.py plugins/ \
             -c pyproject.toml \
             -f sarif \
             -o bandit-results.sarif \
             --severity-level medium \
             --confidence-level medium \
-            -x "**/test_*"
+            -x "**/test_*,**/fuzz_*"
       - name: Upload Bandit SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v4

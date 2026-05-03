@@ -35,3 +35,19 @@ updates:
       - "ci/cd"
       - "automated"
     open-pull-requests-limit: 5
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "docker"
+      - "automated"
+    open-pull-requests-limit: 3

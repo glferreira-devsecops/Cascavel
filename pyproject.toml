@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cascavel"
-version = "2.1.0"
+version = "3.0.0"
 description = "Quantum Security Framework by RET Tecnologia — Pentest automation with 85+ plugins, Red Team 2026 intelligence"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     {name = "Gabriel Ferreira (DevFerreiraG)", email = "devferreirag@proton.me"},
 ]
@@ -29,7 +29,7 @@ keywords = [
     "automation",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Framework :: Pytest",
     "Intended Audience :: Developers",
@@ -57,6 +57,7 @@ dependencies = [
     "requests>=2.31.0",
     "rich>=13.7.0",
     "pyfiglet>=1.0.2",
+    "pyyaml>=6.0.1",
 ]
 
 [project.optional-dependencies]
@@ -78,6 +79,8 @@ dev = [
     "pip-audit>=2.7.0",
     "ruff>=0.3.0",
     "mypy>=1.8.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
 ]
 
 [project.urls]
@@ -93,10 +96,10 @@ Changelog = "https://github.com/glferreira-devsecops/Cascavel/blob/main/CHANGELO
 cascavel = "cascavel:main"
 
 [tool.setuptools]
-py-modules = ["cascavel"]
+py-modules = ["cascavel", "sarif_exporter"]
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 line-length = 120
 
 [tool.ruff.lint]
@@ -129,6 +132,8 @@ skips = [
     # Each skip mirrors the ruff ignores above with Bandit equivalents.
     "B101",   # assert_used — internal invariants in plugin loader
     "B104",   # hardcoded_bind_all_interfaces — checks if target binds 0.0.0.0
+    "B105",   # hardcoded_password_string — intentionally testing default credentials
+
     "B110",   # try_except_pass — graceful recon failure (85 plugins)
     "B112",   # try_except_continue — resilient enumeration loops
     "B113",   # request_without_timeout — some probes need long waits
@@ -136,9 +141,10 @@ skips = [
     "B310",   # urllib_urlopen — URL probing during recon
     "B311",   # random — non-crypto randomization for payloads/jitter
     "B314",   # xml_bad_etree — XXE testing requires raw XML parsing
-    "B320",   # xml_bad_sax — XXE/SAML scanner plugin
     "B321",   # ftplib — FTP brute force plugin
     "B402",   # import_ftplib — FTP brute force plugin needs ftplib
+    "B404",   # blacklist — subprocess module is needed to orchestrate external tools
+    "B405",   # blacklist — xml.etree needed for nmap xml parsing
     "B501",   # request_with_no_cert_validation — TLS bypass for testing
     "B507",   # ssh_no_host_key_verification — SSH brute force plugin
     "B601",   # paramiko_calls — SSH brute force plugin
@@ -147,10 +153,21 @@ skips = [
     "B604",   # any_other_function_with_shell_equals_true — shell pipelines
     "B607",   # start_process_with_partial_path — system tool invocation
     "B608",   # hardcoded_sql_expressions — SQLi payload generation
+
 ]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytest.PytestConfigWarning",
+]

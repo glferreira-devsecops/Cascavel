@@ -28,9 +28,9 @@ import sys
 import time
 import unicodedata
 import urllib.request
-from typing import Any, Dict, List, NoReturn, Optional, Tuple
+from typing import Any, NoReturn
 
-__version__ = "2.2.0"
+__version__ = "3.0.0"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ANSI ESCAPE SANITIZER — Anti-Terminal Injection (2026 Vector)
@@ -111,7 +111,7 @@ if hasattr(signal, "SIGPIPE"):
 
 
 def _check_deps() -> None:
-    missing: List[str] = []
+    missing: list[str] = []
     for lib in REQUIRED_LIBS:
         try:
             importlib.import_module(lib)
@@ -609,7 +609,7 @@ def print_target_card(target: str, ip: str) -> None:
     console.print()
 
 
-def print_tools_status(tools: Dict[str, bool]) -> None:
+def print_tools_status(tools: dict[str, bool]) -> None:
     present = sorted(t for t, v in tools.items() if v)
     absent = sorted(t for t, v in tools.items() if not v)
 
@@ -663,7 +663,7 @@ _CLOUD_METADATA_HOSTS = {
 }
 
 
-def _normalize_ip_representation(host: str) -> Optional[str]:
+def _normalize_ip_representation(host: str) -> str | None:
     """Normaliza representações alternativas de IP para detecção de bypass.
 
     SEGURANÇA 2026: Atacantes usam formatos alternativos para evitar blocklists:
@@ -700,7 +700,7 @@ def _normalize_ip_representation(host: str) -> Optional[str]:
         parts = host.split(".")
         if all(p.startswith("0") and len(p) > 1 and p.isdigit() for p in parts if p):
             try:
-                decimal_parts: List[str] = []
+                decimal_parts: list[str] = []
                 for p in parts:
                     octal_val = int(p, 8)  # Explicit base-8 conversion
                     decimal_parts.append(str(octal_val))
@@ -719,7 +719,7 @@ def _normalize_ip_representation(host: str) -> Optional[str]:
     return None
 
 
-def _is_blocked_ip(ip_str: str) -> Tuple[bool, str]:
+def _is_blocked_ip(ip_str: str) -> tuple[bool, str]:
     """Verifica se um IP é privado/reservado/loopback/link-local/multicast.
 
     Retorna (is_blocked, reason). Usa ipaddress nativo do Python que cobre:
@@ -751,7 +751,7 @@ def _is_blocked_ip(ip_str: str) -> Tuple[bool, str]:
 
     # IPv4-mapped IPv6 (::ffff:127.0.0.1)
     if isinstance(addr, ipaddress.IPv6Address):
-        mapped: Optional[ipaddress.IPv4Address] = addr.ipv4_mapped
+        mapped: ipaddress.IPv4Address | None = addr.ipv4_mapped
         if mapped is not None:
             if mapped.is_loopback or mapped.is_private or mapped.is_link_local:
                 return True, f"IPv4-mapped IPv6 → {mapped}"
@@ -759,7 +759,7 @@ def _is_blocked_ip(ip_str: str) -> Tuple[bool, str]:
     return False, ""
 
 
-def _detect_idna_homograph(host: str) -> Optional[str]:
+def _detect_idna_homograph(host: str) -> str | None:
     """Detecta domínios com Punycode (xn--) que podem ser homograph attacks.
 
     SEGURANÇA 2026: Atacantes registram domínios com caracteres Unicode
@@ -818,7 +818,7 @@ def validate_target(target: str, allow_self: bool = False) -> str:
 
     # Strip userinfo (user:pass@host — URL injection vector)
     if "@" in target:
-        at_parts: List[str] = target.split("@")
+        at_parts: list[str] = target.split("@")
         target = at_parts[-1]
 
     # Strip path, query, fragment
@@ -910,7 +910,7 @@ def validate_target(target: str, allow_self: bool = False) -> str:
                         return ""
             finally:
                 socket.setdefaulttimeout(old_timeout)
-        except (socket.gaierror, socket.timeout, OSError):
+        except (TimeoutError, socket.gaierror, OSError):
             # DNS failed — target may not exist, but let the scan handle it
             console.print(f"  [{S_YELLOW}]⚠ DNS não resolveu {host_part} — continuando mesmo assim.[/]")
 
@@ -1044,7 +1044,7 @@ def _preflight_check() -> bool:
         socket.setdefaulttimeout(3)
         socket.getaddrinfo("dns.google", None)
         dns_ok = True
-    except (socket.gaierror, socket.timeout, OSError):
+    except (TimeoutError, socket.gaierror, OSError):
         pass
     finally:
         socket.setdefaulttimeout(None)
@@ -1102,7 +1102,7 @@ def _preflight_check() -> bool:
 # ═══════════════════════════════════════════════════════════════════════════════
 # FERRAMENTAS & INFRA
 # ═══════════════════════════════════════════════════════════════════════════════
-def _check_single_tool(tool: str) -> Tuple[str, bool, str]:
+def _check_single_tool(tool: str) -> tuple[str, bool, str]:
     """Verifica uma ferramenta e retorna (nome, disponível, versão)."""
     path = shutil.which(tool)
     if not path:
@@ -1126,7 +1126,7 @@ def _check_single_tool(tool: str) -> Tuple[str, bool, str]:
     return (tool, True, version)
 
 
-def detect_tools() -> Dict[str, bool]:
+def detect_tools() -> dict[str, bool]:
     """Detecta ferramentas externas em paralelo com ThreadPoolExecutor.
 
     ~30 tools verificadas em ~3s (paralelo) vs ~15s (serial).
@@ -1166,7 +1166,7 @@ def detect_tools() -> Dict[str, bool]:
     return {tool: shutil.which(tool) is not None for tool in tools}
 
 
-def detect_tools_with_versions() -> Dict[str, Tuple[bool, str]]:
+def detect_tools_with_versions() -> dict[str, tuple[bool, str]]:
     """Versão estendida: retorna {tool: (disponível, versão)} em paralelo."""
     tools = [
         "subfinder",
@@ -1289,8 +1289,8 @@ def detect_ip(target: str) -> str:
             addrs = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
             if addrs:
                 # Prefer IPv4 for display, fallback to IPv6
-                ipv4: List[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET]
-                ipv6: List[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET6]
+                ipv4: list[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET]
+                ipv6: list[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET6]
                 if ipv4:
                     return ipv4[0]
                 if ipv6:
@@ -1298,7 +1298,7 @@ def detect_ip(target: str) -> str:
                 return "N/A"
         finally:
             socket.setdefaulttimeout(old_timeout)
-    except (socket.gaierror, socket.timeout, OSError):
+    except (TimeoutError, socket.gaierror, OSError):
         pass
     return "N/A"
 
@@ -1377,8 +1377,8 @@ def _stderr_log(tool_name: str, stderr_content: str) -> None:
                 f.write(f"--- LOG ROTATED {datetime.datetime.now().isoformat()} ---\n")
         with open(log_path, "a", encoding="utf-8") as f:
             ts = datetime.datetime.now().strftime("%H:%M:%S")
-            stderr_lines: List[str] = stderr_content.split("\n")
-            first_ten: List[str] = stderr_lines if len(stderr_lines) <= 10 else [stderr_lines[i] for i in range(10)]
+            stderr_lines: list[str] = stderr_content.split("\n")
+            first_ten: list[str] = stderr_lines if len(stderr_lines) <= 10 else [stderr_lines[i] for i in range(10)]
             for line in first_ten:  # Max 10 linhas por tool
                 f.write(f"[{ts}] [{tool_name}] {line}\n")
     except (PermissionError, OSError):
@@ -1390,13 +1390,13 @@ def _stderr_log(tool_name: str, stderr_content: str) -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 def enum_tools(
     target: str,
-    report: List[str],
+    report: list[str],
     wordlist: str,
     nuclei_templates: str,
-    timeouts: Dict[str, int],
-    available: Dict[str, bool],
-) -> Dict[str, Any]:
-    results: Dict[str, Any] = {}
+    timeouts: dict[str, int],
+    available: dict[str, bool],
+) -> dict[str, Any]:
+    results: dict[str, Any] = {}
     safe = shlex.quote(target)
     tools = {
         "whois": f"whois {safe}",
@@ -1451,7 +1451,7 @@ def enum_tools(
 # ═══════════════════════════════════════════════════════════════════════════════
 # SCAN DE PORTAS
 # ═══════════════════════════════════════════════════════════════════════════════
-def _parse_port(line: str) -> Optional[int]:
+def _parse_port(line: str) -> int | None:
     raw = line.strip().split(":")[-1] if ":" in line.strip() else line.strip()
     try:
         port = int(raw)
@@ -1460,7 +1460,7 @@ def _parse_port(line: str) -> Optional[int]:
         return None
 
 
-def scan_ports(naabu_out: str) -> List[int]:
+def scan_ports(naabu_out: str) -> list[int]:
     ports = []
     for line in naabu_out.splitlines():
         port = _parse_port(line)
@@ -1469,15 +1469,15 @@ def scan_ports(naabu_out: str) -> List[int]:
     return sorted(set(ports))
 
 
-def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, str]:
+def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, str]:
     """Grab banners dos primeiros 20 ports abertos com recv loop."""
-    banners: Dict[int, str] = {}
+    banners: dict[int, str] = {}
     # Strip port from target if present (host:port -> host)
     host = target.split(":")[0] if ":" in target else target
     # Detecção de família: IPv6 literal usa AF_INET6
     _is_ipv6 = ":" in host
     _af = socket.AF_INET6 if _is_ipv6 else socket.AF_INET
-    scan_ports_list: List[int] = [ports[i] for i in range(min(20, len(ports)))]
+    scan_ports_list: list[int] = [ports[i] for i in range(min(20, len(ports)))]
     for port in scan_ports_list:
         s = None
         try:
@@ -1495,11 +1495,11 @@ def grab_banners(target: str, ports: List[int], timeout: int = 3) -> Dict[int, s
                         break
                     chunks.append(chunk)
                     total += len(chunk)
-                except (socket.timeout, OSError):
+                except (TimeoutError, OSError):
                     break
             raw_banner: str = b"".join(chunks).decode(errors="ignore").strip()
             banners[port] = raw_banner if len(raw_banner) <= 512 else "".join([raw_banner[i] for i in range(512)])
-        except (socket.timeout, ConnectionRefusedError, OSError):
+        except (TimeoutError, ConnectionRefusedError, OSError):
             banners[port] = "N/A"
         except Exception:
             banners[port] = "N/A"
@@ -1524,10 +1524,10 @@ def _exec_plugin(
     name: str,
     target: str,
     ip: str,
-    ports: List[int],
-    banners: Dict[int, str],
+    ports: list[int],
+    banners: dict[int, str],
     timeout: int = 120,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Executa um plugin com timeout guard (SIGALRM, 120s padrão).
 
     SEGURANÇA 2026: Plugins maliciosos ou bugados podem travar indefinidamente.
@@ -1535,7 +1535,7 @@ def _exec_plugin(
     """
     import importlib.machinery as _ilm
 
-    spec: Optional[_ilm.ModuleSpec] = importlib.util.spec_from_file_location(name, path)
+    spec: _ilm.ModuleSpec | None = importlib.util.spec_from_file_location(name, path)
     if spec is None:
         return {"plugin": name, "erro": "Módulo não resolvido"}
     loader = spec.loader
@@ -1582,7 +1582,7 @@ def _exec_plugin(
     return {"plugin": name, "erro": "Execução inesperada"}
 
 
-def _classify(result: Dict[str, Any]) -> tuple:
+def _classify(result: dict[str, Any]) -> tuple:
     """Classifica resultado de plugin como vuln, erro, deprecated ou limpo."""
     if "erro" in result:
         return "erro", S_RED, "✗"
@@ -1610,9 +1610,9 @@ def _classify(result: Dict[str, Any]) -> tuple:
     return "limpo", "green", "✓"
 
 
-def _count_sev(resultados: Any) -> Dict[str, int]:
-    counts: Dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
-    vulns: List[Any] = []
+def _count_sev(resultados: Any) -> dict[str, int]:
+    counts: dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
+    vulns: list[Any] = []
     if isinstance(resultados, list):
         vulns = list(resultados)
     elif isinstance(resultados, dict):
@@ -1632,7 +1632,7 @@ def _count_sev(resultados: Any) -> Dict[str, int]:
     return counts
 
 
-def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: float) -> Panel:
+def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: float) -> Panel:
     """Constrói painel lateral de Security Intel para retenção de atenção.
 
     Protege contra lista vazia e índices fora de range.
@@ -1683,18 +1683,30 @@ def _build_intel_panel(intel_idx: int, scan_stats: Dict[str, int], elapsed: floa
 def run_plugins(
     target: str,
     ip: str,
-    ports: List[int],
-    banners: Dict[int, str],
-    report: List[str],
-) -> List[Dict[str, Any]]:
-    """Executa todos os plugins com split-screen: scan table + security intel."""
-    results: List[Dict[str, Any]] = []
+    ports: list[int],
+    banners: dict[int, str],
+    report: list[str],
+    plugin_filter: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Executa plugins com split-screen: scan table + security intel.
+
+    Args:
+        plugin_filter: If provided, only run plugins whose names are in this list.
+                       None means run all plugins (default behavior).
+    """
+    results: list[dict[str, Any]] = []
     plugin_files = sorted(glob.glob(os.path.join(PLUGINS_PATH, "*.py")))
     valid = [
-        (f, os.path.splitext(os.path.basename(f))[0]) for f in plugin_files if not os.path.basename(f).startswith("__")
+        (f, os.path.splitext(os.path.basename(f))[0])
+        for f in plugin_files
+        if not os.path.basename(f).startswith("__") and os.path.basename(f) != "schema.py"
     ]
+    # Apply profile filter if specified
+    if plugin_filter is not None:
+        filter_set = set(plugin_filter)
+        valid = [(f, n) for f, n in valid if n in filter_set]
     total = len(valid)
-    scan_stats: Dict[str, int] = {
+    scan_stats: dict[str, int] = {
         "ok": 0,
         "vuln": 0,
         "err": 0,
@@ -1812,7 +1824,7 @@ def run_plugins(
                     scan_stats["err"] = err_count + 1
                 elif cls == "vuln":
                     sevs = _count_sev(result.get("resultados", ""))
-                    parts: List[str] = []
+                    parts: list[str] = []
                     for sn, sc in sevs.items():
                         if sc > 0:
                             si = SEV_MAP.get(sn, (S_DIM, "○"))
@@ -1889,7 +1901,7 @@ def run_plugins(
 def print_dashboard(
     target: str,
     ip: str,
-    results: List[Dict[str, Any]],
+    results: list[dict[str, Any]],
     elapsed_total: float,
     report_path: str,
 ) -> None:
@@ -1899,7 +1911,7 @@ def print_dashboard(
     total_ok: int = 0
     total_vuln: int = 0
     total_err: int = 0
-    agg: Dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
+    agg: dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
 
     for r in results:
         cls, _, _ = _classify(r)
@@ -2155,7 +2167,7 @@ def post_scan_menu(report_path: str) -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # FEROXBUSTER
 # ═══════════════════════════════════════════════════════════════════════════════
-def run_feroxbuster(target: str, wordlist: str, available: Dict[str, bool]) -> List[Dict[str, Any]]:
+def run_feroxbuster(target: str, wordlist: str, available: dict[str, bool]) -> list[dict[str, Any]]:
     if not available.get("feroxbuster") or not wordlist:
         return [{"aviso": "feroxbuster/wordlist não disponível"}]
 
@@ -2203,7 +2215,7 @@ def _sanitize_for_json(obj: Any) -> Any:
 def save_json_report(
     target: str,
     ip: str,
-    plugin_results: List[Dict[str, Any]],
+    plugin_results: list[dict[str, Any]],
     elapsed: float,
 ) -> str:
     """Salva relatório em formato JSON estruturado com proteção contra surrogates."""
@@ -2259,7 +2271,7 @@ def list_plugins_table() -> None:
         try:
             import importlib.machinery as _ilm_p
 
-            spec_p: Optional[_ilm_p.ModuleSpec] = importlib.util.spec_from_file_location(name, fp)
+            spec_p: _ilm_p.ModuleSpec | None = importlib.util.spec_from_file_location(name, fp)
             if spec_p is None:
                 table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
                 continue
@@ -2341,11 +2353,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-o",
         "--output-format",
-        choices=["md", "json", "pdf"],
+        choices=["md", "json", "pdf", "sarif"],
         default="md",
-        help="Formato do relatório: md (padrão), json ou pdf",
+        help="Formato do relatório: md (padrão), json, pdf ou sarif",
     )
     parser.add_argument("--pdf", action="store_true", help="Gera relatório PDF profissional (equivalente a -o pdf)")
+    parser.add_argument("--sarif", action="store_true", help="Gera relatório SARIF v2.1.0 (equivalente a -o sarif)")
+    parser.add_argument(
+        "--profile",
+        choices=["web", "api", "cloud", "network", "full"],
+        default=None,
+        help="Perfil de scan pré-configurado (web, api, cloud, network, full)",
+    )
     parser.add_argument(
         "--install-global", action="store_true", help="Instala o Cascavel como comando global no sistema"
     )
@@ -2375,6 +2394,74 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 📋 SCAN PROFILES (YAML)
+# ═══════════════════════════════════════════════════════════════════════════════
+def _load_profile(profile_name: str) -> list[str] | None:
+    """Load a scan profile from profiles/ directory.
+
+    Returns:
+        List of plugin names to include, or None for all plugins.
+    """
+    profiles_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profiles")
+    profile_path = os.path.join(profiles_dir, f"{profile_name}.yaml")
+
+    if not os.path.isfile(profile_path):
+        console.print(f"  [{S_YELLOW}]⚠ Profile '{profile_name}' não encontrado. Usando todos os plugins.[/]")
+        return None
+
+    try:
+        import yaml  # type: ignore[import-untyped]
+    except ImportError:
+        # Fallback: parse YAML manually for simple lists
+        console.print(f"  [{S_DIM}]PyYAML não instalado, parsing manual do profile...[/]")
+        plugins: list[str] = []
+        with open(profile_path, encoding="utf-8") as f:
+            in_plugins = False
+            for line in f:
+                stripped = line.strip()
+                if stripped == "plugins:":
+                    in_plugins = True
+                    continue
+                if in_plugins:
+                    if stripped.startswith("- "):
+                        plugin_name = stripped[2:].strip()
+                        if plugin_name and not plugin_name.startswith("#"):
+                            plugins.append(plugin_name)
+                    elif stripped and not stripped.startswith("#"):
+                        in_plugins = False
+                if stripped == "all_plugins: true":
+                    return None
+        return plugins if plugins else None
+
+    with open(profile_path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    if not isinstance(data, dict):
+        return None
+
+    # all_plugins: true → run everything
+    if data.get("all_plugins"):
+        return None
+
+    plugin_list = data.get("plugins", [])
+    if not isinstance(plugin_list, list) or not plugin_list:
+        return None
+
+    console.print(
+        Panel(
+            f"[{S_CYAN}]📋 Profile: {data.get('name', profile_name)}[/]\n"
+            f"[{S_DIM}]{data.get('description', '')}[/]\n"
+            f"[{S_GREEN}]{len(plugin_list)} plugins selecionados[/]",
+            border_style="cyan",
+            box=box.ROUNDED,
+        )
+    )
+    console.print()
+
+    return [str(p) for p in plugin_list]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # SCAN PRINCIPAL
 # ═══════════════════════════════════════════════════════════════════════════════
 def run_scan(
@@ -2383,9 +2470,19 @@ def run_scan(
     no_notify: bool = False,
     output_format: str = "md",
     global_timeout: int = 90,
+    profile: str | None = None,
 ) -> None:
-    """Executa o scan completo contra o target."""
+    """Executa o scan completo contra o target.
+
+    Args:
+        profile: Nome do scan profile (web, api, cloud, network, full) ou None para todos.
+    """
     mission_start = time.time()
+
+    # Load scan profile if specified
+    _profile_plugins: list[str] | None = None
+    if profile:
+        _profile_plugins = _load_profile(profile)
 
     with console.status(f"[{S_GREEN}]🐍 Resolvendo IP...[/]", spinner="dots"):
         ip = detect_ip(target)
@@ -2420,8 +2517,8 @@ def run_scan(
         f"**Versão**: `v{__version__}`\n",
     ]
 
-    open_ports: List[int] = []
-    banners: Dict[int, str] = {}
+    open_ports: list[int] = []
+    banners: dict[int, str] = {}
 
     if not plugins_only:
         results = enum_tools(target, report, wordlist, nuclei_templates, timeouts, available)
@@ -2447,12 +2544,21 @@ def run_scan(
         console.print()
 
     # Plugins
-    plugin_results = run_plugins(target, ip, open_ports, banners, report)
+    plugin_results = run_plugins(target, ip, open_ports, banners, report, plugin_filter=_profile_plugins)
 
     # Report
     elapsed_total = time.time() - mission_start
     if output_format == "json":
         report_path = save_json_report(target, ip, plugin_results, elapsed_total)
+    elif output_format == "sarif":
+        try:
+            from sarif_exporter import export_sarif
+
+            report_path = export_sarif(target, ip, plugin_results, elapsed_total, output_dir=REPORTS_PATH)
+            console.print(f"  [bold bright_green]📋 SARIF Report: {report_path}[/]")
+        except ImportError:
+            console.print(f"  [{S_YELLOW}]⚠ sarif_exporter não encontrado. Gerando MD.[/]")
+            report_path = save_report("\n".join(report))
     elif output_format == "pdf":
         try:
             from report_generator import generate_pdf_report
@@ -2541,7 +2647,7 @@ def _install_global() -> None:
             )
             if result.returncode != 0:
                 console.print(f"  [{S_RED}]✗ pip install falhou:[/]")
-                err_lines: List[str] = (result.stderr or result.stdout).strip().split("\n")
+                err_lines: list[str] = (result.stderr or result.stdout).strip().split("\n")
                 tail_start: int = max(0, len(err_lines) - 5)
                 for line in [err_lines[i] for i in range(tail_start, len(err_lines))]:
                     console.print(f"    [{S_DIM}]{line}[/]")
@@ -2766,13 +2872,14 @@ def main() -> None:
         console.print(f"  [{S_RED}]✗ Nenhum target válido. Abortando.[/]")
         sys.exit(1)
 
-    out_fmt = "pdf" if args.pdf else args.output_format
+    out_fmt = "sarif" if args.sarif else ("pdf" if args.pdf else args.output_format)
     run_scan(
         target,
         plugins_only=args.plugins_only,
         no_notify=(args.no_notify or quiet),
         output_format=out_fmt,
         global_timeout=args.timeout,
+        profile=getattr(args, "profile", None),
     )
 
     # Final
