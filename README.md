@@ -39,14 +39,14 @@
 </p>
 
 <p align="center">
-  <a href="https://cascavel.pages.dev">Website</a> · 
-  <a href="#-install">Install</a> · 
-  <a href="#-what-makes-cascavel-different">Why Cascavel</a> · 
-  <a href="#-architecture">Architecture</a> · 
-  <a href="#-plugin-arsenal-84">Plugins</a> · 
-  <a href="#-cli-reference">CLI</a> · 
-  <a href="#-pdf-reports-v220">Reports</a> · 
-  <a href="#-security-hardening">Security</a> · 
+  <a href="https://cascavel.pages.dev">Website</a> ·
+  <a href="#-install">Install</a> ·
+  <a href="#-what-makes-cascavel-different">Why Cascavel</a> ·
+  <a href="#-architecture">Architecture</a> ·
+  <a href="#-plugin-arsenal-84">Plugins</a> ·
+  <a href="#-cli-reference">CLI</a> ·
+  <a href="#-pdf-reports-v220">Reports</a> ·
+  <a href="#-security-hardening">Security</a> ·
   <a href="#-contributing">Contributing</a>
 </p>
 
@@ -451,7 +451,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
         ip:         Resolved IPv4/IPv6 address
         open_ports: List of open port numbers (from naabu)
         banners:    Dict mapping port -> banner string
-    
+
     Returns:
         {
             "plugin": "my_plugin",
@@ -489,12 +489,10 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 </p>
 
 <p align="center">
-  <a href="https://cascavel.pages.dev"><strong>🌐 cascavel.pages.dev</strong></a> · 
+  <a href="https://cascavel.pages.dev"><strong>🌐 cascavel.pages.dev</strong></a> ·
   <a href="https://rettecnologia.org"><strong>🏢 rettecnologia.org</strong></a>
 </p>
 
 <p align="center">
   <sub>Making the web safer, one target at a time. 🐍</sub>
 </p>
----
-Security research powered by DarkForge-X framework.
