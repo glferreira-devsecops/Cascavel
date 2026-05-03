@@ -45,6 +45,7 @@ def _build_tool_component() -> dict[str, Any]:
     return {
         "driver": {
             "name": "Cascavel",
+            "version": __version__,
             "semanticVersion": __version__,
             "informationUri": "https://github.com/glferreira-devsecops/Cascavel",
             "organization": "RET Tecnologia",

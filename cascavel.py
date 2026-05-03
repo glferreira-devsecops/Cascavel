@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔═══════════════════════════════════════════════════════════════╗
-║  CASCAVEL — Quantum Security Framework v2.2.0                ║
+║  CASCAVEL — Quantum Security Framework v3.0.0                ║
 ║  Por DevFerreiraG | github.com/glferreira-devsecops          ║
 ║  Framework de automação pentest plugável, multi-plataforma   ║
 ╚═══════════════════════════════════════════════════════════════╝
