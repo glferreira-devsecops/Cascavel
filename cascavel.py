@@ -30,7 +30,7 @@ import unicodedata
 import urllib.request
 from typing import Any, NoReturn
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ANSI ESCAPE SANITIZER — Anti-Terminal Injection (2026 Vector)

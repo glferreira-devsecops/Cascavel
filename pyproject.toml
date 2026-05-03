@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cascavel"
-version = "3.0.0"
+version = "3.0.1"
 description = "Quantum Security Framework by RET Tecnologia — Pentest automation with 85+ plugins, Red Team 2026 intelligence"
 readme = "README.md"
 license = {text = "MIT"}
