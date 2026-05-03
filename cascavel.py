@@ -2306,6 +2306,149 @@ def list_plugins_table() -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 🔄 SELF-UPDATE (GitHub Releases)
+# ═══════════════════════════════════════════════════════════════════════════════
+_GITHUB_REPO = "glferreira-devsecops/Cascavel"
+_GITHUB_API_RELEASES = f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest"
+_GITHUB_RAW_BASE = f"https://raw.githubusercontent.com/{_GITHUB_REPO}"
+
+
+def _parse_semver(v: str) -> tuple[int, ...]:
+    """Parse version string like '3.0.0' into comparable tuple."""
+    return tuple(int(x) for x in v.lstrip("v").split("."))
+
+
+def check_for_update(quiet: bool = False) -> str | None:
+    """Check if a newer version is available on GitHub.
+
+    Returns:
+        Latest version string if update available, None otherwise.
+    """
+    import json
+    import urllib.request
+
+    try:
+        req = urllib.request.Request(
+            _GITHUB_API_RELEASES,
+            headers={"User-Agent": f"Cascavel/{__version__}", "Accept": "application/vnd.github+json"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+        latest = data.get("tag_name", "").lstrip("v")
+        if not latest:
+            return None
+
+        if _parse_semver(latest) > _parse_semver(__version__):
+            if not quiet:
+                console.print(f"\n  [bold green]🆕 Nova versão disponível: v{latest}[/] (atual: v{__version__})")
+                console.print("  [dim]Execute: cascavel --update[/]\n")
+            return latest
+        else:
+            if not quiet:
+                console.print(f"\n  [green]✅ Cascavel v{__version__} está atualizado.[/]\n")
+            return None
+    except Exception as e:
+        if not quiet:
+            console.print(f"  [yellow]⚠ Não foi possível verificar atualizações: {e}[/]")
+        return None
+
+
+def self_update() -> None:
+    """Update Cascavel to the latest version from GitHub.
+
+    Supports two update strategies:
+      1. Git-based: If installed via git clone, uses 'git pull'
+      2. Direct download: Downloads latest core files from GitHub raw
+    """
+    import json
+    import urllib.request
+
+    console.print("\n  [bold cyan]🔄 Cascavel Self-Update[/]")
+    console.print(f"  [dim]Versão atual: v{__version__}[/]\n")
+
+    # Check latest version
+    try:
+        req = urllib.request.Request(
+            _GITHUB_API_RELEASES,
+            headers={"User-Agent": f"Cascavel/{__version__}", "Accept": "application/vnd.github+json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        latest = data.get("tag_name", "").lstrip("v")
+        if not latest:
+            console.print("  [red]❌ Não foi possível determinar a versão mais recente.[/]")
+            return
+
+        if _parse_semver(latest) <= _parse_semver(__version__):
+            console.print(f"  [green]✅ Já está na versão mais recente (v{__version__}).[/]\n")
+            return
+
+        console.print(f"  [green]📦 Atualizando para v{latest}...[/]")
+    except Exception as e:
+        console.print(f"  [red]❌ Erro ao consultar GitHub: {e}[/]")
+        return
+
+    install_dir = os.path.dirname(os.path.abspath(__file__))
+    git_dir = os.path.join(install_dir, ".git")
+
+    # Strategy 1: Git-based update
+    if os.path.isdir(git_dir):
+        console.print("  [dim]Modo: git pull[/]")
+        try:
+            result = subprocess.run(  # noqa: S603, S607
+                ["git", "-C", install_dir, "pull", "--rebase", "origin", "main"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if result.returncode == 0:
+                console.print(f"  [green]✅ Atualizado para v{latest} via git pull[/]")
+                console.print(f"  [dim]{result.stdout.strip()}[/]\n")
+                # Re-install dependencies if requirements changed
+                req_file = os.path.join(install_dir, "requirements.txt")
+                if os.path.isfile(req_file):
+                    console.print("  [dim]Atualizando dependências...[/]")
+                    subprocess.run(  # noqa: S603, S607
+                        [sys.executable, "-m", "pip", "install", "-r", req_file, "-q"],
+                        timeout=120,
+                    )
+                    console.print("  [green]✅ Dependências atualizadas[/]\n")
+            else:
+                console.print(f"  [red]❌ git pull falhou: {result.stderr.strip()}[/]")
+        except Exception as e:
+            console.print(f"  [red]❌ Erro no git pull: {e}[/]")
+        return
+
+    # Strategy 2: Direct download of core files
+    console.print("  [dim]Modo: download direto (sem .git)[/]")
+    core_files = ["cascavel.py", "sarif_exporter.py", "report_generator.py", "requirements.txt"]
+    tag = f"v{latest}"
+    updated = 0
+
+    for fname in core_files:
+        try:
+            url = f"{_GITHUB_RAW_BASE}/{tag}/{fname}"
+            req = urllib.request.Request(url, headers={"User-Agent": f"Cascavel/{__version__}"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                content = resp.read()
+
+            target_path = os.path.join(install_dir, fname)
+            with open(target_path, "wb") as f:
+                f.write(content)
+            console.print(f"    ✅ {fname}")
+            updated += 1
+        except Exception as e:
+            console.print(f"    ❌ {fname}: {e}")
+
+    if updated > 0:
+        console.print(f"\n  [green]✅ {updated}/{len(core_files)} arquivos atualizados para v{latest}[/]")
+        # Update plugins directory
+        console.print("  [dim]Para atualizar plugins, execute: cascavel --update-plugins[/]\n")
+    else:
+        console.print("  [red]❌ Nenhum arquivo atualizado.[/]\n")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # CLI
 # ═══════════════════════════════════════════════════════════════════════════════
 class CascavelArgumentParser(argparse.ArgumentParser):
@@ -2368,6 +2511,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--install-global", action="store_true", help="Instala o Cascavel como comando global no sistema"
     )
+    parser.add_argument(
+        "--update", action="store_true", help="Atualiza o Cascavel para a versão mais recente (via git ou download)"
+    )
+    parser.add_argument("--check-update", action="store_true", help="Verifica se há atualizações disponíveis no GitHub")
 
     def _positive_int(value: str) -> int:
         """Validação de argparse: aceita apenas inteiros positivos."""
@@ -2809,6 +2956,16 @@ def main() -> None:
     # --install-global: instala e sai
     if args.install_global:
         _install_global()
+        sys.exit(0)
+
+    # --update: self-update e sai
+    if args.update:
+        self_update()
+        sys.exit(0)
+
+    # --check-update: verifica atualizações e sai
+    if args.check_update:
+        check_for_update()
         sys.exit(0)
 
     quiet = args.quiet
