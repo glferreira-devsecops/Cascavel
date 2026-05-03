@@ -1,0 +1,45 @@
+# ═══════════════════════════════════════════════════════════════
+# Cascavel v3.0.0 — Cloud Infrastructure Scan Profile
+# Focus: AWS/GCP/Azure, containers, misconfigs
+# ═══════════════════════════════════════════════════════════════
+
+name: "Cloud Infrastructure"
+description: "Cloud-native security assessment for AWS, GCP, Azure, and container environments"
+category: "cloud"
+
+plugins:
+  # Cloud Enumeration
+  - cloud_enum
+  - cloud_metadata
+  - s3_bucket
+
+  # Container & Orchestration
+  - docker_exposure
+  - k8s_exposure
+
+  # CI/CD Security
+  - cicd_exposure
+  - git_dumper
+
+  # Network
+  - dns_deep
+  - dns_rebinding
+  - domain_transf
+  - subdomain_hunter
+  - subdomain_takeou
+
+  # Services
+  - elastic_exposure
+  - mongodb_unauth
+  - redis_unauth
+
+  # Auth & Secrets
+  - secrets_scraper
+  - ssl_check
+  - info_disclosure
+
+  # Recon
+  - tech_fingerprint
+  - shodan_recon
+  - whois_recon
+  - wayback_enum
