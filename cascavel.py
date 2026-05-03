@@ -411,7 +411,7 @@ def _clear_block(num_lines: int) -> None:
         pass  # Silencia erros em terminais incompatíveis
 
 
-def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
+def run_preloader(plugin_count: int, tools_count: int, *, target_hint: Optional[str] = None) -> None:
     """Preloader cinematográfico Awwwards-level com logo fade.
 
     SEGURANÇA UX: Todo o preloader é wrapped em try/except para que
@@ -430,7 +430,7 @@ def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | Non
         console.print(f"  [dim]Preloader desativado: {type(e).__name__}[/]\n")
 
 
-def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
+def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: Optional[str] = None) -> None:
     """Implementação interna do preloader — isolada para try/except."""
     os_name = f"{platform.system()} {platform.release()}"
     py_ver = f"{sys.version.split()[0]}"
@@ -974,10 +974,10 @@ def _preflight_check() -> bool:
     checks = []
 
     # 1. Python version
-    py_ok = sys.version_info >= (3, 8)
+    py_ok = sys.version_info >= (3, 10)
     checks.append(
         (
-            "Python ≥ 3.8",
+            "Python ≥ 3.10",
             py_ok,
             f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             "Atualize Python: python.org/downloads",

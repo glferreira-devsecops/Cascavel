@@ -198,4 +198,4 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 
 ---
 
-> **Total: 84 plugins** | Last updated: v2.1.0 (2026-03-24)
+> **Total: 84 plugins** | Last updated: v2.2.0 (2026-04-15)

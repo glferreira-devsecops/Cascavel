@@ -35,7 +35,7 @@ Sua colaboração é fundamental para o crescimento do **Cascavel — Quantum Se
    ```
 7. **Abra um Pull Request** para a branch `main` do repositório original.
 
-## 🔌 Criando Plugins (v2.1.0)
+## 🔌 Criando Plugins (v2.2.0)
 
 Todos os plugins são funções Python puras no diretório `plugins/`. A assinatura obrigatória é:
 
@@ -55,7 +55,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
     return {"plugin": "meu_plugin", "resultados": resultado}
 ```
 
-### Regras para Plugins (v2.1.0)
+### Regras para Plugins (v2.2.0)
 
 - **Assinatura**: `run(target, ip, open_ports, banners)` — exatamente 4 argumentos posicionais
 - **Unused params**: `_ = (ip, open_ports, banners)` no início da função para suprimir warnings
@@ -69,7 +69,7 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 - **Shell commands**: Use `shlex.quote()` para sanitizar inputs em comandos shell
 - **Arquivo**: Salve como `plugins/nome_do_plugin.py`
 
-### Saída Recomendada (v2.1.0)
+### Saída Recomendada (v2.2.0)
 
 Para plugins novos, inclua as chaves `versao` e `tecnicas`:
 
@@ -84,7 +84,7 @@ return {
 
 ## 📝 Diretrizes de Código
 
-- **Python 3.8+** compatível
+- **Python 3.10+** compatível
 - **Type hints** em funções públicas
 - **Docstrings** descritivas em todas as funções `run()`
 - **snake_case** para funções e variáveis
@@ -118,7 +118,7 @@ wsl --install
 # Dentro do WSL, siga as instruções de Linux acima.
 
 # Opção 2: Nativo (limitado)
-# Instale Python 3.8+ via python.org
+# Instale Python 3.10+ via python.org
 # Algumas ferramentas externas não estão disponíveis no Windows nativo.
 python -m venv venv && venv\Scripts\activate
 pip install -r requirements.txt
