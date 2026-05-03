@@ -18,7 +18,7 @@
   <meta name="keywords" content="Cascavel, Pentest, Security, Cyber, Quantum, Python, OSINT, Red Team, DevSecOps, Framework, Vulnerability Scanner" />
   <meta name="author" content="Gabriel Lima Ferreira" />
   <meta property="og:title" content="CASCAVEL — Quantum Security Framework" />
-  <meta property="og:description" content="85 plugins. 14 categories. 30+ recon tools. Cinematic terminal. CI/CD hardened. Red Team Intelligence Engine." />
+  <meta property="og:description" content="85 plugins. 14 categories. 30+ recon tools. 211 tests. SARIF output. CI/CD hardened. Red Team Intelligence Engine." />
   <meta property="og:image" content="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
   <meta property="og:url" content="https://glferreira-devsecops.github.io/Cascavel/en/" />
   <meta property="og:type" content="website" />
@@ -260,7 +260,7 @@
   <header class="hero">
     <div class="container">
       <h1 class="reveal">CASCAVEL<span class="accent">.</span></h1>
-      <div class="reveal reveal-delay-1"><span class="version-tag">v2.2.0 — Red Team Intelligence Engine</span></div>
+      <div class="reveal reveal-delay-1"><span class="version-tag">v3.0.1 — Red Team Intelligence Engine</span></div>
       <p class="tagline reveal reveal-delay-1">Quantum-grade offensive security framework for demanding Red Teams. Modular, extensible and brutally efficient. Zero tracking. Zero telemetry. Fully auditable code.</p>
 
       <div class="hero-badges reveal reveal-delay-2">
@@ -276,14 +276,14 @@
         <div class="stat"><span class="stat-number">85</span><span class="stat-label">Security Plugins</span></div>
         <div class="stat"><span class="stat-number">14</span><span class="stat-label">Attack Categories</span></div>
         <div class="stat"><span class="stat-number">30+</span><span class="stat-label">Recon Tools</span></div>
-        <div class="stat"><span class="stat-number">3</span><span class="stat-label">Report Formats</span></div>
-        <div class="stat"><span class="stat-number">2.8K</span><span class="stat-label">Lines of Core</span></div>
+        <div class="stat"><span class="stat-number">4</span><span class="stat-label">Report Formats</span></div>
+        <div class="stat"><span class="stat-number">211</span><span class="stat-label">Tests Passing</span></div>
       </div>
 
       <div class="terminal-window reveal reveal-delay-3">
         <div class="terminal-header">
           <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-          <span class="terminal-title">cascavel — v2.2.0 — zsh</span>
+          <span class="terminal-title">cascavel — v3.0.1 — zsh</span>
         </div>
         <div class="terminal-body">
           <span class="comment"># Full target scan</span><br/>
@@ -427,42 +427,41 @@ python3 cascavel.py -t target.com
       <p class="section-subtitle reveal">Technical direction — open to contributions and community feedback.</p>
       <div class="roadmap-grid">
         <div class="roadmap-card reveal">
-          <span class="version-label current">v2.2.0 — STABLE</span>
+          <span class="version-label current">v3.0.1 — STABLE</span>
           <h4>✅ Current</h4>
           <ul>
             <li>85+ plugins with 2026-grade intelligence</li>
-            <li>JSON, Markdown and PDF reports</li>
+            <li>JSON, Markdown, PDF + SARIF v2.1.0 reports</li>
+            <li>Plugin API v2 — CVSS v4.0 scoring</li>
+            <li>211 tests — plugin, schema, silent failure coverage</li>
+            <li>Docker multi-stage image (Go + system tools)</li>
+            <li>YAML scan profiles (web, api, cloud, network, full)</li>
+            <li>Silent failure hardening — SILENT_ERROR reporting</li>
+            <li>Manual dependency control — no automated bots</li>
             <li>Cinematic UX with TTY detection</li>
-            <li>--quiet mode for CI/CD pipelines</li>
-            <li>Installer with 15+ edge case checks</li>
-            <li>Full open-source governance</li>
             <li>OpenSSF Best Practices Badge</li>
           </ul>
         </div>
         <div class="roadmap-card reveal reveal-delay-1">
-          <span class="version-label next">v3.0.0 — Q4 2026</span>
+          <span class="version-label next">v3.1.0 — Q3 2026</span>
           <h4>🚀 Next</h4>
           <ul>
-            <li>Plugin API v2 with native CVSS scoring</li>
-            <li>SARIF output for IDE integration</li>
-            <li>Official Docker image (ghcr.io)</li>
             <li>Async plugin engine (3-5x speed)</li>
             <li>API mode --serve (REST/SOAR)</li>
-            <li>YAML custom scan profiles</li>
-            <li>Plugin test suite with pytest</li>
+            <li>AI-assisted triage with LLM severity</li>
+            <li>SBOM generation (CycloneDX)</li>
+            <li>Compliance mapping OWASP/NIST/PCI-DSS</li>
           </ul>
         </div>
         <div class="roadmap-card reveal reveal-delay-2">
           <span class="version-label future">v4.0.0 — 2027</span>
           <h4>🧠 Future</h4>
           <ul>
-            <li>AI-assisted triage with LLM severity</li>
             <li>Distributed multi-node scanning</li>
-            <li>Compliance mapping OWASP/NIST/PCI-DSS</li>
-            <li>Automatic SBOM generation</li>
             <li>GitHub App (PR one-click audit)</li>
             <li>Community plugin marketplace</li>
             <li>Native man page</li>
+            <li>Full compliance automation engine</li>
           </ul>
         </div>
       </div>
