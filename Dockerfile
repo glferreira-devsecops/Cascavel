@@ -30,7 +30,7 @@ RUN go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest 
     go install -v github.com/OJ/gobuster/v3@latest
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 LABEL maintainer="DevFerreiraG <devferreirag@proton.me>"
 LABEL org.opencontainers.image.source="https://github.com/glferreira-devsecops/Cascavel"
