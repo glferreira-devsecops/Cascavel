@@ -86,6 +86,7 @@ coverage.xml
 
 # ── Logs ─────────────────────────────────────
 *.log
+install.log
 pip-log.txt
 pip-delete-this-directory.txt
 

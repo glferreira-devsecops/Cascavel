@@ -28,9 +28,10 @@ If you discover a security vulnerability in the Cascavel framework, we appreciat
 
 | Version | Supported |
 |---------|-----------|
+| 2.2.x   | ✅ Full   |
 | 2.1.x   | ✅ Full   |
-| 2.0.x   | ✅ Full   |
-| 1.x     | ⚠️ Critical fixes only |
+| 2.0.x   | ⚠️ Critical fixes only |
+| 1.x     | ❌ EOL    |
 
 ## Response
 
