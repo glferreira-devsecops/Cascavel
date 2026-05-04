@@ -533,7 +533,11 @@ SNAKE_ART = r"""[green]
 
 
 def _count_plugins() -> int:
-    return sum(1 for f in glob.glob(os.path.join(PLUGINS_PATH, "*.py")) if not os.path.basename(f).startswith("__"))
+    return sum(
+        1
+        for f in glob.glob(os.path.join(PLUGINS_PATH, "*.py"))
+        if not os.path.basename(f).startswith("__") and os.path.basename(f) != "schema.py"
+    )
 
 
 def print_header() -> None:

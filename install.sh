@@ -1059,7 +1059,7 @@ verify_installation() {
     fi
 
     # Python deps check
-    PLUGIN_COUNT=$(find plugins -maxdepth 1 -name '*.py' ! -name '__init__*' 2>/dev/null | wc -l | tr -d ' ')
+    PLUGIN_COUNT=$(find plugins -maxdepth 1 -name '*.py' ! -name '__init__*' ! -name 'schema.py' 2>/dev/null | wc -l | tr -d ' ')
     info "Plugins disponíveis: ${BOLD}${PLUGIN_COUNT}${NC}"
 
     # Quick syntax check
@@ -1256,7 +1256,7 @@ post_install_health_check() {
 
     # 7. Plugins count and syntax
     local PLUGIN_COUNT
-    PLUGIN_COUNT=$(find plugins -name '*.py' ! -name '__init__*' 2>/dev/null | wc -l | tr -d ' ')
+    PLUGIN_COUNT=$(find plugins -name '*.py' ! -name '__init__*' ! -name 'schema.py' 2>/dev/null | wc -l | tr -d ' ')
     if [ "${PLUGIN_COUNT:-0}" -gt 0 ]; then
         _health_ok "${PLUGIN_COUNT} plugins encontrados"
     else

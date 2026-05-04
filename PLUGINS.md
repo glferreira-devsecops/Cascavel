@@ -1,6 +1,6 @@
 # 🔌 Cascavel — Plugin Documentation
 
-> **84 security plugins** across 14 attack categories. Every plugin follows the standardized `run(target, ip, open_ports, banners) -> dict` interface.
+> **85 security plugins** across 14 attack categories. Every plugin follows the standardized `run(target, ip, open_ports, banners) -> dict` interface.
 
 ---
 
@@ -20,7 +20,7 @@
 | [Information Gathering](#-information-gathering) | 7 | Tech Fingerprint, JS, Secrets, Git Dump |
 | [Web Scanning](#-web-scanning) | 7 | Dir Brute, Nikto, Nuclei, HTTP Methods |
 | [Cloud & Storage](#-cloud--storage) | 2 | S3 Buckets, SAML |
-| [Analysis & Profiling](#-analysis--profiling) | 5 | SSL, WAF Detection, Nmap Advanced |
+| [Analysis & Profiling](#-analysis--profiling) | 6 | SSL, WAF Detection, Nmap Advanced, Security Headers |
 | [Brute Force & Auth Testing](#-brute-force--auth-testing) | 6 | SSH, FTP, SMB, SMTP, Heartbleed |
 
 ---
@@ -163,6 +163,7 @@
 | Plugin | File | Techniques |
 |--------|------|------------|
 | **SSL Check** | `ssl_check.py` | Certificate validation, TLS version, cipher strength, HSTS |
+| **Security Headers** | `security_headers.py` | Header analysis, CSP parsing, Information Disclosure detection |
 | **WAF Detection** | `waf_detec.py` | WAF fingerprint (30+ products), bypass recommendations |
 | **Profiler** | `profiler_bundpent.py` | Target profiling, technology stack, risk scoring |
 | **Nmap Advanced** | `nmap_advanc.py` | Service version detection, script scanning, OS fingerprint |
@@ -198,4 +199,4 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 
 ---
 
-> **Total: 84 plugins** | Last updated: v2.2.0 (2026-04-15)
+> **Total: 85 plugins** | Last updated: v3.0.1 (2026-05-04)

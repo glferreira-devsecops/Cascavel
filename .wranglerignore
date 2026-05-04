@@ -1,0 +1,12 @@
+**/.venv
+**/.venv/**
+.venv/
+venv/
+.git/
+.wrangler/
+node_modules/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+*.pyc

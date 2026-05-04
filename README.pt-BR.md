@@ -27,10 +27,10 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-00D4FF.svg?style=flat-square" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Plataforma-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v2.2.0-C89F5D.svg?style=flat-square" /></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v3.0.1-C89F5D.svg?style=flat-square" /></a>
   <img src="https://img.shields.io/badge/Relat%C3%B3rios-PDF%20|%20MD%20|%20JSON-28A745.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Seguran%C3%A7a-Hardened%202026-critical?style=flat-square" />
   <a href="https://rettecnologia.org"><img src="https://img.shields.io/badge/RET%20Tecnologia-Open%20Source-00D4FF.svg?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNS0xMC01LTEwIDV6TTIgMTJsMTAgNSAxMC01LTEwLTUtMTAgNXoiLz48L3N2Zz4=" /></a>
@@ -116,7 +116,7 @@ A maioria dos workflows de pentest envolve **mais de 20 ferramentas separadas**,
 
 | Requisito | Mínimo | Por quê |
 |:---|:---|:---|
-| **Python** | 3.10+ | `match/case`, typed generics, `importlib.metadata` |
+| **Python** | 3.12+ | LTS até 2028 · `importlib.metadata`, typed generics |
 | **PyJWT** | 2.12.0 | CVE-2022-29217 — ataque de confusão de algoritmo |
 | **ReportLab** | 3.6.13 | CVE-2023-33733 — execução de código via PDF crafted |
 | **Requests** | 2.31.0 | CVE-2023-32681 — vazamento de header em redirect |
@@ -130,7 +130,7 @@ A maioria dos workflows de pentest envolve **mais de 20 ferramentas separadas**,
 curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
 ```
 
-O instalador v2.2.0 inclui **12 hardenings de segurança**: limpeza via `trap`, isolamento `mktemp`, lock de instalação, verificação de hash SHA-256, checagem de CVEs em dependências críticas (PyJWT ≥2.12.0, ReportLab ≥3.6.13, Requests ≥2.31.0), umask 077 e permissões estritas de arquivos.
+O instalador v2.4.0 inclui **15 hardenings de segurança**: limpeza via `trap`, isolamento `mktemp -d` (anti-TOCTOU), lock anti-symlink, verificação de hash SHA-256, enforcement de versão para 6 pacotes (PyJWT, ReportLab, requests, pyOpenSSL, dnspython), `umask 077`, sanitização de PATH (rejeita `.` e caminhos relativos), detecção de container (Docker/Podman/LXC), detecção WSL2, verificação do módulo `ssl` do Python, recuperação de venv corrompido, `chmod 700/600` em caminhos sensíveis, validação GOPATH/GOBIN, enforcement de locale UTF-8, e caminhos absolutos para binários críticos.
 
 <details>
 <summary><strong>Instalação manual</strong></summary>
@@ -150,9 +150,9 @@ python3 cascavel.py -t target.com
 ## 🏗️ Arquitetura
 
 ```
-cascavel.py (1700+ linhas)
+cascavel.py (3000+ linhas)
 ├── Sanitizador ANSI Escape ── Bloqueia injeção CSI/OSC/DCS de plugins
-├── Motor de Preloader ──────── Boot cinematográfico de 4 fases (logo fade → boot seq → progress → online)
+├── Motor de Preloader ──────── Boot cinematográfico de 5 fases (logo fade → boot seq → progress → online)
 ├── Orquestrador de Plugins ── Carga dinâmica, timeout (SIGALRM), sanitização de saída
 ├── Dashboard Split-Screen ─── Rich Live layout (tabela de scan + painel de intel)
 ├── Pipeline de Ferramentas ── 30+ ferramentas com segurança shlex.quote()
@@ -250,13 +250,13 @@ Zero tolerância a falsos positivos. Interface `run()` padronizada. Cada plugin 
 
 `s3_bucket` · `saml_scanner`
 
-### 📊 Análise (5)
+### 📊 Análise (6)
 
-`ssl_check` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
+`ssl_check` · `security_headers` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
 
-### 🔐 Força Bruta (7)
+### 🔐 Força Bruta (6)
 
-`ssh_brute` · `ftp_brute` · `smb_ad` · `smpt_enum` · `heartbleed_scanner` · `domain_transf` · `dns_zone_transfer`
+`ssh_brute` · `ftp_brute` · `smb_ad` · `smpt_enum` · `heartbleed_scanner` · `domain_transf`
 
 > 📖 Documentação completa: [PLUGINS.md](PLUGINS.md)
 
@@ -326,16 +326,25 @@ O Cascavel é blindado contra vetores de ataque modernos que miram as próprias 
 | **Vazamento de processos zombie** | `os.killpg()` mata grupos de processos inteiros no timeout |
 | **Injeção de input** | Todos os alvos de ferramentas externas sanitizados com `shlex.quote()` |
 
-### Proteções do Instalador (v2.2.0)
+### Proteções do Instalador (v2.4.0 — 15 hardenings)
 
-| Vetor | Mitigação |
-|:---|:---|
-| **Race condition TOCTOU** | `mktemp -d` para diretórios temporários |
-| **Execução paralela** | Lock file previne instalações concorrentes |
-| **Supply chain** | Verificação de hash SHA-256 no `requirements.txt` |
-| **CVEs conhecidos** | Checagem de versão para PyJWT, ReportLab, Requests |
-| **Escalação de permissão** | `umask 077`, `chmod 700/600` em caminhos sensíveis |
-| **Falha de limpeza** | `trap` garante remoção do diretório temporário no exit/error |
+| # | Vetor | Mitigação |
+|:--|:---|:---|
+| 1 | **Race condition TOCTOU** | `mktemp -d` para diretórios temporários únicos |
+| 2 | **Execução paralela** | Lock file + check anti-symlink previne instalações concorrentes |
+| 3 | **Supply chain** | Verificação de hash SHA-256 no `requirements.txt` |
+| 4 | **CVEs conhecidos** | Enforcement de versão para 6 pacotes (PyJWT, ReportLab, requests, pyOpenSSL, dnspython) |
+| 5 | **Escalação de permissão** | `umask 077`, `chmod 700/600` em caminhos sensíveis |
+| 6 | **Falha de limpeza** | `trap` cleanup em EXIT/INT/TERM/HUP garante remoção |
+| 7 | **Injeção de PATH** | Remove `.` e caminhos relativos do `$PATH` na inicialização |
+| 8 | **Hijacking de binário** | Usa caminhos absolutos para `mkdir`, `rm`, `cat`, `date`, `uname` |
+| 9 | **Detecção de container** | Detecta Docker, Podman, LXC, containers baseados em cgroup |
+| 10 | **Detecção WSL2** | Identifica kernel WSL para ajustes de scan de rede |
+| 11 | **Venv corrompido** | Detecta binário Python corrompido/movido e recria venv |
+| 12 | **Check do módulo ssl** | Verifica disponibilidade do módulo `ssl` para pip HTTPS |
+| 13 | **Enforcement de locale** | Força `LC_ALL=en_US.UTF-8` para prevenir bugs de encoding |
+| 14 | **Validação GOPATH** | Exporta e valida `GOPATH/GOBIN` para instalação de ferramentas Go |
+| 15 | **Check de espaço em disco** | Avisa se < 500MB disponível antes de iniciar instalação |
 
 ---
 
@@ -343,9 +352,9 @@ O Cascavel é blindado contra vetores de ataque modernos que miram as próprias 
 
 ```
 Cascavel/
-├── cascavel.py           # Motor principal (1700+ linhas)
+├── cascavel.py           # Motor principal (3000+ linhas)
 ├── report_generator.py   # Relatórios PDF (ReportLab Platypus)
-├── install.sh            # Instalador universal (v2.2.0, 12 hardenings)
+├── install.sh            # Instalador universal (v2.4.0, 15 hardenings)
 ├── plugins/              # 85 plugins de segurança
 │   ├── xss_scanner.py    #   └── Interface run() padronizada
 │   ├── jwt_analyzer.py
@@ -437,9 +446,14 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 <p align="center">
   <strong><code>MÉTODO CASCAVEL™</code></strong><br />
   <sub>
-    <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva<br />
+    Um produto da <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva<br />
     <a href="https://github.com/glferreira-devsecops">Gabriel L. Ferreira</a> · Fundador & DevSecOps Lead<br />
     <br />
     🇧🇷 Feito no Brasil com orgulho. Protegendo a web, um alvo por vez. 🐍
   </sub>
+</p>
+
+<p align="center">
+  <a href="https://cascavel.pages.dev"><strong>🌐 cascavel.pages.dev</strong></a> ·
+  <a href="https://rettecnologia.org"><strong>🏢 rettecnologia.org</strong></a>
 </p>

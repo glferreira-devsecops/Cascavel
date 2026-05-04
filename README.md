@@ -9,7 +9,7 @@
 <h3 align="center">Offensive Security Framework — Red Team Intelligence Engine</h3>
 
 <p align="center">
-  <strong>84 security plugins · 30+ recon tools · OWASP 2025 · CVSS v4.0 · PDF/MD/JSON reports</strong><br />
+  <strong>85 security plugins · 30+ recon tools · OWASP 2025 · CVSS v4.0 · PDF/MD/JSON reports</strong><br />
   One command to enumerate, scan, exploit, analyze, and generate compliance-ready pentest reports.<br />
   Built for red teamers, bug bounty hunters, and DevSecOps engineers.
 </p>
@@ -22,9 +22,9 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=flat-square" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
-  <img src="https://img.shields.io/badge/Plugins-84-blueviolet.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v2.2.0-C89F5D.svg?style=flat-square" /></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v3.0.1-C89F5D.svg?style=flat-square" /></a>
   <img src="https://img.shields.io/badge/Reports-PDF%20|%20MD%20|%20JSON-28A745.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Security-Hardened%202026-critical?style=flat-square" />
   <a href="https://rettecnologia.org"><img src="https://img.shields.io/badge/RET%20Tecnologia-Open%20Source-00D4FF.svg?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNS0xMC01LTEwIDV6TTIgMTJsMTAgNSAxMC01LTEwLTUtMTAgNXoiLz48L3N2Zz4=" /></a>
@@ -43,9 +43,9 @@
   <a href="#-install">Install</a> ·
   <a href="#-what-makes-cascavel-different">Why Cascavel</a> ·
   <a href="#-architecture">Architecture</a> ·
-  <a href="#-plugin-arsenal-84">Plugins</a> ·
+  <a href="#-plugin-arsenal-85">Plugins</a> ·
   <a href="#-cli-reference">CLI</a> ·
-  <a href="#-pdf-reports-v220">Reports</a> ·
+  <a href="#-pdf-reports-v301">Reports</a> ·
   <a href="#-security-hardening">Security</a> ·
   <a href="#-contributing">Contributing</a>
 </p>
@@ -100,7 +100,7 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 
 | Capability | Cascavel | Other Tools |
 |:---|:---|:---|
-| **Unified pipeline** | 84 plugins + 30 tools in one command | Fragmented scripts |
+| **Unified pipeline** | 85 plugins + 30 tools in one command | Fragmented scripts |
 | **Live dashboard** | Split-screen with real-time stats + intel | No live feedback |
 | **PDF reports** | 12 legal disclaimers, CVSS v4.0, PTES | Manual formatting |
 | **Terminal UX** | Cinematic preloader, fade animations | Plain stdout |
@@ -131,7 +131,7 @@ Most pentest workflows involve **20+ separate tools**, each with its own syntax,
 curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
 ```
 
-**One command. That's it.** Works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), WSL2, and Docker. The installer auto-detects your OS, installs `git` + `python3` if missing, clones the repo, creates a venv, installs all 84 plugins + 30 tools, and registers the `cascavel` global command. **Zero manual steps.**
+**One command. That's it.** Works on macOS, Linux (Debian/Ubuntu/Kali/Parrot/Fedora/Arch/Alpine/SUSE), WSL2, and Docker. The installer auto-detects your OS, installs `git` + `python3` if missing, clones the repo, creates a venv, installs all 85 plugins + 30 tools, and registers the `cascavel` global command. **Zero manual steps.**
 
 > [!TIP]
 > No `curl`? Use `wget -qO- https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash`
@@ -157,14 +157,14 @@ pip install -r requirements.txt && python3 cascavel.py -t target.com
 
 </details>
 
-The installer v2.3.0 includes **15 security hardenings**: `trap` cleanup, `mktemp -d` TOCTOU isolation, anti-symlink lock, SHA-256 `requirements.txt` integrity, CVE version enforcement (6 packages), `umask 077`, PATH prefix sanitization (rejects `.` and relative paths), container detection (Docker/Podman/LXC), WSL2 kernel detection, Python `ssl` module verification, stale venv recovery, `chmod 700/600` on sensitive paths, GOPATH/GOBIN export validation, locale UTF-8 enforcement, and absolute paths for critical binaries.
+The installer v2.4.0 includes **15 security hardenings**: `trap` cleanup, `mktemp -d` TOCTOU isolation, anti-symlink lock, SHA-256 `requirements.txt` integrity, CVE version enforcement (6 packages), `umask 077`, PATH prefix sanitization (rejects `.` and relative paths), container detection (Docker/Podman/LXC), WSL2 kernel detection, Python `ssl` module verification, stale venv recovery, `chmod 700/600` on sensitive paths, GOPATH/GOBIN export validation, locale UTF-8 enforcement, and absolute paths for critical binaries.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-cascavel.py (2800+ lines)                    report_generator.py (1400+ lines)
+cascavel.py (3000+ lines)                    report_generator.py (1400+ lines)
 ├── ANSI Escape Sanitizer                     ├── _NumberedCanvas (two-pass "Page X of Y")
 │   └── Blocks CSI/OSC/DCS injection          ├── Diagonal "CONFIDENCIAL" watermark
 ├── Preloader Engine                          ├── QR Code → rettecnologia.org
@@ -197,7 +197,7 @@ cascavel.py (2800+ lines)                    report_generator.py (1400+ lines)
 
 ---
 
-## 📄 PDF Reports (v2.2.0)
+## 📄 PDF Reports (v3.0.1)
 
 Enterprise-grade reports signed by **[RET Tecnologia](https://rettecnologia.org)**, compliant with Brazilian and international frameworks:
 
@@ -225,7 +225,7 @@ cascavel -t target.com -o md       # Markdown for documentation
 
 ---
 
-## 🔌 Plugin Arsenal (84)
+## 🔌 Plugin Arsenal (85)
 
 Zero false-positive tolerance. Standardized `run()` interface. Each plugin returns structured results with severity classification.
 
@@ -277,9 +277,9 @@ Zero false-positive tolerance. Standardized `run()` interface. Each plugin retur
 
 `s3_bucket` · `saml_scanner`
 
-### 📊 Analysis (5)
+### 📊 Analysis (6)
 
-`ssl_check` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
+`ssl_check` · `security_headers` · `waf_detec` · `profiler_bundpent` · `nmap_advanc` · `auto_exploit`
 
 ### 🔐 Brute Force (6)
 
@@ -298,7 +298,7 @@ python3 cascavel.py -t example.com --pdf      # Generate PDF report
 python3 cascavel.py -t example.com -o json    # JSON output (CI/CD integration)
 python3 cascavel.py -t example.com -q         # Quiet mode (no animations)
 python3 cascavel.py --plugins-only            # Skip external tools
-python3 cascavel.py --list-plugins            # List all 84 plugins
+python3 cascavel.py --list-plugins            # List all 85 plugins
 python3 cascavel.py --check-tools             # Check installed tools
 ```
 
@@ -353,7 +353,7 @@ Cascavel is hardened against modern attack vectors targeting security tools them
 | **Process zombie leak** | `os.killpg()` kills entire process groups on timeout |
 | **Input injection** | All external tool targets sanitized with `shlex.quote()` |
 
-### Installer Protections (v2.3.0 — 15 hardenings)
+### Installer Protections (v2.4.0 — 15 hardenings)
 
 | # | Vector | Mitigation |
 |:--|:---|:---|
@@ -379,11 +379,11 @@ Cascavel is hardened against modern attack vectors targeting security tools them
 
 ```
 Cascavel/
-├── cascavel.py           # Core engine (2800+ lines)
+├── cascavel.py           # Core engine (3000+ lines)
 ├── report_generator.py   # PDF reports (ReportLab Platypus)
-├── install.sh            # Universal installer (v2.3.0, 15 hardenings)
-├── plugins/              # 84 security plugins
-│   ├── xss_scanner.py    #   └── Standardized run() interface
+├── install.sh            # Universal installer (v2.4.0, 15 hardenings)
+├── plugins/              # 85 security plugins
+│   ├── xss_scanner.py    #   └── 85 plugins, standardized run() interface
 │   ├── jwt_analyzer.py
 │   └── ...
 ├── docs/                 # Screenshots and assets
