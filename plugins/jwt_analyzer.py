@@ -359,7 +359,7 @@ def _is_fp_by_baseline(target, ep, vuln_resp_text):
     Envia um token claramente inválido e compara as respostas.
     """
     try:
-        invalid_token = "invalid_header.invalid_payload.invalid_signature"
+        invalid_token = "invalid_header.invalid_payload.invalid_signature"  # noqa: S105
         resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {invalid_token}"}, timeout=5)
         # Se a resposta com token inválido for 200 e tiver o mesmo tamanho/conteúdo
         # significa que o endpoint é público ou é um FP do WAF/App (ignora auth).
