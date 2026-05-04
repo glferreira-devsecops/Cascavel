@@ -11,6 +11,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
 def run(target, ip, ports, banners):
     finding = None
     # Kubelet default port
@@ -19,9 +20,7 @@ def run(target, ip, ports, banners):
 
     base_url = f"https://{ip}:10250"
 
-    headers = {
-        "User-Agent": "Cascavel-Kube-Probe/3.0.1"
-    }
+    headers = {"User-Agent": "Cascavel-Kube-Probe/3.0.1"}
 
     try:
         # Step 1: Verificar se consegue extrair a lista de PODS (sem auth)
@@ -53,7 +52,7 @@ def run(target, ip, ports, banners):
                             "description": "API Kubelet exposta publicamente sem autenticação, permitindo execução arbitrária de comandos em pods rodando no nó.",
                             "endpoint": rce_url,
                             "payload": "echo CASCADE_RCE_CONFIRMED",
-                            "evidence": rce_resp.text.strip()
+                            "evidence": rce_resp.text.strip(),
                         }
     except Exception:
         pass

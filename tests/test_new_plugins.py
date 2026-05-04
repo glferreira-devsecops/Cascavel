@@ -23,6 +23,7 @@ def test_llm_rag_poisoning_vulnerable(mock_post):
     assert finding["severity"] == "CRITICAL"
     assert "LLM RAG Poisoning" in finding["vulnerability"]
 
+
 @patch("plugins.llm_rag_poisoning.requests.post")
 def test_llm_rag_poisoning_safe(mock_post):
     mock_resp = MagicMock()
@@ -33,6 +34,7 @@ def test_llm_rag_poisoning_safe(mock_post):
     finding = plugin_llm.run(target, ip, [], {})
     assert finding is None
 
+
 @patch("plugins.kubelet_anonymous_rce.requests.post")
 @patch("plugins.kubelet_anonymous_rce.requests.get")
 def test_kubelet_anonymous_rce_vulnerable(mock_get, mock_post):
@@ -42,7 +44,7 @@ def test_kubelet_anonymous_rce_vulnerable(mock_get, mock_post):
         "items": [
             {
                 "metadata": {"name": "test-pod", "namespace": "default"},
-                "spec": {"containers": [{"name": "test-container"}]}
+                "spec": {"containers": [{"name": "test-container"}]},
             }
         ]
     }
@@ -60,6 +62,7 @@ def test_kubelet_anonymous_rce_vulnerable(mock_get, mock_post):
     assert finding["severity"] == "CRITICAL"
     assert "Kubelet" in finding["vulnerability"]
 
+
 @patch("plugins.kubelet_anonymous_rce.requests.get")
 def test_kubelet_anonymous_rce_safe(mock_get):
     mock_resp_get = MagicMock()
@@ -69,6 +72,7 @@ def test_kubelet_anonymous_rce_safe(mock_get):
     ip = "127.0.0.1"
     finding = plugin_kubelet.run(target, ip, [10250], {})
     assert finding is None
+
 
 @patch("plugins.graphql_ast_bomb.requests.post")
 def test_graphql_ast_bomb_vulnerable(mock_post):
@@ -85,6 +89,7 @@ def test_graphql_ast_bomb_vulnerable(mock_post):
     assert finding is not None
     assert finding["severity"] == "HIGH"
     assert "GraphQL" in finding["vulnerability"]
+
 
 @patch("plugins.graphql_ast_bomb.requests.post")
 def test_graphql_ast_bomb_safe(mock_post):
@@ -104,6 +109,7 @@ def test_graphql_ast_bomb_safe(mock_post):
         finding = plugin_graphql.run(target, ip, [], {})
     assert finding is None
 
+
 @patch("plugins.web3_rpc_exposure.requests.post")
 def test_web3_rpc_exposure_vulnerable(mock_post):
     mock_resp = MagicMock()
@@ -117,6 +123,7 @@ def test_web3_rpc_exposure_vulnerable(mock_post):
     assert finding["severity"] == "CRITICAL"
     assert "Web3" in finding["vulnerability"]
 
+
 @patch("plugins.web3_rpc_exposure.requests.post")
 def test_web3_rpc_exposure_safe(mock_post):
     mock_resp = MagicMock()
@@ -126,6 +133,7 @@ def test_web3_rpc_exposure_safe(mock_post):
     ip = "127.0.0.1"
     finding = plugin_web3.run(target, ip, [8545], {})
     assert finding is None
+
 
 @patch("plugins.serverless_event_injection.requests.post")
 def test_serverless_event_injection_vulnerable(mock_post):
@@ -138,6 +146,7 @@ def test_serverless_event_injection_vulnerable(mock_post):
     assert finding is not None
     assert finding["severity"] == "CRITICAL"
     assert "Serverless" in finding["vulnerability"]
+
 
 @patch("plugins.serverless_event_injection.requests.post")
 def test_serverless_event_injection_safe(mock_post):

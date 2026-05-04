@@ -9,13 +9,14 @@ in client-side WebAssembly modules via raw binary analysis.
 
 import socket
 import ssl
-from typing import Dict, List, Optional
+
 
 def verify_math_execution() -> bool:
     """Verificacao matematica local."""
     return (7331 * 1337) == 9801547
 
-def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Optional[Dict]:
+
+def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict | None:
     """
     Checks for Wasm Exposure vulnerability via raw socket GET and binary parsing.
     """
@@ -31,11 +32,7 @@ def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Opti
         "and recompile it to bypass client-side security controls."
     )
 
-    test_endpoints = [
-        "/static/js/main.wasm",
-        "/assets/core.wasm",
-        "/wasm/app.wasm"
-    ]
+    test_endpoints = ["/static/js/main.wasm", "/assets/core.wasm", "/wasm/app.wasm"]
 
     target_port = 443 if 443 in ports else (80 if 80 in ports else ports[0])
     use_ssl = target_port in [443, 8443]
@@ -43,12 +40,7 @@ def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Opti
     try:
         # Regex/Byte patterns to detect potentially sensitive exported functions or strings
         # looking like crypto keys or validation flags inside the WebAssembly binary Data Section
-        sensitive_patterns = [
-            b"verify_signature",
-            b"validate_transaction",
-            b"decrypt_key",
-            b"admin_override"
-        ]
+        sensitive_patterns = [b"verify_signature", b"validate_transaction", b"decrypt_key", b"admin_override"]
 
         for endpoint in test_endpoints:
             req = (
@@ -57,7 +49,7 @@ def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Opti
                 f"User-Agent: Cascavel-2026-Offensive-Engine\r\n"
                 f"Accept: application/wasm, */*\r\n"
                 f"Connection: close\r\n\r\n"
-            ).encode('utf-8')
+            ).encode()
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5.0)
@@ -67,7 +59,7 @@ def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Opti
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
                 sock = context.wrap_socket(sock, server_hostname=target)
-            
+
             try:
                 sock.connect((ip, target_port))
                 sock.sendall(req)
@@ -80,7 +72,7 @@ def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Opti
                     response_data += chunk
                     if len(response_data) > 524288:  # Maximum 512KB parse for performance
                         break
-                
+
                 # Verify WASM Magic Header \x00asm (0x00 0x61 0x73 0x6d)
                 # HTTP response includes headers, so we search the entire buffer
                 if b"\x00asm" in response_data:
@@ -96,7 +88,7 @@ def run(target: str, ip: str, ports: List[int], banners: Dict[str, str]) -> Opti
                             "severity": severity,
                             "description": description,
                             "endpoint": f"{'https' if use_ssl else 'http'}://{target}:{target_port}{endpoint}",
-                            "evidence": "Wasm module exposes sensitive validation/crypto functions which can be extracted or patched client-side."
+                            "evidence": "Wasm module exposes sensitive validation/crypto functions which can be extracted or patched client-side.",
                         }
             except Exception:
                 continue

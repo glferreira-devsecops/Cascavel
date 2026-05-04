@@ -11,6 +11,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
 def run(target, ip, ports, banners):
     finding = None
 
@@ -20,7 +21,7 @@ def run(target, ip, ports, banners):
     headers = {
         "User-Agent": "Cascavel-Serverless-Probe/3.0.1",
         "X-Amz-Invocation-Type": "Event",
-        "X-Forwarded-For": "127.0.0.1"
+        "X-Forwarded-For": "127.0.0.1",
     }
 
     try:
@@ -36,7 +37,7 @@ def run(target, ip, ports, banners):
                 "description": "Função Serverless falhou em tratar entradas manipuladas (Headers de Invocação AWS/Azure) e vazou o Contexto de Execução contendo credenciais temporárias IAM.",
                 "endpoint": base_url,
                 "payload": "X-Amz-Invocation-Type: Event",
-                "evidence": resp.text[:100] + "..."
+                "evidence": resp.text[:100] + "...",
             }
         elif "Task timed out after" in resp.text:
             finding = {

