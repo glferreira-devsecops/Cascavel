@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-03-23
 
 ### Added
-- **26 new security plugins** bringing total to 84:
+- **26 new security plugins** bringing total to 85:
   - HTTP Smuggling (H2.O, CL-TE, TE-CL, HTTP/2)
   - gRPC scanner (reflection, insecure channel)
   - OAuth scanner (PKCE, state, token leak)
