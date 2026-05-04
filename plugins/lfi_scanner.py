@@ -128,6 +128,16 @@ SENSITIVE_PAYLOADS = [
 ]
 
 
+def _get_404_baseline(target):
+    """Calcula o tamanho da página de erro 404 (baseline diffing) para evitar que WAFs que retornam 200 OK com Soft-404 sejam reportados como vulneráveis."""  # noqa: E501
+    url = f"http://{target}/?file=nao_existo_cascavel_123.txt"
+    try:
+        resp = requests.get(url, timeout=6)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
 def _classify_severity(method):
     """Classifica severidade e descrição."""
     critical_methods = {
@@ -157,12 +167,17 @@ def _classify_severity(method):
     return "ALTO", f"LFI confirmado via {method}"
 
 
-def _test_lfi_get(target, param, payloads):
-    """Testa LFI via GET em um parâmetro com lista de payloads."""
+def _test_lfi_get(target, param, payloads, baseline_len):
+    """Testa LFI via GET em um parâmetro com lista de payloads, validando contra o baseline 404."""
     for payload, indicator, method in payloads:
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         try:
             resp = requests.get(url, timeout=6)
+            # Baseline diffing: Se o tamanho for igual (+- 5%) ao baseline 404 genérico, é FP (Soft-404/WAF block).
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             if resp.status_code == 200 and indicator and indicator in resp.text:
                 sev, desc = _classify_severity(method)
                 return {
@@ -179,11 +194,15 @@ def _test_lfi_get(target, param, payloads):
     return None
 
 
-def _test_lfi_post(target, param):
+def _test_lfi_post(target, param, baseline_len):
     """Testa LFI via POST body."""
     for payload, indicator, method in TRAVERSAL_PAYLOADS[:5]:
         try:
             resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             if indicator and indicator in resp.text:
                 return {
                     "tipo": "LFI_POST",
@@ -197,7 +216,7 @@ def _test_lfi_post(target, param):
     return None
 
 
-def _test_path_in_url(target):
+def _test_path_in_url(target, baseline_len):
     """Testa LFI diretamente no path URL (REST-style)."""
     vulns = []
     path_payloads = [
@@ -209,6 +228,10 @@ def _test_path_in_url(target):
     for path in path_payloads:
         try:
             resp = requests.get(f"http://{target}{path}", timeout=6)
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             if LINUX_INDICATOR in resp.text:
                 vulns.append(
                     {
@@ -236,39 +259,41 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    baseline_len = _get_404_baseline(target)
+
     for param in PARAMS:
         # 1. Traversal payloads
-        vuln = _test_lfi_get(target, param, TRAVERSAL_PAYLOADS)
+        vuln = _test_lfi_get(target, param, TRAVERSAL_PAYLOADS, baseline_len)
         if vuln:
             vulns.append(vuln)
 
         # 2. PHP wrappers
-        vuln = _test_lfi_get(target, param, PHP_WRAPPER_PAYLOADS)
+        vuln = _test_lfi_get(target, param, PHP_WRAPPER_PAYLOADS, baseline_len)
         if vuln:
             vulns.append(vuln)
 
         # 3. /proc filesystem
-        vuln = _test_lfi_get(target, param, PROC_PAYLOADS)
+        vuln = _test_lfi_get(target, param, PROC_PAYLOADS, baseline_len)
         if vuln:
             vulns.append(vuln)
 
         # 4. Log poisoning
-        vuln = _test_lfi_get(target, param, LOG_PAYLOADS)
+        vuln = _test_lfi_get(target, param, LOG_PAYLOADS, baseline_len)
         if vuln:
             vulns.append(vuln)
 
         # 5. Sensitive files
-        vuln = _test_lfi_get(target, param, SENSITIVE_PAYLOADS)
+        vuln = _test_lfi_get(target, param, SENSITIVE_PAYLOADS, baseline_len)
         if vuln:
             vulns.append(vuln)
 
         # 6. POST body LFI
-        vuln = _test_lfi_post(target, param)
+        vuln = _test_lfi_post(target, param, baseline_len)
         if vuln:
             vulns.append(vuln)
 
     # 7. Path in URL
-    vulns.extend(_test_path_in_url(target))
+    vulns.extend(_test_path_in_url(target, baseline_len))
 
     return {
         "plugin": "lfi_scanner",

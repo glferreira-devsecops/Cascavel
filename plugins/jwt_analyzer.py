@@ -352,6 +352,24 @@ def _analyze_token(token, resultado):
             )
 
 
+def _is_fp_by_baseline(target, ep, vuln_resp_text):
+    """
+    Verifica se a resposta de sucesso é apenas um Soft-404 genérico ou
+    um endpoint que ignora JWT completamente (public endpoint).
+    Envia um token claramente inválido e compara as respostas.
+    """
+    try:
+        invalid_token = "eyJhbGciOiJub25lIn0.eyJibGFoIjoiYmxhaCJ9."  # noqa: S105
+        resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {invalid_token}"}, timeout=5)
+        # Se a resposta com token inválido for 200 e tiver o mesmo tamanho/conteúdo
+        # significa que o endpoint é público ou é um FP do WAF/App (ignora auth).
+        if resp.status_code == 200 and len(resp.text) == len(vuln_resp_text):
+            return True
+        return False
+    except Exception:
+        return False
+
+
 def _test_none_alg(target, token, resultado):
     """Testa se o servidor aceita alg:none."""
     header, payload = _decode_jwt(token)
@@ -367,6 +385,10 @@ def _test_none_alg(target, token, resultado):
         try:
             resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {none_token}"}, timeout=5)
             if resp.status_code == 200 and any(k in resp.text.lower() for k in ["email", "username", "name"]):
+                # Baseline validation to prevent Soft-404 / Public endpoint FPs
+                if _is_fp_by_baseline(target, ep, resp.text):
+                    continue
+
                 resultado["vulns"].append(
                     {
                         "tipo": "JWT_ALG_NONE_ACCEPTED",
@@ -392,6 +414,10 @@ def _test_expired_acceptance(target, token, resultado):
         try:
             resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {token}"}, timeout=5)
             if resp.status_code == 200:
+                # Baseline validation to prevent Soft-404 / Public endpoint FPs
+                if _is_fp_by_baseline(target, ep, resp.text):
+                    continue
+
                 resultado["vulns"].append(
                     {
                         "tipo": "JWT_EXPIRED_ACCEPTED",

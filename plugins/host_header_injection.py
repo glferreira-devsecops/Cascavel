@@ -5,39 +5,69 @@ import requests
 PAGES = ["/", "/login", "/forgot-password", "/reset-password", "/api/", "/admin/", "/register", "/signup", "/contact"]
 
 
+def _verify_waf_blind_reflection(target, page, header_name):
+    """Verifica se o WAF/Server apenas reflete o header arbitrariamente."""
+    test_str = "cascavel_blind_reflection_test_12345"
+    url = f"http://{target}{page}"
+    try:
+        resp = requests.get(url, headers={header_name: test_str}, timeout=5)
+        if test_str in resp.text:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _get_baseline_len(target, page):
+    """Obtém o tamanho base da resposta sem injeção."""
+    try:
+        resp = requests.get(f"http://{target}{page}", timeout=5)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
 def _test_host_reflection(target, page):
     """Testa se Host header é refletido na resposta."""
     vulns = []
     test_host = "evil.cascavel-test.com"
     url = f"http://{target}{page}"
+    baseline_len = _get_baseline_len(target, page)
 
     # Direct Host override
     try:
         resp = requests.get(url, headers={"Host": test_host}, timeout=5)
-        if test_host in resp.text:
-            vulns.append(
-                {
-                    "tipo": "HOST_HEADER_REFLECTED",
-                    "pagina": page,
-                    "severidade": "ALTO",
-                    "descricao": "Host injetado refletido na resposta — password reset poisoning!",
-                }
-            )
+        if resp.status_code != 400 and test_host in resp.text:
+            resp_len = len(resp.text)
+            # Se a página encolher drasticamente, provável WAF block page
+            if baseline_len == 0 or abs(resp_len - baseline_len) / baseline_len <= 0.5:
+                if not _verify_waf_blind_reflection(target, page, "Host"):
+                    vulns.append(
+                        {
+                            "tipo": "HOST_HEADER_REFLECTED",
+                            "pagina": page,
+                            "severidade": "ALTO",
+                            "descricao": "Host injetado refletido na resposta — password reset poisoning!",
+                        }
+                    )
     except Exception:
         pass
 
     # X-Forwarded-Host
     try:
         resp = requests.get(url, headers={"X-Forwarded-Host": test_host}, timeout=5)
-        if test_host in resp.text:
-            vulns.append(
-                {
-                    "tipo": "XFH_REFLECTED",
-                    "pagina": page,
-                    "severidade": "ALTO",
-                    "descricao": "X-Forwarded-Host refletido — password reset poisoning via proxy!",
-                }
-            )
+        if resp.status_code != 400 and test_host in resp.text:
+            resp_len = len(resp.text)
+            if baseline_len == 0 or abs(resp_len - baseline_len) / baseline_len <= 0.5:
+                if not _verify_waf_blind_reflection(target, page, "X-Forwarded-Host"):
+                    vulns.append(
+                        {
+                            "tipo": "XFH_REFLECTED",
+                            "pagina": page,
+                            "severidade": "ALTO",
+                            "descricao": "X-Forwarded-Host refletido — password reset poisoning via proxy!",
+                        }
+                    )
     except Exception:
         pass
 
@@ -138,7 +168,7 @@ def _test_duplicate_host(target, page):
             headers={"Host": target, "X-Forwarded-Host": "evil.com"},
             timeout=5,
         )
-        if "evil.com" in resp.text:
+        if resp.status_code != 400 and "evil.com" in resp.text:
             return {
                 "tipo": "DUPLICATE_HOST_BYPASS",
                 "pagina": page,

@@ -126,9 +126,29 @@ PROTOCOL_PAYLOADS = [
 ]
 
 
+def _get_404_baseline(target):
+    """Calcula o tamanho de uma página de erro genérica."""
+    try:
+        resp = requests.get(f"http://{target}/cascavel_invalid_page_12345", timeout=5)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
+def _get_baseline_latency(target):
+    """Calcula a latência base do alvo para evitar falsos positivos time-based."""
+    try:
+        start = time.time()
+        requests.get(f"http://{target}/?url=http://non_existent_cascavel_123.local/", timeout=5)
+        return time.time() - start
+    except Exception:
+        return 0.5
+
+
 def _test_cloud_metadata(target, param):
     """Testa SSRF contra cloud metadata endpoints."""
     vulns = []
+    baseline_len = _get_404_baseline(target)
     for internal_url, label, indicators in CLOUD_METADATA:
         url = f"http://{target}/?{param}={urllib.parse.quote(internal_url, safe='')}"
         try:
@@ -138,6 +158,10 @@ def _test_cloud_metadata(target, param):
                 headers["Metadata-Flavor"] = "Google"
             resp = requests.get(url, timeout=8, allow_redirects=True, headers=headers)
             if resp.status_code == 200:
+                resp_len = len(resp.text)
+                if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                    continue  # Falso positivo: Soft-404 genérico
+
                 for indicator in indicators:
                     if indicator in resp.text:
                         severity = "CRITICO"
@@ -190,7 +214,7 @@ def _test_localhost_bypass(target, param):
     return vulns
 
 
-def _test_internal_services(target, param):
+def _test_internal_services(target, param, baseline_latency):
     """Testa SSRF para descobrir serviços internos."""
     vulns = []
     for service_url, service, indicator in INTERNAL_SERVICES:
@@ -209,14 +233,15 @@ def _test_internal_services(target, param):
                         "descricao": f"Serviço interno {service} acessível via SSRF!",
                     }
                 )
-            # Time-based detection (port open vs closed)
-            elif elapsed > 3:
+            # Time-based detection (port open vs closed) validado contra baseline
+            elif elapsed > (baseline_latency + 2.5):
                 vulns.append(
                     {
                         "tipo": "SSRF_PORT_OPEN",
                         "servico": service,
                         "parametro": param,
                         "tempo": round(elapsed, 2),
+                        "baseline": round(baseline_latency, 2),
                         "severidade": "MEDIO",
                     }
                 )
@@ -251,11 +276,26 @@ def _test_protocol_smuggling(target, param):
 
 def _test_post_ssrf(target, param):
     """Testa SSRF via POST body (JSON + form-data)."""
+    try:
+        baseline = requests.post(
+            f"http://{target}/",
+            json={param: "http://invalid.cascavel.test/"},
+            timeout=6,
+            headers={"Content-Type": "application/json"},
+        )
+        baseline_len = len(baseline.text)
+    except Exception:
+        baseline_len = 0
+
     for internal_url, label, indicators in CLOUD_METADATA[:3]:
         try:
             resp = requests.post(
                 f"http://{target}/", json={param: internal_url}, timeout=6, headers={"Content-Type": "application/json"}
             )
+            resp_len = len(resp.text)
+            if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                continue
+
             for indicator in indicators:
                 if indicator in resp.text:
                     return {
@@ -283,6 +323,9 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    # Calibrar latência para não emitir falsos positivos no time-based SSRF
+    baseline_latency = _get_baseline_latency(target)
+
     for param in PARAMS:
         # 1. Cloud metadata SSRF
         vulns.extend(_test_cloud_metadata(target, param))
@@ -291,7 +334,7 @@ def run(target, ip, open_ports, banners):
         vulns.extend(_test_localhost_bypass(target, param))
 
         # 3. Internal service discovery
-        vulns.extend(_test_internal_services(target, param))
+        vulns.extend(_test_internal_services(target, param, baseline_latency))
 
         # 4. Protocol smuggling
         vulns.extend(_test_protocol_smuggling(target, param))

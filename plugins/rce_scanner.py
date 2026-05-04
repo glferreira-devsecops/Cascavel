@@ -109,7 +109,49 @@ BYPASS_HEADERS_LIST = [
 ]
 
 
-def _test_output_rce(target, param):
+def _get_baseline_latency(target):
+    """Calcula o tempo natural de resposta do servidor."""
+    latencies = []
+    for _ in range(3):
+        try:
+            start = time.time()
+            requests.get(f"http://{target}/", timeout=8)
+            latencies.append(time.time() - start)
+        except Exception:
+            continue
+    if latencies:
+        return sum(latencies) / len(latencies)
+    return 0.5  # default conservador
+
+
+def _verify_waf_blind_reflection(target, param):
+    """Verifica se o WAF ou a aplicação reflete o payload cegamente, causando Falsos Positivos em testes baseados em string."""  # noqa: E501
+    junk = "cascavel_junk_reflection_123"
+    url = f"http://{target}/?{param}={junk}"
+    try:
+        resp = requests.get(url, timeout=5)
+        if junk in resp.text:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _verify_header_blind_reflection(target):
+    """Verifica se headers são refletidos no corpo (para evitar FPs no teste de RCE via Header)."""
+    junk = "cascavel_header_junk_123"
+    try:
+        resp = requests.get(
+            f"http://{target}/", headers={"User-Agent": junk, "Referer": junk, "X-Forwarded-For": junk}, timeout=5
+        )
+        if junk in resp.text:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _test_output_rce(target, param, reflects_blindly):
     """Testa RCE output-based com múltiplos separadores e bypass techniques."""
     for payload, indicator, method in OUTPUT_PAYLOADS:
         for headers in BYPASS_HEADERS_LIST[:2]:
@@ -117,6 +159,10 @@ def _test_output_rce(target, param):
             try:
                 resp = requests.get(url, timeout=8, headers={**{"User-Agent": "Cascavel/2.0"}, **headers})
                 if indicator and indicator in resp.text:
+                    # Se o payload reflete e o payload contem o proprio indicador, ignora
+                    if reflects_blindly and indicator in payload:
+                        continue
+
                     return {
                         "tipo": "RCE_OUTPUT",
                         "metodo": method,
@@ -131,36 +177,41 @@ def _test_output_rce(target, param):
     return None
 
 
-def _test_time_rce(target, param):
-    """Testa blind RCE via time delay."""
+def _test_time_rce(target, param, baseline_latency):
+    """Testa blind RCE via time delay validando com a baseline natural."""
+    if baseline_latency > 8.0:
+        return None
+
     for payload, method, threshold in TIME_PAYLOADS:
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         try:
             start = time.time()
             requests.get(url, timeout=10)
             elapsed = time.time() - start
-            if elapsed > threshold:
+            if elapsed > (threshold + baseline_latency):
                 return {
                     "tipo": "RCE_TIME_BASED",
                     "metodo": method,
                     "parametro": param,
                     "severidade": "CRITICO",
                     "tempo": round(elapsed, 2),
+                    "baseline_estimada": round(baseline_latency, 2),
                 }
         except requests.Timeout:
-            return {
-                "tipo": "RCE_TIME_BASED",
-                "metodo": method,
-                "parametro": param,
-                "severidade": "ALTO",
-                "timeout": True,
-            }
+            if baseline_latency < 3.0:
+                return {
+                    "tipo": "RCE_TIME_BASED",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": "ALTO",
+                    "timeout": True,
+                }
         except Exception:
             continue
     return None
 
 
-def _test_post_rce(target, param):
+def _test_post_rce(target, param, reflects_blindly):
     """Testa RCE via POST body (JSON + form-data)."""
     for payload, indicator, method in OUTPUT_PAYLOADS[:8]:
         for content_type, _data_fn in [
@@ -173,6 +224,10 @@ def _test_post_rce(target, param):
                 else:
                     resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
                 if indicator and indicator in resp.text:
+                    # Se o payload reflete e o payload contem o proprio indicador, ignora
+                    if reflects_blindly and indicator in payload:
+                        continue
+
                     return {
                         "tipo": "RCE_POST_BODY",
                         "metodo": method,
@@ -185,7 +240,7 @@ def _test_post_rce(target, param):
     return None
 
 
-def _test_header_injection(target):
+def _test_header_injection(target, header_reflects_blindly):
     """Testa RCE via headers injetáveis (User-Agent, Referer, X-Forwarded-For)."""
     injectable_headers = [
         ("User-Agent", ";id", "uid=", "HEADER_UA"),
@@ -196,6 +251,9 @@ def _test_header_injection(target):
         try:
             resp = requests.get(f"http://{target}/", headers={header: payload}, timeout=6)
             if indicator in resp.text:
+                if header_reflects_blindly and indicator in payload:
+                    continue
+
                 return {
                     "tipo": "RCE_HEADER_INJECTION",
                     "metodo": method,
@@ -243,21 +301,27 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    # Calcular Baseline da infraestrutura alvo
+    baseline_latency = _get_baseline_latency(target)
+    header_reflects_blindly = _verify_header_blind_reflection(target)
+
     for param in PARAMS:
+        reflects_blindly = _verify_waf_blind_reflection(target, param)
+
         # 1. Output-based RCE
-        vuln = _test_output_rce(target, param)
+        vuln = _test_output_rce(target, param, reflects_blindly)
         if vuln:
             vulns.append(vuln)
             continue  # Confirmed RCE, skip other tests for this param
 
         # 2. Time-based RCE
-        vuln = _test_time_rce(target, param)
+        vuln = _test_time_rce(target, param, baseline_latency)
         if vuln:
             vulns.append(vuln)
             continue
 
         # 3. POST body RCE
-        vuln = _test_post_rce(target, param)
+        vuln = _test_post_rce(target, param, reflects_blindly)
         if vuln:
             vulns.append(vuln)
             continue
@@ -269,7 +333,7 @@ def run(target, ip, open_ports, banners):
                 vulns.append(vuln)
 
     # 5. Header injection (global, not per-param)
-    header_vuln = _test_header_injection(target)
+    header_vuln = _test_header_injection(target, header_reflects_blindly)
     if header_vuln:
         vulns.append(header_vuln)
 

@@ -84,7 +84,21 @@ YAML_PAYLOADS = [
 ]
 
 
-def _test_payload(url, payload):
+def _get_junk_data_response(url, content_type):
+    """Envia dados inválidos (Junk Data) para verificar se o erro 500 é genérico."""
+    try:
+        resp = requests.post(
+            url,
+            data="INVALID_JUNK_DATA_FOR_BASELINE_TEST_12345!@#",
+            timeout=5,
+            headers={"Content-Type": content_type},
+        )
+        return resp.status_code, resp.text.lower()
+    except Exception:
+        return 0, ""
+
+
+def _test_payload(url, payload, junk_status=0, junk_text=""):
     """Testa um payload de deserialization."""
     try:
         data = payload["data"]
@@ -94,8 +108,9 @@ def _test_payload(url, payload):
             timeout=5,
             headers={"Content-Type": payload["content_type"]},
         )
+        resp_text_lower = resp.text.lower()
         for indicator in payload["indicadores"]:
-            if indicator.lower() in resp.text.lower():
+            if indicator.lower() in resp_text_lower:
                 return {
                     "tipo": "INSECURE_DESERIALIZATION",
                     "tecnologia": payload["nome"],
@@ -103,14 +118,16 @@ def _test_payload(url, payload):
                     "severidade": "CRITICO",
                     "status": resp.status_code,
                 }
-        # Check for generic error disclosure
-        if resp.status_code == 500 and any(e in resp.text.lower() for e in ["exception", "error", "traceback"]):
-            return {
-                "tipo": "DESER_ERROR_DISCLOSURE",
-                "tecnologia": payload["nome"],
-                "severidade": "ALTO",
-                "descricao": "Server error 500 com deserialization payload — possível vulnerabilidade!",
-            }
+        # Check for generic error disclosure ONLY if junk data did not trigger it
+        if resp.status_code == 500 and any(e in resp_text_lower for e in ["exception", "error", "traceback"]):
+            is_generic_fp = junk_status == 500 and any(e in junk_text for e in ["exception", "error", "traceback"])
+            if not is_generic_fp:
+                return {
+                    "tipo": "DESER_ERROR_DISCLOSURE",
+                    "tecnologia": payload["nome"],
+                    "severidade": "ALTO",
+                    "descricao": "Server error 500 com deserialization payload — possível vulnerabilidade!",
+                }
     except Exception:
         pass
     return None
@@ -150,7 +167,7 @@ def _test_viewstate(url):
     return None
 
 
-def _test_json_deserialization(url):
+def _test_json_deserialization(url, junk_status=0, junk_text=""):
     """Testa JSON deserialization (Jackson/FastJSON/.NET)."""
     json_payloads = [
         # Jackson polymorphic
@@ -166,18 +183,18 @@ def _test_json_deserialization(url):
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 500:
                 body = resp.text.lower()
-                if any(
-                    e in body
-                    for e in ["jackson", "fastjson", "typeloader", "remoting", "jdbcrowset", "objectdataprovider"]
-                ):
-                    vulns.append(
-                        {
-                            "tipo": "JSON_DESERIALIZATION",
-                            "severidade": "CRITICO",
-                            "descricao": "JSON polymorphic deserialization detected!",
-                            "amostra": resp.text[:150],
-                        }
-                    )
+                indicators = ["jackson", "fastjson", "typeloader", "remoting", "jdbcrowset", "objectdataprovider"]
+                for ind in indicators:
+                    if ind in body and ind not in junk_text:
+                        vulns.append(
+                            {
+                                "tipo": "JSON_DESERIALIZATION",
+                                "severidade": "CRITICO",
+                                "descricao": "JSON polymorphic deserialization detected!",
+                                "amostra": resp.text[:150],
+                            }
+                        )
+                        break
         except Exception:
             continue
     return vulns
@@ -199,8 +216,15 @@ def run(target, ip, open_ports, banners):
     for ep in ENDPOINTS:
         url = f"http://{target}{ep}"
 
+        junk_baselines = {}
+
         for payload in all_payloads:
-            vuln = _test_payload(url, payload)
+            ct = payload["content_type"]
+            if ct not in junk_baselines:
+                junk_baselines[ct] = _get_junk_data_response(url, ct)
+            j_status, j_text = junk_baselines[ct]
+
+            vuln = _test_payload(url, payload, j_status, j_text)
             if vuln:
                 vuln["endpoint"] = ep
                 vulns.append(vuln)
@@ -209,7 +233,14 @@ def run(target, ip, open_ports, banners):
         if vs:
             vulns.append(vs)
 
-        vulns.extend(_test_json_deserialization(url))
+        if "application/json" not in junk_baselines:
+            junk_baselines["application/json"] = _get_junk_data_response(url, "application/json")
+        j_json_status, j_json_text = junk_baselines["application/json"]
+
+        json_vulns = _test_json_deserialization(url, j_json_status, j_json_text)
+        for jv in json_vulns:
+            jv["endpoint"] = ep
+        vulns.extend(json_vulns)
 
     return {
         "plugin": "deserialization_scan",

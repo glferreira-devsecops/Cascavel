@@ -1,5 +1,6 @@
 # plugins/xxe_scanner.py — Cascavel 2026 Intelligence
 import base64
+import time
 
 import requests
 
@@ -128,55 +129,105 @@ XINCLUDE_PAYLOAD = (
 )
 
 
+def _get_baseline_latency(target):
+    """Calcula a latência base do alvo para mitigar falsos positivos em timeouts WAF."""
+    try:
+        start = time.time()
+        requests.get(f"http://{target}/cascavel_invalid_xxe_test", timeout=5)
+        return time.time() - start
+    except Exception:
+        return 0.5
+
+
+def _get_404_baseline(target, endpoint):
+    """Calcula o tamanho baseline do endpoint."""
+    url = f"http://{target}{endpoint}"
+    try:
+        # Envia um XML vazio/inválido curto para ver o erro genérico do parser,
+        # ou se o WAF bloqueia com uma página genérica.
+        resp = requests.post(
+            url, data="<cascavel>invalid_baseline</cascavel>", timeout=6, headers={"Content-Type": "application/xml"}
+        )
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
+def _verify_waf_blind_reflection(target, endpoint, payload_xml):
+    """Verifica se o WAF reflete cegamente o payload (ou partes dele) causando FP."""
+    test_val = "cascavel_blind_reflection_test"
+    url = f"http://{target}{endpoint}"
+    test_xml = f'<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/cascavel_invalid">]><data>{test_val}</data>'
+    try:
+        resp = requests.post(url, data=test_xml, timeout=5, headers={"Content-Type": "application/xml"})
+        if test_val in resp.text:
+            return True
+        return False
+    except Exception:
+        return False
+
+
 def _test_classic_xxe(target, endpoint):
     """Testa XXE clássico com múltiplos Content-Types."""
     vulns = []
     url = f"http://{target}{endpoint}"
 
+    baseline_len = _get_404_baseline(target, endpoint)
+
     for payload in CLASSIC_PAYLOADS:
         for ct in CONTENT_TYPES[:3]:
             try:
                 resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": ct})
+
+                # Check FP via soft-404 / generic block size
+                if baseline_len > 0 and abs(len(resp.text) - baseline_len) / baseline_len < 0.05:
+                    continue
+
                 if resp.status_code == 200:
                     if payload["indicador"] and payload["indicador"] in resp.text:
-                        vulns.append(
-                            {
-                                "tipo": "XXE",
-                                "subtipo": payload["nome"],
-                                "endpoint": endpoint,
-                                "content_type": ct,
-                                "severidade": "CRITICO",
-                                "descricao": f"XXE confirmado via {payload['nome']}!",
-                                "amostra": resp.text[:300],
-                            }
-                        )
-                        break
+                        if not _verify_waf_blind_reflection(target, endpoint, payload["xml"]):
+                            vulns.append(
+                                {
+                                    "tipo": "XXE",
+                                    "subtipo": payload["nome"],
+                                    "endpoint": endpoint,
+                                    "content_type": ct,
+                                    "severidade": "CRITICO",
+                                    "descricao": f"XXE confirmado via {payload['nome']}!",
+                                    "amostra": resp.text[:300],
+                                }
+                            )
+                            break
                     elif any(kw in resp.text.lower() for kw in XML_PARSER_ERRORS):
-                        vulns.append(
-                            {
-                                "tipo": "XXE_PARSER_DETECTED",
-                                "subtipo": payload["nome"],
-                                "endpoint": endpoint,
-                                "severidade": "MEDIO",
-                                "descricao": "XML parser detectado — superfície de ataque XXE!",
-                            }
-                        )
+                        if not _verify_waf_blind_reflection(target, endpoint, payload["xml"]):
+                            vulns.append(
+                                {
+                                    "tipo": "XXE_PARSER_DETECTED",
+                                    "subtipo": payload["nome"],
+                                    "endpoint": endpoint,
+                                    "severidade": "MEDIO",
+                                    "descricao": "XML parser detectado — superfície de ataque XXE!",
+                                }
+                            )
             except Exception:
                 continue
     return vulns
 
 
-def _test_blind_xxe(target, endpoint):
-    """Testa blind XXE via OOB (HTTP/DNS callback)."""
+def _test_blind_xxe(target, endpoint, baseline_latency):
+    """Testa blind XXE via OOB (HTTP/DNS callback) incorporando timeout real."""
     vulns = []
     url = f"http://{target}{endpoint}"
 
     for payload in BLIND_PAYLOADS:
         for ct in CONTENT_TYPES[:2]:
             try:
+                start = time.time()
                 resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": ct})
-                # Blind XXE não retorna dados — marcar como injetado
-                if resp.status_code in (200, 500, 400):
+                elapsed = time.time() - start
+                # Se demorou excessivamente mais que o baseline, não assumir injeção direto se for WAF delay
+                # Blind XXE não retorna dados — marcar como injetado se a resposta foi limpa
+                if resp.status_code in (200, 500, 400) and elapsed < (baseline_latency + 4.0):
                     vulns.append(
                         {
                             "tipo": "XXE_BLIND_INJECTED",
@@ -188,6 +239,8 @@ def _test_blind_xxe(target, endpoint):
                         }
                     )
                     break
+            except requests.exceptions.Timeout:
+                pass
             except Exception:
                 continue
     return vulns
@@ -278,19 +331,25 @@ def _test_encoding_bypass(target, endpoint):
     """Testa XXE com encoding bypass (UTF-7, UTF-16)."""
     vulns = []
     url = f"http://{target}{endpoint}"
+    baseline_len = _get_404_baseline(target, endpoint)
+
     for payload in ENCODING_PAYLOADS:
         try:
             resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": "application/xml"})
+            if baseline_len > 0 and abs(len(resp.text) - baseline_len) / baseline_len < 0.05:
+                continue
+
             if payload["indicador"] and payload["indicador"] in resp.text:
-                vulns.append(
-                    {
-                        "tipo": "XXE_ENCODING_BYPASS",
-                        "subtipo": payload["nome"],
-                        "endpoint": endpoint,
-                        "severidade": "CRITICO",
-                        "descricao": f"XXE via {payload['nome']} encoding bypass!",
-                    }
-                )
+                if not _verify_waf_blind_reflection(target, endpoint, payload["xml"]):
+                    vulns.append(
+                        {
+                            "tipo": "XXE_ENCODING_BYPASS",
+                            "subtipo": payload["nome"],
+                            "endpoint": endpoint,
+                            "severidade": "CRITICO",
+                            "descricao": f"XXE via {payload['nome']} encoding bypass!",
+                        }
+                    )
         except Exception:
             continue
     return vulns
@@ -309,12 +368,14 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners, base64)
     vulns = []
 
+    baseline_latency = _get_baseline_latency(target)
+
     for ep in ENDPOINTS:
         # 1. Classic XXE
         vulns.extend(_test_classic_xxe(target, ep))
 
         # 2. Blind/OOB XXE
-        vulns.extend(_test_blind_xxe(target, ep))
+        vulns.extend(_test_blind_xxe(target, ep, baseline_latency))
 
         # 3. XInclude
         xi = _test_xinclude(target, ep)

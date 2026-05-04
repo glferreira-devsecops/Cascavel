@@ -69,7 +69,7 @@ MUTATION_PAYLOADS = {
 
 
 def _find_gql_endpoint(target):
-    """Descobre endpoint GraphQL ativo."""
+    """Descobre endpoint GraphQL ativo verificando JSON válido."""
     for ep in GQL_ENDPOINTS:
         try:
             resp = requests.post(
@@ -78,8 +78,13 @@ def _find_gql_endpoint(target):
                 headers={"Content-Type": CT_JSON},
                 timeout=5,
             )
-            if resp.status_code == 200 and ("data" in resp.text or "errors" in resp.text):
-                return ep
+            if resp.status_code == 200:
+                try:
+                    json_resp = resp.json()
+                    if "data" in json_resp or "errors" in json_resp:
+                        return ep
+                except Exception:
+                    pass
         except Exception:
             continue
     return None
@@ -98,18 +103,24 @@ def _test_injections(target, endpoint):
                 headers={"Content-Type": CT_JSON},
             )
             body = resp.text.lower()
-            if resp.status_code == 200 and "errors" not in body and "data" in body:
-                vulns.append(
-                    {
-                        "tipo": f"GRAPHQL_{name}",
-                        "endpoint": endpoint,
-                        "severidade": payload_data.get("severity", "CRITICO"),
-                        "descricao": f"Payload {name} executado com sucesso via GraphQL!",
-                        "amostra": resp.text[:200],
-                    }
-                )
-            # Check for SQL error reflection
-            elif any(e in body for e in ["syntax error", "sql", "mysql", "postgres", "sqlite", "oracle", "mssql"]):
+            if resp.status_code == 200:
+                try:
+                    json_resp = resp.json()
+                    if "errors" not in json_resp and "data" in json_resp:
+                        vulns.append(
+                            {
+                                "tipo": f"GRAPHQL_{name}",
+                                "endpoint": endpoint,
+                                "severidade": payload_data.get("severity", "CRITICO"),
+                                "descricao": f"Payload {name} executado com sucesso via GraphQL!",
+                                "amostra": resp.text[:200],
+                            }
+                        )
+                except Exception:
+                    pass
+
+            # Check for SQL error reflection if not already caught
+            if any(e in body for e in ["syntax error", "sql", "mysql", "postgres", "sqlite", "oracle", "mssql"]):
                 vulns.append(
                     {
                         "tipo": f"GRAPHQL_ERROR_LEAK_{name}",
@@ -135,16 +146,21 @@ def _test_mutations(target, endpoint):
                 timeout=8,
                 headers={"Content-Type": CT_JSON},
             )
-            if resp.status_code == 200 and "data" in resp.text and "null" not in resp.text:
-                vulns.append(
-                    {
-                        "tipo": f"GRAPHQL_MUTATION_{name}",
-                        "endpoint": endpoint,
-                        "severidade": "CRITICO",
-                        "descricao": f"Mutation {name} aceita sem auth — data modification!",
-                        "amostra": resp.text[:200],
-                    }
-                )
+            if resp.status_code == 200:
+                try:
+                    json_resp = resp.json()
+                    if "data" in json_resp and json_resp.get("data") is not None:
+                        vulns.append(
+                            {
+                                "tipo": f"GRAPHQL_MUTATION_{name}",
+                                "endpoint": endpoint,
+                                "severidade": "CRITICO",
+                                "descricao": f"Mutation {name} aceita sem auth — data modification!",
+                                "amostra": resp.text[:200],
+                            }
+                        )
+                except Exception:
+                    pass
         except Exception:
             continue
     return vulns

@@ -87,6 +87,15 @@ GRAPHQL_QUERIES = [
 ]
 
 
+def _get_404_baseline_len(target):
+    """Obtém o tamanho do body de erro padrão para endpoints que não existem."""
+    try:
+        resp = requests.get(f"http://{target}/api/non_existent_endpoint_12345", timeout=5)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
 def _probe_endpoint(target, ep_template, id_list):
     """Testa um endpoint IDOR com múltiplos IDs."""
     responses = {}
@@ -106,61 +115,82 @@ def _probe_endpoint(target, ep_template, id_list):
     return responses
 
 
-def _analyze_responses(responses, ep_template):
-    """Analisa padrões de resposta para detectar IDOR/BOLA."""
+def _analyze_responses(responses, ep_template, baseline_len):
+    """Analisa padrões de resposta para detectar IDOR/BOLA com diff checking rigoroso."""
     vulns = []
     success = [tid for tid, r in responses.items() if r["status"] == 200 and r["has_data"]]
     success_200 = [tid for tid, r in responses.items() if r["status"] == 200]
 
-    if len(success) >= 2:
+    # Verifica se os sucessos não são apenas soft-404 refletindo ID ou body genérico
+    valid_success = []
+    for tid in success:
+        diff_len = abs(responses[tid]["length"] - baseline_len)
+        if baseline_len == 0 or diff_len > (baseline_len * 0.05):
+            valid_success.append(tid)
+
+    if len(valid_success) >= 2:
         vulns.append(
             {
                 "tipo": "IDOR_BOLA",
                 "endpoint": ep_template,
-                "ids_acessiveis": success[:5],
+                "ids_acessiveis": valid_success[:5],
                 "severidade": "CRITICO",
-                "descricao": "Múltiplos IDs com PII acessíveis sem auth — BOLA confirmado!",
+                "descricao": "Múltiplos IDs com PII acessíveis sem auth — BOLA confirmado via Response Diffing!",
             }
         )
     elif len(success_200) >= 3:
-        # Different lengths suggest different users' data
+        # Different lengths suggest different users' data, tolerância de 5% p/ falsos positivos
         lengths = set(responses[tid]["length"] for tid in success_200)
-        if len(lengths) > 1:
+        max_len = max(lengths) if lengths else 0
+        min_len = min(lengths) if lengths else 0
+        if max_len > 0 and abs(max_len - min_len) > (max_len * 0.05):
             vulns.append(
                 {
                     "tipo": "IDOR_POSSIVEL",
                     "endpoint": ep_template,
                     "ids_200": success_200[:5],
                     "severidade": "ALTO",
-                    "descricao": "Múltiplos IDs retornam respostas diferentes — provável IDOR!",
+                    "descricao": "Múltiplos IDs retornam respostas sensivelmente diferentes — provável IDOR!",
                 }
             )
 
-    if 0 in responses and responses[0]["status"] == 200:
+    if (
+        0 in responses
+        and responses[0]["status"] == 200
+        and abs(responses[0]["length"] - baseline_len) > (baseline_len * 0.05)
+    ):
         vulns.append(
             {
                 "tipo": "IDOR_ZERO_ID",
                 "endpoint": ep_template,
                 "severidade": "MEDIO",
-                "descricao": "ID=0 retorna dados — off-by-one!",
+                "descricao": "ID=0 retorna dados válidos — off-by-one!",
             }
         )
-    if -1 in responses and responses[-1]["status"] == 200:
+    if (
+        -1 in responses
+        and responses[-1]["status"] == 200
+        and abs(responses[-1]["length"] - baseline_len) > (baseline_len * 0.05)
+    ):
         vulns.append(
             {
                 "tipo": "IDOR_NEGATIVE_ID",
                 "endpoint": ep_template,
                 "severidade": "MEDIO",
-                "descricao": "ID negativo retorna dados — integer overflow?",
+                "descricao": "ID negativo retorna dados válidos — integer overflow?",
             }
         )
-    if 999999 in responses and responses[999999]["status"] == 200:
+    if (
+        999999 in responses
+        and responses[999999]["status"] == 200
+        and abs(responses[999999]["length"] - baseline_len) > (baseline_len * 0.05)
+    ):
         vulns.append(
             {
                 "tipo": "IDOR_LARGE_ID",
                 "endpoint": ep_template,
                 "severidade": "MEDIO",
-                "descricao": "ID grande retorna dados — enumeration!",
+                "descricao": "ID gigante retorna dados válidos — enumeration bypass!",
             }
         )
 
@@ -262,12 +292,16 @@ def _check_parameter_pollution(target):
     return vulns
 
 
-def _check_uuid_prediction(target):
+def _check_uuid_prediction(target, baseline_len):
     """Testa IDOR com UUIDs previsíveis (v1 timestamp-based)."""
     vulns = []
     for ep_template in ENDPOINTS_UUID:
         responses = _probe_endpoint(target, ep_template, TEST_UUIDS)
-        success = [uid for uid, r in responses.items() if r["status"] == 200 and r.get("has_data")]
+        success = [
+            uid
+            for uid, r in responses.items()
+            if r["status"] == 200 and r.get("has_data") and abs(r["length"] - baseline_len) > (baseline_len * 0.05)
+        ]
         if success:
             vulns.append(
                 {
@@ -275,7 +309,7 @@ def _check_uuid_prediction(target):
                     "endpoint": ep_template,
                     "uuids_acessiveis": success,
                     "severidade": "ALTO",
-                    "descricao": "UUIDs sequenciais/previsíveis retornam dados — IDOR!",
+                    "descricao": "UUIDs sequenciais/previsíveis retornam dados sensíveis validados — IDOR!",
                 }
             )
     return vulns
@@ -294,13 +328,16 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    # Obtem baseline para ignorar Soft-404s ou pages padrao WAF
+    baseline_len = _get_404_baseline_len(target)
+
     # 1. Numeric IDOR
     for ep_template in ENDPOINTS_NUMERIC:
         responses = _probe_endpoint(target, ep_template, TEST_IDS)
-        vulns.extend(_analyze_responses(responses, ep_template))
+        vulns.extend(_analyze_responses(responses, ep_template, baseline_len))
 
     # 2. UUID IDOR
-    vulns.extend(_check_uuid_prediction(target))
+    vulns.extend(_check_uuid_prediction(target, baseline_len))
 
     # 3. Privilege escalation
     vulns.extend(_check_privilege_escalation(target))

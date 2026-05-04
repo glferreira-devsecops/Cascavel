@@ -40,9 +40,28 @@ UNKEYED_HEADERS = [
 ]
 
 
+def _verify_waf_blind_reflection(target, page):
+    """Verifica se o servidor reflete QUALQUER header unkeyed cegamente."""
+    junk_header = "X-Cascavel-Test-Junk"
+    junk_value = "cascavel_blind_reflection_" + "".join(random.choices(string.ascii_lowercase, k=6))
+    url = f"http://{target}{page}"
+    try:
+        resp = requests.get(url, headers={junk_header: junk_value}, timeout=5)
+        if junk_value in resp.text or junk_value in str(resp.headers):
+            return True
+        return False
+    except Exception:
+        return False
+
+
 def _test_unkeyed_reflection(target, page):
     """Testa se headers unkeyed são refletidos na resposta."""
     vulns = []
+
+    # Se o servidor reflete qualquer header lixo, ignora teste para evitar FPs
+    if _verify_waf_blind_reflection(target, page):
+        return []
+
     url = f"http://{target}{page}"
     for header_name, header_value, method in UNKEYED_HEADERS:
         try:
@@ -120,6 +139,18 @@ def _test_cache_deception(target):
 def _test_fat_get(target, page):
     """Testa Fat GET cache poisoning (body in GET request)."""
     try:
+        # Verifica baseline - se qualquer dado no body do GET é refletido
+        # isso evita FPs onde a aplicação apenas ecoa tudo (ex: debug page)
+        baseline_junk = "baseline_fat_get_" + "".join(random.choices(string.ascii_lowercase, k=6))
+        baseline_resp = requests.get(
+            f"http://{target}{page}",
+            data=f"random_field={baseline_junk}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=5,
+        )
+        if baseline_junk in baseline_resp.text:
+            return None  # FP: Blind reflection no body do GET
+
         resp = requests.get(
             f"http://{target}{page}",
             data=f"param={CANARY}",
@@ -141,6 +172,12 @@ def _test_fat_get(target, page):
 def _test_parameter_cloaking(target, page):
     """Testa parameter cloaking para cache poisoning."""
     try:
+        # Baseline check para ver se qualquer param é refletido
+        baseline_junk = "baseline_cloak_" + "".join(random.choices(string.ascii_lowercase, k=6))
+        baseline_resp = requests.get(f"http://{target}{page}?cb=1;random={baseline_junk}", timeout=5)
+        if baseline_junk in baseline_resp.text:
+            return None  # FP: Blind reflection de parametros aninhados
+
         # Some caches strip query params — inject via fragment/semicolon
         resp = requests.get(f"http://{target}{page}?cb=1;evil={CANARY}", timeout=5)
         if CANARY in resp.text:

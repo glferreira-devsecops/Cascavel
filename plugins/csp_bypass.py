@@ -155,13 +155,21 @@ def _analyze_directives(csp_string, page):
     # Framework CDN bypass
     for cdn_domain, desc in FRAMEWORK_BYPASS_DOMAINS:
         if cdn_domain in csp_string:
+            # Rebaixamento Anti-FP: CDNs como jsdelivr/unpkg só são altamente perigosos com unsafe-eval ou wildcards
+            if "'unsafe-eval'" in csp_string or "*" in csp_string:
+                sev = "ALTO"
+                desc_ext = f"{desc} (Agravado por unsafe-eval/*)"
+            else:
+                sev = "BAIXO"
+                desc_ext = f"{desc} (Risco mitigado sem unsafe-eval, possível falso positivo em apps modernas)"
+
             vulns.append(
                 {
                     "tipo": "CSP_CDN_BYPASS",
                     "pagina": page,
                     "dominio": cdn_domain,
-                    "severidade": "ALTO",
-                    "descricao": desc,
+                    "severidade": sev,
+                    "descricao": desc_ext,
                 }
             )
 

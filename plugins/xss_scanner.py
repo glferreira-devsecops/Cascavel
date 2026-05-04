@@ -119,8 +119,34 @@ BYPASS_HEADERS = [
 ]
 
 
-def _test_reflected(target, param):
+def _verify_waf_blind_reflection(target, param, method="GET"):
+    """
+    Junk Data Verification (Baseline): Se o WAF ecoar a string junk '<cascavel_junk>'
+    sem codificação (sem escape HTMLEntities), o WAF reflete tudo cegamente,
+    o que causa Falsos Positivos de Reflexão.
+    Retorna True se é uma reflexão WAF-based (Falso Positivo), False se for seguro.
+    """
+    junk = "<cascavel_junk_123>"
+    try:
+        if method == "GET":
+            url = f"http://{target}/?{param}={urllib.parse.quote(junk, safe='')}"
+            resp = requests.get(url, timeout=6)
+        else:
+            url = f"http://{target}/"
+            resp = requests.post(url, data={param: junk}, timeout=6)
+
+        if junk in resp.text:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _test_reflected(target, param, is_waf_reflection):
     """Testa payloads XSS refletidos em GET com bypass headers."""
+    if is_waf_reflection:
+        return None  # WAF ou LB reflete tudo, pular para evitar falso positivo
+
     for payload, method in REFLECTED_PAYLOADS:
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         for headers in [{}] + BYPASS_HEADERS:
@@ -144,8 +170,11 @@ def _test_reflected(target, param):
     return None
 
 
-def _test_reflected_post(target, param):
+def _test_reflected_post(target, param, is_waf_reflection):
     """Testa payloads XSS via POST body (JSON + form-data)."""
+    if is_waf_reflection:
+        return None
+
     for payload, method in REFLECTED_PAYLOADS[:10]:
         try:
             resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
@@ -245,13 +274,15 @@ def run(target, ip, open_ports, banners):
 
     # 1. Reflected XSS — GET + headers bypass
     for param in PARAMS:
-        vuln = _test_reflected(target, param)
+        is_waf_reflection = _verify_waf_blind_reflection(target, param)
+        vuln = _test_reflected(target, param, is_waf_reflection)
         if vuln:
             vulns.append(vuln)
 
     # 2. Reflected XSS — POST
     for param in PARAMS[:15]:
-        vuln = _test_reflected_post(target, param)
+        is_waf_reflection = _verify_waf_blind_reflection(target, param, method="POST")
+        vuln = _test_reflected_post(target, param, is_waf_reflection)
         if vuln:
             vulns.append(vuln)
 

@@ -64,12 +64,69 @@ CRITICO_METHODS = {
 }
 
 
+def _verify_waf_blind_reflection(target, header_name):
+    """Verifica se o WAF/Proxy reflete cabeçalhos desconhecidos cegamente."""
+    junk_value = "cascavel_blind_reflection_test_12345"
+    try:
+        resp = requests.get(f"http://{target}/", headers={header_name: junk_value}, timeout=6, allow_redirects=False)
+        resp_headers_str = str(resp.headers).lower()
+        if junk_value.lower() in resp.text.lower() or junk_value.lower() in resp_headers_str:
+            return True
+        return False
+    except Exception:
+        return False
+
+
+def _verify_waf_blind_reflection_param(target, param):
+    """Verifica se o WAF/Proxy reflete parâmetros desconhecidos cegamente."""
+    junk_value = "cascavel_blind_param_12345"
+    url = f"http://{target}/?{param}={junk_value}"
+    try:
+        resp = requests.get(url, timeout=6, allow_redirects=False)
+        resp_headers_str = str(resp.headers).lower()
+        if junk_value.lower() in resp.text.lower() or junk_value.lower() in resp_headers_str:
+            return True
+        return False
+    except Exception:
+        return False
+
+
+def _get_baseline_response(url, headers=None):
+    """Captura a resposta base de uma requisição benigna para diffing."""
+    try:
+        resp = requests.get(url, headers=headers or {}, timeout=6, allow_redirects=False)
+        return resp.text, resp.headers
+    except Exception:
+        return "", {}
+
+
 def _test_crlf_get(target, param, payload, method):
     """Testa CRLF injection via GET parameter."""
     url = f"http://{target}/?{param}={payload}"
+
+    # Validação de WAF cego para o parâmetro
+    if _verify_waf_blind_reflection_param(target, param):
+        return []
+
+    # Baseline sem CRLF
+    payload_no_crlf = (
+        payload.replace("%0d", "")
+        .replace("%0a", "")
+        .replace("%0D", "")
+        .replace("%0A", "")
+        .replace("\r", "")
+        .replace("\n", "")
+        .replace("%c0%0d", "")
+        .replace("%c0%0a", "")
+        .replace("%250d", "")
+        .replace("%250a", "")
+    )
+    url_baseline = f"http://{target}/?{param}={payload_no_crlf}"
+    baseline_text, baseline_headers = _get_baseline_response(url_baseline)
+
     try:
         resp = requests.get(url, timeout=6, allow_redirects=False)
-        return _analyze_response(resp, param, method)
+        return _analyze_response(resp, param, method, baseline_text, baseline_headers)
     except Exception:
         return []
 
@@ -82,10 +139,14 @@ def _test_crlf_header(target, payload, method):
         ("X-Forwarded-Host", payload),
     ]
     vulns = []
+    baseline_text, baseline_headers = _get_baseline_response(f"http://{target}/")
     for header_name, header_val in headers_to_test:
+        if _verify_waf_blind_reflection(target, header_name):
+            continue
+
         try:
             resp = requests.get(f"http://{target}/", headers={header_name: header_val}, timeout=6)
-            found = _analyze_response(resp, f"header:{header_name}", method)
+            found = _analyze_response(resp, f"header:{header_name}", method, baseline_text, baseline_headers)
             vulns.extend(found)
             if found:
                 break
@@ -96,22 +157,38 @@ def _test_crlf_header(target, payload, method):
 
 def _test_crlf_path(target, payload, method):
     """Testa CRLF injection no path da URL."""
+    payload_no_crlf = (
+        payload.replace("%0d", "")
+        .replace("%0a", "")
+        .replace("%0D", "")
+        .replace("%0A", "")
+        .replace("\r", "")
+        .replace("\n", "")
+        .replace("%c0%0d", "")
+        .replace("%c0%0a", "")
+        .replace("%250d", "")
+        .replace("%250a", "")
+    )
+    baseline_text, baseline_headers = _get_baseline_response(f"http://{target}/{payload_no_crlf}")
     try:
         resp = requests.get(f"http://{target}/{payload}", timeout=6, allow_redirects=False)
-        return _analyze_response(resp, "URL_PATH", method)
+        return _analyze_response(resp, "URL_PATH", method, baseline_text, baseline_headers)
     except Exception:
         return []
 
 
-def _analyze_response(resp, injection_point, method):
+def _analyze_response(resp, injection_point, method, baseline_text="", baseline_headers=None):
     """Analisa resposta para sinais de CRLF injection."""
+    if baseline_headers is None:
+        baseline_headers = {}
     vulns = []
 
     # Check injected headers
     for h_name, h_val in resp.headers.items():
         h_low = h_name.lower()
         v_low = h_val.lower()
-        if "injected" in h_low or "cascaveltest" in v_low or "unicodecrlf" in v_low:
+        b_val = baseline_headers.get(h_name, "").lower()
+        if ("injected" in h_low or "cascaveltest" in v_low or "unicodecrlf" in v_low) and v_low != b_val:
             sev = "CRITICO" if method in CRITICO_METHODS else "ALTO"
             vulns.append(
                 {
@@ -128,7 +205,7 @@ def _analyze_response(resp, injection_point, method):
     # Check body injection (response splitting)
     body_indicators = ["CRLFTest", "POISONED", "<h1>CRLF</h1>", "SMUGGLED"]
     for indicator in body_indicators:
-        if indicator in resp.text:
+        if indicator in resp.text and indicator not in baseline_text:
             vulns.append(
                 {
                     "tipo": "HTTP_RESPONSE_SPLITTING",
@@ -142,7 +219,8 @@ def _analyze_response(resp, injection_point, method):
 
     # Check cookie injection
     for cookie_header in resp.headers.get("Set-Cookie", "").split(","):
-        if "session=pwned" in cookie_header.lower():
+        b_cookies = baseline_headers.get("Set-Cookie", "").lower()
+        if "session=pwned" in cookie_header.lower() and "session=pwned" not in b_cookies:
             vulns.append(
                 {
                     "tipo": "CRLF_COOKIE_INJECTION",
@@ -155,7 +233,8 @@ def _analyze_response(resp, injection_point, method):
 
     # Check CORS injection
     acao = resp.headers.get("Access-Control-Allow-Origin", "")
-    if acao == "*" and "CORS_INJECTION" in method:
+    b_acao = baseline_headers.get("Access-Control-Allow-Origin", "")
+    if acao == "*" and "CORS_INJECTION" in method and b_acao != "*":
         vulns.append(
             {
                 "tipo": "CRLF_CORS_INJECTION",

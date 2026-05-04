@@ -1,5 +1,7 @@
 # plugins/open_redirect.py — Cascavel 2026 Intelligence
 
+import urllib.parse
+
 import requests
 
 PARAMS = [
@@ -68,7 +70,20 @@ JS_REDIRECT_PATTERNS = [
 ]
 
 
-def _test_get_redirect(target, param, payload, method):
+def _verify_waf_blind_reflection(target, param):
+    """Verifica se o payload é refletido cegamente no HTML, causando FPs em JS/Meta redirect."""
+    junk = "http://cascavel_junk_reflection_123.com"
+    url = f"http://{target}/?{param}={junk}"
+    try:
+        resp = requests.get(url, timeout=5, allow_redirects=False)
+        if junk in resp.text:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _test_get_redirect(target, param, payload, method, reflects_blindly):
     """Testa open redirect via GET parameter."""
     url = f"http://{target}/?{param}={payload}"
     try:
@@ -77,7 +92,22 @@ def _test_get_redirect(target, param, payload, method):
         # HTTP redirect
         if resp.status_code in [301, 302, 303, 307, 308]:
             location = resp.headers.get("Location", "")
-            if "evil.com" in location or location.startswith("javascript:"):
+
+            # Verifica se evil.com é o domínio real
+            is_evil = False
+            if location.startswith("javascript:"):
+                is_evil = True
+            elif "evil.com" in location:
+                try:
+                    parsed = urllib.parse.urlparse(location)
+                    if parsed.netloc and "evil.com" in parsed.netloc:
+                        is_evil = True
+                    elif not parsed.scheme and location.startswith("//evil.com"):
+                        is_evil = True
+                except Exception:
+                    is_evil = "evil.com" in location
+
+            if is_evil:
                 sev = "CRITICO" if "javascript:" in location else "ALTO"
                 return {
                     "tipo": "OPEN_REDIRECT",
@@ -89,7 +119,7 @@ def _test_get_redirect(target, param, payload, method):
                 }
 
         # JS redirect
-        if resp.status_code == 200:
+        if resp.status_code == 200 and not reflects_blindly:
             if any(p in resp.text for p in JS_REDIRECT_PATTERNS) and "evil.com" in resp.text:
                 return {
                     "tipo": "OPEN_REDIRECT_JS",
@@ -208,8 +238,10 @@ def run(target, ip, open_ports, banners):
     payloads = _get_payloads(target)
 
     for param in PARAMS:
+        reflects_blindly = _verify_waf_blind_reflection(target, param)
+
         for payload, method in payloads:
-            result = _test_get_redirect(target, param, payload, method)
+            result = _test_get_redirect(target, param, payload, method, reflects_blindly)
             if result:
                 vulns.append(result)
                 break

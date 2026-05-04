@@ -142,8 +142,41 @@ SQL_ERRORS = [
 ]
 
 
-def _check_error_based(resp_text, method, param):
-    """Verifica erros SQL expostos na resposta."""
+def _get_baseline_latency(target):
+    """Calcula o tempo natural de resposta do servidor."""
+    latencies = []
+    for _ in range(3):
+        try:
+            start = time.time()
+            requests.get(f"http://{target}/", timeout=8)
+            latencies.append(time.time() - start)
+        except Exception:
+            continue
+    if latencies:
+        return sum(latencies) / len(latencies)
+    return 0.5  # Default conservador se houver falha
+
+
+def _get_404_baseline(target):
+    """Captura a resposta de uma página inexistente para calcular a baseline de tamanho (Soft-404 / WAF)."""
+    try:
+        resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
+        return len(resp.text)
+    except Exception:
+        return 0
+
+
+def _check_error_based(resp_text, method, param, baseline_len):
+    """Verifica erros SQL expostos na resposta com proteção de baseline diffing."""
+    resp_len = len(resp_text)
+    # Tolerância de 5% ou 50 bytes
+    tolerance = max(baseline_len * 0.05, 50)
+    diff_from_baseline = abs(resp_len - baseline_len)
+
+    # Se a resposta de erro tiver o mesmo tamanho da baseline de erro 404/WAF, ignore
+    if baseline_len > 0 and diff_from_baseline <= tolerance:
+        return None
+
     lower = resp_text.lower()
     for err in SQL_ERRORS:
         if err in lower:
@@ -154,37 +187,50 @@ def _check_error_based(resp_text, method, param):
                 "severidade": "CRITICO",
                 "erro_detectado": err,
                 "amostra": resp_text[:300],
+                "diff_bytes": diff_from_baseline,
             }
     return None
 
 
-def _check_time_based(method, elapsed, threshold, param):
-    """Detecta SQLi time-based via delay na resposta."""
-    if elapsed > threshold:
+def _check_time_based(method, elapsed, threshold, param, baseline_latency):
+    """Detecta SQLi time-based via delay na resposta considerando a baseline natural."""
+    if elapsed > (threshold + baseline_latency):
         return {
             "tipo": "SQLI_TIME_BASED",
             "metodo": method,
             "parametro": param,
             "severidade": "CRITICO",
             "tempo_resposta": round(elapsed, 2),
+            "baseline_estimada": round(baseline_latency, 2),
         }
     return None
 
 
-def _check_boolean_diff(resp_true_len, resp_false_len, param):
-    """Detecta SQLi boolean-based via diferença de tamanho."""
-    diff = abs(resp_true_len - resp_false_len)
-    if diff > 50:
+def _check_boolean_diff(r_true_len, r_false_len, r_baseline_len, param):
+    """Detecta SQLi boolean-based via diferença de tamanho, considerando a baseline natural."""
+    # Se a diferença entre o true e o baseline for pequena, mas o false divergir muito, é um indício
+    diff_true_base = abs(r_true_len - r_baseline_len)
+    diff_false_base = abs(r_false_len - r_baseline_len)
+    diff_true_false = abs(r_true_len - r_false_len)
+
+    # Tolerância de 2% para variações naturais da página (CSRF tokens, timestamps)
+    tolerance = r_baseline_len * 0.02 if r_baseline_len > 0 else 50
+    tolerance = max(tolerance, 50)  # Pelo menos 50 bytes
+
+    # Condição: True é muito parecido com Baseline, e False é muito diferente
+    # ou vice-versa, e a diferença entre eles é maior que a tolerância natural
+    if diff_true_false > tolerance and (diff_true_base <= tolerance or diff_false_base <= tolerance):
         return {
             "tipo": "SQLI_BLIND_BOOLEAN",
             "parametro": param,
             "severidade": "ALTO",
-            "diff_bytes": diff,
+            "diff_bytes": diff_true_false,
+            "detalhes": f"True len: {r_true_len}, False len: {r_false_len}, Baseline: {r_baseline_len}",
         }
     return None
 
 
-def _test_error_and_union(target, param):
+def _test_error_and_union(target, param, baseline_len):
     """Testa error-based e union-based em um parâmetro."""
     findings = []
     all_payloads = ERROR_PAYLOADS + UNION_PAYLOADS + WAF_BYPASS_PAYLOADS + OOB_PAYLOADS + STACKED_PAYLOADS
@@ -192,7 +238,7 @@ def _test_error_and_union(target, param):
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         try:
             resp = requests.get(url, timeout=8)
-            vuln = _check_error_based(resp.text, method, param)
+            vuln = _check_error_based(resp.text, method, param, baseline_len)
             if vuln:
                 findings.append(vuln)
                 if "CRITICO" in vuln.get("severidade", ""):
@@ -202,25 +248,31 @@ def _test_error_and_union(target, param):
     return findings
 
 
-def _test_time_based(target, param):
-    """Testa time-based blind SQLi."""
+def _test_time_based(target, param, baseline_latency):
+    """Testa time-based blind SQLi validando contra a baseline."""
+    # Se a baseline natural já é altíssima (ex: > 8s), ignora time-based para evitar FP
+    if baseline_latency > 8.0:
+        return None
+
     for payload, method, threshold in TIME_PAYLOADS:
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         try:
             start = time.time()
             requests.get(url, timeout=12)
             elapsed = time.time() - start
-            vuln = _check_time_based(method, elapsed, threshold, param)
+            vuln = _check_time_based(method, elapsed, threshold, param, baseline_latency)
             if vuln:
                 return vuln
         except requests.Timeout:
-            return {
-                "tipo": "SQLI_TIME_BASED",
-                "metodo": method,
-                "parametro": param,
-                "severidade": "ALTO",
-                "timeout": True,
-            }
+            # Se deu timeout e a baseline já era alta, ignora. Senão, flag.
+            if baseline_latency < 3.0:
+                return {
+                    "tipo": "SQLI_TIME_BASED",
+                    "metodo": method,
+                    "parametro": param,
+                    "severidade": "ALTO",
+                    "timeout": True,
+                }
         except Exception:
             continue
     return None
@@ -229,21 +281,23 @@ def _test_time_based(target, param):
 def _test_boolean_based(target, param):
     """Testa boolean-based blind SQLi."""
     try:
+        # Baseline request sem injection
+        r_base = requests.get(f"http://{target}/?{param}=1", timeout=6)
         r_true = requests.get(f"http://{target}/?{param}=' AND 1=1--", timeout=6)
         r_false = requests.get(f"http://{target}/?{param}=' AND 1=2--", timeout=6)
-        return _check_boolean_diff(len(r_true.text), len(r_false.text), param)
+        return _check_boolean_diff(len(r_true.text), len(r_false.text), len(r_base.text), param)
     except Exception:
         return None
 
 
-def _test_post_injection(target, param):
+def _test_post_injection(target, param, baseline_len):
     """Testa SQLi via POST body (JSON + form)."""
     for payload, method in ERROR_PAYLOADS[:5]:
         try:
             resp = requests.post(
                 f"http://{target}/", json={param: payload}, timeout=6, headers={"Content-Type": "application/json"}
             )
-            vuln = _check_error_based(resp.text, f"POST_{method}", param)
+            vuln = _check_error_based(resp.text, f"POST_{method}", param, baseline_len)
             if vuln:
                 return vuln
         except Exception:
@@ -264,12 +318,16 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    # 1. Calcular Baseline
+    baseline_latency = _get_baseline_latency(target)
+    baseline_len = _get_404_baseline(target)
+
     for param in PARAMS:
         # Error + Union + WAF bypass + OOB + Stacked
-        vulns.extend(_test_error_and_union(target, param))
+        vulns.extend(_test_error_and_union(target, param, baseline_len))
 
-        # Time-based blind
-        time_vuln = _test_time_based(target, param)
+        # Time-based blind com Baseline Dinâmica
+        time_vuln = _test_time_based(target, param, baseline_latency)
         if time_vuln:
             vulns.append(time_vuln)
 
@@ -279,7 +337,7 @@ def run(target, ip, open_ports, banners):
             vulns.append(bool_vuln)
 
         # POST injection
-        post_vuln = _test_post_injection(target, param)
+        post_vuln = _test_post_injection(target, param, baseline_len)
         if post_vuln:
             vulns.append(post_vuln)
 
