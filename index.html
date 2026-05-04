@@ -143,7 +143,7 @@
     .dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:inset 0 -1px 2px rgba(0,0,0,.3)}
     .dot-r{background:var(--red)}.dot-y{background:var(--yellow)}.dot-g{background:var(--green)}
     .terminal-title{font-size:.68rem;color:var(--text-dim);margin-left:.6rem;font-family:'JetBrains Mono',monospace}
-    .terminal-body{padding:1.3rem 1.6rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word}
+    .terminal-body{padding:1.3rem 1.6rem;min-height:280px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word}
     .prompt{color:var(--cyan)}.cmd{color:var(--text-bright)}.comment{color:#444;font-style:italic}
     .cursor{display:inline-block;width:8px;height:16px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;border-radius:1px}
     @keyframes blink{50%{opacity:0}}
@@ -303,7 +303,7 @@
       .carousel-indicators{padding:.6rem 0}
       /* Terminal mobile */
       .terminal-window{font-size:.7rem}
-      .terminal-body{padding:.8rem;min-height:auto;font-size:.75rem}
+      .terminal-body{padding:.8rem;min-height:250px;font-size:.75rem}
       /* Particle canvas - reduce on mobile for perf */
       #particleCanvas{opacity:.3}
       /* Section titles */
@@ -891,42 +891,6 @@ python3 cascavel.py -t target.com
         const activeIdx = Math.round(scrollLeft / cardWidth);
         dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
       }, { passive: true });
-
-      // Auto-scroll (paused when out of view or interacting)
-      let autoIdx = 0;
-      let autoInterval = null;
-
-      const startAutoScroll = () => {
-        if (!autoInterval) {
-          autoInterval = setInterval(() => {
-            autoIdx = (autoIdx + 1) % total;
-            carousel.scrollTo({ left: cards[autoIdx].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
-          }, 4000);
-        }
-      };
-
-      const stopAutoScroll = () => {
-        if (autoInterval) {
-          clearInterval(autoInterval);
-          autoInterval = null;
-        }
-      };
-
-      const obs = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            startAutoScroll();
-          } else {
-            stopAutoScroll();
-          }
-        });
-      }, { threshold: 0.1 });
-      obs.observe(carousel);
-
-      carousel.addEventListener('mouseenter', stopAutoScroll);
-      carousel.addEventListener('mouseleave', startAutoScroll);
-      carousel.addEventListener('touchstart', stopAutoScroll, { passive: true });
-      carousel.addEventListener('touchend', startAutoScroll, { passive: true });
     })();
 
     // === Nav Scroll Effect ===
