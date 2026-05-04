@@ -46,6 +46,7 @@ CVE_FLOORS = {
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
+
 def parse_version(v: str) -> tuple:
     """Parse '1.2.3' into (1, 2, 3) for comparison."""
     return tuple(int(x) for x in v.split("."))
@@ -77,14 +78,16 @@ def parse_requirements(path: Path) -> list[dict]:
             full_name = match.group(1)
             op = match.group(2) or ""
             ver = match.group(3) or ""
-            deps.append({
-                "name": name,
-                "full_name": full_name,
-                "operator": op,
-                "version": ver,
-                "line_num": i,
-                "raw": line,
-            })
+            deps.append(
+                {
+                    "name": name,
+                    "full_name": full_name,
+                    "operator": op,
+                    "version": ver,
+                    "line_num": i,
+                    "raw": line,
+                }
+            )
     return deps
 
 
@@ -157,7 +160,7 @@ def audit(update: bool = False, ci: bool = False) -> int:
         for cve_pkg, (min_ver, cve_desc) in CVE_FLOORS.items():
             if name_lower == cve_pkg.lower() and dep["version"]:
                 if parse_version(dep["version"]) < parse_version(min_ver):
-                    msg = f'{dep["name"]} {dep["version"]} < {min_ver} ({cve_desc})'
+                    msg = f"{dep['name']} {dep['version']} < {min_ver} ({cve_desc})"
                     print(f"  ❌ {msg}")
                     issues.append(msg)
                 else:
@@ -197,7 +200,7 @@ def audit(update: bool = False, ci: bool = False) -> int:
             old_line = dep["raw"]
             # Preserve the operator style
             op = dep["operator"] or ">="
-            new_line = f'{dep["full_name"]}{op}{latest}'
+            new_line = f"{dep['full_name']}{op}{latest}"
             idx = dep["line_num"] - 1
             lines[idx] = new_line
             print(f"  ✏️  {old_line} → {new_line}")

@@ -105,6 +105,8 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "S", "B", "UP"]
 ignore = [
+    "E501",   # Line too long — unavoidable for long injection payloads
+    "E722",   # Bare except — used for fast recon loops
     # ── Security Tool Design Patterns (NOT suppression) ──
     # Cascavel is an offensive security framework. These patterns
     # are INTENTIONAL architectural decisions for pentest tools:
