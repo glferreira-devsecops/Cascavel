@@ -867,8 +867,10 @@ python3 cascavel.py -t target.com
       const carousel = document.getElementById('intelCarousel');
       const indicators = document.getElementById('carouselIndicators');
       if (!carousel || !indicators) return;
+
       const cards = carousel.querySelectorAll('.intel-card');
       const total = cards.length;
+
       // Create dots
       for (let i = 0; i < total; i++) {
         const dot = document.createElement('button');
@@ -879,7 +881,9 @@ python3 cascavel.py -t target.com
         });
         indicators.appendChild(dot);
       }
+
       const dots = indicators.querySelectorAll('.carousel-dot');
+
       // Update active dot on scroll
       carousel.addEventListener('scroll', () => {
         const scrollLeft = carousel.scrollLeft;
@@ -887,19 +891,42 @@ python3 cascavel.py -t target.com
         const activeIdx = Math.round(scrollLeft / cardWidth);
         dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
       }, { passive: true });
-      // Auto-scroll
+
+      // Auto-scroll (paused when out of view or interacting)
       let autoIdx = 0;
-      let autoInterval = setInterval(() => {
-        autoIdx = (autoIdx + 1) % total;
-        carousel.scrollTo({ left: cards[autoIdx].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
-      }, 4000);
-      carousel.addEventListener('mouseenter', () => clearInterval(autoInterval));
-      carousel.addEventListener('mouseleave', () => {
-        autoInterval = setInterval(() => {
-          autoIdx = (autoIdx + 1) % total;
-          carousel.scrollTo({ left: cards[autoIdx].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
-        }, 4000);
-      });
+      let autoInterval = null;
+
+      const startAutoScroll = () => {
+        if (!autoInterval) {
+          autoInterval = setInterval(() => {
+            autoIdx = (autoIdx + 1) % total;
+            carousel.scrollTo({ left: cards[autoIdx].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
+          }, 4000);
+        }
+      };
+
+      const stopAutoScroll = () => {
+        if (autoInterval) {
+          clearInterval(autoInterval);
+          autoInterval = null;
+        }
+      };
+
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            startAutoScroll();
+          } else {
+            stopAutoScroll();
+          }
+        });
+      }, { threshold: 0.1 });
+      obs.observe(carousel);
+
+      carousel.addEventListener('mouseenter', stopAutoScroll);
+      carousel.addEventListener('mouseleave', startAutoScroll);
+      carousel.addEventListener('touchstart', stopAutoScroll, { passive: true });
+      carousel.addEventListener('touchend', startAutoScroll, { passive: true });
     })();
 
     // === Nav Scroll Effect ===
