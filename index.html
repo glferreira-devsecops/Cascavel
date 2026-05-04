@@ -875,7 +875,7 @@ python3 cascavel.py -t target.com
         dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
         dot.setAttribute('aria-label', 'Intel card ' + (i+1));
         dot.addEventListener('click', () => {
-          cards[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+          carousel.scrollTo({ left: cards[i].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
         });
         indicators.appendChild(dot);
       }
@@ -891,13 +891,13 @@ python3 cascavel.py -t target.com
       let autoIdx = 0;
       let autoInterval = setInterval(() => {
         autoIdx = (autoIdx + 1) % total;
-        cards[autoIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        carousel.scrollTo({ left: cards[autoIdx].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
       }, 4000);
       carousel.addEventListener('mouseenter', () => clearInterval(autoInterval));
       carousel.addEventListener('mouseleave', () => {
         autoInterval = setInterval(() => {
           autoIdx = (autoIdx + 1) % total;
-          cards[autoIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+          carousel.scrollTo({ left: cards[autoIdx].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
         }, 4000);
       });
     })();
