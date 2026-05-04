@@ -49,13 +49,14 @@
       --transition:all .35s cubic-bezier(.4,0,.2,1);
     }
 
-    html{scroll-behavior:smooth;scroll-padding-top:80px;overflow-x:hidden;width:100%}
+    html{scroll-behavior:smooth;scroll-padding-top:80px;overflow-x:hidden;width:100%;overflow-anchor:none;}
 
     body{
       background:var(--bg);color:var(--text);
       font-family:'Inter',system-ui,-apple-system,sans-serif;
       line-height:1.75;min-height:100vh;overflow-x:hidden;
       overscroll-behavior-y:none;
+      overflow-anchor:none;
       -webkit-text-size-adjust:100%;
       -webkit-tap-highlight-color:transparent;
       -webkit-font-smoothing:antialiased;
@@ -138,12 +139,12 @@
     .stat::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:1px}
 
     /* Terminal Window */
-    .terminal-window{background:rgba(10,10,22,.95);border:1px solid var(--border);border-radius:var(--radius);max-width:720px;margin:0 auto;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.6),0 0 50px var(--cyan-dim),inset 0 1px 0 rgba(255,255,255,.03)}
+    .terminal-window{background:rgba(10,10,22,.95);border:1px solid var(--border);border-radius:var(--radius);max-width:720px;margin:0 auto;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.6),0 0 50px var(--cyan-dim),inset 0 1px 0 rgba(255,255,255,.03);overflow-anchor:none;}
     .terminal-header{background:rgba(0,255,229,.04);padding:.55rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border)}
     .dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:inset 0 -1px 2px rgba(0,0,0,.3)}
     .dot-r{background:var(--red)}.dot-y{background:var(--yellow)}.dot-g{background:var(--green)}
     .terminal-title{font-size:.68rem;color:var(--text-dim);margin-left:.6rem;font-family:'JetBrains Mono',monospace}
-    .terminal-body{padding:1.3rem 1.6rem;min-height:280px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word}
+    .terminal-body{padding:1.3rem 1.6rem;height:280px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word;overflow-anchor:none;}
     .prompt{color:var(--cyan)}.cmd{color:var(--text-bright)}.comment{color:#444;font-style:italic}
     .cursor{display:inline-block;width:8px;height:16px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;border-radius:1px}
     @keyframes blink{50%{opacity:0}}
@@ -201,11 +202,11 @@
     .integration-tag:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);transform:translateY(-3px) scale(1.03);box-shadow:0 8px 25px rgba(0,255,229,.15)}
 
     /* Intel Carousel */
-    .intel-carousel-wrapper{position:relative;overflow:hidden}
-    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .intel-carousel-wrapper{position:relative;overflow:hidden;overflow-anchor:none;}
+    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory;}
     .intel-carousel::-webkit-scrollbar{display:none}
-    .intel-card{min-width:310px;max-width:360px;background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.4rem;scroll-snap-align:start;flex-shrink:0;transition:var(--transition);backdrop-filter:blur(12px)}
-    .intel-card:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 12px 35px rgba(0,0,0,.4),0 0 20px var(--cyan-dim)}
+    .intel-card{scroll-snap-align:center;min-width:310px;max-width:360px;background:rgba(12,12,24,.9);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.4rem;flex-shrink:0;transition:var(--transition);}
+    .intel-card:hover{border-color:var(--border-hover);box-shadow:0 12px 35px rgba(0,0,0,.4),0 0 20px var(--cyan-dim)}
     .intel-tag{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--magenta);margin-bottom:.5rem;display:block;text-shadow:0 0 10px var(--magenta-dim)}
     .intel-text{font-size:.82rem;opacity:.65;line-height:1.7}
     .carousel-indicators{display:flex;justify-content:center;gap:.4rem;margin-top:1rem}
@@ -303,7 +304,7 @@
       .carousel-indicators{padding:.6rem 0}
       /* Terminal mobile */
       .terminal-window{font-size:.7rem}
-      .terminal-body{padding:.8rem;min-height:250px;font-size:.75rem}
+      .terminal-body{padding:.8rem;height:250px;font-size:.75rem;overflow-y:hidden}
       /* Particle canvas - reduce on mobile for perf */
       #particleCanvas{opacity:.3}
       /* Section titles */
@@ -874,9 +875,11 @@ python3 cascavel.py -t target.com
       // Create dots
       for (let i = 0; i < total; i++) {
         const dot = document.createElement('button');
+        dot.type = 'button';
         dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
         dot.setAttribute('aria-label', 'Intel card ' + (i+1));
-        dot.addEventListener('click', () => {
+        dot.addEventListener('click', (e) => {
+          e.preventDefault();
           carousel.scrollTo({ left: cards[i].offsetLeft - carousel.offsetLeft, behavior: 'smooth' });
         });
         indicators.appendChild(dot);
@@ -884,45 +887,63 @@ python3 cascavel.py -t target.com
 
       const dots = indicators.querySelectorAll('.carousel-dot');
 
-      // Update active dot on scroll
+      // Update active dot on scroll (Debounced / Cached)
+      let cardWidthCache = cards[0].offsetWidth + 16;
+      window.addEventListener('resize', () => { cardWidthCache = cards[0].offsetWidth + 16; }, { passive: true });
+      let isCarouselScrolling = false;
       carousel.addEventListener('scroll', () => {
-        const scrollLeft = carousel.scrollLeft;
-        const cardWidth = cards[0].offsetWidth + 16;
-        const activeIdx = Math.round(scrollLeft / cardWidth);
-        dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+        if (!isCarouselScrolling) {
+          window.requestAnimationFrame(() => {
+            const scrollLeft = carousel.scrollLeft;
+            const activeIdx = Math.round(scrollLeft / cardWidthCache);
+            dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+            isCarouselScrolling = false;
+          });
+          isCarouselScrolling = true;
+        }
       }, { passive: true });
     })();
 
     // === Nav Scroll Effect ===
     const navbar = document.getElementById('navbar');
+    const btn = document.getElementById('backToTop');
+    let isWindowScrolling = false;
     window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 50);
-      const btn = document.getElementById('backToTop');
-      btn.classList.toggle('visible', window.scrollY > 600);
+      if (!isWindowScrolling) {
+        window.requestAnimationFrame(() => {
+          navbar.classList.toggle('scrolled', window.scrollY > 50);
+          btn.classList.toggle('visible', window.scrollY > 600);
+          isWindowScrolling = false;
+        });
+        isWindowScrolling = true;
+      }
     }, { passive: true });
 
     // === Back to Top ===
-    document.getElementById('backToTop').addEventListener('click', () => {
+    btn.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // === Active Nav Link ===
-    const sections = document.querySelectorAll('section[id]');
+    // === Active Nav Link (IntersectionObserver - Zero Layout Thrashing) ===
     const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
     const bottomLinks = document.querySelectorAll('#bottomNav a[href^="#"]');
-    window.addEventListener('scroll', () => {
-      let current = '';
-      sections.forEach(section => {
-        const top = section.offsetTop - 120;
-        if (scrollY >= top) current = section.getAttribute('id');
+    const sections = document.querySelectorAll('section[id]');
+
+    const navObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const current = entry.target.getAttribute('id');
+          navLinks.forEach(link => {
+            link.style.color = link.getAttribute('href') === '#' + current ? 'var(--cyan)' : '';
+          });
+          bottomLinks.forEach(l => {
+            l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+          });
+        }
       });
-      navLinks.forEach(link => {
-        link.style.color = link.getAttribute('href') === '#' + current ? 'var(--cyan)' : '';
-      });
-      bottomLinks.forEach(l => {
-        l.classList.toggle('active', l.getAttribute('href') === '#' + current);
-      });
-    }, { passive: true });
+    }, { rootMargin: '-40% 0px -60% 0px', threshold: 0 });
+
+    sections.forEach(sec => navObserver.observe(sec));
   </script>
 
 </body>
