@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2024,SC2034
 # ╔═══════════════════════════════════════════════════════════════════╗
 # ║  CASCAVEL — Quantum Security Framework                           ║
 # ║  One-Command Universal Installer v2.4.0 (Bulletproof 2026)       ║
@@ -77,7 +78,7 @@ IS_TTY="false"
 
 # ─── Step Counter ────────────────────────────────────────────────────
 CURRENT_STEP=0
-TOTAL_STEPS=11
+TOTAL_STEPS=12
 _next_step() {
     ((CURRENT_STEP++))
 }
@@ -190,7 +191,7 @@ show_logo() {
     echo -e "${Y}      ${R}  ╱${Y}▀▀▀▀▀▀▀${R}╲${N}"
     echo -e "${Y}     ${R} ╱╱${Y}         ${R}╲╲${N}"
     echo -e "${R}    ≺≺≺${Y}    ▄▄▄    ${R}≻≻≻        ${G}┌─────────────────────────────┐${N}"
-    echo -e "${Y}    ╲╲${Y}  ▄█▀ ▀█▄  ${R}╱╱${N}         ${G}│${N} ${B}84${N} plugins · ${B}30+${N} tools · CVSS ${G}│${N}"
+    echo -e "${Y}    ╲╲${Y}  ▄█▀ ▀█▄  ${R}╱╱${N}         ${G}│${N} ${B}85${N} plugins · ${B}30+${N} tools · CVSS ${G}│${N}"
     echo -e "${Y}     ╲${Y}▄█▀     ▀█▄${R}╱${N}          ${G}│${N} PDF/MD/JSON · OWASP · LGPD   ${G}│${N}"
     echo -e "${Y}      █${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}█           ${G}│${N} Python 3.12+ · MIT License   ${G}│${N}"
     echo -e "${Y}      █${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}▓${G}◆${Y}█           ${G}└─────────────────────────────┘${N}"
@@ -270,7 +271,7 @@ _auto_clone_if_needed() {
         return 0
     fi
 
-    # Método 1: Git clone (prefcerido)
+    # Método 1: Git clone (preferido)
     if command -v git &>/dev/null || _auto_install_git; then
         _spinner_start "Clonando repositório..."
         if git clone --depth 1 "$REPO_URL" "$CLONE_DIR" >>"$INSTALL_LOG" 2>&1; then
@@ -555,7 +556,7 @@ install_python() {
         brew)   brew install python3 >>"$INSTALL_LOG" 2>&1 ;;
         apt)
             sudo apt-get update -qq >>"$INSTALL_LOG" 2>&1
-            sudo apt-get install -y -qq python3 python3-pip python3-venv python3-dev >>"$INSTALL_LOG" 2>&1
+            sudo apt-get install -y -qq python3 python3-pip python3-venv python3-dev libssl-dev >>"$INSTALL_LOG" 2>&1
             ;;
         dnf)    sudo dnf install -y python3 python3-pip python3-devel >>"$INSTALL_LOG" 2>&1 ;;
         yum)    sudo yum install -y python3 python3-pip >>"$INSTALL_LOG" 2>&1 ;;
@@ -690,6 +691,8 @@ install_python_deps() {
         local dep_total
         dep_total=$(grep -cvE '^\s*$|^\s*#' requirements.txt 2>/dev/null || echo "0")
         while IFS= read -r dep || [ -n "$dep" ]; do
+            dep="${dep%%$'\r'}"  # Strip Windows \r (CRLF line endings)
+            dep="$(echo "$dep" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"  # Trim whitespace
             [[ -z "$dep" || "$dep" == \#* ]] && continue
             ((dep_count++))
             _spinner_start "Instalando [$dep_count/$dep_total] $dep..."
@@ -712,7 +715,8 @@ _check_dep_versions() {
     if [ -n "$PYJWT_VER" ] && [ "$PYJWT_VER" != "0.0.0" ]; then
         PYJWT_MAJOR=$(echo "$PYJWT_VER" | cut -d. -f1)
         PYJWT_MINOR=$(echo "$PYJWT_VER" | cut -d. -f2)
-        if [ "${PYJWT_MAJOR:-0}" -le 2 ] && [ "${PYJWT_MINOR:-0}" -lt 12 ]; then
+        # Proper semver: 1.x is always < 2.12, 2.x < 2.12 only if minor < 12
+        if [ "${PYJWT_MAJOR:-0}" -lt 2 ] || { [ "${PYJWT_MAJOR:-0}" -eq 2 ] && [ "${PYJWT_MINOR:-0}" -lt 12 ]; }; then
             warn "⚠ CVE-2026-32597: PyJWT $PYJWT_VER < 2.12.0 — crit header bypass!"
             warn "  Atualize: pip install 'pyjwt>=2.12.0'"
             _log "SECURITY: CVE-2026-32597 — PyJWT $PYJWT_VER vulnerável"
@@ -725,7 +729,8 @@ _check_dep_versions() {
         RL_MAJOR=$(echo "$REPORTLAB_VER" | cut -d. -f1)
         RL_MINOR=$(echo "$REPORTLAB_VER" | cut -d. -f2)
         RL_PATCH=$(echo "$REPORTLAB_VER" | cut -d. -f3)
-        if [ "${RL_MAJOR:-0}" -le 3 ] && [ "${RL_MINOR:-0}" -le 6 ] && [ "${RL_PATCH:-0}" -lt 13 ]; then
+        # Proper semver: < 3.6.13 means major<3 OR (major==3 AND (minor<6 OR (minor==6 AND patch<13)))
+        if [ "${RL_MAJOR:-0}" -lt 3 ] || { [ "${RL_MAJOR:-0}" -eq 3 ] && { [ "${RL_MINOR:-0}" -lt 6 ] || { [ "${RL_MINOR:-0}" -eq 6 ] && [ "${RL_PATCH:-0}" -lt 13 ]; }; }; }; then
             warn "⚠ CVE-2023-33733: reportlab $REPORTLAB_VER < 3.6.13 — RCE via rl_safe_eval!"
             warn "  Atualize: pip install 'reportlab>=3.6.13'"
             _log "SECURITY: CVE-2023-33733 — reportlab $REPORTLAB_VER vulnerável"
@@ -737,7 +742,8 @@ _check_dep_versions() {
     if [ -n "$REQUESTS_VER" ] && [ "$REQUESTS_VER" != "0.0.0" ]; then
         REQ_MAJOR=$(echo "$REQUESTS_VER" | cut -d. -f1)
         REQ_MINOR=$(echo "$REQUESTS_VER" | cut -d. -f2)
-        if [ "${REQ_MAJOR:-0}" -le 2 ] && [ "${REQ_MINOR:-0}" -lt 31 ]; then
+        # Proper semver: < 2.31 means major<2 OR (major==2 AND minor<31)
+        if [ "${REQ_MAJOR:-0}" -lt 2 ] || { [ "${REQ_MAJOR:-0}" -eq 2 ] && [ "${REQ_MINOR:-0}" -lt 31 ]; }; then
             warn "⚠ CVE-2023-32681: requests $REQUESTS_VER < 2.31.0 — Proxy-Auth header leak!"
             _log "SECURITY: CVE-2023-32681 — requests $REQUESTS_VER vulnerável"
         fi
@@ -793,6 +799,23 @@ _auto_install_go() {
                 tar -C "$GOROOT_LOCAL" --strip-components=1 -xzf "$TMP_GO" 2>/dev/null
                 export GOROOT="$GOROOT_LOCAL"
                 export PATH="$GOROOT_LOCAL/bin:$PATH"
+                # Persist GOROOT to shell profiles so Go survives terminal restart
+                local GO_EXPORT="export GOROOT=\"$GOROOT_LOCAL\"\nexport PATH=\"$GOROOT_LOCAL/bin:\$PATH\""
+                local GO_COMMENT="# Go SDK (auto-installed by Cascavel)"
+                for _prof in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+                    if [ -f "$_prof" ] && ! grep -q "go-sdk" "$_prof" 2>/dev/null; then
+                        printf "\n%s\n%b\n" "$GO_COMMENT" "$GO_EXPORT" >> "$_prof"
+                        _log "GO: Persisted GOROOT to $_prof"
+                    fi
+                done
+                # Fish shell
+                local _fish_conf="$HOME/.config/fish/config.fish"
+                if [ -f "$_fish_conf" ] || command -v fish &>/dev/null; then
+                    $MKDIR -p "$(dirname "$_fish_conf")" 2>/dev/null || true
+                    if ! grep -q "go-sdk" "$_fish_conf" 2>/dev/null; then
+                        printf "\n%s\nset -gx GOROOT \"%s\"\nset -gx PATH \"%s/bin\" \$PATH\n" "$GO_COMMENT" "$GOROOT_LOCAL" "$GOROOT_LOCAL" >> "$_fish_conf"
+                    fi
+                fi
             fi
             _spinner_stop
 
@@ -848,8 +871,8 @@ install_external_tools() {
             ;;
         apt)
             APT_TOOLS="nmap nikto sqlmap hydra john sslscan dnsrecon fierce tshark whois traceroute"
-            _spinner_start "Instalando ferramentas APT ($( echo $APT_TOOLS | wc -w | tr -d ' ') pacotes)..."
-            sudo apt install -y $APT_TOOLS >>"$INSTALL_LOG" 2>&1 || warn "Alguns pacotes APT falharam."
+            _spinner_start "Instalando ferramentas APT ($(echo "$APT_TOOLS" | wc -w | tr -d ' ') pacotes)..."
+            sudo apt-get install -y $APT_TOOLS >>"$INSTALL_LOG" 2>&1 || warn "Alguns pacotes APT falharam."
             _spinner_stop
             pip install wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
@@ -861,8 +884,17 @@ install_external_tools() {
             sudo pacman -Sy --noconfirm nmap nikto hydra john wireshark-cli whois traceroute 2>/dev/null || true
             pip install wafw00f sqlmap -q 2>/dev/null || true
             ;;
+        zypper)
+            sudo zypper install -y nmap nikto hydra john wireshark whois traceroute 2>/dev/null || true
+            pip install wafw00f sqlmap -q 2>/dev/null || true
+            ;;
+        apk)
+            sudo apk add nmap nikto hydra john-the-ripper whois curl 2>/dev/null || true
+            pip install wafw00f sqlmap -q 2>/dev/null || true
+            ;;
         *)
-            warn "Package manager não suportado. Ferramentas externas não instaladas."
+            warn "Package manager '$PKG_MANAGER' não suportado. Ferramentas externas não instaladas."
+            dimlog "Instale manualmente: nmap, nikto, hydra, subfinder, nuclei"
             ;;
     esac
 
@@ -882,7 +914,21 @@ install_external_tools() {
             *":$GOBIN:"*) ;; # já está
             *) export PATH="$GOBIN:$PATH" ;;
         esac
-        dimlog "GOPATH=$GOPATH | GOBIN=$GOBIN"
+        # Persist GOBIN to shell profiles so Go tools survive terminal restart
+        local GOBIN_EXPORT="export GOPATH=\"$GOPATH\"\nexport PATH=\"$GOBIN:\$PATH\""
+        local GOBIN_COMMENT="# Go tools PATH (auto-configured by Cascavel)"
+        for _goprof in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+            if [ -f "$_goprof" ] && ! grep -q "GOPATH" "$_goprof" 2>/dev/null; then
+                printf "\n%s\n%b\n" "$GOBIN_COMMENT" "$GOBIN_EXPORT" >> "$_goprof"
+                _log "GO: Persisted GOBIN to $_goprof"
+            fi
+        done
+        local _gofish="$HOME/.config/fish/config.fish"
+        if { [ -f "$_gofish" ] || command -v fish &>/dev/null; } && ! grep -q "GOPATH" "$_gofish" 2>/dev/null; then
+            $MKDIR -p "$(dirname "$_gofish")" 2>/dev/null || true
+            printf "\n%s\nset -gx GOPATH \"%s\"\nset -gx PATH \"%s\" \$PATH\n" "$GOBIN_COMMENT" "$GOPATH" "$GOBIN" >> "$_gofish"
+        fi
+        dimlog "GOPATH=$GOPATH | GOBIN=$GOBIN (persistido)"
         _log "GO: GOPATH=$GOPATH GOBIN=$GOBIN GO_VERSION=$(go version 2>/dev/null)"
 
         # Git check — Go install precisa de git
@@ -1013,7 +1059,7 @@ verify_installation() {
     fi
 
     # Python deps check
-    PLUGIN_COUNT=$(ls plugins/*.py 2>/dev/null | grep -v __init__ | wc -l | tr -d ' ')
+    PLUGIN_COUNT=$(find plugins -maxdepth 1 -name '*.py' ! -name '__init__*' 2>/dev/null | wc -l | tr -d ' ')
     info "Plugins disponíveis: ${BOLD}${PLUGIN_COUNT}${NC}"
 
     # Quick syntax check
@@ -1255,6 +1301,7 @@ post_install_health_check() {
 
 # ─── Summary ─────────────────────────────────────────────────────────
 show_summary() {
+    step "Resumo da instalação..."
     local elapsed_time=""
     if [ -n "${INSTALL_START_TIME:-}" ]; then
         local end_time
@@ -1311,7 +1358,7 @@ first_run_wizard() {
         if [[ "$TARGET_INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             # IP address — aceitar
             true
-        elif [[ ! "$TARGET_INPUT" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]+\.[a-zA-Z]{2,}$ ]]; then
+        elif [[ ! "$TARGET_INPUT" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*\.[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
             warn "Formato inválido: '$TARGET_INPUT'. Use: exemplo.com.br ou 192.168.1.1"
             echo -e "  ${DIM}Você pode executar depois: cascavel $TARGET_INPUT${NC}"
             return 0

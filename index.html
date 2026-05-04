@@ -6,14 +6,12 @@
   <title>CASCAVEL — Quantum Security Framework</title>
   <script>if(window.top!==window.self){window.top.location=window.self.location;}</script>
 
-  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site + RET A+ Reference) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data: https:; connect-src 'self'; object-src 'none'; worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data:; connect-src 'self'; frame-ancestors 'none';" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-  <meta http-equiv="Permissions-Policy" content="accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), browsing-topics=(), attribution-reporting=(), run-ad-auction=()" />
-  <meta name="theme-color" content="#06060e" />
-  <link rel="canonical" href="https://cascavel.pages.dev/" />
+  <meta http-equiv="Permissions-Policy" content="interest-cohort=(), camera=(), microphone=(), geolocation=()" />
 
   <!-- SEO & Open Graph -->
   <meta name="description" content="Quantum Security Framework — 85 plugins em 14 categorias de ataque, 30+ ferramentas de reconhecimento, UX cinematográfica, relatórios PDF/MD/JSON. CI/CD hardened. Red Team Intelligence Engine." />
@@ -22,7 +20,7 @@
   <meta property="og:title" content="CASCAVEL — Quantum Security Framework" />
   <meta property="og:description" content="85 plugins. 14 categorias. 30+ recon tools. Terminal cinematográfico. CI/CD hardened. Red Team Intelligence Engine." />
   <meta property="og:image" content="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
-  <meta property="og:url" content="https://cascavel.pages.dev/" />
+  <meta property="og:url" content="https://glferreira-devsecops.github.io/Cascavel/" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="CASCAVEL — Quantum Security Framework" />
@@ -31,164 +29,381 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@700;900&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    ::selection{background:rgba(0,255,229,.25);color:#fff}
 
     :root{
-      --cyan:#00ffe5;--cyan-dim:rgba(0,255,229,.08);--cyan-glow:rgba(0,255,229,.25);--cyan-strong:rgba(0,255,229,.5);
-      var(--magenta):#ff2d95;var(--magenta-dim):rgba(255,45,149,.08);var(--magenta-glow):rgba(255,45,149,.3);
-      var(--green):#28c840;var(--yellow):#febc2e;var(--red):#ff5f57;var(--purple):#a855f7;
-      var(--bg):#05050a;var(--bg-card):rgba(10,10,18,.7);var(--bg-card-hover):rgba(15,15,25,.85);
-      var(--text):#c8d6e5;var(--text-bright):#ffffff;var(--text-dim):rgba(200,214,229,.4);
-      var(--border):rgba(0,255,229,.1);var(--border-hover):rgba(0,255,229,.3);
-      var(--radius):16px;var(--radius-sm):8px;
-      --transition:all .35s cubic-bezier(.4,0,.2,1);
+      --cyan:#00ffe5;--cyan-dim:rgba(0,255,229,.08);--cyan-glow:rgba(0,255,229,.35);--cyan-strong:rgba(0,255,229,.6);
+      --magenta:#ff2d95;--magenta-dim:rgba(255,45,149,.08);--magenta-glow:rgba(255,45,149,.4);
+      --green:#28c840;--yellow:#febc2e;--red:#ff5f57;--purple:#a855f7;
+      --bg:#030308;--bg-card:rgba(10,10,20,.6);--bg-card-hover:rgba(15,15,30,.85);
+      --text:#c8d6e5;--text-bright:#f0f4f8;--text-dim:rgba(200,214,229,.5);
+      --border:rgba(0,255,229,.15);--border-hover:rgba(0,255,229,.4);
+      --radius:16px;--radius-sm:10px;
+      --transition:all .5s cubic-bezier(.25, 1, .5, 1);
     }
 
-    html{scroll-behavior:smooth;scroll-padding-top:80px;overflow-x:hidden;width:100%;overflow-anchor:none;}
+    html{scroll-behavior: smooth; scroll-padding-top:80px; overflow-x: hidden; width: 100%;}
 
     body{
       background:var(--bg);color:var(--text);
       font-family:'Inter',system-ui,-apple-system,sans-serif;
-      line-height:1.75;min-height:100vh;overflow-x:hidden;
-      overscroll-behavior-y:none;
-      overflow-anchor:none;
-      -webkit-text-size-adjust:100%;
-      -webkit-tap-highlight-color:transparent;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      text-rendering:optimizeLegibility;
+      line-height:1.8;min-height:100vh;overflow-x:hidden;width:100%;position:relative;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Particle Canvas Layer */
-    #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-3;pointer-events:none}
+    /* Canvas Grid & Ambient Background */
+    #particles-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -3; pointer-events: none; opacity: 1; }
 
-    /* Animated Grid Background */
-    body::before{
-      content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;
-      background-image:
-        linear-gradient(rgba(0,255,229,.03) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(0,255,229,.03) 1px,transparent 1px);
-      background-size:60px 60px;
-      animation:gridShift 20s linear infinite;
-    }
-    @keyframes gridShift{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+    h1,h2,h3,h4{font-family:'Orbitron',monospace;color:var(--cyan);letter-spacing:.5px}
+    a{color:var(--cyan);text-decoration:none;transition:var(--transition)}
+    a:hover{color:var(--magenta);text-shadow:0 0 15px var(--magenta-glow)}
+    .container{max-width:1140px;margin:0 auto;padding:0 1.5rem}
 
-    /* Ambient Glow */
-    body::after{
-      content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;z-index:-1;
-      background:radial-gradient(ellipse at 30% 20%,rgba(0,255,229,.04),transparent 50%),
-                 radial-gradient(ellipse at 70% 80%,rgba(255,45,149,.03),transparent 50%);
-      animation:ambientFloat 15s ease-in-out infinite alternate;pointer-events:none;
-    }
-    @keyframes ambientFloat{0%{transform:translate(0,0)}100%{transform:translate(-30px,20px)}}
-
-    section{padding:8rem 0;position:relative}
-    .container{max-width:1200px;margin:0 auto;padding:0 2rem;position:relative;z-index:2}
-    .section-title{font-family:'Outfit',sans-serif;font-size:4.5rem;font-weight:900;letter-spacing:-2px;margin-bottom:1.5rem;color:var(--text-bright);line-height:1.1;text-transform:uppercase}
-    .section-subtitle{font-size:1.25rem;color:var(--text);opacity:.7;max-width:700px;margin-bottom:4rem;line-height:1.6;font-family:'Inter',sans-serif;font-weight:300;}
-    .cyber-glitch{position:relative;display:inline-block;}
-    .cyber-glitch::before,.cyber-glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;opacity:.5;}
-
-    a{color:var(--cyan);text-decoration:none;transition:var(--transition);touch-action:manipulation}
-    a:hover{color:var(--magenta);text-shadow:0 0 12px var(--magenta-glow)}
-    .top-nav{position:sticky;top:0;z-index:1000;background:rgba(6,6,14,.88);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--border);padding:calc(.75rem + env(safe-area-inset-top)) 0 .75rem;transition:var(--transition)}
+    /* Desktop Top Nav */
+    .top-nav{position:sticky;top:0;z-index:1000;background:rgba(3,3,8,.75);backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);border-bottom:1px solid var(--border);padding:.8rem 0;transition:var(--transition)}
+    .top-nav.scrolled{box-shadow:0 10px 40px rgba(0,0,0,.8);background:rgba(3,3,8,.95)}
     .top-nav .container{display:flex;align-items:center;justify-content:space-between}
-    .nav-brand{font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:800;color:var(--cyan);display:flex;align-items:center;gap:.5rem}
-    .nav-links{display:flex;gap:1.2rem;align-items:center;list-style:none}
-    .nav-links a{font-size:.78rem;font-weight:500;text-transform:uppercase;letter-spacing:1.5px;padding:.3rem .1rem}
+    .nav-brand{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:800;color:var(--cyan);display:flex;align-items:center;gap:.5rem}
+    .nav-brand:hover{color:var(--text-bright);text-shadow:0 0 25px var(--cyan-glow)}
+    .nav-links{display:flex;gap:1.5rem;align-items:center;list-style:none}
+    .nav-links a{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;padding:.4rem .2rem;position:relative;color:var(--text)}
+    .nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--cyan);transition:width .4s cubic-bezier(.25,1,.5,1), background .4s; border-radius:2px}
+    .nav-links a:hover::after{width:100%; background:var(--magenta)}
+    .nav-links a:hover{color:var(--text-bright)}
 
-    .bottom-nav{display:none;position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(6,6,14,.92);backdrop-filter:blur(24px) saturate(180%);border:1px solid var(--border);border-radius:30px;padding:.4rem .6rem}
+    /* Mobile Bottom Floating Pill Nav */
+    .bottom-nav{display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(10,10,22,.85);backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);border:1px solid rgba(0,255,229,.3);border-radius:40px;padding:.5rem .8rem;box-shadow:0 12px 50px rgba(0,0,0,.8), 0 0 30px var(--cyan-dim)}
+    .bottom-nav a{display:flex;flex-direction:column;align-items:center;padding:.5rem .8rem;font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;font-family:'Orbitron',monospace;border-radius:30px;transition:var(--transition); font-weight:600}
+    .bottom-nav a .nav-icon{font-size:1.2rem;margin-bottom:.2rem; filter: grayscale(100%); transition: var(--transition)}
+    .bottom-nav a.active,.bottom-nav a:hover{color:var(--text-bright);background:var(--cyan-strong); box-shadow: 0 0 20px var(--cyan-dim)}
+    .bottom-nav a.active .nav-icon, .bottom-nav a:hover .nav-icon { filter: grayscale(0%); transform: translateY(-2px) scale(1.1) }
 
-    .hero{min-height:100vh;display:flex;align-items:center;padding-top:120px;padding-bottom:6rem;position:relative;overflow:hidden}
-    .hero .container{display:grid;grid-template-columns:1.2fr .8fr;gap:4rem;align-items:center}
-    .hero-label{display:inline-block;border:1px solid var(--cyan);color:var(--cyan);background:var(--cyan-dim);padding:.4rem 1.2rem;border-radius:30px;font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:2px;margin-bottom:2rem;text-transform:uppercase}
-    .hero-title{font-family:'Outfit',sans-serif;font-size:5.5rem;font-weight:900;letter-spacing:-2.5px;line-height:1;margin-bottom:1.5rem;color:var(--text-bright)}
-    .hero-desc{font-size:1.35rem;font-weight:300;color:var(--text);opacity:.8;margin-bottom:3rem;max-width:560px;line-height:1.6}
-    .hero-actions{display:flex;gap:1.5rem;flex-wrap:wrap}
-    .cta{display:inline-flex;align-items:center;justify-content:center;padding:1.1rem 2.2rem;border-radius:30px;font-family:'Orbitron',monospace;font-size:.9rem;font-weight:600;letter-spacing:1px;text-decoration:none;transition:var(--transition);text-transform:uppercase}
-    .cta-primary{background:var(--cyan);color:#000;box-shadow:0 0 20px var(--cyan-glow)}
-    .cta-primary:hover{background:#fff;box-shadow:0 0 30px rgba(255,255,255,.4);transform:translateY(-3px)}
-    .cta-secondary{background:transparent;color:var(--text-bright);border:1px solid var(--border)}
-    .cta-secondary:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);transform:translateY(-3px)}
+    .hero{padding:clamp(6rem, 15vw, 10rem) 0 clamp(4rem, 10vw, 6rem);text-align:center;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-20%;left:50%;width:150vw;height:150vw;max-width:1400px;max-height:1400px;background:radial-gradient(circle at 35% 35%,rgba(0,255,229,.15) 0%,rgba(0,255,229,0) 50%),radial-gradient(circle at 65% 65%,rgba(255,45,149,.1) 0%,rgba(255,45,149,0) 50%);pointer-events:none;animation:heroNebula 15s ease-in-out infinite alternate;will-change:transform,opacity;z-index:0}
+    @keyframes heroNebula{0%{transform:translate(-40%, -10%) scale(0.8);opacity:0.5}100%{transform:translate(-60%, 10%) scale(1.1);opacity:1}}
 
-    .terminal-window{background:rgba(10,10,22,.95);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.6),0 0 50px var(--cyan-dim)}
-    .terminal-header{background:rgba(0,255,229,.04);padding:.55rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border)}
-    .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+    .hero-title-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      z-index: 2;
+    }
+    .title-layer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: clamp(3.5rem, 14vw, 10.5rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .layer-back {
+      position: relative;
+      z-index: 1;
+    }
+    .layer-front {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      pointer-events: none;
+    }
+    .snake-weave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translateZ(0); /* Hardware Acceleration */
+      z-index: 2;
+      width: 140%;
+      height: 400px;
+      pointer-events: none;
+    }
+    .snake-body-anim {
+      stroke-dasharray: 450 1500;
+      animation: slither 8s linear infinite;
+    }
+    @keyframes slither {
+      0% { stroke-dashoffset: 450; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { stroke-dashoffset: -1050; opacity: 0; }
+    }
+    .letter {
+      position: relative;
+      display: inline-block;
+      background: linear-gradient(180deg, #ffffff 0%, #8ca4bd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s;
+    }
+    .layer-back .front-only, .layer-front .back-only, .transparent-only {
+      visibility: hidden;
+    }
+    .layer-back .back-only {
+      filter: drop-shadow(0 8px 15px rgba(0,0,0,0.9));
+    }
+    .layer-front .front-only {
+      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.95)) drop-shadow(0 0 20px rgba(0,255,229,0.35));
+    }
+    .layer-front .accent {
+      background: linear-gradient(135deg, var(--magenta), #ff8a00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: pulseAccent 3s ease-in-out infinite alternate;
+      will-change: filter, transform;
+      transform: translateZ(0);
+    }
+    @keyframes pulseAccent {
+      0% { filter: drop-shadow(0 0 25px var(--magenta)); transform: scale(1) translateZ(0); }
+      100% { filter: drop-shadow(0 0 10px #ff8a00); transform: scale(1.05) translateZ(0); }
+    }
+    .hero-title-wrapper:hover .layer-front .front-only {
+      transform: translateY(-8px) scale(1.03);
+      filter: drop-shadow(0 35px 50px rgba(0,0,0,0.95)) drop-shadow(0 0 35px rgba(0,255,229,0.6));
+    }
+    .hero-title-wrapper:hover .layer-back .back-only {
+      transform: translateY(8px) scale(0.97);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.9));
+    }
+    .hero-ambient-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translateZ(0);
+      width: 120%;
+      height: 120%;
+      background: radial-gradient(circle at center, rgba(0,255,229,0.2) 0%, rgba(255,45,149,0.1) 35%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+      animation: pulseGlow 5s ease-in-out infinite alternate;
+      border-radius: 50%;
+      filter: blur(40px);
+      will-change: transform, opacity;
+    }
+    @keyframes pulseGlow {
+      0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    }
+
+    .hero .version-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(0,255,229,0.05);backdrop-filter:blur(10px);border:1px solid rgba(0,255,229,0.2);border-radius:30px;padding:.4rem 1.2rem;font-size:.75rem;font-family:'Orbitron',monospace;color:var(--text-bright);margin:.8rem 0 1.5rem;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+    .hero .version-tag span{color:var(--cyan);font-weight:bold}
+    .hero .version-tag::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,255,229,.2),transparent);transform:translateX(-100%);animation:shimmer 4s ease-in-out infinite;will-change:transform}
+    @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+    .tagline{font-size:clamp(1rem,2vw,1.25rem);color:var(--text);max-width:760px;margin:0 auto 2.5rem;opacity:.9;font-weight:400;line-height:1.8;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
+
+    .hero-badges{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+    .hero-badges img{height:22px;border-radius:4px;transition:var(--transition);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+    .hero-badges img:hover{transform:scale(1.1) translateY(-2px);filter:brightness(1.2);box-shadow:0 8px 20px rgba(0,255,229,0.2)}
+
+    .hero-stats{display:flex;gap:4rem;justify-content:center;flex-wrap:wrap;margin-bottom:4rem}
+    .stat{text-align:center;position:relative;padding:0 1rem}
+    .stat-number{font-family:'Orbitron',monospace;font-size:2.8rem;font-weight:800;color:var(--text-bright);display:block;text-shadow:0 0 35px var(--cyan-strong), 0 0 10px var(--cyan)}
+    .stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:3px;opacity:.6;margin-top:.4rem;color:var(--cyan);font-weight:600}
+    .stat::after{content:'';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);width:40px;height:3px;background:linear-gradient(90deg,var(--cyan),transparent);border-radius:2px}
+
+    /* Terminal Window */
+    .terminal-window{background:rgba(8,8,16,.85);backdrop-filter:blur(40px) saturate(150%);-webkit-backdrop-filter:blur(40px) saturate(150%);border:1px solid rgba(0,255,229,0.2);border-radius:var(--radius);max-width:760px;margin:0 auto;overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,.8),0 0 60px var(--cyan-dim),inset 0 1px 1px rgba(255,255,255,.05);position:relative}
+    .terminal-window::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,229,0.5),transparent)}
+    .terminal-header{background:rgba(0,0,0,.4);padding:.7rem 1.2rem;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid rgba(255,255,255,.05)}
+    .dot{width:12px;height:12px;border-radius:50%;display:inline-block;box-shadow:inset 0 -1px 3px rgba(0,0,0,.4)}
     .dot-r{background:var(--red)}.dot-y{background:var(--yellow)}.dot-g{background:var(--green)}
-    .terminal-body{padding:1.3rem 1.6rem;height:280px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;white-space:pre-wrap;color:var(--text-bright)}
-    .prompt{color:var(--cyan)}.cmd{color:var(--text-bright)}.cursor{display:inline-block;width:8px;height:16px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
+    .terminal-title{font-size:.75rem;color:var(--text-dim);margin-left:.8rem;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px}
+    .terminal-body{padding:1.8rem 2rem;font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:2.2;text-align:left}
+    .prompt{color:var(--cyan);font-weight:bold}.cmd{color:var(--text-bright)}.comment{color:#6c7a89;font-style:italic}
+    .cursor{display:inline-block;width:10px;height:18px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:4px;border-radius:2px;box-shadow:0 0 10px var(--cyan)}
     @keyframes blink{50%{opacity:0}}
 
-    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:2rem}
-    .feature-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:3rem 2.5rem;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(12px)}
-    .feature-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);transform:scaleX(0);transform-origin:center;transition:transform .5s cubic-bezier(.4,0,.2,1)}
-    .feature-card:hover{border-color:var(--border-hover);transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.4)}
-    .feature-card:hover::before{transform:scaleX(1)}
-    .feature-icon{width:60px;height:60px;background:var(--cyan-dim);border:1px solid var(--border);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:1.8rem;color:var(--cyan);transition:var(--transition)}
-    .feature-card:hover .feature-icon{transform:scale(1.1) rotate(-5deg);background:var(--cyan);color:#000;box-shadow:0 0 20px var(--cyan-glow)}
-    .feature-card h3{font-family:'Outfit',sans-serif;font-size:1.8rem;margin-bottom:1.2rem;color:var(--text-bright)}
-    .feature-card p{font-size:1.05rem;opacity:.7;line-height:1.7}
+    /* CTA Buttons */
+    .cta-group{display:flex;gap:1.5rem;justify-content:center;margin-top:3.5rem;flex-wrap:wrap}
+    .cta{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;padding:.85rem 2rem;border-radius:40px;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;transition:var(--transition);position:relative;overflow:hidden;min-width:200px}
+    .cta-primary{background:linear-gradient(135deg,var(--cyan),#007bb5);color:#000;box-shadow:0 8px 30px var(--cyan-glow), inset 0 1px 1px rgba(255,255,255,0.4)}
+    .cta-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 15px 45px var(--cyan-strong), inset 0 1px 1px rgba(255,255,255,0.6);color:#000}
+    .cta-secondary{background:rgba(12,12,24,.5);backdrop-filter:blur(10px);border:1px solid var(--border-hover);color:var(--text-bright)}
+    .cta-secondary:hover{background:var(--cyan-dim);border-color:var(--cyan);transform:translateY(-3px) scale(1.02);color:var(--cyan);box-shadow:0 10px 30px var(--cyan-dim)}
 
-    .table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-card)}
-    .plugin-table{width:100%;border-collapse:collapse;font-size:.82rem}
-    .plugin-table th{text-align:left;padding:.7rem 1rem;background:rgba(0,255,229,.04);color:var(--cyan);font-family:'Orbitron',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;border-bottom:2px solid var(--border-hover)}
-    .plugin-table td{padding:.6rem 1rem;border-bottom:1px solid rgba(0,255,229,.05);transition:background .2s}
-    .plugin-table tr:hover td{background:rgba(0,255,229,.04)}
+    /* Sections */
+    section{padding:clamp(5rem, 12vw, 8rem) 0;position:relative}
+    .section-title{font-size:clamp(1.8rem, 5vw, 2.8rem);margin-bottom:1rem;position:relative;display:inline-block;letter-spacing:-0.03em;text-shadow:0 4px 20px rgba(0,0,0,0.5)}
+    .section-title::after{content:'';position:absolute;bottom:-10px;left:0;width:80px;height:4px;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:4px;box-shadow:0 2px 10px var(--cyan-glow)}
+    .section-subtitle{font-family:'Inter',sans-serif;font-size:clamp(.95rem, 2.5vw, 1.15rem);color:var(--text-bright);opacity:.7;margin:1.5rem 0 4rem;max-width:650px;line-height:1.8}
 
-    .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
-    .reveal.visible{opacity:1;transform:translateY(0)}
+    /* Scroll Reveal (Smooth Physics) */
+    .reveal{opacity:0;transform:translateY(40px) scale(0.95);transition:opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);}
+    .reveal.visible{opacity:1;transform:translateY(0) scale(1)}
     .reveal-delay-1{transition-delay:.1s}
     .reveal-delay-2{transition-delay:.2s}
     .reveal-delay-3{transition-delay:.3s}
     .reveal-delay-4{transition-delay:.4s}
 
-    @media(max-width:992px){
-      .hero .container{grid-template-columns:1fr;text-align:center;}
-      .hero-title{font-size:3.5rem;}
-      .hero-desc{margin:0 auto 2.5rem;}
-      .hero-actions{justify-content:center;}
-      .terminal-window{display:none;}
+    /* Feature Cards */
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem}
+    .feature-card{background:linear-gradient(180deg, rgba(20,20,35,0.6) 0%, rgba(10,10,20,0.8) 100%);border:1px solid rgba(0,255,229,0.1);border-radius:20px;padding:2.5rem 2rem;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+    .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .5s}
+    .feature-card::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0,255,229,0.15), transparent 40%);opacity:0;transition:opacity .5s;pointer-events:none;z-index:0}
+    @media (hover: hover) {
+      .feature-card:hover{border-color:rgba(0,255,229,0.5);transform:translateY(-10px);box-shadow:0 30px 60px rgba(0,0,0,.8),0 0 40px var(--cyan-dim)}
+      .feature-card:hover::before{opacity:1}
+      .feature-card:hover::after{opacity:1}
+    }
+    .feature-icon{font-size:2.5rem;margin-bottom:1.2rem;display:block;filter:drop-shadow(0 0 15px rgba(0,255,229,.5)); position:relative; z-index:1}
+    .feature-card h3{font-size:1.1rem;margin-bottom:.8rem;letter-spacing:0.5px;color:var(--text-bright);position:relative;z-index:1}
+    .feature-card p{font-size:.9rem;opacity:.75;line-height:1.8;position:relative;z-index:1}
+
+    /* Plugin Table */
+    .table-wrapper{overflow-x:auto;border-radius:20px;border:1px solid rgba(0,255,229,0.2);background:rgba(10,10,22,0.8);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+    .plugin-table{width:100%;border-collapse:collapse;font-size:.9rem}
+    .plugin-table th{text-align:left;padding:1.2rem 1.5rem;background:rgba(0,255,229,.08);color:var(--cyan);font-family:'Orbitron',monospace;font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;border-bottom:2px solid rgba(0,255,229,0.3)}
+    .plugin-table td{padding:1rem 1.5rem;border-bottom:1px solid rgba(0,255,229,.08);transition:background .3s}
+    .plugin-table tr:hover td{background:rgba(0,255,229,.06)}
+    .plugin-table .cat-icon{margin-right:.6rem;font-size:1.1rem}
+    .badge-count{background:rgba(0,255,229,0.1);color:var(--cyan);border:1px solid rgba(0,255,229,0.3);border-radius:20px;padding:.2rem .8rem;font-size:.75rem;font-family:'Orbitron',monospace;font-weight:700;display:inline-block;box-shadow:0 0 10px rgba(0,255,229,0.1)}
+    .plugin-table .techniques{opacity:.7;font-size:.85rem;line-height:1.6}
+
+    /* Integration Tags */
+    .integrations{display:flex;flex-wrap:wrap;gap:1rem;margin-top:2.5rem}
+    .integration-tag{background:rgba(16,16,32,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(0,255,229,0.15);border-radius:30px;padding:.6rem 1.5rem;font-size:.85rem;color:var(--text-bright);transition:var(--transition);cursor:default;font-weight:500;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+    .integration-tag:hover{border-color:var(--cyan);color:var(--bg);background:var(--cyan);transform:translateY(-4px) scale(1.05);box-shadow:0 10px 30px var(--cyan-glow)}
+
+    /* Intel Carousel */
+    .intel-carousel{display:flex;gap:1.8rem;overflow-x:auto;padding:2rem 0 3rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+    .intel-card{min-width:320px;max-width:400px;background:linear-gradient(180deg, rgba(20,20,35,0.6) 0%, rgba(10,10,20,0.8) 100%);border:1px solid rgba(255,45,149,0.2);border-radius:20px;padding:2rem;scroll-snap-align:start;flex-shrink:0;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+    .intel-card::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,45,149,0.15), transparent 40%);opacity:0;transition:opacity .5s;pointer-events:none;z-index:0}
+    @media (hover: hover) {
+      .intel-card:hover{border-color:var(--magenta);transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,.8),0 0 35px var(--magenta-dim)}
+      .intel-card:hover::after{opacity:1}
+    }
+    .intel-tag{font-family:'Orbitron',monospace;font-size:.8rem;color:var(--magenta);margin-bottom:1rem;display:inline-block;text-shadow:0 0 15px var(--magenta-dim);letter-spacing:1px;font-weight:800;background:rgba(255,45,149,0.1);padding:0.2rem 0.8rem;border-radius:12px;border:1px solid rgba(255,45,149,0.2)}
+    .intel-text{font-size:.95rem;opacity:.8;line-height:1.8;position:relative;z-index:1;color:var(--text-bright)}
+
+    /* Install Box */
+    .install-box{background:linear-gradient(180deg, rgba(16,16,32,0.8) 0%, rgba(10,10,22,0.9) 100%);border:1px solid rgba(0,255,229,0.2);border-radius:24px;padding:3rem;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative}
+    .install-box::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:50%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+    .install-box code{display:block;background:rgba(0,0,0,.6);padding:1.8rem;border-radius:12px;font-family:'JetBrains Mono',monospace;font-size:.95rem;color:var(--cyan);border:1px solid rgba(0,255,229,.15);line-height:2.2;overflow-x:auto;box-shadow:inset 0 4px 20px rgba(0,0,0,.5)}
+    .install-note{margin-top:2rem;font-size:.9rem;opacity:.6;line-height:1.8}
+    .install-note em{color:var(--text-bright);opacity:.9;font-style:normal;font-weight:500}
+
+    /* Roadmap */
+    .roadmap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem}
+    .roadmap-card{background:linear-gradient(180deg, rgba(20,20,35,0.6) 0%, rgba(10,10,20,0.8) 100%);border:1px solid rgba(0,255,229,0.1);border-radius:20px;padding:2.5rem;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+    .roadmap-card::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0,255,229,0.15), transparent 40%);opacity:0;transition:opacity .5s;pointer-events:none;z-index:0}
+    @media (hover: hover) {
+      .roadmap-card:hover{border-color:rgba(0,255,229,0.5);transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,.8),0 0 35px var(--cyan-dim)}
+      .roadmap-card:hover::after{opacity:1}
+    }
+    .roadmap-card h4{font-size:1.05rem;margin-bottom:1.5rem;letter-spacing:0.5px;color:var(--text-bright);position:relative;z-index:1}
+    .roadmap-card ul{list-style:none;padding:0;position:relative;z-index:1}
+    .roadmap-card li{font-size:.9rem;padding:.5rem 0;opacity:.8;position:relative;padding-left:1.6rem;line-height:1.6}
+    .roadmap-card li::before{content:'›';position:absolute;left:0;color:var(--cyan);font-weight:bold;font-size:1.2rem;top:0.4rem}
+    .version-label{display:inline-block;border-radius:8px;padding:.3rem 1rem;font-size:.7rem;font-family:'Orbitron',monospace;margin-bottom:1.5rem;letter-spacing:1px;box-shadow:0 4px 15px rgba(0,0,0,.3);font-weight:700}
+    .version-label.current{background:rgba(40,200,64,.15);color:var(--green);border:1px solid rgba(40,200,64,.4)}
+    .version-label.next{background:rgba(0,255,229,0.15);color:var(--cyan);border:1px solid rgba(0,255,229,0.4)}
+    .version-label.future{background:rgba(255,45,149,0.15);color:var(--magenta);border:1px solid rgba(255,45,149,.4)}
+
+    /* Architecture Section */
+    .arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:2.5rem}
+    .arch-item{background:linear-gradient(180deg, rgba(20,20,35,0.6) 0%, rgba(10,10,20,0.8) 100%);border:1px solid rgba(0,255,229,0.1);border-radius:16px;padding:2rem 1.5rem;text-align:center;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+    .arch-item::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0,255,229,0.15), transparent 40%);opacity:0;transition:opacity .5s;pointer-events:none;z-index:0}
+    @media (hover: hover) {
+      .arch-item:hover{border-color:rgba(0,255,229,0.5);transform:translateY(-8px);box-shadow:0 15px 40px rgba(0,0,0,.8),0 0 25px var(--cyan-dim)}
+      .arch-item:hover::after{opacity:1}
+    }
+    .arch-item .arch-icon{font-size:2.5rem;margin-bottom:1rem;display:block;filter:drop-shadow(0 0 15px rgba(0,255,229,.3));position:relative;z-index:1}
+    .arch-item h4{font-size:.9rem;margin-bottom:.6rem;letter-spacing:0.5px;color:var(--text-bright);position:relative;z-index:1}
+    .arch-item p{font-size:.85rem;opacity:.7;line-height:1.6;position:relative;z-index:1}
+
+    /* Governance */
+    .gov-grid{display:flex;flex-wrap:wrap;gap:1rem}
+    .gov-link{display:inline-flex;align-items:center;gap:.6rem;background:rgba(10,10,22,0.8);border:1px solid rgba(0,255,229,0.2);border-radius:12px;padding:.6rem 1.2rem;font-size:.85rem;transition:var(--transition);backdrop-filter:blur(10px);font-weight:500;color:var(--text-bright)}
+    .gov-link:hover{border-color:var(--cyan);background:var(--cyan);color:var(--bg);transform:translateY(-3px);box-shadow:0 8px 25px var(--cyan-glow)}
+
+    /* Footer */
+    footer{border-top:1px solid rgba(0,255,229,0.15);padding:4rem 0;text-align:center;position:relative;background:rgba(6,6,14,0.9)}
+    footer::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:300px;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+    .footer-links{display:flex;gap:2rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap}
+    footer p{font-size:.8rem;opacity:.5;line-height:2.2}
+    footer a{opacity:.8;color:var(--cyan);font-weight:500}
+    footer a:hover{opacity:1;color:var(--magenta)}
+
+    /* Back to Top */
+    .back-to-top{position:fixed;bottom:2.5rem;right:2.5rem;width:50px;height:50px;border-radius:50%;background:rgba(10,10,22,0.9);border:1px solid rgba(0,255,229,0.3);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;opacity:0;transform:translateY(30px);transition:var(--transition);z-index:100;box-shadow:0 8px 30px rgba(0,0,0,.6);backdrop-filter:blur(10px)}
+    .back-to-top.visible{opacity:1;transform:translateY(0)}
+    .back-to-top:hover{background:var(--cyan);color:var(--bg);transform:translateY(-5px);box-shadow:0 12px 40px var(--cyan-glow)}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:8px;height:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:rgba(0,255,229,0.2);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(0,255,229,0.5)}
+
+    /* Responsive */
+    @media(max-width:900px){
+      .hero-stats{gap:2rem;}
+      .stat-number{font-size:2.2rem}
+      .stat-label{font-size:0.65rem}
+      .arch-grid{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:768px){
-      .nav-links{display:none;}
-      section{padding:5rem 0;}
-      .section-title{font-size:3rem;letter-spacing:-1px;}
-      .stats-grid{grid-template-columns:1fr 1fr;}
+      html { scroll-behavior: auto !important; }
+      .top-nav .nav-links{display:none}
+      .bottom-nav{display:flex;gap:.5rem; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background: rgba(10,10,22,0.98) !important;}
+      .top-nav { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background: rgba(3,3,8,0.98) !important; }
+      .hero{padding:clamp(4rem, 12vw, 6rem) 0 clamp(3rem, 8vw, 5rem)}
+      .hero-title-wrapper{transform:scale(0.8);margin-bottom:-1.5rem}
+      /* KILL MOBILE SVG FILTERS (Extreme GPU stuttering fix) */
+      .snake-weave g, .snake-weave use, .snake-weave circle, .snake-weave polygon { filter: none !important; }
+      .layer-front .front-only { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.9)) !important; }
+      .layer-back .back-only { filter: none !important; }
+      .hero-ambient-glow { filter: none !important; opacity: 0.3; animation: none !important; }
+      .hero::before { animation: none !important; opacity: 0.2; }
+      .hero-stats{gap:1.5rem;justify-content:center}
+      .stat-number{font-size:2rem}
+      .stat-label{font-size:0.6rem}
+      .features-grid,.roadmap-grid{grid-template-columns:1fr;gap:1.5rem}
+      .arch-grid{grid-template-columns:1fr;gap:1.2rem}
+      .cta-group{flex-direction:column;align-items:stretch;gap:1.2rem}
+      .cta{justify-content:center;min-height:55px}
+      .back-to-top{bottom:6.5rem;right:1.5rem;width:45px;height:45px; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;}
+      footer{padding-bottom:8rem}
+      .intel-carousel { scroll-snap-type: none; }
+      .intel-card{min-width:280px;padding:1.5rem}
+      .install-box{padding:1.8rem}
+      .install-box code{font-size:0.85rem;padding:1.2rem}
+      .terminal-body{padding:1.5rem;font-size:0.8rem}
+      .terminal-window { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background: rgba(8,8,16,0.98) !important; }
+      .feature-card, .roadmap-card, .arch-item, .intel-card, .install-box, .table-wrapper {
+        backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      }
+      .hero .version-tag, .integration-tag, .gov-link, .cta-secondary {
+        backdrop-filter:none !important; -webkit-backdrop-filter:none !important; background: rgba(20,20,35,0.95) !important;
+      }
     }
     @media(max-width:480px){
-      .bottom-nav a .nav-icon{font-size:.9rem}
-      /* Trust badges 480 */
-      .trust-badges{gap:.25rem}
-      .trust-badge{font-size:.5rem;padding:.2rem .35rem}
-      .badge-grade{font-size:.5rem;padding:.1rem .25rem}
-      /* Marquee 480 */
-      .intel-card{min-width:85vw;padding:1rem}
-      .intel-tag{font-size:.65rem}
-      .intel-text{font-size:.8rem}
-      /* Feature cards */
-      .feature-card{padding:1.2rem}
-      .feature-card h3{font-size:.95rem}
-      .feature-card p{font-size:.75rem}
+      .hero-title-wrapper{transform:scale(0.65);margin-bottom:-2rem}
+      .stat::after{display:none}
+      .hero-stats{gap:1rem}
+      .stat-number{font-size:1.6rem}
+      .bottom-nav{gap:0.2rem;padding:0.4rem;width:95%}
+      .bottom-nav a{padding:.4rem .2rem;font-size:.5rem;min-height:50px;justify-content:center}
+      .bottom-nav a .nav-icon{font-size:1.1rem;margin-bottom:0.2rem}
+      .feature-card{padding:1.8rem 1.5rem}
+      .roadmap-card{padding:1.8rem 1.5rem}
     }
-    @media(max-width:360px){
-      .hero h1{font-size:1.5rem}
-      .stat{min-width:100%}
-      .trust-badges{flex-direction:column;align-items:center}
-      .trust-badge{width:fit-content}
-      .cta{max-width:100%}
-      .intel-card{min-width:95vw}
-    }
-  </style>
+</style>
 </head>
 <body>
-
-  <!-- Particle Canvas -->
-  <canvas id="particleCanvas"></canvas>
+  <canvas id="particles-bg"></canvas>
 
   <!-- Desktop Top Nav -->
   <nav class="top-nav" id="navbar" aria-label="Desktop Navigation">
@@ -219,7 +434,116 @@
   <!-- Hero -->
   <header class="hero">
     <div class="container">
-      <h1 class="reveal">CASCAVEL<span class="accent">.</span></h1>
+      <div class="hero-title-wrapper reveal">
+        <div class="hero-ambient-glow"></div>
+
+        <div class="title-layer layer-back">
+          <span class="letter back-only">C</span>
+          <span class="letter front-only">A</span>
+          <span class="letter back-only">S</span>
+          <span class="letter front-only">C</span>
+          <span class="letter back-only">A</span>
+          <span class="letter front-only">V</span>
+          <span class="letter back-only">E</span>
+          <span class="letter front-only">L</span>
+          <span class="letter transparent-only">.</span>
+        </div>
+
+        <svg class="snake-weave" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="cyber-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00ffe5" />
+              <stop offset="30%" stop-color="#a855f7" />
+              <stop offset="50%" stop-color="#ff2d95" />
+              <stop offset="70%" stop-color="#a855f7" />
+              <stop offset="100%" stop-color="#00ffe5" />
+            </linearGradient>
+            <pattern id="scales" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <path d="M 0,8 Q 8,0 16,8 Q 8,16 0,8" fill="#030308" stroke="rgba(0,255,229,0.6)" stroke-width="2"/>
+              <path d="M 8,0 L 8,16 M 0,8 L 16,8" stroke="rgba(255,45,149,0.3)" stroke-width="0.5"/>
+            </pattern>
+
+            <!-- MOBILE OPTIMIZATION: Reduced from 3 to 2 blur layers, constrained bounds to save GPU fill rate -->
+            <filter id="ultra-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="glow1"/>
+              <feGaussianBlur in="SourceGraphic" stdDeviation="25" result="glow2"/>
+              <feMerge>
+                <feMergeNode in="glow2"/>
+                <feMergeNode in="glow1"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+
+            <!-- MOBILE OPTIMIZATION: Less heavy shadow and restricted area -->
+            <filter id="body-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.9"/>
+            </filter>
+
+            <!-- MOBILE OPTIMIZATION: Combined head filter to avoid double rendering -->
+            <filter id="head-combo" x="-30%" y="-30%" width="160%" height="160%">
+               <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.9" result="shadow"/>
+               <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="glow"/>
+               <feMerge>
+                 <feMergeNode in="shadow"/>
+                 <feMergeNode in="glow"/>
+                 <feMergeNode in="SourceGraphic"/>
+               </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Complex weaving path -->
+          <path id="snake-path" d="M -200,250 C 50,20 200,380 450,200 C 650,50 800,380 1000,200 C 1200,20 1400,380 1650,200 C 1800,50 1950,250 2100,200" pathLength="1000" fill="none" />
+
+          <!-- Pure Black Cyber Snake Stack -->
+          <!-- MOBILE OPTIMIZATION: Grouped elements with glow to render the blur only ONCE instead of twice -->
+          <g filter="url(#ultra-glow)">
+            <!-- 1. Ambient Glow Aura -->
+            <use href="#snake-path" stroke="url(#cyber-grad)" stroke-width="50" stroke-linecap="round" class="snake-body-anim" opacity="0.6" />
+            <!-- 5. Energy Spine (Moved into the glow group) -->
+            <use href="#snake-path" stroke="#ff2d95" stroke-width="3" stroke-linecap="round" class="snake-body-anim" opacity="0.8"/>
+          </g>
+
+          <!-- 2. Neon Cyan Border -->
+          <use href="#snake-path" stroke="#00ffe5" stroke-width="44" stroke-linecap="round" class="snake-body-anim" filter="url(#body-shadow)"/>
+
+          <!-- 3. Pure Black Base Body -->
+          <use href="#snake-path" stroke="#030308" stroke-width="40" stroke-linecap="round" class="snake-body-anim" />
+
+          <!-- 4. Cyber Scales Pattern -->
+          <use href="#snake-path" stroke="url(#scales)" stroke-width="40" stroke-linecap="round" class="snake-body-anim" />
+
+          <!-- The Cyber Head -->
+          <g filter="url(#head-combo)">
+            <animateMotion dur="8s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#snake-path" />
+            </animateMotion>
+
+            <!-- Stealth Fighter Polygonal Head -->
+            <polygon points="-25,-22 35,0 -25,22 -10,0" fill="#030308" stroke="#00ffe5" stroke-width="3" stroke-linejoin="round"/>
+
+            <!-- Magenta Energy Core -->
+            <polygon points="5,-6 25,0 5,6 -2,0" fill="#ff2d95"/>
+
+            <!-- Cyber Eyes (OPTIMIZATION: inline CSS blur removed as it causes layout thrashing on mobile, using opacity) -->
+            <circle cx="12" cy="-10" r="3" fill="#ff2d95" opacity="0.8"/>
+            <circle cx="12" cy="10" r="3" fill="#ff2d95" opacity="0.8"/>
+            <circle cx="12" cy="-10" r="1.5" fill="#fff"/>
+            <circle cx="12" cy="10" r="1.5" fill="#fff"/>
+          </g>
+        </svg>
+
+        <div class="title-layer layer-front">
+          <span class="letter back-only">C</span>
+          <span class="letter front-only">A</span>
+          <span class="letter back-only">S</span>
+          <span class="letter front-only">C</span>
+          <span class="letter back-only">A</span>
+          <span class="letter front-only">V</span>
+          <span class="letter back-only">E</span>
+          <span class="letter front-only">L</span>
+          <span class="letter accent front-only">.</span>
+        </div>
+      </div>
       <div class="reveal reveal-delay-1">
         <span class="version-tag">v3.0.1 — Red Team Intelligence Engine</span>
       </div>
@@ -238,12 +562,12 @@
         <img src="https://img.shields.io/badge/SAST-Bandit%20%2B%20CodeQL%20%2B%20Semgrep-a855f7?style=flat" alt="SAST Stack" />
       </div>
 
-      <div class="hero-stats reveal reveal-delay-2">
-        <div class="stat"><span class="stat-number" data-target="85" data-suffix="">0</span><span class="stat-label">Security Plugins</span></div>
-        <div class="stat"><span class="stat-number" data-target="14" data-suffix="">0</span><span class="stat-label">Attack Categories</span></div>
-        <div class="stat"><span class="stat-number" data-target="30" data-suffix="+">0</span><span class="stat-label">Recon Tools</span></div>
-        <div class="stat"><span class="stat-number" data-target="211" data-suffix="">0</span><span class="stat-label">Security Tests</span></div>
-        <div class="stat"><span class="stat-number" data-target="3" data-suffix="">0</span><span class="stat-label">Report Formats</span></div>
+      <div class="hero-stats reveal reveal-delay-2" id="stats-section">
+        <div class="stat"><span class="stat-number">85</span><span class="stat-label">Security Plugins</span></div>
+        <div class="stat"><span class="stat-number">14</span><span class="stat-label">Attack Categories</span></div>
+        <div class="stat"><span class="stat-number">30+</span><span class="stat-label">Recon Tools</span></div>
+        <div class="stat"><span class="stat-number">3</span><span class="stat-label">Report Formats</span></div>
+        <div class="stat"><span class="stat-number">2.8K</span><span class="stat-label">Lines of Core</span></div>
       </div>
 
       <!-- Terminal -->
@@ -252,7 +576,7 @@
           <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
           <span class="terminal-title">cascavel — v3.0.1 — zsh</span>
         </div>
-        <div class="terminal-body">
+        <div class="terminal-body" id="terminal-body">
           <span class="comment"># Scan completo em um alvo</span><br/>
           <span class="prompt">❯ </span><span class="cmd">python3 cascavel.py -t target.com</span><br/>
           <span class="comment"># Listar 85 plugins disponíveis</span><br/>
@@ -268,18 +592,6 @@
       <div class="cta-group reveal reveal-delay-4">
         <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener" class="cta cta-primary">⚡ Ver no GitHub</a>
         <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md" target="_blank" rel="noopener" class="cta cta-secondary">📖 Plugin Docs</a>
-      </div>
-
-      <!-- Trust Badges -->
-      <div class="trust-badges reveal reveal-delay-4">
-        <a href="https://securityheaders.com/?q=cascavel.pages.dev&followRedirects=on" target="_blank" rel="noopener" class="trust-badge">Headers <span class="badge-grade">A+</span></a>
-        <a href="https://www.ssllabs.com/ssltest/analyze.html?d=cascavel.pages.dev" target="_blank" rel="noopener" class="trust-badge">SSL Labs <span class="badge-grade">A+</span></a>
-        <a href="https://hstspreload.org/?domain=cascavel.pages.dev" target="_blank" rel="noopener" class="trust-badge">HSTS <span class="badge-grade">✓</span></a>
-        <a href="https://csp-evaluator.withgoogle.com/?url=https://cascavel.pages.dev" target="_blank" rel="noopener" class="trust-badge">CSP L3 <span class="badge-grade">✓</span></a>
-        <span class="trust-badge">TLS 1.3 <span class="badge-grade">✓</span></span>
-        <span class="trust-badge">Zero Tracking <span class="badge-grade">✓</span></span>
-        <span class="trust-badge">COEP <span class="badge-grade">✓</span></span>
-        <span class="trust-badge">35 Permissions <span class="badge-grade">✓</span></span>
       </div>
     </div>
   </header>
@@ -440,27 +752,15 @@
     <div class="container">
       <h2 class="section-title reveal">Security Intel</h2>
       <p class="section-subtitle reveal">Motor de inteligência integrado — 40+ tips e facts exibidos durante scans em tempo real.</p>
-      <div class="intel-marquee-wrapper">
-        <div class="intel-marquee">
-          <!-- original set -->
-          <div class="intel-card"><span class="intel-tag">💀 FACT</span><span class="intel-text">Hackers comprometem 93% das redes corporativas em 2 dias. O custo médio de um data breach é $4.88M (2024).</span></div>
-          <div class="intel-card"><span class="intel-tag">🔐 TIP</span><span class="intel-text">Sempre valide JWT com algoritmo fixo — nunca confie no header 'alg'. None algorithm = bypass total de autenticação.</span></div>
-          <div class="intel-card"><span class="intel-tag">⚡ FACT</span><span class="intel-text">O Log4Shell (CVE-2021-44228) teve 10M+ tentativas de exploit por hora. 86% dos ataques exploram vulns com patches disponíveis.</span></div>
-          <div class="intel-card"><span class="intel-tag">🛡️ TIP</span><span class="intel-text">Redis sem auth = RCE via CONFIG SET + crontab/SSH key injection. IMDSv2 no AWS previne SSRF para credenciais EC2.</span></div>
-          <div class="intel-card"><span class="intel-tag">🧬 TIP</span><span class="intel-text">Race conditions: use single-packet attack para bypass de rate limiting. Prototype Pollution em Node.js escala para RCE via gadget chains.</span></div>
-          <div class="intel-card"><span class="intel-tag">📡 FACT</span><span class="intel-text">Shodan indexa 7+ bilhões de dispositivos. 95% dos incidentes de segurança em cloud são causados por misconfiguration.</span></div>
-          <div class="intel-card"><span class="intel-tag">💣 TIP</span><span class="intel-text">GraphQL batching pode brute force queries autenticadas. Docker --privileged + docker.sock = container escape trivial.</span></div>
-          <div class="intel-card"><span class="intel-tag">🕷️ FACT</span><span class="intel-text">O SolarWinds hack comprometeu 18.000 organizações via supply chain. Zero-days em iOS valem até $2M no mercado.</span></div>
-          <!-- duplicated set for seamless looping -->
-          <div class="intel-card"><span class="intel-tag">💀 FACT</span><span class="intel-text">Hackers comprometem 93% das redes corporativas em 2 dias. O custo médio de um data breach é $4.88M (2024).</span></div>
-          <div class="intel-card"><span class="intel-tag">🔐 TIP</span><span class="intel-text">Sempre valide JWT com algoritmo fixo — nunca confie no header 'alg'. None algorithm = bypass total de autenticação.</span></div>
-          <div class="intel-card"><span class="intel-tag">⚡ FACT</span><span class="intel-text">O Log4Shell (CVE-2021-44228) teve 10M+ tentativas de exploit por hora. 86% dos ataques exploram vulns com patches disponíveis.</span></div>
-          <div class="intel-card"><span class="intel-tag">🛡️ TIP</span><span class="intel-text">Redis sem auth = RCE via CONFIG SET + crontab/SSH key injection. IMDSv2 no AWS previne SSRF para credenciais EC2.</span></div>
-          <div class="intel-card"><span class="intel-tag">🧬 TIP</span><span class="intel-text">Race conditions: use single-packet attack para bypass de rate limiting. Prototype Pollution em Node.js escala para RCE via gadget chains.</span></div>
-          <div class="intel-card"><span class="intel-tag">📡 FACT</span><span class="intel-text">Shodan indexa 7+ bilhões de dispositivos. 95% dos incidentes de segurança em cloud são causados por misconfiguration.</span></div>
-          <div class="intel-card"><span class="intel-tag">💣 TIP</span><span class="intel-text">GraphQL batching pode brute force queries autenticadas. Docker --privileged + docker.sock = container escape trivial.</span></div>
-          <div class="intel-card"><span class="intel-tag">🕷️ FACT</span><span class="intel-text">O SolarWinds hack comprometeu 18.000 organizações via supply chain. Zero-days em iOS valem até $2M no mercado.</span></div>
-        </div>
+      <div class="intel-carousel reveal">
+        <div class="intel-card"><span class="intel-tag">💀 FACT</span><span class="intel-text">Hackers comprometem 93% das redes corporativas em 2 dias. O custo médio de um data breach é $4.88M (2024).</span></div>
+        <div class="intel-card"><span class="intel-tag">🔐 TIP</span><span class="intel-text">Sempre valide JWT com algoritmo fixo — nunca confie no header 'alg'. None algorithm = bypass total de autenticação.</span></div>
+        <div class="intel-card"><span class="intel-tag">⚡ FACT</span><span class="intel-text">O Log4Shell (CVE-2021-44228) teve 10M+ tentativas de exploit por hora. 86% dos ataques exploram vulns com patches disponíveis.</span></div>
+        <div class="intel-card"><span class="intel-tag">🛡️ TIP</span><span class="intel-text">Redis sem auth = RCE via CONFIG SET + crontab/SSH key injection. IMDSv2 no AWS previne SSRF para credenciais EC2.</span></div>
+        <div class="intel-card"><span class="intel-tag">🧬 TIP</span><span class="intel-text">Race conditions: use single-packet attack para bypass de rate limiting. Prototype Pollution em Node.js escala para RCE via gadget chains.</span></div>
+        <div class="intel-card"><span class="intel-tag">📡 FACT</span><span class="intel-text">Shodan indexa 7+ bilhões de dispositivos. 95% dos incidentes de segurança em cloud são causados por misconfiguration.</span></div>
+        <div class="intel-card"><span class="intel-tag">💣 TIP</span><span class="intel-text">GraphQL batching pode brute force queries autenticadas. Docker --privileged + docker.sock = container escape trivial.</span></div>
+        <div class="intel-card"><span class="intel-tag">🕷️ FACT</span><span class="intel-text">O SolarWinds hack comprometeu 18.000 organizações via supply chain. Zero-days em iOS valem até $2M no mercado.</span></div>
       </div>
     </div>
   </section>
@@ -582,32 +882,7 @@ python3 cascavel.py -t target.com
 
   <!-- Scripts -->
   <script>
-    // === Particle Canvas Animation ===
-    (function(){
-      const c=document.getElementById('particleCanvas'),x=c.getContext('2d');
-      let w,h,particles=[];
-      function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
-      window.addEventListener('resize',resize);resize();
-      class P{constructor(){this.reset()}
-        reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.r=Math.random()*1.5+.5;this.a=Math.random()*.3+.05;this.pulse=Math.random()*Math.PI*2}
-        update(){this.x+=this.vx;this.y+=this.vy;this.pulse+=.02;
-          if(this.x<0||this.x>w)this.vx*=-1;if(this.y<0||this.y>h)this.vy*=-1}
-        draw(){const a=this.a+Math.sin(this.pulse)*.1;
-          x.beginPath();x.arc(this.x,this.y,this.r,0,Math.PI*2);
-          x.fillStyle=`rgba(0,255,229,${a})`;x.fill()}}
-      const particleCount = w < 768 ? 25 : w < 1200 ? 40 : 60;
-      for(let i=0;i<particleCount;i++)particles.push(new P);
-      function animate(){x.clearRect(0,0,w,h);
-        particles.forEach(p=>{p.update();p.draw()});
-        // Draw connections
-        for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){
-          const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
-          if(d<120){x.beginPath();x.moveTo(particles[i].x,particles[i].y);x.lineTo(particles[j].x,particles[j].y);
-            x.strokeStyle=`rgba(0,255,229,${.06*(1-d/120)})`;x.stroke()}}}
-        requestAnimationFrame(animate)}animate();
-    })();
-
-    // === Scroll Reveal ===
+    // Scroll Reveal
     const reveals = document.querySelectorAll('.reveal');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -619,125 +894,58 @@ python3 cascavel.py -t target.com
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     reveals.forEach(el => observer.observe(el));
 
-    // === Counter Animation ===
-    const counters = document.querySelectorAll('.stat-number[data-target]');
-    const counterObs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          const target = +el.dataset.target;
-          const suffix = el.dataset.suffix || '';
-          const duration = 1500;
-          const start = performance.now();
-          function step(now) {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            el.textContent = Math.floor(target * eased) + suffix;
-            if (progress < 1) requestAnimationFrame(step);
-            else el.textContent = target + suffix;
-          }
-          requestAnimationFrame(step);
-          counterObs.unobserve(el);
-        }
-      });
-    }, { threshold: 0.5 });
-    counters.forEach(c => counterObs.observe(c));
-
-    // === Terminal Typing Effect ===
-    (function(){
-      const body = document.querySelector('.terminal-body');
-      if (!body) return;
-      const lines = [
-        { type: 'comment', text: '# Scan completo em um alvo' },
-        { type: 'cmd', text: 'python3 cascavel.py -t target.com' },
-        { type: 'comment', text: '# Listar 85 plugins dispon\u00edveis' },
-        { type: 'cmd', text: 'python3 cascavel.py --list-plugins' },
-        { type: 'comment', text: '# Verificar ferramentas externas' },
-        { type: 'cmd', text: 'python3 cascavel.py --check-tools' },
-        { type: 'comment', text: '# Modo CI/CD silencioso com JSON' },
-        { type: 'cmd', text: 'python3 cascavel.py -t target.com --quiet --json' }
-      ];
-      body.innerHTML = '';
-      let lineIdx = 0;
-      function typeLine() {
-        if (lineIdx >= lines.length) {
-          const cursor = document.createElement('span');
-          cursor.className = 'cursor';
-          body.appendChild(cursor);
-          return;
-        }
-        const line = lines[lineIdx];
-        if (line.type === 'comment') {
-          const span = document.createElement('span');
-          span.className = 'comment';
-          span.textContent = line.text;
-          body.appendChild(span);
-          body.appendChild(document.createElement('br'));
-          lineIdx++;
-          setTimeout(typeLine, 200);
-        } else {
-          const prompt = document.createElement('span');
-          prompt.className = 'prompt';
-          prompt.textContent = '\u276f ';
-          body.appendChild(prompt);
-          const cmd = document.createElement('span');
-          cmd.className = 'cmd';
-          body.appendChild(cmd);
-          let charIdx = 0;
-          function typeChar() {
-            if (charIdx < line.text.length) {
-              cmd.textContent += line.text[charIdx];
-              charIdx++;
-              setTimeout(typeChar, 25 + Math.random() * 20);
-            } else {
-              body.appendChild(document.createElement('br'));
-              lineIdx++;
-              setTimeout(typeLine, 300);
-            }
-          }
-          typeChar();
-        }
-      }
-      // Start typing when terminal is visible
-      const termObs = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          typeLine();
-          termObs.disconnect();
-        }
-      }, { threshold: 0.3 });
-      termObs.observe(body.closest('.terminal-window'));
-    })();
-
-    // === Intel Marquee CSS-Only ===
-    // Carousel logic removed to entirely eliminate layout thrashing and scroll hijacking.
-
-    // === Nav Scroll Effect ===
+    // Nav scroll effect
     const navbar = document.getElementById('navbar');
-    const btn = document.getElementById('backToTop');
-    let isWindowScrolling = false;
+    let scrollTicking = false;
     window.addEventListener('scroll', () => {
-      if (!isWindowScrolling) {
+      if (!scrollTicking) {
         window.requestAnimationFrame(() => {
           navbar.classList.toggle('scrolled', window.scrollY > 50);
+          const btn = document.getElementById('backToTop');
           btn.classList.toggle('visible', window.scrollY > 600);
-          isWindowScrolling = false;
+          scrollTicking = false;
         });
-        isWindowScrolling = true;
+        scrollTicking = true;
       }
     }, { passive: true });
 
-    // === Back to Top ===
-    btn.addEventListener('click', () => {
+    // Back to top
+    document.getElementById('backToTop').addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // === Active Nav Link (IntersectionObserver - Zero Layout Thrashing) ===
+    // 3D Tilt Effect for Premium UX
+    const cardsElements = document.querySelectorAll('.feature-card, .roadmap-card, .intel-card, .arch-item');
+    cardsElements.forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        el.style.setProperty('--mouse-x', `${x}px`);
+        el.style.setProperty('--mouse-y', `${y}px`);
+
+        if (window.innerWidth > 768) {
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -8;
+          const rotateY = ((x - centerX) / centerX) * 8;
+          el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+          el.style.zIndex = 10;
+        }
+      });
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = '';
+        el.style.zIndex = 1;
+      });
+    });
+
+    // Active nav link (desktop + mobile bottom pill) using IntersectionObserver
+    const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
     const bottomLinks = document.querySelectorAll('#bottomNav a[href^="#"]');
-    const sections = document.querySelectorAll('section[id]');
 
-    const navObserver = new IntersectionObserver((entries) => {
+    const sectionObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const current = entry.target.getAttribute('id');
@@ -749,9 +957,266 @@ python3 cascavel.py -t target.com
           });
         }
       });
-    }, { rootMargin: '-40% 0px -60% 0px', threshold: 0 });
+    }, { rootMargin: '-120px 0px -50% 0px', threshold: 0 });
 
-    sections.forEach(sec => navObserver.observe(sec));
+    sections.forEach(section => sectionObserver.observe(section));
+
+    // Advanced 3D Cyber Canvas Background (Warp Tunnel & Quantum Dust)
+    const canvas = document.getElementById('particles-bg');
+    const ctx = canvas.getContext('2d');
+    let width, height, cx, cy;
+    let time = 0;
+
+    let stars = [];
+    const focalLength = 500;
+
+    let lastWidth = window.innerWidth;
+    function resize() {
+      // Prevent canvas resize on mobile when only height changes (address bar show/hide during scroll)
+      if (window.innerWidth <= 768 && window.innerWidth === lastWidth) return;
+      if (window.innerWidth === canvas.width && window.innerHeight === canvas.height) return;
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      width = canvas.width;
+      height = canvas.height;
+      cx = width / 2;
+      cy = height / 2;
+      lastWidth = window.innerWidth;
+      initStars();
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 250);
+    });
+
+    // Initial size setup
+    resize();
+
+    class Star {
+      constructor() {
+        this.reset();
+        this.z = Math.random() * 2000; // Start at random depths
+      }
+      reset() {
+        this.x = (Math.random() - 0.5) * 4000;
+        this.y = (Math.random() - 0.5) * 4000;
+        this.z = 2000;
+        this.speed = Math.random() * 3 + 1.5;
+        this.color = Math.random() > 0.6 ? 'rgba(255, 45, 149,' : 'rgba(0, 255, 229,';
+        this.glow = Math.random() * 2 + 0.5;
+      }
+      update() {
+        this.z -= this.speed;
+        if (this.z <= 0) this.reset();
+      }
+      draw() {
+        let scale = focalLength / this.z;
+        let px = cx + this.x * scale;
+        let py = cy + this.y * scale;
+        let size = Math.max(0.1, this.glow * scale);
+        let opacity = Math.min(1, 1 - (this.z / 2000));
+
+        if (px >= 0 && px <= width && py >= 0 && py <= height && opacity > 0) {
+          ctx.beginPath();
+          ctx.arc(px, py, size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color + opacity + ')';
+          ctx.fill();
+        }
+      }
+    }
+
+    function initStars() {
+      stars = [];
+      const numStars = Math.min(Math.floor(window.innerWidth / 15), 100); // Scaled down for mobile performance
+      for (let i = 0; i < numStars; i++) stars.push(new Star());
+    }
+
+    function drawPerspectiveGrid() {
+      let gridY = (time * 40) % 200;
+      ctx.lineWidth = 1;
+
+      // Horizontal Floor & Ceiling Lines
+      ctx.beginPath();
+      for (let i = 1; i < 20; i++) {
+        let z = i * 150 - gridY;
+        if (z <= 0) continue;
+        let scale = focalLength / z;
+        let pyFloor = cy + 400 * scale;
+        let pyCeiling = cy - 400 * scale;
+        let opacity = Math.max(0, 1 - (z / 2000));
+
+        ctx.strokeStyle = `rgba(0, 255, 229, ${opacity * 0.15})`;
+
+        if (pyFloor > cy && pyFloor < height * 1.5) {
+          ctx.moveTo(0, pyFloor); ctx.lineTo(width, pyFloor);
+        }
+        if (pyCeiling < cy && pyCeiling > -height * 0.5) {
+          ctx.moveTo(0, pyCeiling); ctx.lineTo(width, pyCeiling);
+        }
+      }
+      ctx.stroke();
+
+      // Vertical Perspective Lines
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(0, 255, 229, 0.1)';
+      for (let i = -15; i <= 15; i++) {
+        let x = i * 200;
+        let pxFar = cx + x * (focalLength / 2000);
+        let pyFarFloor = cy + 400 * (focalLength / 2000);
+        let pyFarCeil = cy - 400 * (focalLength / 2000);
+
+        let pxNear = cx + x * (focalLength / 50);
+        let pyNearFloor = cy + 400 * (focalLength / 50);
+        let pyNearCeil = cy - 400 * (focalLength / 50);
+
+        // Floor
+        ctx.moveTo(pxFar, pyFarFloor); ctx.lineTo(pxNear, pyNearFloor);
+        // Ceiling
+        ctx.moveTo(pxFar, pyFarCeil); ctx.lineTo(pxNear, pyNearCeil);
+      }
+      ctx.stroke();
+    }
+
+    let isCanvasVisible = true;
+
+    function animateCanvas() {
+      if (!isCanvasVisible) return;
+      time += 0.016;
+      ctx.clearRect(0, 0, width, height);
+
+      // Ambient core glow
+      const gradCore = ctx.createRadialGradient(cx, cy, 0, cx, cy, width * 0.5);
+      gradCore.addColorStop(0, 'rgba(0, 255, 229, 0.05)');
+      gradCore.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradCore;
+      ctx.fillRect(0, 0, width, height);
+
+      drawPerspectiveGrid();
+
+      for (let i = 0; i < stars.length; i++) {
+        stars[i].update();
+        stars[i].draw();
+      }
+
+      requestAnimationFrame(animateCanvas);
+    }
+
+    // Pause animation when scrolled out of view
+    const canvasObserver = new IntersectionObserver((entries) => {
+      isCanvasVisible = entries[0].isIntersecting;
+      if (isCanvasVisible) requestAnimationFrame(animateCanvas);
+    }, { threshold: 0 });
+    canvasObserver.observe(document.querySelector('.hero'));
+
+    // Stats Counter Animation
+    const statsSection = document.getElementById('stats-section');
+    const counters = document.querySelectorAll('.stat-number');
+    let countersStarted = false;
+
+    if (statsSection) {
+      counters.forEach(counter => {
+        const text = counter.innerText;
+        const target = parseFloat(text);
+        const suffix = text.replace(/[0-9.]/g, '');
+        counter.setAttribute('data-target', target);
+        counter.setAttribute('data-suffix', suffix);
+        counter.innerText = '0' + suffix;
+      });
+
+      const runCounters = () => {
+        counters.forEach(counter => {
+          const target = parseFloat(counter.getAttribute('data-target'));
+          const suffix = counter.getAttribute('data-suffix') || '';
+          const duration = 2000;
+          const stepTime = 20;
+          const steps = duration / stepTime;
+          const increment = target / steps;
+          let current = 0;
+
+          const updateCounter = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+              counter.innerText = (Number.isInteger(target) ? target : target.toFixed(1)) + suffix;
+              clearInterval(updateCounter);
+            } else {
+              counter.innerText = (Number.isInteger(target) ? Math.floor(current) : current.toFixed(1)) + suffix;
+            }
+          }, stepTime);
+        });
+      };
+
+      const statsObserver = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && !countersStarted) {
+          countersStarted = true;
+          runCounters();
+        }
+      }, { threshold: 0.5 });
+      statsObserver.observe(statsSection);
+    }
+
+    // Terminal Typewriter Animation
+    const terminalBody = document.getElementById('terminal-body');
+    if (terminalBody) {
+      const commands = [];
+      Array.from(terminalBody.children).forEach(el => {
+        if (el.classList.contains('comment')) commands.push({ type: 'comment', text: el.innerText });
+        else if (el.classList.contains('cmd')) commands.push({ type: 'cmd', text: el.innerText });
+      });
+
+      terminalBody.innerHTML = '<span class="cursor" id="cursor"></span>';
+
+      let cmdIndex = 0;
+      let charIndex = 0;
+
+      function typeCommand() {
+        if (cmdIndex >= commands.length) return;
+
+        const cmd = commands[cmdIndex];
+        const cursor = document.getElementById('cursor');
+
+        if (charIndex === 0) {
+          if (cmd.type === 'comment') {
+            const span = document.createElement('span');
+            span.className = 'comment';
+            terminalBody.insertBefore(span, cursor);
+          } else {
+            const prompt = document.createElement('span');
+            prompt.className = 'prompt';
+            prompt.innerText = '❯ ';
+            terminalBody.insertBefore(prompt, cursor);
+
+            const span = document.createElement('span');
+            span.className = 'cmd';
+            terminalBody.insertBefore(span, cursor);
+          }
+        }
+
+        const currentElement = cursor.previousElementSibling;
+
+        if (charIndex < cmd.text.length) {
+          currentElement.textContent += cmd.text.charAt(charIndex);
+          charIndex++;
+          setTimeout(typeCommand, cmd.type === 'comment' ? 15 : 40);
+        } else {
+          const br = document.createElement('br');
+          terminalBody.insertBefore(br, cursor);
+          cmdIndex++;
+          charIndex = 0;
+          setTimeout(typeCommand, 400);
+        }
+      }
+
+      const terminalObserver = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          setTimeout(typeCommand, 500);
+          terminalObserver.disconnect();
+        }
+      }, { threshold: 0.5 });
+      terminalObserver.observe(terminalBody);
+    }
   </script>
 
 </body>
