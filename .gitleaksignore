@@ -1,0 +1,3 @@
+4520de29fba4689162b75bd41d5bd67b93aad2fe:plugins/jwt_analyzer.py:generic-api-key:362
+26548ec3a5748e69766b217d79d66dd804519c9a:plugins/jwt_analyzer.py:jwt:362
+26548ec3a5748e69766b217d79d66dd804519c9a:plugins/nosql_scanner.py:generic-api-key:268
