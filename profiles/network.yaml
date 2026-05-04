@@ -18,9 +18,11 @@ plugins:
   - dns_rebinding
   - domain_transf
 
-  # Service Brute Force
+  # Service Brute Force & Auth
   - ssh_brute
   - ftp_brute
+  - coerced_auth_web
+  - oidc_poisoning
 
   # Service Exposure
   - elastic_exposure
@@ -34,10 +36,13 @@ plugins:
   - email_harvester
   - email_spoof_check
   - smpt_enum
+  - smtp_smuggling
 
-  # TLS/SSL
+  # TLS/SSL & Protocol Levels
   - ssl_check
   - heartbleed_scanner
+  - http2_rapid_reset
+  - sspp_rce
 
   # Recon
   - whois_recon

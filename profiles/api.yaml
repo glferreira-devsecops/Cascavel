@@ -13,14 +13,18 @@ plugins:
   - api_versioning
   - graphql_probe
   - grpc_scanner
+  - web3_rpc_exposure
 
   # Injection
   - sqli_scanner
   - nosql_scanner
   - graphql_injection
+  - graphql_ast_bomb
+  - graphql_nuclear
   - xxe_scanner
   - ssti_scanner
   - blind_rce
+  - serverless_event_injection
 
   # Auth & Access Control
   - jwt_analyzer

@@ -13,6 +13,7 @@ plugins:
   - cors_checker
   - open_redirect
   - path_traversal
+  - admin_finder
 
   # A02:2021 — Cryptographic Failures
   - ssl_check
@@ -40,6 +41,7 @@ plugins:
   - info_disclosure
   - csp_bypass
   - host_header_injection
+  - security_headers
 
   # A06:2021 — Vulnerable Components
   - tech_fingerprint
@@ -64,6 +66,20 @@ plugins:
 
   # A10:2021 — SSRF
   - ssrf_scanner
+
+  # Web Scanning
+  - dir_bruteforce
+  - katana_crawler
+  - nikto_scanner
+  - nuclei_scanner
+  - wps_scanmini
+  - profiler_bundpent
+
+  # Advanced Web & Exploitation
+  - fast_webshell
+  - memshell_injector
+  - wasm_reverser
+  - auto_exploit
 
   # Supplementary
   - websocket_scanner

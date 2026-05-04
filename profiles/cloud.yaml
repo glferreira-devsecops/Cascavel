@@ -12,10 +12,12 @@ plugins:
   - cloud_enum
   - cloud_metadata
   - s3_bucket
+  - cloud_ghosting
 
   # Container & Orchestration
   - docker_exposure
   - k8s_exposure
+  - kubelet_anonymous_rce
 
   # CI/CD Security
   - cicd_exposure
@@ -27,6 +29,7 @@ plugins:
   - domain_transf
   - subdomain_hunter
   - subdomain_takeou
+  - broker_ssrf_relay
 
   # Services
   - elastic_exposure
