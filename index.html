@@ -143,7 +143,7 @@
     .dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:inset 0 -1px 2px rgba(0,0,0,.3)}
     .dot-r{background:var(--red)}.dot-y{background:var(--yellow)}.dot-g{background:var(--green)}
     .terminal-title{font-size:.68rem;color:var(--text-dim);margin-left:.6rem;font-family:'JetBrains Mono',monospace}
-    .terminal-body{padding:1.3rem 1.6rem;min-height:280px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word}
+    .terminal-body{padding:1.3rem 1.6rem;min-height:280px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-word}
     .prompt{color:var(--cyan)}.cmd{color:var(--text-bright)}.comment{color:#444;font-style:italic}
     .cursor{display:inline-block;width:8px;height:16px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;border-radius:1px}
     @keyframes blink{50%{opacity:0}}
@@ -202,7 +202,7 @@
 
     /* Intel Carousel */
     .intel-carousel-wrapper{position:relative;overflow:hidden}
-    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .intel-carousel::-webkit-scrollbar{display:none}
     .intel-card{min-width:310px;max-width:360px;background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.4rem;scroll-snap-align:start;flex-shrink:0;transition:var(--transition);backdrop-filter:blur(12px)}
     .intel-card:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 12px 35px rgba(0,0,0,.4),0 0 20px var(--cyan-dim)}
@@ -600,7 +600,7 @@
     <div class="container">
       <h2 class="section-title reveal">Security Intel</h2>
       <p class="section-subtitle reveal">Motor de inteligência integrado — 40+ tips e facts exibidos durante scans em tempo real.</p>
-      <div class="intel-carousel-wrapper reveal">
+      <div class="intel-carousel-wrapper">
         <div class="carousel-fade-left"></div>
         <div class="carousel-fade-right"></div>
         <div class="intel-carousel" id="intelCarousel">
