@@ -80,7 +80,7 @@ IS_TTY="false"
 CURRENT_STEP=0
 TOTAL_STEPS=12
 _next_step() {
-    ((CURRENT_STEP++))
+    ((CURRENT_STEP++)) || true
 }
 
 # ─── Spinner (visual feedback for long operations) ───────────────────
@@ -694,7 +694,7 @@ install_python_deps() {
             dep="${dep%%$'\r'}"  # Strip Windows \r (CRLF line endings)
             dep="$(echo "$dep" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"  # Trim whitespace
             [[ -z "$dep" || "$dep" == \#* ]] && continue
-            ((dep_count++))
+            ((dep_count++)) || true
             _spinner_start "Instalando [$dep_count/$dep_total] $dep..."
             pip install "$dep" --no-cache-dir --retries 3 --timeout 30 -q 2>/dev/null || warn "Falha: $dep"
             _spinner_stop
@@ -852,12 +852,12 @@ install_external_tools() {
             local brew_count=0
             local brew_total=0
             for tool in $BREW_TOOLS; do
-                command -v "$tool" &>/dev/null || ((brew_total++))
+                if ! command -v "$tool" &>/dev/null; then ((brew_total++)) || true; fi
             done
             if [ "$brew_total" -gt 0 ]; then
                 for tool in $BREW_TOOLS; do
                     if ! command -v "$tool" &>/dev/null; then
-                        ((brew_count++))
+                        ((brew_count++)) || true
                         _spinner_start "Instalando [$brew_count/$brew_total] $tool..."
                         brew install "$tool" >>"$INSTALL_LOG" 2>&1 || warn "Falha: $tool"
                         _spinner_stop
@@ -955,14 +955,14 @@ install_external_tools() {
             local go_installed=0
             for pkg in "${GO_TOOLS[@]}"; do
                 TOOL_NAME=$(basename "${pkg%%@*}")
-                ((go_count++))
+                ((go_count++)) || true
                 if command -v "$TOOL_NAME" &>/dev/null; then
-                    ((go_installed++))
+                    ((go_installed++)) || true
                 else
                     _spinner_start "[${go_count}/${go_total}] go install ${TOOL_NAME}..."
                     go install "$pkg" >>"$INSTALL_LOG" 2>&1 || warn "Falha: $TOOL_NAME"
                     _spinner_stop
-                    command -v "$TOOL_NAME" &>/dev/null && ((go_installed++))
+                    if command -v "$TOOL_NAME" &>/dev/null; then ((go_installed++)) || true; fi
                 fi
             done
             info "Go tools: ${go_installed}/${go_total} instaladas."
@@ -1046,7 +1046,7 @@ verify_installation() {
 
     for tool in "${TOOLS[@]}"; do
         if command -v "$tool" &>/dev/null; then
-            ((FOUND++))
+            ((FOUND++)) || true
         else
             MISSING_LIST="${MISSING_LIST}${tool} "
         fi
@@ -1199,9 +1199,9 @@ post_install_health_check() {
     local HEALTH_FAIL=0
     local HEALTH_WARN=0
 
-    _health_ok()  { ((HEALTH_PASS++)); echo -e "    ${GREEN}✓${NC} $1"; }
-    _health_fail(){ ((HEALTH_FAIL++)); echo -e "    ${RED}✗${NC} $1"; }
-    _health_warn(){ ((HEALTH_WARN++)); echo -e "    ${YELLOW}⚠${NC} $1"; }
+    _health_ok()  { ((HEALTH_PASS++)) || true; echo -e "    ${GREEN}✓${NC} $1"; }
+    _health_fail(){ ((HEALTH_FAIL++)) || true; echo -e "    ${RED}✗${NC} $1"; }
+    _health_warn(){ ((HEALTH_WARN++)) || true; echo -e "    ${YELLOW}⚠${NC} $1"; }
 
     # 1. Core files exist
     for f in cascavel.py requirements.txt install.sh pyproject.toml; do
