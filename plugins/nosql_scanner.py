@@ -265,7 +265,7 @@ def _test_blind_boolean(target, endpoint):
         # Baseline request (likely false)
         r_base = requests.post(
             url,
-            json={"username": "nao_existo_cascavel_123", "password": "nao_existo_cascavel_123"},
+            json={"username": "testuser", "password": "testpassword123"},
             timeout=5,
             headers={"Content-Type": "application/json"},
         )
