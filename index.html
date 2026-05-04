@@ -6,12 +6,14 @@
   <title>CASCAVEL — Quantum Security Framework</title>
   <script>if(window.top!==window.self){window.top.location=window.self.location;}</script>
 
-  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data:; connect-src 'self'; frame-ancestors 'none';" />
+  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site + RET A+ Reference) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data: https:; connect-src 'self'; object-src 'none'; worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-  <meta http-equiv="Permissions-Policy" content="interest-cohort=(), camera=(), microphone=(), geolocation=()" />
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), browsing-topics=(), attribution-reporting=(), run-ad-auction=()" />
+  <meta name="theme-color" content="#06060e" />
+  <link rel="canonical" href="https://cascavel.pages.dev/" />
 
   <!-- SEO & Open Graph -->
   <meta name="description" content="Quantum Security Framework — 85 plugins em 14 categorias de ataque, 30+ ferramentas de reconhecimento, UX cinematográfica, relatórios PDF/MD/JSON. CI/CD hardened. Red Team Intelligence Engine." />
@@ -20,7 +22,7 @@
   <meta property="og:title" content="CASCAVEL — Quantum Security Framework" />
   <meta property="og:description" content="85 plugins. 14 categorias. 30+ recon tools. Terminal cinematográfico. CI/CD hardened. Red Team Intelligence Engine." />
   <meta property="og:image" content="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
-  <meta property="og:url" content="https://glferreira-devsecops.github.io/Cascavel/" />
+  <meta property="og:url" content="https://cascavel.pages.dev/" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="CASCAVEL — Quantum Security Framework" />
@@ -34,6 +36,7 @@
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    ::selection{background:rgba(0,255,229,.25);color:#fff}
 
     :root{
       --cyan:#00ffe5;--cyan-dim:rgba(0,255,229,.08);--cyan-glow:rgba(0,255,229,.25);--cyan-strong:rgba(0,255,229,.5);
@@ -53,6 +56,9 @@
       font-family:'Inter',system-ui,-apple-system,sans-serif;
       line-height:1.75;min-height:100vh;overflow-x:hidden;
     }
+
+    /* Particle Canvas Layer */
+    #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-3;pointer-events:none}
 
     /* Animated Grid Background */
     body::before{
@@ -99,14 +105,16 @@
 
     /* Hero */
     .hero{padding:6rem 0 4rem;text-align:center;position:relative}
-    .hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(0,255,229,.06) 0%,transparent 70%);pointer-events:none}
+    .hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(0,255,229,.08) 0%,rgba(255,45,149,.03) 40%,transparent 70%);pointer-events:none;animation:heroGlow 4s ease-in-out infinite alternate}
+    @keyframes heroGlow{0%{opacity:.6;transform:translateX(-50%) scale(1)}100%{opacity:1;transform:translateX(-50%) scale(1.05)}}
 
-    .hero h1{font-size:clamp(2.5rem,7vw,4.5rem);font-weight:800;margin-bottom:.3rem;position:relative;display:inline-block}
-    .hero h1 .accent{color:var(--magenta);animation:pulseAccent 2s ease-in-out infinite}
+    .hero h1{font-size:clamp(2.5rem,7vw,4.5rem);font-weight:800;margin-bottom:.3rem;position:relative;display:inline-block;background:linear-gradient(135deg,var(--cyan),#00b4d8,var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-fill-color:transparent;animation:gradientShift 6s ease infinite;background-size:200% 200%}
+    @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .hero h1 .accent{-webkit-text-fill-color:var(--magenta);animation:pulseAccent 2s ease-in-out infinite}
     @keyframes pulseAccent{0%,100%{opacity:1}50%{opacity:.6}}
 
-    .hero .version-tag{display:inline-block;background:var(--cyan-dim);border:1px solid var(--border);border-radius:24px;padding:.25rem 1rem;font-size:.72rem;font-family:'Orbitron',monospace;color:var(--cyan);margin:.8rem 0 1.2rem;position:relative;overflow:hidden}
-    .hero .version-tag::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,255,229,.15),transparent);animation:shimmer 3s ease-in-out infinite}
+    .hero .version-tag{display:inline-block;background:var(--cyan-dim);border:1px solid var(--border);border-radius:24px;padding:.25rem 1rem;font-size:.72rem;font-family:'Orbitron',monospace;color:var(--cyan);margin:.8rem 0 1.2rem;position:relative;overflow:hidden;backdrop-filter:blur(10px)}
+    .hero .version-tag::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,255,229,.2),transparent);animation:shimmer 3s ease-in-out infinite}
     @keyframes shimmer{0%{left:-100%}100%{left:100%}}
 
     .tagline{font-size:clamp(.92rem,1.8vw,1.12rem);color:var(--text);max-width:720px;margin:0 auto 2rem;opacity:.8;font-weight:300;line-height:1.8}
@@ -116,10 +124,11 @@
     .hero-badges img:hover{transform:scale(1.1);filter:brightness(1.2)}
 
     .hero-stats{display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
-    .stat{text-align:center;position:relative}
+    .stat{text-align:center;position:relative;padding:1rem;border-radius:var(--radius-sm);background:rgba(0,255,229,.02);border:1px solid rgba(0,255,229,.06);transition:var(--transition)}
+    .stat:hover{border-color:var(--border-hover);background:rgba(0,255,229,.05);transform:translateY(-3px)}
     .stat-number{font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:800;color:var(--cyan);display:block;text-shadow:0 0 30px var(--cyan-dim)}
     .stat-label{font-size:.65rem;text-transform:uppercase;letter-spacing:2.5px;opacity:.45;margin-top:.2rem}
-    .stat::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:var(--border-hover);border-radius:1px}
+    .stat::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:1px}
 
     /* Terminal Window */
     .terminal-window{background:rgba(10,10,22,.95);border:1px solid var(--border);border-radius:var(--radius);max-width:720px;margin:0 auto;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.6),0 0 50px var(--cyan-dim),inset 0 1px 0 rgba(255,255,255,.03)}
@@ -135,10 +144,12 @@
     /* CTA Buttons */
     .cta-group{display:flex;gap:1rem;justify-content:center;margin-top:2.5rem;flex-wrap:wrap}
     .cta{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.6rem;border-radius:30px;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;transition:var(--transition);position:relative;overflow:hidden}
+    .cta::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.1);border-radius:50%;transform:translate(-50%,-50%);transition:width .5s ease,height .5s ease}
+    .cta:hover::after{width:300px;height:300px}
     .cta-primary{background:linear-gradient(135deg,var(--cyan),#00b4d8);color:var(--bg);box-shadow:0 4px 20px var(--cyan-glow)}
-    .cta-primary:hover{transform:translateY(-2px);box-shadow:0 8px 35px var(--cyan-strong);color:var(--bg)}
+    .cta-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 40px var(--cyan-strong);color:var(--bg)}
     .cta-secondary{background:transparent;border:1px solid var(--border-hover);color:var(--cyan)}
-    .cta-secondary:hover{background:var(--cyan-dim);border-color:var(--cyan);transform:translateY(-2px);color:var(--cyan)}
+    .cta-secondary:hover{background:var(--cyan-dim);border-color:var(--cyan);transform:translateY(-3px) scale(1.02);color:var(--cyan)}
 
     /* Sections */
     section{padding:5rem 0;position:relative}
@@ -154,15 +165,16 @@
     .reveal-delay-3{transition-delay:.3s}
     .reveal-delay-4{transition-delay:.4s}
 
-    /* Feature Cards */
+    /* Feature Cards — Glassmorphism */
     .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem}
-    .feature-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem 1.6rem;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(10px)}
-    .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .4s}
-    .feature-card::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at center,rgba(0,255,229,.04),transparent 60%);opacity:0;transition:opacity .4s;pointer-events:none}
-    .feature-card:hover{border-color:var(--border-hover);transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.3),0 0 30px var(--cyan-dim)}
+    .feature-card{background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem 1.6rem;transition:var(--transition);position:relative;overflow:hidden;backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%)}
+    .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),transparent);opacity:0;transition:opacity .4s}
+    .feature-card::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at center,rgba(0,255,229,.05),transparent 60%);opacity:0;transition:opacity .5s;pointer-events:none}
+    .feature-card:hover{border-color:var(--border-hover);transform:translateY(-8px);box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 40px var(--cyan-dim),inset 0 1px 0 rgba(255,255,255,.04)}
     .feature-card:hover::before{opacity:1}
     .feature-card:hover::after{opacity:1}
-    .feature-icon{font-size:1.8rem;margin-bottom:.8rem;display:block;filter:drop-shadow(0 0 8px rgba(0,255,229,.3))}
+    .feature-icon{font-size:2rem;margin-bottom:.8rem;display:block;filter:drop-shadow(0 0 12px rgba(0,255,229,.4));transition:transform .3s ease}
+    .feature-card:hover .feature-icon{transform:scale(1.15) rotate(-5deg)}
     .feature-card h3{font-size:.88rem;margin-bottom:.5rem}
     .feature-card p{font-size:.82rem;opacity:.6;line-height:1.7}
 
@@ -178,15 +190,23 @@
 
     /* Integration Tags */
     .integrations{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:1.5rem}
-    .integration-tag{background:var(--bg-card);border:1px solid var(--border);border-radius:22px;padding:.4rem 1rem;font-size:.78rem;color:var(--text);transition:var(--transition);cursor:default}
-    .integration-tag:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,255,229,.1)}
+    .integration-tag{background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:22px;padding:.4rem 1rem;font-size:.78rem;color:var(--text);transition:var(--transition);cursor:default;backdrop-filter:blur(8px)}
+    .integration-tag:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);transform:translateY(-3px) scale(1.03);box-shadow:0 8px 25px rgba(0,255,229,.15)}
 
     /* Intel Carousel */
-    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-    .intel-card{min-width:310px;max-width:360px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.4rem;scroll-snap-align:start;flex-shrink:0;transition:var(--transition)}
-    .intel-card:hover{border-color:var(--border-hover);transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .intel-carousel-wrapper{position:relative;overflow:hidden}
+    .intel-carousel{display:flex;gap:1rem;overflow-x:auto;padding:1rem 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .intel-carousel::-webkit-scrollbar{display:none}
+    .intel-card{min-width:310px;max-width:360px;background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.4rem;scroll-snap-align:start;flex-shrink:0;transition:var(--transition);backdrop-filter:blur(12px)}
+    .intel-card:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 12px 35px rgba(0,0,0,.4),0 0 20px var(--cyan-dim)}
     .intel-tag{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--magenta);margin-bottom:.5rem;display:block;text-shadow:0 0 10px var(--magenta-dim)}
     .intel-text{font-size:.82rem;opacity:.65;line-height:1.7}
+    .carousel-indicators{display:flex;justify-content:center;gap:.4rem;margin-top:1rem}
+    .carousel-dot{width:8px;height:8px;border-radius:50%;background:var(--border);border:none;cursor:pointer;transition:var(--transition);padding:0}
+    .carousel-dot.active{background:var(--cyan);box-shadow:0 0 8px var(--cyan-glow)}
+    .carousel-fade-left,.carousel-fade-right{position:absolute;top:0;bottom:2rem;width:60px;pointer-events:none;z-index:2}
+    .carousel-fade-left{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+    .carousel-fade-right{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
 
     /* Install Box */
     .install-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;backdrop-filter:blur(10px)}
@@ -209,16 +229,25 @@
 
     /* Architecture Section */
     .arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.5rem}
-    .arch-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;text-align:center;transition:var(--transition)}
-    .arch-item:hover{border-color:var(--border-hover);transform:translateY(-3px)}
-    .arch-item .arch-icon{font-size:2rem;margin-bottom:.5rem;display:block}
+    .arch-item{background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;text-align:center;transition:var(--transition);backdrop-filter:blur(10px);position:relative;overflow:hidden}
+    .arch-item::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .3s}
+    .arch-item:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .arch-item:hover::before{opacity:1}
+    .arch-item .arch-icon{font-size:2rem;margin-bottom:.5rem;display:block;transition:transform .3s}
+    .arch-item:hover .arch-icon{transform:scale(1.15)}
     .arch-item h4{font-size:.75rem;margin-bottom:.3rem}
     .arch-item p{font-size:.72rem;opacity:.5}
 
+    /* Trust Badges */
+    .trust-badges{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}
+    .trust-badge{display:inline-flex;align-items:center;gap:.3rem;background:rgba(0,255,229,.03);border:1px solid rgba(0,255,229,.12);border-radius:20px;padding:.3rem .8rem;font-size:.62rem;font-family:'Orbitron',monospace;color:var(--cyan);letter-spacing:.5px;transition:var(--transition);text-decoration:none}
+    .trust-badge:hover{border-color:var(--cyan);background:var(--cyan-dim);transform:translateY(-2px);box-shadow:0 4px 15px var(--cyan-dim);color:var(--cyan)}
+    .trust-badge .badge-grade{color:var(--green);font-weight:700}
+
     /* Governance */
     .gov-grid{display:flex;flex-wrap:wrap;gap:.7rem}
-    .gov-link{display:inline-flex;align-items:center;gap:.4rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:.8rem;transition:var(--transition)}
-    .gov-link:hover{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);transform:translateY(-2px)}
+    .gov-link{display:inline-flex;align-items:center;gap:.4rem;background:rgba(12,12,24,.65);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:.8rem;transition:var(--transition);backdrop-filter:blur(8px)}
+    .gov-link:hover{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,255,229,.1)}
 
     /* Footer */
     footer{border-top:1px solid var(--border);padding:3rem 0;text-align:center;position:relative}
@@ -243,25 +272,75 @@
       .top-nav .nav-links{display:none}
       .bottom-nav{display:flex;gap:.2rem}
       .hero{padding:4rem 0 3rem}
-      .hero h1{font-size:2.5rem}
-      .hero-stats{gap:1.5rem}.stat-number{font-size:1.6rem}
+      .hero h1{font-size:2.2rem;letter-spacing:-.02em}
+      .hero .subtitle{font-size:.95rem}
+      .hero-stats{gap:1rem;flex-wrap:wrap;justify-content:center}
+      .stat{min-width:calc(33% - 1rem)}
+      .stat-number{font-size:1.4rem}
+      .stat-label{font-size:.6rem}
       .features-grid,.roadmap-grid{grid-template-columns:1fr}
       .arch-grid{grid-template-columns:repeat(2,1fr)}
       section{padding:3.5rem 0}
-      .cta-group{flex-direction:column;align-items:center}
+      .cta-group{flex-direction:column;align-items:center;gap:.6rem}
+      .cta{width:100%;max-width:280px;text-align:center}
       .back-to-top{bottom:5rem;right:1rem}
       footer{padding-bottom:5rem}
+      /* Trust badges mobile */
+      .trust-badges{gap:.35rem;justify-content:center}
+      .trust-badge{font-size:.55rem;padding:.25rem .45rem}
+      /* Carousel mobile */
+      .intel-carousel-wrapper{margin:0 -1rem}
+      .carousel-fade-left,.carousel-fade-right{width:20px}
+      .intel-card{min-width:85vw;padding:1rem}
+      .carousel-indicators{padding:.6rem 0}
+      /* Terminal mobile */
+      .terminal-window{font-size:.7rem}
+      .terminal-body{padding:.8rem;min-height:auto}
+      /* Particle canvas - reduce on mobile for perf */
+      #particleCanvas{opacity:.3}
+      /* Section titles */
+      .section-title{font-size:1.6rem}
+      .section-subtitle{font-size:.85rem}
+      /* Plugin table */
+      .plugin-table{font-size:.65rem}
+      .plugin-table th,.plugin-table td{padding:.45rem .35rem}
+      .techniques{max-width:180px}
     }
     @media(max-width:480px){
       .arch-grid{grid-template-columns:1fr}
       .stat::after{display:none}
-      .hero-stats{gap:1rem}
+      .stat{min-width:calc(50% - .5rem)}
+      .hero-stats{gap:.6rem}
+      .hero h1{font-size:1.8rem}
       .bottom-nav a{padding:.35rem .5rem;font-size:.5rem}
       .bottom-nav a .nav-icon{font-size:.9rem}
+      /* Trust badges 480 */
+      .trust-badges{gap:.25rem}
+      .trust-badge{font-size:.5rem;padding:.2rem .35rem}
+      .badge-grade{font-size:.5rem;padding:.1rem .25rem}
+      /* Carousel 480 */
+      .intel-card{min-width:90vw;padding:.8rem}
+      .intel-tag{font-size:.55rem;padding:.15rem .35rem}
+      .intel-text{font-size:.7rem}
+      /* Feature cards */
+      .feature-card{padding:1.2rem}
+      .feature-card h3{font-size:.95rem}
+      .feature-card p{font-size:.75rem}
+    }
+    @media(max-width:360px){
+      .hero h1{font-size:1.5rem}
+      .stat{min-width:100%}
+      .trust-badges{flex-direction:column;align-items:center}
+      .trust-badge{width:fit-content}
+      .cta{max-width:100%}
+      .intel-card{min-width:95vw}
     }
   </style>
 </head>
 <body>
+
+  <!-- Particle Canvas -->
+  <canvas id="particleCanvas"></canvas>
 
   <!-- Desktop Top Nav -->
   <nav class="top-nav" id="navbar" aria-label="Desktop Navigation">
@@ -312,11 +391,11 @@
       </div>
 
       <div class="hero-stats reveal reveal-delay-2">
-        <div class="stat"><span class="stat-number">85</span><span class="stat-label">Security Plugins</span></div>
-        <div class="stat"><span class="stat-number">14</span><span class="stat-label">Attack Categories</span></div>
-        <div class="stat"><span class="stat-number">30+</span><span class="stat-label">Recon Tools</span></div>
-        <div class="stat"><span class="stat-number">3</span><span class="stat-label">Report Formats</span></div>
-        <div class="stat"><span class="stat-number">2.8K</span><span class="stat-label">Lines of Core</span></div>
+        <div class="stat"><span class="stat-number" data-target="85" data-suffix="">0</span><span class="stat-label">Security Plugins</span></div>
+        <div class="stat"><span class="stat-number" data-target="14" data-suffix="">0</span><span class="stat-label">Attack Categories</span></div>
+        <div class="stat"><span class="stat-number" data-target="30" data-suffix="+">0</span><span class="stat-label">Recon Tools</span></div>
+        <div class="stat"><span class="stat-number" data-target="211" data-suffix="">0</span><span class="stat-label">Security Tests</span></div>
+        <div class="stat"><span class="stat-number" data-target="3" data-suffix="">0</span><span class="stat-label">Report Formats</span></div>
       </div>
 
       <!-- Terminal -->
@@ -341,6 +420,18 @@
       <div class="cta-group reveal reveal-delay-4">
         <a href="https://github.com/glferreira-devsecops/Cascavel" target="_blank" rel="noopener" class="cta cta-primary">⚡ Ver no GitHub</a>
         <a href="https://github.com/glferreira-devsecops/Cascavel/blob/main/PLUGINS.md" target="_blank" rel="noopener" class="cta cta-secondary">📖 Plugin Docs</a>
+      </div>
+
+      <!-- Trust Badges -->
+      <div class="trust-badges reveal reveal-delay-4">
+        <a href="https://securityheaders.com/?q=cascavel.pages.dev&followRedirects=on" target="_blank" rel="noopener" class="trust-badge">Headers <span class="badge-grade">A+</span></a>
+        <a href="https://www.ssllabs.com/ssltest/analyze.html?d=cascavel.pages.dev" target="_blank" rel="noopener" class="trust-badge">SSL Labs <span class="badge-grade">A+</span></a>
+        <a href="https://hstspreload.org/?domain=cascavel.pages.dev" target="_blank" rel="noopener" class="trust-badge">HSTS <span class="badge-grade">✓</span></a>
+        <a href="https://csp-evaluator.withgoogle.com/?url=https://cascavel.pages.dev" target="_blank" rel="noopener" class="trust-badge">CSP L3 <span class="badge-grade">✓</span></a>
+        <span class="trust-badge">TLS 1.3 <span class="badge-grade">✓</span></span>
+        <span class="trust-badge">Zero Tracking <span class="badge-grade">✓</span></span>
+        <span class="trust-badge">COEP <span class="badge-grade">✓</span></span>
+        <span class="trust-badge">35 Permissions <span class="badge-grade">✓</span></span>
       </div>
     </div>
   </header>
@@ -501,15 +592,20 @@
     <div class="container">
       <h2 class="section-title reveal">Security Intel</h2>
       <p class="section-subtitle reveal">Motor de inteligência integrado — 40+ tips e facts exibidos durante scans em tempo real.</p>
-      <div class="intel-carousel reveal">
-        <div class="intel-card"><span class="intel-tag">💀 FACT</span><span class="intel-text">Hackers comprometem 93% das redes corporativas em 2 dias. O custo médio de um data breach é $4.88M (2024).</span></div>
-        <div class="intel-card"><span class="intel-tag">🔐 TIP</span><span class="intel-text">Sempre valide JWT com algoritmo fixo — nunca confie no header 'alg'. None algorithm = bypass total de autenticação.</span></div>
-        <div class="intel-card"><span class="intel-tag">⚡ FACT</span><span class="intel-text">O Log4Shell (CVE-2021-44228) teve 10M+ tentativas de exploit por hora. 86% dos ataques exploram vulns com patches disponíveis.</span></div>
-        <div class="intel-card"><span class="intel-tag">🛡️ TIP</span><span class="intel-text">Redis sem auth = RCE via CONFIG SET + crontab/SSH key injection. IMDSv2 no AWS previne SSRF para credenciais EC2.</span></div>
-        <div class="intel-card"><span class="intel-tag">🧬 TIP</span><span class="intel-text">Race conditions: use single-packet attack para bypass de rate limiting. Prototype Pollution em Node.js escala para RCE via gadget chains.</span></div>
-        <div class="intel-card"><span class="intel-tag">📡 FACT</span><span class="intel-text">Shodan indexa 7+ bilhões de dispositivos. 95% dos incidentes de segurança em cloud são causados por misconfiguration.</span></div>
-        <div class="intel-card"><span class="intel-tag">💣 TIP</span><span class="intel-text">GraphQL batching pode brute force queries autenticadas. Docker --privileged + docker.sock = container escape trivial.</span></div>
-        <div class="intel-card"><span class="intel-tag">🕷️ FACT</span><span class="intel-text">O SolarWinds hack comprometeu 18.000 organizações via supply chain. Zero-days em iOS valem até $2M no mercado.</span></div>
+      <div class="intel-carousel-wrapper reveal">
+        <div class="carousel-fade-left"></div>
+        <div class="carousel-fade-right"></div>
+        <div class="intel-carousel" id="intelCarousel">
+          <div class="intel-card"><span class="intel-tag">💀 FACT</span><span class="intel-text">Hackers comprometem 93% das redes corporativas em 2 dias. O custo médio de um data breach é $4.88M (2024).</span></div>
+          <div class="intel-card"><span class="intel-tag">🔐 TIP</span><span class="intel-text">Sempre valide JWT com algoritmo fixo — nunca confie no header 'alg'. None algorithm = bypass total de autenticação.</span></div>
+          <div class="intel-card"><span class="intel-tag">⚡ FACT</span><span class="intel-text">O Log4Shell (CVE-2021-44228) teve 10M+ tentativas de exploit por hora. 86% dos ataques exploram vulns com patches disponíveis.</span></div>
+          <div class="intel-card"><span class="intel-tag">🛡️ TIP</span><span class="intel-text">Redis sem auth = RCE via CONFIG SET + crontab/SSH key injection. IMDSv2 no AWS previne SSRF para credenciais EC2.</span></div>
+          <div class="intel-card"><span class="intel-tag">🧬 TIP</span><span class="intel-text">Race conditions: use single-packet attack para bypass de rate limiting. Prototype Pollution em Node.js escala para RCE via gadget chains.</span></div>
+          <div class="intel-card"><span class="intel-tag">📡 FACT</span><span class="intel-text">Shodan indexa 7+ bilhões de dispositivos. 95% dos incidentes de segurança em cloud são causados por misconfiguration.</span></div>
+          <div class="intel-card"><span class="intel-tag">💣 TIP</span><span class="intel-text">GraphQL batching pode brute force queries autenticadas. Docker --privileged + docker.sock = container escape trivial.</span></div>
+          <div class="intel-card"><span class="intel-tag">🕷️ FACT</span><span class="intel-text">O SolarWinds hack comprometeu 18.000 organizações via supply chain. Zero-days em iOS valem até $2M no mercado.</span></div>
+        </div>
+        <div class="carousel-indicators" id="carouselIndicators"></div>
       </div>
     </div>
   </section>
@@ -631,7 +727,32 @@ python3 cascavel.py -t target.com
 
   <!-- Scripts -->
   <script>
-    // Scroll Reveal
+    // === Particle Canvas Animation ===
+    (function(){
+      const c=document.getElementById('particleCanvas'),x=c.getContext('2d');
+      let w,h,particles=[];
+      function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
+      window.addEventListener('resize',resize);resize();
+      class P{constructor(){this.reset()}
+        reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.r=Math.random()*1.5+.5;this.a=Math.random()*.3+.05;this.pulse=Math.random()*Math.PI*2}
+        update(){this.x+=this.vx;this.y+=this.vy;this.pulse+=.02;
+          if(this.x<0||this.x>w)this.vx*=-1;if(this.y<0||this.y>h)this.vy*=-1}
+        draw(){const a=this.a+Math.sin(this.pulse)*.1;
+          x.beginPath();x.arc(this.x,this.y,this.r,0,Math.PI*2);
+          x.fillStyle=`rgba(0,255,229,${a})`;x.fill()}}
+      const particleCount = w < 768 ? 25 : w < 1200 ? 40 : 60;
+      for(let i=0;i<particleCount;i++)particles.push(new P);
+      function animate(){x.clearRect(0,0,w,h);
+        particles.forEach(p=>{p.update();p.draw()});
+        // Draw connections
+        for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){
+          const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+          if(d<120){x.beginPath();x.moveTo(particles[i].x,particles[i].y);x.lineTo(particles[j].x,particles[j].y);
+            x.strokeStyle=`rgba(0,255,229,${.06*(1-d/120)})`;x.stroke()}}}
+        requestAnimationFrame(animate)}animate();
+    })();
+
+    // === Scroll Reveal ===
     const reveals = document.querySelectorAll('.reveal');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -643,7 +764,137 @@ python3 cascavel.py -t target.com
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     reveals.forEach(el => observer.observe(el));
 
-    // Nav scroll effect
+    // === Counter Animation ===
+    const counters = document.querySelectorAll('.stat-number[data-target]');
+    const counterObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = +el.dataset.target;
+          const suffix = el.dataset.suffix || '';
+          const duration = 1500;
+          const start = performance.now();
+          function step(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.floor(target * eased) + suffix;
+            if (progress < 1) requestAnimationFrame(step);
+            else el.textContent = target + suffix;
+          }
+          requestAnimationFrame(step);
+          counterObs.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(c => counterObs.observe(c));
+
+    // === Terminal Typing Effect ===
+    (function(){
+      const body = document.querySelector('.terminal-body');
+      if (!body) return;
+      const lines = [
+        { type: 'comment', text: '# Scan completo em um alvo' },
+        { type: 'cmd', text: 'python3 cascavel.py -t target.com' },
+        { type: 'comment', text: '# Listar 85 plugins dispon\u00edveis' },
+        { type: 'cmd', text: 'python3 cascavel.py --list-plugins' },
+        { type: 'comment', text: '# Verificar ferramentas externas' },
+        { type: 'cmd', text: 'python3 cascavel.py --check-tools' },
+        { type: 'comment', text: '# Modo CI/CD silencioso com JSON' },
+        { type: 'cmd', text: 'python3 cascavel.py -t target.com --quiet --json' }
+      ];
+      body.innerHTML = '';
+      let lineIdx = 0;
+      function typeLine() {
+        if (lineIdx >= lines.length) {
+          const cursor = document.createElement('span');
+          cursor.className = 'cursor';
+          body.appendChild(cursor);
+          return;
+        }
+        const line = lines[lineIdx];
+        if (line.type === 'comment') {
+          const span = document.createElement('span');
+          span.className = 'comment';
+          span.textContent = line.text;
+          body.appendChild(span);
+          body.appendChild(document.createElement('br'));
+          lineIdx++;
+          setTimeout(typeLine, 200);
+        } else {
+          const prompt = document.createElement('span');
+          prompt.className = 'prompt';
+          prompt.textContent = '\u276f ';
+          body.appendChild(prompt);
+          const cmd = document.createElement('span');
+          cmd.className = 'cmd';
+          body.appendChild(cmd);
+          let charIdx = 0;
+          function typeChar() {
+            if (charIdx < line.text.length) {
+              cmd.textContent += line.text[charIdx];
+              charIdx++;
+              setTimeout(typeChar, 25 + Math.random() * 20);
+            } else {
+              body.appendChild(document.createElement('br'));
+              lineIdx++;
+              setTimeout(typeLine, 300);
+            }
+          }
+          typeChar();
+        }
+      }
+      // Start typing when terminal is visible
+      const termObs = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          typeLine();
+          termObs.disconnect();
+        }
+      }, { threshold: 0.3 });
+      termObs.observe(body.closest('.terminal-window'));
+    })();
+
+    // === Intel Carousel Auto-Scroll + Indicators ===
+    (function(){
+      const carousel = document.getElementById('intelCarousel');
+      const indicators = document.getElementById('carouselIndicators');
+      if (!carousel || !indicators) return;
+      const cards = carousel.querySelectorAll('.intel-card');
+      const total = cards.length;
+      // Create dots
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Intel card ' + (i+1));
+        dot.addEventListener('click', () => {
+          cards[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        });
+        indicators.appendChild(dot);
+      }
+      const dots = indicators.querySelectorAll('.carousel-dot');
+      // Update active dot on scroll
+      carousel.addEventListener('scroll', () => {
+        const scrollLeft = carousel.scrollLeft;
+        const cardWidth = cards[0].offsetWidth + 16;
+        const activeIdx = Math.round(scrollLeft / cardWidth);
+        dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+      }, { passive: true });
+      // Auto-scroll
+      let autoIdx = 0;
+      let autoInterval = setInterval(() => {
+        autoIdx = (autoIdx + 1) % total;
+        cards[autoIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      }, 4000);
+      carousel.addEventListener('mouseenter', () => clearInterval(autoInterval));
+      carousel.addEventListener('mouseleave', () => {
+        autoInterval = setInterval(() => {
+          autoIdx = (autoIdx + 1) % total;
+          cards[autoIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        }, 4000);
+      });
+    })();
+
+    // === Nav Scroll Effect ===
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
       navbar.classList.toggle('scrolled', window.scrollY > 50);
@@ -651,12 +902,12 @@ python3 cascavel.py -t target.com
       btn.classList.toggle('visible', window.scrollY > 600);
     }, { passive: true });
 
-    // Back to top
+    // === Back to Top ===
     document.getElementById('backToTop').addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // Active nav link (both desktop + mobile bottom pill)
+    // === Active Nav Link ===
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
     const bottomLinks = document.querySelectorAll('#bottomNav a[href^="#"]');

@@ -1,0 +1,3 @@
+# Cloudflare Pages Redirects
+# RFC 9116: security.txt must be accessible at /.well-known/security.txt
+/security.txt /.well-known/security.txt 301

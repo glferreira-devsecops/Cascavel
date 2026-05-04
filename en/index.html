@@ -6,12 +6,14 @@
   <title>CASCAVEL — Quantum Security Framework</title>
   <script>if(window.top!==window.self){window.top.location=window.self.location;}</script>
 
-  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data:; connect-src 'self'; frame-ancestors 'none';" />
+  <!-- 🔒 Security Hardening Headers (OpenSSF hardened_site + RET A+ Reference) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; img-src 'self' https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev data: https:; connect-src 'self'; object-src 'none'; worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-  <meta http-equiv="Permissions-Policy" content="interest-cohort=(), camera=(), microphone=(), geolocation=()" />
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), browsing-topics=(), attribution-reporting=(), run-ad-auction=()" />
+  <meta name="theme-color" content="#06060e" />
+  <link rel="canonical" href="https://cascavel.pages.dev/en/" />
 
   <!-- SEO & Open Graph -->
   <meta name="description" content="Quantum Security Framework — 85 plugins across 14 attack categories, 30+ recon tools, cinematic terminal UX, PDF/MD/JSON reports. CI/CD hardened. Red Team Intelligence Engine." />
@@ -20,7 +22,7 @@
   <meta property="og:title" content="CASCAVEL — Quantum Security Framework" />
   <meta property="og:description" content="85 plugins. 14 categories. 30+ recon tools. 211 tests. SARIF output. CI/CD hardened. Red Team Intelligence Engine." />
   <meta property="og:image" content="https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/docs/cascavel_logo.png" />
-  <meta property="og:url" content="https://glferreira-devsecops.github.io/Cascavel/en/" />
+  <meta property="og:url" content="https://cascavel.pages.dev/en/" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="CASCAVEL — Quantum Security Framework" />
@@ -34,6 +36,7 @@
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    ::selection{background:rgba(0,255,229,.25);color:#fff}
     :root{
       --cyan:#00ffe5;--cyan-dim:rgba(0,255,229,.08);--cyan-glow:rgba(0,255,229,.25);--cyan-strong:rgba(0,255,229,.5);
       --magenta:#ff2d95;--magenta-dim:rgba(255,45,149,.08);--magenta-glow:rgba(255,45,149,.3);

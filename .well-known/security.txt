@@ -1,0 +1,8 @@
+Contact: mailto:contato@rettecnologia.org
+Contact: https://github.com/glferreira-devsecops/Cascavel/security/advisories
+Expires: 2027-12-31T23:59:59.000Z
+Encryption: https://github.com/glferreira-devsecops.gpg
+Preferred-Languages: pt-BR, en
+Canonical: https://cascavel.pages.dev/.well-known/security.txt
+Policy: https://github.com/glferreira-devsecops/Cascavel/blob/main/SECURITY.md
+Hiring: https://www.linkedin.com/company/ret-consultoria/

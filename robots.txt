@@ -1,0 +1,10 @@
+# CASCAVEL Security Framework — robots.txt
+# Zero tracking. Zero telemetry. Full transparency.
+
+User-agent: *
+Allow: /
+Sitemap: https://cascavel.pages.dev/sitemap.xml
+
+# Block sensitive paths
+Disallow: /.git/
+Disallow: /docs/internal/

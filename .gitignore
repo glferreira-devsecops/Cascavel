@@ -128,3 +128,5 @@ docker-compose.override.yml
 node_modules/
 package-lock.json
 yarn.lock
+run_logs.txt
+protection.json
