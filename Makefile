@@ -97,12 +97,21 @@ docker: ## Build Docker image
 docker-run: ## Run Docker container (--help)
 	docker run --rm cascavel:3.0.0 --help
 
+# ── Documentation ────────────────────────────
+
+docs-sync: ## Synchronize plugins documentation to HTML
+	@echo "🔄 Generating plugins HTML from PLUGINS.md..."
+	@$(PYTHON) generate_plugins_html.py
+	@echo "💉 Injecting generated HTML into site pages..."
+	@$(PYTHON) apply_plugins_html.py
+	@echo "✅ Documentation sync complete!"
+
 # ── Combined ─────────────────────────────────
 
 check: lint security compile profiles ## Run lint + security + compile + profiles (CI gate)
 	@echo "✅ All checks passed"
 
-all: lint format security test compile profiles sarif-validate ## Run everything
+all: lint format security test compile profiles sarif-validate docs-sync ## Run everything
 
 # ── Cleanup ──────────────────────────────────
 

@@ -45,3 +45,13 @@ repos:
     hooks:
       - id: yamllint
         args: [-d, '{extends: relaxed, rules: {line-length: {max: 150}}}']
+
+  # ── Docs Sync ───────────────────────────────
+  - repo: local
+    hooks:
+      - id: docs-sync
+        name: Sync Plugin Docs to HTML
+        entry: make docs-sync
+        language: system
+        files: ^PLUGINS\.md$
+        pass_filenames: false

@@ -1,0 +1,248 @@
+<div class="plugin-categories-detailed">
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">Plugin</span> Categories
+
+| Category | Count | Description |
+|----------|-------|-------------|
+| [Injection & Code Execution](#-injection--code-execution) | 7 | XSS, SQLi, SSTI, RCE, NoSQL, Log4Shell |
+| [Server-Side Attacks](#-server-side-attacks) | 4 | SSRF, XXE, LFI, Path Traversal |
+| [Authentication & Authorization](#-authentication--authorization) | 6 | JWT, OAuth, CSRF, IDOR, Session |
+| [Protocol-Level Attacks](#-protocol-level-attacks) | 4 | HTTP Smuggling, HTTP/2, WebSocket, gRPC |
+| [Defense Analysis & Bypass](#-defense-analysis--bypass) | 7 | CORS, CSP, WAF, Rate Limit, Cache Poison |
+| [API Security](#-api-security) | 4 | GraphQL, API Enum, API Versioning |
+| [Advanced Web Attacks](#-advanced-web-attacks) | 6 | Mass Assignment, Race Condition, Prototype Pollution |
+| [Infrastructure Exposure](#-infrastructure-exposure) | 8 | Docker, K8s, Redis, MongoDB, CI/CD, Cloud |
+| [Reconnaissance & OSINT](#-reconnaissance--osint) | 11 | Subdomains, DNS, WHOIS, Shodan, Traceroute |
+| [Information Gathering](#-information-gathering) | 7 | Tech Fingerprint, JS, Secrets, Git Dump |
+| [Web Scanning](#-web-scanning) | 7 | Dir Brute, Nikto, Nuclei, HTTP Methods |
+| [Cloud & Storage](#-cloud--storage) | 2 | S3 Buckets, SAML |
+| [Analysis & Profiling](#-analysis--profiling) | 6 | SSL, WAF Detection, Nmap Advanced, Security Headers |
+| [Brute Force & Auth Testing](#-brute-force--auth-testing) | 6 | SSH, FTP, SMB, SMTP, Heartbleed |
+
+---
+
+## 💉 Injection & Code Execution <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">7</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>XSS Scanner</strong></td><td><code>xss_scanner.py</code></td><td class="techniques">Polyglot payloads, DOM-based, mutation XSS, WAF bypass, event handlers</td></tr>
+          <tr><td><strong>SQLi Scanner</strong></td><td><code>sqli_scanner.py</code></td><td class="techniques">Time-based, error-based, union-based, boolean blind, DBMS fingerprint</td></tr>
+          <tr><td><strong>SSTI Scanner</strong></td><td><code>ssti_scanner.py</code></td><td class="techniques">Jinja2, Twig, Mako, Freemarker, multi-engine polyglot payloads</td></tr>
+          <tr><td><strong>RCE Scanner</strong></td><td><code>rce_scanner.py</code></td><td class="techniques">Command injection, OS detection, chained commands, encoding bypass</td></tr>
+          <tr><td><strong>Blind RCE</strong></td><td><code>blind_rce.py</code></td><td class="techniques">Time-based OOB detection, sleep injection, DNS callback</td></tr>
+          <tr><td><strong>NoSQL Scanner</strong></td><td><code>nosql_scanner.py</code></td><td class="techniques">MongoDB injection ($gt, $ne, $regex), JSON body injection</td></tr>
+          <tr><td><strong>Log4Shell Scanner</strong></td><td><code>cve_2021_44228_scanner.py</code></td><td class="techniques">12 headers, 5 WAF bypass payloads, Java fingerprint, OOB tokens</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🌐</span> Server-Side Attacks <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">4</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>SSRF Scanner</strong></td><td><code>ssrf_scanner.py</code></td><td class="techniques">IMDSv2, DNS rebinding, gopher://, redirect chain, cloud metadata</td></tr>
+          <tr><td><strong>XXE Scanner</strong></td><td><code>xxe_scanner.py</code></td><td class="techniques">XML entity injection, OOB exfiltration, parameter entities</td></tr>
+          <tr><td><strong>LFI Scanner</strong></td><td><code>lfi_scanner.py</code></td><td class="techniques">Path traversal, null byte, double encoding, wrapper protocols</td></tr>
+          <tr><td><strong>Path Traversal</strong></td><td><code>path_traversal.py</code></td><td class="techniques">Directory traversal, encoding bypass, OS-specific paths</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🔐</span> Authentication & Authorization <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">6</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>JWT Analyzer</strong></td><td><code>jwt_analyzer.py</code></td><td class="techniques">None algorithm, key confusion (RS→HS), JWKS poisoning, claim analysis</td></tr>
+          <tr><td><strong>OAuth Scanner</strong></td><td><code>oauth_scanner.py</code></td><td class="techniques">PKCE enforcement, state validation, token leakage, redirect URI</td></tr>
+          <tr><td><strong>CSRF Detector</strong></td><td><code>csrf_detector.py</code></td><td class="techniques">Token validation, SameSite, origin header check</td></tr>
+          <tr><td><strong>IDOR Scanner</strong></td><td><code>idor_scanner.py</code></td><td class="techniques">Sequential ID enumeration, UUID prediction, access control bypass</td></tr>
+          <tr><td><strong>Session Fixation</strong></td><td><code>session_fixation.py</code></td><td class="techniques">Cookie flags, session regeneration, pre-auth token analysis</td></tr>
+          <tr><td><strong>Password Policy</strong></td><td><code>password_policy.py</code></td><td class="techniques">Policy strength analysis, common password testing, lockout detection</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🔄</span> Protocol-Level Attacks <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">4</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>HTTP Smuggling</strong></td><td><code>http_smuggling.py</code></td><td class="techniques">CL-TE, TE-CL, TE-TE, H2.O desync, chunked mutation</td></tr>
+          <tr><td><strong>HTTP/2 Smuggle</strong></td><td><code>http2_smuggle.py</code></td><td class="techniques">HTTP/2 downgrade, continuation flood, HPACK injection</td></tr>
+          <tr><td><strong>WebSocket Scanner</strong></td><td><code>websocket_scanner.py</code></td><td class="techniques">CSWSH, origin bypass, message injection, upgrade detection</td></tr>
+          <tr><td><strong>gRPC Scanner</strong></td><td><code>grpc_scanner.py</code></td><td class="techniques">Reflection enabled, insecure channel, service enumeration</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🛡️</span> Defense Analysis & Bypass <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">7</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CORS Checker</strong></td><td><code>cors_checker.py</code></td><td class="techniques">Wildcard origin, null origin, subdomain trust, credential exposure</td></tr>
+          <tr><td><strong>CSP Bypass</strong></td><td><code>csp_bypass.py</code></td><td class="techniques">Unsafe-inline, unsafe-eval, data: URI, base-uri, *.cdn bypass</td></tr>
+          <tr><td><strong>Clickjacking</strong></td><td><code>clickjacking_check.py</code></td><td class="techniques">X-Frame-Options, CSP frame-ancestors, transparent overlay</td></tr>
+          <tr><td><strong>Host Header Injection</strong></td><td><code>host_header_injection.py</code></td><td class="techniques">Password reset poisoning, cache deception, SSRF via Host</td></tr>
+          <tr><td><strong>Cache Poisoning</strong></td><td><code>web_cache_poison.py</code></td><td class="techniques">Unkeyed headers, cache key normalization, fat GET</td></tr>
+          <tr><td><strong>Rate Limit Check</strong></td><td><code>rate_limit_check.py</code></td><td class="techniques">Brute force feasibility, IP rotation bypass, header spoofing</td></tr>
+          <tr><td><strong>WAF Bypass</strong></td><td><code>waf_bypass.py</code></td><td class="techniques">Encoding mutation, chunked TE, case alternation, comment injection</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🎯</span> API Security <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">4</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>GraphQL Probe</strong></td><td><code>graphql_probe.py</code></td><td class="techniques">Introspection enabled, field suggestion, type enumeration</td></tr>
+          <tr><td><strong>GraphQL Injection</strong></td><td><code>graphql_injection.py</code></td><td class="techniques">Batch query, alias overload, nested depth, SQL in fields</td></tr>
+          <tr><td><strong>API Enum</strong></td><td><code>api_enum.py</code></td><td class="techniques">Endpoint discovery, version detection, documentation exposure</td></tr>
+          <tr><td><strong>API Versioning</strong></td><td><code>api_versioning.py</code></td><td class="techniques">Deprecated version detection, v1 vs v2 comparison, OpenAPI exposure</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">💣</span> Advanced Web Attacks <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">6</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Mass Assignment</strong></td><td><code>mass_assignment.py</code></td><td class="techniques">Hidden field injection, role escalation, isAdmin bypass</td></tr>
+          <tr><td><strong>Race Condition</strong></td><td><code>race_condition.py</code></td><td class="techniques">TOCTOU, parallel request race, last-write-wins detection</td></tr>
+          <tr><td><strong>Prototype Pollution</strong></td><td><code>prototype_pollution.py</code></td><td class="techniques">`__proto__`, constructor pollution, JSON merge injection</td></tr>
+          <tr><td><strong>Deserialization</strong></td><td><code>deserialization_scan.py</code></td><td class="techniques">Java/PHP/Python/Ruby serialized objects, magic bytes</td></tr>
+          <tr><td><strong>Open Redirect</strong></td><td><code>open_redirect.py</code></td><td class="techniques">URL parameter manipulation, encoding bypass, scheme tricks</td></tr>
+          <tr><td><strong>CRLF Injection</strong></td><td><code>crlf_scanner.py</code></td><td class="techniques">Header injection, response splitting, log injection</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🏗️</span> Infrastructure Exposure <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">8</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Docker Exposure</strong></td><td><code>docker_exposure.py</code></td><td class="techniques">Remote API (2375/2376), registry leak, socket exposure</td></tr>
+          <tr><td><strong>K8s Exposure</strong></td><td><code>k8s_exposure.py</code></td><td class="techniques">API server, etcd, kubelet, dashboard, service accounts</td></tr>
+          <tr><td><strong>Redis Unauth</strong></td><td><code>redis_unauth.py</code></td><td class="techniques">Unauthenticated access, INFO dump, config get</td></tr>
+          <tr><td><strong>MongoDB Unauth</strong></td><td><code>mongodb_unauth.py</code></td><td class="techniques">No-auth access, database listing, collection dump</td></tr>
+          <tr><td><strong>Elastic Exposure</strong></td><td><code>elastic_exposure.py</code></td><td class="techniques">Cluster health, index listing, Kibana dashboard</td></tr>
+          <tr><td><strong>CI/CD Exposure</strong></td><td><code>cicd_exposure.py</code></td><td class="techniques">Jenkins, GitLab CI, GitHub Actions, artifact exposure</td></tr>
+          <tr><td><strong>Cloud Metadata</strong></td><td><code>cloud_metadata.py</code></td><td class="techniques">AWS IMDS, GCP metadata, Azure IMDS, link-local bypass</td></tr>
+          <tr><td><strong>Cloud Enum</strong></td><td><code>cloud_enum.py</code></td><td class="techniques">S3/GCS/Azure blob enumeration, DNS CNAME analysis</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🔍</span> Reconnaissance & OSINT <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">11</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Subdomain Hunter</strong></td><td><code>subdomain_hunter.py</code></td><td class="techniques">Certificate Transparency, DNS brute, zone transfer</td></tr>
+          <tr><td><strong>Subdomain Takeover</strong></td><td><code>subdomain_takeou.py</code></td><td class="techniques">CNAME dangling, fingerprint matching, service detection</td></tr>
+          <tr><td><strong>DNS Deep</strong></td><td><code>dns_deep.py</code></td><td class="techniques">All record types (A/AAAA/MX/TXT/NS/SOA/SRV/CAA/DMARC)</td></tr>
+          <tr><td><strong>DNS Rebinding</strong></td><td><code>dns_rebinding.py</code></td><td class="techniques">TTL manipulation, private IP rebind, bypass detection</td></tr>
+          <tr><td><strong>Network Mapper</strong></td><td><code>network_mapper.py</code></td><td class="techniques">Live host detection, service enumeration, port profiling</td></tr>
+          <tr><td><strong>Email Harvester</strong></td><td><code>email_harvester.py</code></td><td class="techniques">Web scraping, SMTP VRFY, pattern generation</td></tr>
+          <tr><td><strong>Email Spoof Check</strong></td><td><code>email_spoof_check.py</code></td><td class="techniques">SPF, DKIM, DMARC validation, spoofability scoring</td></tr>
+          <tr><td><strong>Shodan Recon</strong></td><td><code>shodan_recon.py</code></td><td class="techniques">API-based reconnaissance, service fingerprint, CVE mapping</td></tr>
+          <tr><td><strong>Wayback Enum</strong></td><td><code>wayback_enum.py</code></td><td class="techniques">Wayback Machine URL extraction, parameter discovery</td></tr>
+          <tr><td><strong>WHOIS Recon</strong></td><td><code>whois_recon.py</code></td><td class="techniques">WHOIS/RDAP, domain age, registrar risk, privacy, DNSSEC, expiry</td></tr>
+          <tr><td><strong>Traceroute Mapper</strong></td><td><code>traceroute_mapper.py</code></td><td class="techniques">Hop analysis, latency profiling, CDN/ISP detection, firewall filter</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🕵️</span> Information Gathering <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">7</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Tech Fingerprint</strong></td><td><code>tech_fingerprint.py</code></td><td class="techniques">Wappalyzer-style detection, header/meta/script analysis</td></tr>
+          <tr><td><strong>JS Analyzer</strong></td><td><code>js_analyzer.py</code></td><td class="techniques">API key extraction, endpoint discovery, source map detection</td></tr>
+          <tr><td><strong>Param Miner</strong></td><td><code>param_miner.py</code></td><td class="techniques">Hidden parameter brute force, reflected parameter discovery</td></tr>
+          <tr><td><strong>Info Disclosure</strong></td><td><code>info_disclosure.py</code></td><td class="techniques">.env, .git, backup files, debug endpoints, error messages</td></tr>
+          <tr><td><strong>Secrets Scraper</strong></td><td><code>secrets_scraper.py</code></td><td class="techniques">AWS/GCP/Azure keys, JWT, API tokens, passwords (regex-based)</td></tr>
+          <tr><td><strong>Git Dumper</strong></td><td><code>git_dumper.py</code></td><td class="techniques">.git directory enumeration, HEAD/config/refs extraction</td></tr>
+          <tr><td><strong>Admin Finder</strong></td><td><code>admin_finder.py</code></td><td class="techniques">Common admin paths, CMS-specific panels, status code analysis</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🌐</span> Web Scanning <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">7</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Dir Bruteforce</strong></td><td><code>dir_bruteforce.py</code></td><td class="techniques">Path enumeration, wordlist-based, status filtering</td></tr>
+          <tr><td><strong>Nikto Scanner</strong></td><td><code>nikto_scanner.py</code></td><td class="techniques">Nikto integration (requires nikto binary)</td></tr>
+          <tr><td><strong>Katana Crawler</strong></td><td><code>katana_crawler.py</code></td><td class="techniques">Katana integration (automated deep crawling)</td></tr>
+          <tr><td><strong>HTTP Methods</strong></td><td><code>http_methods.py</code></td><td class="techniques">OPTIONS, TRACE, PUT, DELETE, PATCH method testing</td></tr>
+          <tr><td><strong>WPS Scanmini</strong></td><td><code>wps_scanmini.py</code></td><td class="techniques">WordPress-specific: themes, plugins, user enum</td></tr>
+          <tr><td><strong>Nuclei Scanner</strong></td><td><code>nuclei_scanner.py</code></td><td class="techniques">Nuclei integration (template-based vulnerability scanning)</td></tr>
+          <tr><td><strong>Upload Detection</strong></td><td><code>fast_webshell.py</code></td><td class="techniques">PUT/PATCH method detection, WebDAV, extension acceptance (passive)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">☁️</span> Cloud & Storage <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">2</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>S3 Bucket</strong></td><td><code>s3_bucket.py</code></td><td class="techniques">Public bucket detection, ACL misconfiguration, listing</td></tr>
+          <tr><td><strong>SAML Scanner</strong></td><td><code>saml_scanner.py</code></td><td class="techniques">Signature wrapping, assertion injection, XML canonicalization</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">📊</span> Analysis & Profiling <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">6</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>SSL Check</strong></td><td><code>ssl_check.py</code></td><td class="techniques">Certificate validation, TLS version, cipher strength, HSTS</td></tr>
+          <tr><td><strong>Security Headers</strong></td><td><code>security_headers.py</code></td><td class="techniques">Header analysis, CSP parsing, Information Disclosure detection</td></tr>
+          <tr><td><strong>WAF Detection</strong></td><td><code>waf_detec.py</code></td><td class="techniques">WAF fingerprint (30+ products), bypass recommendations</td></tr>
+          <tr><td><strong>Profiler</strong></td><td><code>profiler_bundpent.py</code></td><td class="techniques">Target profiling, technology stack, risk scoring</td></tr>
+          <tr><td><strong>Nmap Advanced</strong></td><td><code>nmap_advanc.py</code></td><td class="techniques">Service version detection, script scanning, OS fingerprint</td></tr>
+          <tr><td><strong>Auto Exploit</strong></td><td><code>auto_exploit.py</code></td><td class="techniques">CVE matching, exploit suggestion based on detected versions</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="plugin-category-block" style="margin-bottom: 2rem;">
+    <h3 style="color: var(--cyan); margin-bottom: 1rem; border-bottom: 1px solid rgba(0, 255, 229, 0.2); padding-bottom: 0.5rem;"><span class="cat-icon">🔐</span> Brute Force & Auth Testing <span class="badge-count" style="font-size: 0.8rem; vertical-align: middle; margin-left: 0.5rem;">6</span></h3>
+    <div class="table-wrapper">
+      <table class="plugin-table">
+        <thead><tr><th style="width: 25%;">Plugin</th><th style="width: 25%;">Arquivo</th><th>Técnicas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>SSH Brute</strong></td><td><code>ssh_brute.py</code></td><td class="techniques">Paramiko-based auth testing, key auth detection</td></tr>
+          <tr><td><strong>FTP Brute</strong></td><td><code>ftp_brute.py</code></td><td class="techniques">Anonymous login, credential testing, directory listing</td></tr>
+          <tr><td><strong>SMB/AD</strong></td><td><code>smb_ad.py</code></td><td class="techniques">SMB share enumeration, null session, AD recon</td></tr>
+          <tr><td><strong>SMTP Enum</strong></td><td><code>smpt_enum.py</code></td><td class="techniques">VRFY/EXPN user enumeration, open relay detection</td></tr>
+          <tr><td><strong>Heartbleed</strong></td><td><code>heartbleed_scanner.py</code></td><td class="techniques">CVE-2014-0160, TLS heartbeat memory leak detection</td></tr>
+          <tr><td><strong>Domain Transfer</strong></td><td><code>domain_transf.py</code></td><td class="techniques">DNS zone transfer (AXFR) testing</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
