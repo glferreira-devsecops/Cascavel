@@ -1,12 +1,13 @@
 # ============================================================================
 # CASCAVEL Security Framework — HTTP Security Headers (Elite 2026)
 # OWASP Secure Headers Project + NIST SP 800-53 + CIS Benchmark
+# Reference: rettecnologia.org (A+ SecurityHeaders.com)
 # Compatible: Cloudflare Pages / Netlify / Vercel Edge
 # ============================================================================
 
 /*
   # --- Core Security (OpenSSF hardened_site required) ---
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self'; object-src 'none'; worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
 
@@ -15,7 +16,7 @@
 
   # --- Privacy & Referrer ---
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), browsing-topics=(), attribution-reporting=(), run-ad-auction=()
 
   # --- Cross-Origin Isolation (OWASP 2026) ---
   Cross-Origin-Opener-Policy: same-origin
@@ -33,3 +34,6 @@
   # --- Information Disclosure Prevention ---
   X-Permitted-Cross-Domain-Policies: none
   X-Download-Options: noopen
+
+  # --- Crawler Governance ---
+  X-Robots-Tag: index, follow
