@@ -16,7 +16,7 @@ Sua colaboração é fundamental para o crescimento do **Cascavel — Quantum Se
 1. **Fork** o repositório principal no GitHub.
 2. **Clone** seu fork:
    ```bash
-   git clone https://github.com/SEU_USUARIO/Cascavel.git
+   git clone https://github.com/glferreira-devsecops/Cascavel.git
    cd Cascavel
    ```
 3. **Crie um branch** para sua contribuição:
