@@ -483,7 +483,7 @@ detect_os() {
             OS="linux"
             if [ -f /etc/os-release ]; then
                 . /etc/os-release
-                DISTRO="${NAME} ${VERSION_ID}"
+                DISTRO="${NAME} ${VERSION_ID:-}"
                 case "$ID" in
                     ubuntu|debian|kali|parrot|pop)
                         PKG_MANAGER="apt"
@@ -494,7 +494,7 @@ detect_os() {
                             PKG_MANAGER="yum"
                         fi
                         ;;
-                    arch|manjaro|endeavouros)
+                    arch|manjaro|endeavouros|cachyos|garuda|artix)
                         PKG_MANAGER="pacman"
                         ;;
                     opensuse*|sles)
@@ -758,6 +758,17 @@ _auto_install_go() {
 
     warn "Go não encontrado. Tentando instalar automaticamente..."
 
+    # Tenta instalar via package manager primeiro (mais rápido e integrado ao SO)
+    if command -v sudo &>/dev/null && sudo -n true 2>/dev/null; then
+        case "${PKG_MANAGER:-}" in
+            pacman) sudo pacman -Sy --noconfirm go >>"${INSTALL_LOG:-/dev/null}" 2>&1 && command -v go &>/dev/null && return 0 ;;
+            apt)    sudo apt-get install -y golang-go >>"${INSTALL_LOG:-/dev/null}" 2>&1 && command -v go &>/dev/null && return 0 ;;
+            dnf|yum) sudo "$PKG_MANAGER" install -y golang >>"${INSTALL_LOG:-/dev/null}" 2>&1 && command -v go &>/dev/null && return 0 ;;
+            zypper) sudo zypper install -y go >>"${INSTALL_LOG:-/dev/null}" 2>&1 && command -v go &>/dev/null && return 0 ;;
+            apk)    sudo apk add go >>"${INSTALL_LOG:-/dev/null}" 2>&1 && command -v go &>/dev/null && return 0 ;;
+        esac
+    fi
+
     # Detect OS and Architecture
     local GO_OS GO_ARCH GO_VERSION
     case "$($UNAME -s)" in
@@ -789,11 +800,11 @@ _auto_install_go() {
             if [ "$(id -u)" -eq 0 ]; then
                 $RM -rf /usr/local/go
                 tar -C /usr/local -xzf "$TMP_GO" 2>/dev/null
-            elif command -v sudo &>/dev/null; then
+            elif command -v sudo &>/dev/null && sudo -n true 2>/dev/null; then
                 sudo $RM -rf /usr/local/go
                 sudo tar -C /usr/local -xzf "$TMP_GO" 2>/dev/null
             else
-                # Fallback: instala no $HOME/go-sdk
+                # Fallback: instala no $HOME/go-sdk (sem sudo ou sudo requer senha)
                 local GOROOT_LOCAL="$HOME/go-sdk"
                 $MKDIR -p "$GOROOT_LOCAL"
                 tar -C "$GOROOT_LOCAL" --strip-components=1 -xzf "$TMP_GO" 2>/dev/null
