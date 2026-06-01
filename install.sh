@@ -992,11 +992,42 @@ install_external_tools() {
     fi
 
     # Rust-based tools
-    if command -v cargo &>/dev/null; then
-        if ! command -v feroxbuster &>/dev/null; then
-            dimlog "cargo install feroxbuster..."
-            cargo install feroxbuster -q 2>/dev/null || warn "Falha: feroxbuster"
+    if ! command -v feroxbuster &>/dev/null; then
+        # Try pre-built binary first (fast, no compilation)
+        local _fb_ver _fb_url _fb_tmp _fb_installed=false
+        _fb_ver=$(curl -fsSL "https://api.github.com/repos/epi052/feroxbuster/releases/latest" 2>/dev/null \
+            | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+        if [ -n "$_fb_ver" ]; then
+            local _fb_arch
+            case "$($UNAME -m)" in
+                x86_64|amd64) _fb_arch="x86_64" ;;
+                aarch64|arm64) _fb_arch="aarch64" ;;
+                armv*) _fb_arch="armv7" ;;
+                *) _fb_arch="" ;;
+            esac
+            _fb_url="https://github.com/epi052/feroxbuster/releases/download/${_fb_ver}/${_fb_arch}-linux-feroxbuster.zip"
+            _fb_tmp=$(mktemp "${TMPDIR:-/tmp}/feroxbuster.XXXXXXXX.zip")
+            _spinner_start "Baixando feroxbuster ${_fb_ver} (binário pré-compilado)..."
+            if curl -fsSL "$_fb_url" -o "$_fb_tmp" 2>/dev/null && [ -s "$_fb_tmp" ]; then
+                _spinner_stop
+                if command -v unzip &>/dev/null; then
+                    unzip -qo "$_fb_tmp" feroxbuster -d "$GOBIN" 2>/dev/null \
+                        && chmod +x "$GOBIN/feroxbuster" 2>/dev/null \
+                        && _fb_installed=true
+                fi
+            else
+                _spinner_stop
+            fi
+            $RM -f "$_fb_tmp" 2>/dev/null || true
         fi
+        # Fallback: compile via cargo (slow — shows spinner)
+        if ! $_fb_installed && command -v cargo &>/dev/null; then
+            _spinner_start "Compilando feroxbuster via cargo (pode demorar 5-10 min)..."
+            cargo install feroxbuster -q >>"${INSTALL_LOG:-/dev/null}" 2>&1 \
+                && _fb_installed=true || warn "Falha: feroxbuster"
+            _spinner_stop
+        fi
+        $_fb_installed || dimlog "feroxbuster não instalado (opcional)"
     fi
 }
 
