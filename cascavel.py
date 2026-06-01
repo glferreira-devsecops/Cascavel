@@ -1606,11 +1606,22 @@ def _classify(result: dict[str, Any]) -> tuple:
         if status == "vulneravel" or resultados.get("vulns"):
             return "vuln", S_RED, "⚠"
         return "limpo", "green", "✓"
-    # List results — filtra strings vazias e None antes de contar como vuln
+    # List results — filtra strings vazias, None e SILENT_ERROR antes de contar como vuln
     if isinstance(resultados, list):
-        real_findings = [v for v in resultados if v and v != "" and v != "N/A"]
+        real_findings = [
+            v for v in resultados
+            if v and v != "" and v != "N/A"
+            and not (isinstance(v, dict) and v.get("tipo") in ("SILENT_ERROR", "ERRO_CONEXAO"))
+        ]
         if real_findings:
             return "vuln", S_RED, "⚠"
+        # Tem entradas mas só SILENT_ERROR — falha operacional, não vulnerabilidade
+        silent_only = [
+            v for v in resultados
+            if isinstance(v, dict) and v.get("tipo") in ("SILENT_ERROR", "ERRO_CONEXAO")
+        ]
+        if silent_only:
+            return "silent", S_DIM, "~"
     return "limpo", "green", "✓"
 
 
@@ -1630,6 +1641,8 @@ def _count_sev(resultados: Any) -> dict[str, int]:
                 return counts
     for v in vulns:
         if isinstance(v, dict):
+            if v.get("tipo") in ("SILENT_ERROR", "ERRO_CONEXAO"):
+                continue  # falha operacional, não conta como finding
             sev = v.get("severidade", "INFO")
             if sev in counts:
                 counts[sev] += 1
@@ -1826,6 +1839,11 @@ def run_plugins(
                     sev_str = ""
                     err_count: int = scan_stats.get("err", 0)
                     scan_stats["err"] = err_count + 1
+                elif cls == "silent":
+                    desc = "[dim]Sem conexão[/]"
+                    sev_str = "[dim]—[/]"
+                    ok_count_s: int = scan_stats.get("ok", 0)
+                    scan_stats["ok"] = ok_count_s + 1
                 elif cls == "vuln":
                     sevs = _count_sev(result.get("resultados", ""))
                     parts: list[str] = []
@@ -1880,6 +1898,8 @@ def run_plugins(
             # Track stats no fallback também para dashboard preciso
             if cls == "erro":
                 scan_stats["err"] += 1
+            elif cls == "silent":
+                scan_stats["ok"] += 1
             elif cls == "vuln":
                 scan_stats["vuln"] += 1
                 for sn, sc in _count_sev(result.get("resultados", "")).items():
