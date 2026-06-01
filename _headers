@@ -7,7 +7,11 @@
 
 /*
   # --- Core Security (OpenSSF hardened_site required) ---
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self'; object-src 'none'; worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  # CSP is the single source of truth (no duplicate <meta> in HTML).
+  # script-src has NO 'unsafe-inline': all scripts are external ('self'); JSON-LD blocks are non-executable data.
+  # style-src keeps 'unsafe-inline' intentionally for the static page's inline <style>/style="" (low risk, no user input).
+  # img-src restricted to the exact hosts in use (logo/favicon, shields, OpenSSF badge) instead of the https: wildcard.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://raw.githubusercontent.com https://img.shields.io https://www.bestpractices.dev; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self'; object-src 'none'; worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
 
@@ -22,6 +26,13 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: credentialless
   Cross-Origin-Resource-Policy: same-origin
+
+  # --- CORS (decision: restrict to own origin) ---
+  # Cloudflare Pages injects "Access-Control-Allow-Origin: *" on static assets by default.
+  # This is a 100% public/static site with no credentials/cookies, so wildcard CORS exposes
+  # nothing today, but it is unnecessary. We override it to the canonical origin so no other
+  # origin can read responses via fetch/XHR. CORP: same-origin already covers no-cors embedding.
+  Access-Control-Allow-Origin: https://cascavel.pages.dev
 
   # --- Legacy XSS (disabled per OWASP recommendation — use CSP instead) ---
   X-XSS-Protection: 0

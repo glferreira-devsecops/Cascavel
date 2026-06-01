@@ -5,6 +5,6 @@ User-agent: *
 Allow: /
 Sitemap: https://cascavel.pages.dev/sitemap.xml
 
-# Block sensitive paths
-Disallow: /.git/
-Disallow: /docs/internal/
+# No Disallow signposts: this is a fully public static site with no private paths.
+# Listing paths here would only advertise them. /.git/ is never published (asserted at
+# build time via scripts/assert-no-git-published.sh and .wranglerignore).
