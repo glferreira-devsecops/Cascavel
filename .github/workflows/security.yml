@@ -114,8 +114,6 @@ jobs:
         uses: trufflesecurity/trufflehog@v3.81.9
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           extra_args: --debug --only-verified
 
   actionlint:
@@ -130,7 +128,7 @@ jobs:
           bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint
       - name: Run zizmor
-        uses: woodruffw/zizmor-github-action@e811c7fbfa2135c34cb1394f1de261fdb932375f # v1
+        uses: woodruffw/zizmor-action@v1
         with:
           project: .
 

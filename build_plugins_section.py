@@ -36,7 +36,7 @@ PAGES = [
 
 
 def parse_plugins_md(path):
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         content = f.read()
 
     categories = []
@@ -82,46 +82,46 @@ def render_blocks(categories, th):
     for cat in categories:
         count = len(cat["plugins"])
         rows = "\n".join(
-            "          <tr><td><strong>%s</strong></td><td><code>%s</code></td>"
-            '<td class="techniques">%s</td></tr>' % (esc(p[0]), esc(p[1]), esc(p[2]))
+            f"          <tr><td><strong>{esc(p[0])}</strong></td><td><code>{esc(p[1])}</code></td>"
+            f'<td class="techniques">{esc(p[2])}</td></tr>'
             for p in cat["plugins"]
         )
         block = (
-            '  <div class="plugin-category-block" style="margin-bottom: 2rem;">\n'
-            '    <h3 style="color: var(--cyan); margin-bottom: 1rem; '
-            "border-bottom: 1px solid rgba(0, 255, 229, 0.2); "
-            'padding-bottom: 0.5rem;"><span class="cat-icon">%s</span> %s '
-            '<span class="badge-count" style="font-size: 0.8rem; '
-            'vertical-align: middle; margin-left: 0.5rem;">%d</span></h3>\n'
-            '    <div class="table-wrapper">\n'
-            '      <table class="plugin-table">\n'
-            '        <thead><tr><th style="width: 25%%;">%s</th>'
-            '<th style="width: 25%%;">%s</th><th>%s</th></tr></thead>\n'
-            "        <tbody>\n"
-            "%s\n"
-            "        </tbody>\n"
-            "      </table>\n"
-            "    </div>\n"
-            "  </div>"
-        ) % (esc(cat["icon"]), esc(cat["name"]), count, th[0], th[1], th[2], rows)
+            f'  <div class="plugin-category-block" style="margin-bottom: 2rem;">\n'
+            f'    <h3 style="color: var(--cyan); margin-bottom: 1rem; '
+            f"border-bottom: 1px solid rgba(0, 255, 229, 0.2); "
+            f'padding-bottom: 0.5rem;"><span class="cat-icon">{esc(cat["icon"])}</span> {esc(cat["name"])} '
+            f'<span class="badge-count" style="font-size: 0.8rem; '
+            f'vertical-align: middle; margin-left: 0.5rem;">{count}</span></h3>\n'
+            f'    <div class="table-wrapper">\n'
+            f'      <table class="plugin-table">\n'
+            f'        <thead><tr><th style="width: 25%;">{th[0]}</th>'
+            f'<th style="width: 25%;">{th[1]}</th><th>{th[2]}</th></tr></thead>\n'
+            f"        <tbody>\n"
+            f"{rows}\n"
+            f"        </tbody>\n"
+            f"      </table>\n"
+            f"    </div>\n"
+            f"  </div>"
+        )
         out.append(block)
     return "\n".join(out)
 
 
 def build_section(page, blocks_html):
     return (
-        '  <section id="plugins">\n'
-        '    <div class="container">\n'
-        '      <h2 class="section-title reveal">%s</h2>\n'
-        '      <p class="section-subtitle reveal">%s</p>\n'
-        '      <div class="table-wrapper reveal">\n'
-        '        <div class="plugin-categories-detailed">\n'
-        "%s\n"
-        "        </div>\n"
-        "      </div>\n"
-        "    </div>\n"
-        "  </section>"
-    ) % (page["heading"], page["subtitle"], blocks_html)
+        f'  <section id="plugins">\n'
+        f'    <div class="container">\n'
+        f'      <h2 class="section-title reveal">{page["heading"]}</h2>\n'
+        f'      <p class="section-subtitle reveal">{page["subtitle"]}</p>\n'
+        f'      <div class="table-wrapper reveal">\n'
+        f'        <div class="plugin-categories-detailed">\n'
+        f"{blocks_html}\n"
+        f"        </div>\n"
+        f"      </div>\n"
+        f"    </div>\n"
+        f"  </section>"
+    )
 
 
 def replace_section(doc, new_section):
@@ -137,7 +137,7 @@ def replace_section(doc, new_section):
 
 
 def ensure_script_tag(doc, src):
-    tag = '<script src="%s" defer></script>' % src
+    tag = f'<script src="{src}" defer></script>'
     if tag in doc:
         return doc
     idx = doc.rfind("</body>")
@@ -149,20 +149,20 @@ def ensure_script_tag(doc, src):
 def main():
     categories = parse_plugins_md(PLUGINS_MD)
     total = sum(len(c["plugins"]) for c in categories)
-    print("Parsed PLUGINS.md: %d categories, %d plugins" % (len(categories), total))
+    print(f"Parsed PLUGINS.md: {len(categories)} categories, {total} plugins")
 
     for page in PAGES:
         blocks_html = render_blocks(categories, page["th"])
-        with open(page["file"], "r", encoding="utf-8") as f:
+        with open(page["file"], encoding="utf-8") as f:
             doc = f.read()
         before = len(doc)
         doc = replace_section(doc, build_section(page, blocks_html))
         doc = ensure_script_tag(doc, page["src"])
         with open(page["file"], "w", encoding="utf-8") as f:
             f.write(doc)
+        table_count = doc.count('class="plugin-table"')
         print(
-            "OK: %s  %d -> %d bytes  (%d tables)"
-            % (page["file"], before, len(doc), doc.count('class="plugin-table"'))
+            f'OK: {page["file"]}  {before} -> {len(doc)} bytes  ({table_count} tables)'
         )
 
 

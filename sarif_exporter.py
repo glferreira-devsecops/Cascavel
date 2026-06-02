@@ -6,7 +6,7 @@ Generates SARIF 2.1.0 compliant JSON logs for integration with GitHub Code Scann
 import datetime
 import json
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 _SARIF_LEVEL = {
     "CRITICAL": "error",
@@ -22,8 +22,8 @@ _SARIF_LEVEL = {
 
 
 def _result_to_sarif(
-    result: Dict[str, Any], index: int
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    result: dict[str, Any], index: int
+) -> tuple[dict[str, Any], dict[str, Any]]:
     plugin = result.get("plugin", "unknown")
     severity = str(result.get("severity", "INFO")).upper()
     title = str(result.get("title", f"Finding from {plugin}"))
@@ -40,7 +40,7 @@ def _result_to_sarif(
         "properties": {"tags": [severity], "precision": "high"},
     }
 
-    sarif_result: Dict[str, Any] = {
+    sarif_result: dict[str, Any] = {
         "ruleId": rule_id,
         "level": sarif_level,
         "message": {"text": title},
@@ -66,19 +66,21 @@ def _result_to_sarif(
 def export_sarif(
     target: str,
     ip: str,
-    results: List[Dict[str, Any]],
+    results: list[dict[str, Any]],
     duration: float,
     output_dir: str,
 ) -> str:
-    rules_dict: Dict[str, Dict[str, Any]] = {}
-    sarif_results: List[Dict[str, Any]] = []
+    rules_dict: dict[str, dict[str, Any]] = {}
+    sarif_results: list[dict[str, Any]] = []
 
     for i, res in enumerate(results):
+        if "erro" in res and not res.get("findings"):
+            continue
         sarif_res, rule = _result_to_sarif(res, i)
         sarif_results.append(sarif_res)
         rules_dict[rule["id"]] = rule
 
-    sarif_log: Dict[str, Any] = {
+    sarif_log: dict[str, Any] = {
         "version": "2.1.0",
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
         "runs": [
@@ -92,6 +94,7 @@ def export_sarif(
                     }
                 },
                 "results": sarif_results,
+                "invocations": [{"executionSuccessful": True}],
             }
         ],
     }

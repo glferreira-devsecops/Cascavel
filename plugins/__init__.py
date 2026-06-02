@@ -54,7 +54,7 @@ def _verify_ast(source_code: str, filename: str):
     try:
         tree = ast.parse(source_code, filename=filename)
     except SyntaxError as e:
-        raise SecurityError(f"Syntax error in plugin: {e}")
+        raise SecurityError(f"Syntax error in plugin: {e}") from e
 
     visitor = ZeroTrustASTVisitor()
     visitor.visit(tree)

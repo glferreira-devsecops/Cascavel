@@ -5,10 +5,10 @@ Generates a JSON layer that can be imported directly into the MITRE ATT&CK Navig
 
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 
-def generate_mitre_layer(scan_results: Dict[str, Any], target: str) -> str:
+def generate_mitre_layer(scan_results: dict[str, Any], target: str) -> str:
     """Converts Cascavel scan results into a MITRE ATT&CK Navigator JSON layer."""
 
     vulns = scan_results.get("vulns", [])

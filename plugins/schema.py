@@ -135,10 +135,10 @@ class PluginResult:
             self.evidence = self.evidence[:50000] + "\n[TRUNCATED_MAX_50KB_LIMIT]"
 
         # 5. MAX_NESTING_DEPTH for findings (Recursion bomb / OOM mitigation)
-        MAX_NESTING_DEPTH = 3
+        max_nesting_depth = 3
 
         def _enforce_depth(obj: Any, current_depth: int = 0) -> Any:
-            if current_depth > MAX_NESTING_DEPTH:
+            if current_depth > max_nesting_depth:
                 return "[DEPTH_LIMIT_EXCEEDED]"
             if isinstance(obj, dict):
                 return {

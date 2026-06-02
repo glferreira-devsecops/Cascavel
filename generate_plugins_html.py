@@ -2,7 +2,7 @@ import re
 
 
 def parse_plugins_md(md_file):
-    with open(md_file, "r", encoding="utf-8") as f:
+    with open(md_file, encoding="utf-8") as f:
         content = f.read()
 
     categories = []

@@ -72,7 +72,7 @@ def test_export_sarif_fuzz(results):
         filepath = export_sarif("example.com", "1.2.3.4", results, 10.5, tmpdir)
         assert os.path.exists(filepath)
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["version"] == "2.1.0"
