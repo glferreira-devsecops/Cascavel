@@ -54,7 +54,11 @@ def _scan_secrets(content, filename):
     for secret_name, pattern in SECRET_PATTERNS.items():
         matches = re.findall(pattern, content)
         for match in matches[:3]:
-            sev = "CRITICO" if ("SECRET" in secret_name or "PRIVATE" in secret_name) else "ALTO"
+            sev = (
+                "CRITICO"
+                if ("SECRET" in secret_name or "PRIVATE" in secret_name)
+                else "ALTO"
+            )
             findings.append(
                 {
                     "tipo": secret_name,
@@ -116,7 +120,10 @@ def run(target, ip, open_ports, banners):
     try:
         js_files = _collect_js_urls(target)
     except Exception:
-        return {"plugin": "js_analyzer", "resultados": "Erro ao buscar página principal"}
+        return {
+            "plugin": "js_analyzer",
+            "resultados": "Erro ao buscar página principal",
+        }
 
     for js_url in js_files:
         try:

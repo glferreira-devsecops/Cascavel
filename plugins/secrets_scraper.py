@@ -48,7 +48,10 @@ PATHS = [
 KEY_PATTERNS = [
     # AWS
     (r"AKIA[0-9A-Z]{16}", "AWS Access Key ID"),
-    (r"(?:aws_secret_access_key|AWS_SECRET)\s*[:=]\s*['\"]?([A-Za-z0-9/+=]{40})", "AWS Secret Key"),
+    (
+        r"(?:aws_secret_access_key|AWS_SECRET)\s*[:=]\s*['\"]?([A-Za-z0-9/+=]{40})",
+        "AWS Secret Key",
+    ),
     # Stripe
     (r"sk_live_[0-9a-zA-Z]{24,}", "Stripe Live Secret Key"),
     (r"sk_test_[0-9a-zA-Z]{24,}", "Stripe Test Secret Key"),
@@ -62,10 +65,16 @@ KEY_PATTERNS = [
     (r"github_pat_[0-9A-Za-z_]{82,}", "GitHub Fine-Grained PAT"),
     # Google
     (r"AIza[0-9A-Za-z\-_]{35}", "Google API Key"),
-    (r"[0-9]+-[0-9A-Za-z_]{32}\.apps\.googleusercontent\.com", "Google OAuth Client ID"),
+    (
+        r"[0-9]+-[0-9A-Za-z_]{32}\.apps\.googleusercontent\.com",
+        "Google OAuth Client ID",
+    ),
     # Slack
     (r"xox[bporas]-[0-9A-Za-z\-]{10,}", "Slack Token"),
-    (r"https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+", "Slack Webhook"),
+    (
+        r"https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+",
+        "Slack Webhook",
+    ),
     # SendGrid
     (r"SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}", "SendGrid API Key"),
     # Mailgun
@@ -76,7 +85,10 @@ KEY_PATTERNS = [
     # Firebase
     (r"AAAA[A-Za-z0-9_-]{7}:[A-Za-z0-9_-]{140}", "Firebase Cloud Messaging"),
     # Heroku
-    (r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "Heroku API Key / UUID"),
+    (
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        "Heroku API Key / UUID",
+    ),
     # Shopify
     (r"shpat_[0-9a-fA-F]{32}", "Shopify Private App Token"),
     (r"shpca_[0-9a-fA-F]{32}", "Shopify Custom App Token"),
@@ -88,7 +100,10 @@ KEY_PATTERNS = [
     (r"sk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}", "OpenAI API Key"),
     (r"sk-proj-[A-Za-z0-9_-]{100,}", "OpenAI Project Key"),
     # Supabase
-    (r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "JWT/Supabase Key"),
+    (
+        r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
+        "JWT/Supabase Key",
+    ),
     # Generic
     (r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", "Private Key (PEM)"),
     (
@@ -115,7 +130,9 @@ def _calculate_entropy(text):
     for c in text:
         freq[c] = freq.get(c, 0) + 1
     length = len(text)
-    entropy = -sum((count / length) * math.log2(count / length) for count in freq.values())
+    entropy = -sum(
+        (count / length) * math.log2(count / length) for count in freq.values()
+    )
     return round(entropy, 2)
 
 

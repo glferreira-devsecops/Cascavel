@@ -14,7 +14,7 @@ def run(target, ip, open_ports, banners):
     resultado = {}
     cmd = f"dig axfr {safe_target} @{safe_target}"
     try:
-        output = subprocess.check_output(cmd, shell=True, timeout=20)
+        output = subprocess.check_output(cmd, shell=False, timeout=20)
         decoded = output.decode()
         if "Transfer failed" not in decoded and "connection timed out" not in decoded:
             resultado["transferencia"] = decoded

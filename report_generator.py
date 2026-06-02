@@ -37,17 +37,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from reportlab.platypus import (
-    HRFlowable,
-    Image,
-    KeepTogether,
-    PageBreak,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
+from reportlab.platypus import (HRFlowable, Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table,
+                                TableStyle)
 
 # Optional: QR Code (graceful degradation if not installed)
 try:
@@ -87,9 +78,21 @@ SEVERITY_MAP = {
         "9.0 – 10.0",
         "Comprometimento total. Exfiltração de dados, RCE, ou bypass de autenticação.",
     ),
-    "ALTO": (SEV_HIGH, "7.0 – 8.9", "Acesso não autorizado, escalação de privilégios, ou exposição massiva."),
-    "MEDIO": (SEV_MEDIUM, "4.0 – 6.9", "Information disclosure, bypass parcial, ou configuração insegura."),
-    "BAIXO": (SEV_LOW, "0.1 – 3.9", "Configuração subótima, risco mitigado por controles existentes."),
+    "ALTO": (
+        SEV_HIGH,
+        "7.0 – 8.9",
+        "Acesso não autorizado, escalação de privilégios, ou exposição massiva.",
+    ),
+    "MEDIO": (
+        SEV_MEDIUM,
+        "4.0 – 6.9",
+        "Information disclosure, bypass parcial, ou configuração insegura.",
+    ),
+    "BAIXO": (
+        SEV_LOW,
+        "0.1 – 3.9",
+        "Configuração subótima, risco mitigado por controles existentes.",
+    ),
     "INFO": (SEV_INFO, "0.0", "Achado informacional sem impacto direto na segurança."),
 }
 
@@ -145,9 +148,32 @@ def _build_styles():
         s.add(ParagraphStyle(name, **kw))
 
     # Cover
-    _add("CoverTitle", fontName=FONT_BOLD, fontSize=32, textColor=NAVY, alignment=TA_CENTER, spaceAfter=6, leading=38)
-    _add("CoverSub", fontName=FONT_REG, fontSize=14, textColor=STEEL, alignment=TA_CENTER, spaceAfter=4, leading=18)
-    _add("CoverMeta", fontName=FONT_REG, fontSize=10, textColor=ICE_BLUE, alignment=TA_CENTER, spaceAfter=3)
+    _add(
+        "CoverTitle",
+        fontName=FONT_BOLD,
+        fontSize=32,
+        textColor=NAVY,
+        alignment=TA_CENTER,
+        spaceAfter=6,
+        leading=38,
+    )
+    _add(
+        "CoverSub",
+        fontName=FONT_REG,
+        fontSize=14,
+        textColor=STEEL,
+        alignment=TA_CENTER,
+        spaceAfter=4,
+        leading=18,
+    )
+    _add(
+        "CoverMeta",
+        fontName=FONT_REG,
+        fontSize=10,
+        textColor=ICE_BLUE,
+        alignment=TA_CENTER,
+        spaceAfter=3,
+    )
 
     # Section titles
     _add(
@@ -161,7 +187,15 @@ def _build_styles():
         borderWidth=0,
         borderPadding=0,
     )
-    _add("SectionH2", fontName=FONT_BOLD, fontSize=12, textColor=STEEL, spaceBefore=12, spaceAfter=6, leading=16)
+    _add(
+        "SectionH2",
+        fontName=FONT_BOLD,
+        fontSize=12,
+        textColor=STEEL,
+        spaceBefore=12,
+        spaceAfter=6,
+        leading=16,
+    )
 
     # Body — with widows/orphans control
     _add(
@@ -214,7 +248,15 @@ def _build_styles():
         spaceAfter=1,
         leading=10,
     )
-    _add("LegalTitle", fontName=FONT_BOLD, fontSize=8, textColor=NAVY, spaceBefore=6, spaceAfter=2, leading=10)
+    _add(
+        "LegalTitle",
+        fontName=FONT_BOLD,
+        fontSize=8,
+        textColor=NAVY,
+        spaceBefore=6,
+        spaceAfter=2,
+        leading=10,
+    )
 
     # Code
     _add(
@@ -232,7 +274,9 @@ def _build_styles():
     )
 
     # Footer
-    _add("Footer", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE, alignment=TA_CENTER)
+    _add(
+        "Footer", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE, alignment=TA_CENTER
+    )
 
     return s
 
@@ -271,7 +315,9 @@ class _NumberedCanvas(canvas.Canvas):
         self.saveState()
         self.setFillColor(ICE_BLUE)
         self.setFont(FONT_REG, 6)
-        self.drawRightString(w - 12 * mm, 8 * mm, f"Página {self._pageNumber} de {total}")
+        self.drawRightString(
+            w - 12 * mm, 8 * mm, f"Página {self._pageNumber} de {total}"
+        )
         self.restoreState()
 
 
@@ -286,7 +332,9 @@ class _PremiumPageTemplate:
       • 'Página X de Y' via _NumberedCanvas two-pass
     """
 
-    def __init__(self, target: str, report_id: str, classification: str = "CONFIDENCIAL"):
+    def __init__(
+        self, target: str, report_id: str, classification: str = "CONFIDENCIAL"
+    ):
         self.target = target
         self.report_id = report_id
         self.classification = classification
@@ -380,7 +428,18 @@ def _build_risk_matrix_drawing(sev_counts: dict) -> Drawing:
         bar_h = max(4, (count / max_count) * 70)
 
         # Bar
-        d.add(Rect(x, 25, bar_width, bar_h, fillColor=sev_colors[i], strokeColor=None, rx=3, ry=3))
+        d.add(
+            Rect(
+                x,
+                25,
+                bar_width,
+                bar_h,
+                fillColor=sev_colors[i],
+                strokeColor=None,
+                rx=3,
+                ry=3,
+            )
+        )
 
         # Count label
         d.add(
@@ -397,13 +456,27 @@ def _build_risk_matrix_drawing(sev_counts: dict) -> Drawing:
 
         # Severity label
         d.add(
-            String(x + bar_width / 2, 10, sev[:4], fontName=FONT_BOLD, fontSize=6, textAnchor="middle", fillColor=STEEL)
+            String(
+                x + bar_width / 2,
+                10,
+                sev[:4],
+                fontName=FONT_BOLD,
+                fontSize=6,
+                textAnchor="middle",
+                fillColor=STEEL,
+            )
         )
 
     # Title
     d.add(
         String(
-            125, 107, "DISTRIBUIÇÃO DE SEVERIDADE", fontName=FONT_BOLD, fontSize=7, textAnchor="middle", fillColor=NAVY
+            125,
+            107,
+            "DISTRIBUIÇÃO DE SEVERIDADE",
+            fontName=FONT_BOLD,
+            fontSize=7,
+            textAnchor="middle",
+            fillColor=NAVY,
         )
     )
 
@@ -533,7 +606,11 @@ def _build_disclaimers(company: str, now: datetime.datetime) -> list:
 # ═══════════════════════════════════════════════════════════════════════
 
 COMPLIANCE_FRAMEWORKS = [
-    ("OWASP Top 10", "A01–A10 (2021/2025)", "Mapeamento de achados contra categorias OWASP"),
+    (
+        "OWASP Top 10",
+        "A01–A10 (2021/2025)",
+        "Mapeamento de achados contra categorias OWASP",
+    ),
     ("CVSS v4.0", "FIRST.org", "Scoring padronizado de severidade"),
     ("NIST SP 800-115", "NIST", "Guia técnico para testes de segurança"),
     ("ISO/IEC 27001:2022", "ISO", "Gestão de segurança da informação"),
@@ -584,7 +661,9 @@ def generate_pdf_report(
     if output_path is None:
         reports_dir = os.path.join(BASE_PATH, "reports")
         os.makedirs(reports_dir, exist_ok=True)
-        output_path = os.path.join(reports_dir, f"cascavel_{now.strftime('%Y%m%d_%H%M%S')}.pdf")
+        output_path = os.path.join(
+            reports_dir, f"cascavel_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
+        )
 
     doc = SimpleDocTemplate(
         output_path,
@@ -634,7 +713,11 @@ def generate_pdf_report(
     story.append(Paragraph("Quantum Security Framework", styles["CoverSub"]))
     story.append(Spacer(1, 4 * mm))
 
-    story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON, spaceAfter=6, hAlign="CENTER"))
+    story.append(
+        HRFlowable(
+            width="50%", thickness=2, color=CYAN_NEON, spaceAfter=6, hAlign="CENTER"
+        )
+    )
 
     story.append(Paragraph("RELATÓRIO DE ANÁLISE DE SEGURANÇA", styles["CoverSub"]))
     story.append(Spacer(1, 8 * mm))
@@ -730,7 +813,9 @@ def generate_pdf_report(
     # ═══════════════════════════════════════════════════════════════════
     # PAGE 3-4: LEGAL DISCLAIMERS (12 cláusulas)
     # ═══════════════════════════════════════════════════════════════════
-    story.append(Paragraph("1. DISCLAIMER JURÍDICO E TERMOS DE USO", styles["SectionH1"]))
+    story.append(
+        Paragraph("1. DISCLAIMER JURÍDICO E TERMOS DE USO", styles["SectionH1"])
+    )
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     disclaimers = _build_disclaimers(company, now)
@@ -813,7 +898,9 @@ def generate_pdf_report(
         color, cvss_range, desc = SEVERITY_MAP[sev_name]
         sev_data.append([sev_name, cvss_range, str(count), desc])
 
-    sev_table = Table(sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm], repeatRows=1)
+    sev_table = Table(
+        sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm], repeatRows=1
+    )
     sev_style = [
         ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
@@ -829,7 +916,14 @@ def generate_pdf_report(
     for row_idx in range(1, len(sev_data)):
         sev_name_cell = sev_data[row_idx][0]
         if sev_name_cell in SEVERITY_MAP:
-            sev_style.append(("TEXTCOLOR", (0, row_idx), (0, row_idx), SEVERITY_MAP[sev_name_cell][0]))
+            sev_style.append(
+                (
+                    "TEXTCOLOR",
+                    (0, row_idx),
+                    (0, row_idx),
+                    SEVERITY_MAP[sev_name_cell][0],
+                )
+            )
             sev_style.append(("FONTNAME", (0, row_idx), (0, row_idx), FONT_BOLD))
     sev_table.setStyle(TableStyle(sev_style))
     story.append(sev_table)
@@ -849,7 +943,12 @@ def generate_pdf_report(
     story.append(Spacer(1, 8 * mm))
 
     # CVSS explanation
-    story.append(Paragraph("Escala CVSS v4.0 (Common Vulnerability Scoring System)", styles["SectionH2"]))
+    story.append(
+        Paragraph(
+            "Escala CVSS v4.0 (Common Vulnerability Scoring System)",
+            styles["SectionH2"],
+        )
+    )
     cvss_text = (
         "O CVSS é um framework padronizado do FIRST.org para atribuição de scores numéricos (0.0–10.0) "
         "a vulnerabilidades, refletindo sua severidade técnica. Os scores são calculados com base em "
@@ -906,7 +1005,12 @@ def generate_pdf_report(
             card.append(title_table)
 
             if owasp_cat:
-                card.append(Paragraph(f"<b>OWASP:</b> {_sanitize_html(owasp_cat)}", styles["BodySmall"]))
+                card.append(
+                    Paragraph(
+                        f"<b>OWASP:</b> {_sanitize_html(owasp_cat)}",
+                        styles["BodySmall"],
+                    )
+                )
 
             if details:
                 card.append(Paragraph("<b>Descrição:</b>", styles["BodySmall"]))
@@ -917,7 +1021,9 @@ def generate_pdf_report(
                 card.append(Paragraph(_sanitize_html(str(evidence)), styles["Code"]))
 
             if remediation:
-                card.append(Paragraph("<b>Remediação Recomendada:</b>", styles["BodySmall"]))
+                card.append(
+                    Paragraph("<b>Remediação Recomendada:</b>", styles["BodySmall"])
+                )
                 card.append(Paragraph(_sanitize_html(str(remediation)), styles["Body"]))
 
             if refs:
@@ -957,15 +1063,36 @@ def generate_pdf_report(
     )
     story.append(Spacer(1, 4 * mm))
 
-    remediation_header = ["#", "Achado", "Severidade", "Ação Recomendada", "Esforço", "Prazo"]
+    remediation_header = [
+        "#",
+        "Achado",
+        "Severidade",
+        "Ação Recomendada",
+        "Esforço",
+        "Prazo",
+    ]
     remediation_rows = [remediation_header]
 
-    effort_map = {"CRITICO": "Alto", "ALTO": "Alto", "MEDIO": "Médio", "BAIXO": "Baixo", "INFO": "Mínimo"}
-    deadline_map = {"CRITICO": "24h", "ALTO": "72h", "MEDIO": "2 semanas", "BAIXO": "30 dias", "INFO": "Backlog"}
+    effort_map = {
+        "CRITICO": "Alto",
+        "ALTO": "Alto",
+        "MEDIO": "Médio",
+        "BAIXO": "Baixo",
+        "INFO": "Mínimo",
+    }
+    deadline_map = {
+        "CRITICO": "24h",
+        "ALTO": "72h",
+        "MEDIO": "2 semanas",
+        "BAIXO": "30 dias",
+        "INFO": "Backlog",
+    }
 
     # Sort vulns by severity priority
     sev_priority = {"CRITICO": 0, "ALTO": 1, "MEDIO": 2, "BAIXO": 3, "INFO": 4}
-    sorted_vulns = sorted(vulns, key=lambda v: sev_priority.get(v.get("severity", "INFO").upper(), 4))
+    sorted_vulns = sorted(
+        vulns, key=lambda v: sev_priority.get(v.get("severity", "INFO").upper(), 4)
+    )
 
     for idx, vuln in enumerate(sorted_vulns, 1):
         name = vuln.get("plugin", vuln.get("name", f"Achado #{idx}"))
@@ -974,8 +1101,12 @@ def generate_pdf_report(
         effort = effort_map.get(severity, "Médio")
         deadline = deadline_map.get(severity, "30 dias")
         # Truncate remediation text for table cell
-        rem_short = str(remediation)[:120] + ("..." if len(str(remediation)) > 120 else "")
-        remediation_rows.append([str(idx), name[:30], severity, rem_short, effort, deadline])
+        rem_short = str(remediation)[:120] + (
+            "..." if len(str(remediation)) > 120 else ""
+        )
+        remediation_rows.append(
+            [str(idx), name[:30], severity, rem_short, effort, deadline]
+        )
 
     if not vulns:
         remediation_rows.append(["—", "Nenhum achado", "—", "N/A", "—", "—"])
@@ -1103,7 +1234,11 @@ def generate_pdf_report(
 
     tools_rows = [["Ferramenta", "Categoria", "Propósito"]]
     tools_list = [
-        ("Cascavel Core", "Framework", "Orquestração de plugins e análise centralizada"),
+        (
+            "Cascavel Core",
+            "Framework",
+            "Orquestração de plugins e análise centralizada",
+        ),
         ("Nmap / Naabu", "Scanner", "Port scanning e service detection"),
         ("Nuclei", "Scanner", "Vulnerability scanning com 10.000+ templates"),
         ("Subfinder", "OSINT", "Subdomain enumeration passiva"),
@@ -1118,7 +1253,9 @@ def generate_pdf_report(
     for t in tools_list:
         tools_rows.append(list(t))
 
-    tools_table = Table(tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm], repeatRows=1)
+    tools_table = Table(
+        tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm], repeatRows=1
+    )
     tools_table.setStyle(
         TableStyle(
             [
@@ -1272,9 +1409,16 @@ def generate_pdf_report(
 
     revision_data = [
         ["Versão", "Data", "Autor", "Descrição"],
-        ["1.0", now.strftime("%d/%m/%Y"), analyst_name, "Primeira versão do relatório — scan automatizado completo."],
+        [
+            "1.0",
+            now.strftime("%d/%m/%Y"),
+            analyst_name,
+            "Primeira versão do relatório — scan automatizado completo.",
+        ],
     ]
-    revision_table = Table(revision_data, colWidths=[18 * mm, 24 * mm, 40 * mm, 100 * mm], repeatRows=1)
+    revision_table = Table(
+        revision_data, colWidths=[18 * mm, 24 * mm, 40 * mm, 100 * mm], repeatRows=1
+    )
     revision_table.setStyle(
         TableStyle(
             [
@@ -1439,7 +1583,9 @@ if __name__ == "__main__":
                 "details": (
                     "TLS 1.0 ainda habilitado no servidor. Protocolo considerado inseguro desde 2018 (PCI DSS 3.2.1)."
                 ),
-                "evidence": ("TLSv1.0 handshake successful\nCipher: TLS_RSA_WITH_AES_128_CBC_SHA"),
+                "evidence": (
+                    "TLSv1.0 handshake successful\nCipher: TLS_RSA_WITH_AES_128_CBC_SHA"
+                ),
                 "remediation": (
                     "Desabilitar TLS 1.0 e 1.1. Configurar servidor"
                     " para aceitar apenas TLS 1.2+ com cipher suites modernas."
@@ -1454,12 +1600,16 @@ if __name__ == "__main__":
                     "Política CORS wildcard detectada (Access-Control-Allow-Origin: *)."
                     " Permite que qualquer domínio faça requisições cross-origin."
                 ),
-                "evidence": ("Response header: Access-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true"),
+                "evidence": (
+                    "Response header: Access-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true"
+                ),
                 "remediation": (
                     "Restringir CORS para origens confiáveis específicas."
                     " Nunca combinar wildcard com Allow-Credentials."
                 ),
-                "references": ["https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"],
+                "references": [
+                    "https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"
+                ],
                 "owasp": "A05:2021 — Security Misconfiguration",
             },
             {
@@ -1470,7 +1620,9 @@ if __name__ == "__main__":
                     "Response headers:\nServer: nginx/1.24.0\nContent-Type: text/html\n(X-Frame-Options: ABSENT)"
                 ),
                 "remediation": "Adicionar X-Frame-Options: DENY ou SAMEORIGIN. Considerar também CSP frame-ancestors.",
-                "references": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"],
+                "references": [
+                    "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"
+                ],
                 "owasp": "A05:2021 — Security Misconfiguration",
             },
         ],

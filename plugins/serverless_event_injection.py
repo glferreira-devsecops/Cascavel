@@ -27,7 +27,13 @@ def run(target, ip, ports, banners):
     try:
         # Enviar um JSON vazio, mas com Headers manipulados,
         # forçando o middleware do FaaS a expor metadados em caso de erro.
-        resp = requests.post(base_url, json={"context_dump": True}, headers=headers, timeout=5, verify=False)
+        resp = requests.post(
+            base_url,
+            json={"context_dump": True},
+            headers=headers,
+            timeout=5,
+            verify=False,
+        )
 
         # Procura por chaves de ambiente AWS comuns que vazaram em StackTraces
         if "AWS_SESSION_TOKEN" in resp.text or "AWS_ACCESS_KEY_ID" in resp.text:

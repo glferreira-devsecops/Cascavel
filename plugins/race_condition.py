@@ -137,6 +137,12 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "race_condition",
         "versao": "2026.1",
-        "tecnicas": ["toctou", "barrier_sync", "connection_pool", "limit_overrun", "response_diversity"],
+        "tecnicas": [
+            "toctou",
+            "barrier_sync",
+            "connection_pool",
+            "limit_overrun",
+            "response_diversity",
+        ],
         "resultados": vulns if vulns else "Nenhuma race condition detectada",
     }

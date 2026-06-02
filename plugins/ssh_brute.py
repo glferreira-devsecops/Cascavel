@@ -3,7 +3,7 @@
 try:
     import paramiko
 except ImportError:
-    paramiko = None
+    paramiko = None  # type: ignore
 
 
 def run(target, ip, open_ports, banners):
@@ -15,7 +15,10 @@ def run(target, ip, open_ports, banners):
     _ = (ip, banners)
 
     if paramiko is None:
-        return {"plugin": "ssh_brute", "resultados": {"erro": "paramiko não instalado (pip install paramiko)"}}
+        return {
+            "plugin": "ssh_brute",
+            "resultados": {"erro": "paramiko não instalado (pip install paramiko)"},
+        }
 
     ssh_default = [22, 2222, 222]
     portas = sorted(set(ssh_default + [p for p in open_ports if p in ssh_default]))
@@ -29,7 +32,9 @@ def run(target, ip, open_ports, banners):
             for senha in senhas:
                 try:
                     client = paramiko.SSHClient()
-                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.set_missing_host_key_policy(
+                        paramiko.AutoAddPolicy()
+                    )  # nosec B507
                     client.connect(
                         target,
                         port=porta,
@@ -39,14 +44,22 @@ def run(target, ip, open_ports, banners):
                         allow_agent=False,
                         look_for_keys=False,
                     )
-                    encontrados.append({"porta": porta, "usuario": user, "senha": senha})
+                    encontrados.append(
+                        {"porta": porta, "usuario": user, "senha": senha}
+                    )
                     client.close()
-                except (OSError, paramiko.AuthenticationException, paramiko.ssh_exception.SSHException):
+                except (
+                    OSError,
+                    paramiko.AuthenticationException,
+                    paramiko.ssh_exception.SSHException,
+                ):
                     continue
                 except Exception:
                     continue
 
     return {
         "plugin": "ssh_brute",
-        "resultados": encontrados if encontrados else "Nenhum acesso SSH padrão identificado",
+        "resultados": (
+            encontrados if encontrados else "Nenhum acesso SSH padrão identificado"
+        ),
     }

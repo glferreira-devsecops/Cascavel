@@ -131,3 +131,4 @@ yarn.lock
 run_logs.txt
 protection.json
 .pages_deploy/
+bandit_results.json

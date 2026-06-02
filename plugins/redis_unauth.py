@@ -70,7 +70,11 @@ def _check_redis_rce(target, port):
     vulns = []
     # CONFIG GET dir
     response = _send_redis_cmd(target, port, "CONFIG GET dir\r\n")
-    if "dir" in response.lower() and "-ERR" not in response and "-NOAUTH" not in response:
+    if (
+        "dir" in response.lower()
+        and "-ERR" not in response
+        and "-NOAUTH" not in response
+    ):
         vulns.append(
             {
                 "tipo": "REDIS_RCE_VIA_CONFIG",
@@ -146,6 +150,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "redis_unauth",
         "versao": "2026.1",
-        "tecnicas": ["command_probe", "rce_config", "lua_eval", "slaveof_attack", "sentinel", "acl_enum"],
+        "tecnicas": [
+            "command_probe",
+            "rce_config",
+            "lua_eval",
+            "slaveof_attack",
+            "sentinel",
+            "acl_enum",
+        ],
         "resultados": vulns if vulns else "Nenhum Redis exposto",
     }

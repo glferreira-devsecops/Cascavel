@@ -20,13 +20,22 @@ def run(target, ip, open_ports, banners):
     # Método 1: gau (Get All URLs)
     if shutil.which("gau"):
         try:
+            p1 = subprocess.Popen(["echo", safe_target], stdout=subprocess.PIPE)
             proc = subprocess.run(
-                f"echo {safe_target} | gau --threads 3 --blacklist png,jpg,gif,css,woff,ttf,svg",
-                shell=True,
+                [
+                    "gau",
+                    "--threads",
+                    "3",
+                    "--blacklist",
+                    "png,jpg,gif,css,woff,ttf,svg",
+                ],
+                stdin=p1.stdout,
                 capture_output=True,
                 timeout=60,
                 encoding="utf-8",
+                shell=False,
             )
+            p1.stdout.close()
             for url in proc.stdout.splitlines():
                 if url.strip():
                     urls_encontradas.add(url.strip())
@@ -40,13 +49,16 @@ def run(target, ip, open_ports, banners):
     # Método 2: waybackurls
     if shutil.which("waybackurls"):
         try:
+            p1 = subprocess.Popen(["echo", safe_target], stdout=subprocess.PIPE)
             proc = subprocess.run(
-                f"echo {safe_target} | waybackurls",
-                shell=True,
+                ["waybackurls"],
+                stdin=p1.stdout,
                 capture_output=True,
                 timeout=60,
                 encoding="utf-8",
+                shell=False,
             )
+            p1.stdout.close()
             for url in proc.stdout.splitlines():
                 if url.strip():
                     urls_encontradas.add(url.strip())

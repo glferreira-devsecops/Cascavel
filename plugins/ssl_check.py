@@ -53,7 +53,9 @@ def _check_certificate(target, port):
                 # Expiry check
                 try:
                     not_after = cert.get("notAfter", "")
-                    expiry = datetime.datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
+                    expiry = datetime.datetime.strptime(
+                        not_after, "%b %d %H:%M:%S %Y %Z"
+                    )
                     days_left = (expiry - datetime.datetime.utcnow()).days
                     cert_info["dias_ate_expirar"] = days_left
                     if days_left < 0:
@@ -108,7 +110,11 @@ def _check_certificate(target, port):
                         break
 
                 # Key size check
-                cipher_bits = ssock.cipher()[2] if ssock.cipher() and len(ssock.cipher()) > 2 else 0
+                cipher_bits = (
+                    ssock.cipher()[2]
+                    if ssock.cipher() and len(ssock.cipher()) > 2
+                    else 0
+                )
                 if cipher_bits and cipher_bits < 128:
                     vulns.append(
                         {
@@ -207,7 +213,13 @@ def _check_hsts(target):
                     }
                 )
     except Exception as e:
-        vulns.append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha ao verificar HSTS: {e}"})
+        vulns.append(
+            {
+                "tipo": "SILENT_ERROR",
+                "severidade": "INFO",
+                "descricao": f"Falha ao verificar HSTS: {e}",
+            }
+        )
     return vulns
 
 
@@ -215,7 +227,9 @@ def _check_http_redirect(target):
     """Verifica se HTTP redireciona para HTTPS."""
     vulns = []
     try:
-        resp = __import__("requests").get(f"http://{target}", timeout=5, allow_redirects=False)
+        resp = __import__("requests").get(
+            f"http://{target}", timeout=5, allow_redirects=False
+        )
         if resp.status_code in [301, 302, 307, 308]:
             location = resp.headers.get("Location", "")
             if "https://" in location:
@@ -238,7 +252,11 @@ def _check_http_redirect(target):
             )
     except Exception as e:
         vulns.append(
-            {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha ao verificar redirect HTTP→HTTPS: {e}"}
+            {
+                "tipo": "SILENT_ERROR",
+                "severidade": "INFO",
+                "descricao": f"Falha ao verificar redirect HTTP→HTTPS: {e}",
+            }
         )
     return vulns
 
@@ -266,7 +284,14 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "ssl_check",
         "versao": "2026.1",
-        "tecnicas": ["cert_analysis", "protocol_check", "cipher_check", "hsts_analysis", "http_redirect", "key_size"],
+        "tecnicas": [
+            "cert_analysis",
+            "protocol_check",
+            "cipher_check",
+            "hsts_analysis",
+            "http_redirect",
+            "key_size",
+        ],
         "certificado": cert_info,
         "resultados": vulns if vulns else "SSL/TLS sem vulnerabilidades críticas",
     }

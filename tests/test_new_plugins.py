@@ -4,7 +4,6 @@ import requests
 
 import plugins.graphql_ast_bomb as plugin_graphql
 import plugins.kubelet_anonymous_rce as plugin_kubelet
-
 # Import the newly added plugins
 import plugins.llm_rag_poisoning as plugin_llm
 import plugins.serverless_event_injection as plugin_serverless

@@ -18,7 +18,10 @@ def run(target, ip, open_ports, banners):
     _ = (open_ports, banners)
 
     if not _HAS_SHODAN:
-        return {"plugin": "shodan_recon", "resultados": {"erro": "shodan não instalado (pip install shodan)"}}
+        return {
+            "plugin": "shodan_recon",
+            "resultados": {"erro": "shodan não instalado (pip install shodan)"},
+        }
 
     api_key = os.environ.get("SHODAN_API_KEY", "")
     if not api_key:

@@ -63,7 +63,8 @@ def _check_mongo_express(target):
         try:
             resp = requests.get(f"http://{target}:{port}/", timeout=5)
             if resp.status_code == 200 and any(
-                k in resp.text.lower() for k in ["mongo express", "mongo-express", "databases"]
+                k in resp.text.lower()
+                for k in ["mongo express", "mongo-express", "databases"]
             ):
                 vulns.append(
                     {

@@ -184,7 +184,10 @@ def _test_socketio_info(target):
     vulns = []
     import requests as req
 
-    for path in ["/socket.io/?EIO=4&transport=polling", "/socket.io/?EIO=3&transport=polling"]:
+    for path in [
+        "/socket.io/?EIO=4&transport=polling",
+        "/socket.io/?EIO=3&transport=polling",
+    ]:
         try:
             resp = req.get(f"http://{target}{path}", timeout=5)
             if resp.status_code == 200 and "sid" in resp.text:
@@ -233,6 +236,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "websocket_scanner",
         "versao": "2026.1",
-        "tecnicas": ["cswsh", "multi_origin", "ws_smuggling", "socketio_exposure", "compression_attack", "no_auth"],
+        "tecnicas": [
+            "cswsh",
+            "multi_origin",
+            "ws_smuggling",
+            "socketio_exposure",
+            "compression_attack",
+            "no_auth",
+        ],
         "resultados": vulns if vulns else "Nenhum WebSocket vulnerável detectado",
     }

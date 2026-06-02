@@ -58,14 +58,20 @@ def _test_password(target, path, password, label):
     try:
         resp = requests.post(
             f"http://{target}{path}",
-            json={"email": "cascavel@test.com", "password": password, "username": "cascavel_probe"},
+            json={
+                "email": "cascavel@test.com",
+                "password": password,
+                "username": "cascavel_probe",
+            },
             timeout=8,
         )
         if resp.status_code in (200, 201):
             return {
                 "tipo": f"WEAK_PASSWORD_{label}",
                 "endpoint": path,
-                "senha_testada": password if len(password) <= 6 else password[:3] + "***",
+                "senha_testada": (
+                    password if len(password) <= 6 else password[:3] + "***"
+                ),
                 "severidade": "ALTO",
                 "descricao": f"Senha fraca aceita ({label}) — policy insuficiente!",
             }
@@ -173,11 +179,16 @@ def _check_credential_stuffing(target, path):
         try:
             resp = requests.post(
                 f"http://{target}{path}",
-                json={"email": email, "password": password, "username": email.split("@")[0]},
+                json={
+                    "email": email,
+                    "password": password,
+                    "username": email.split("@")[0],
+                },
                 timeout=5,
             )
             if resp.status_code == 200 and any(
-                k in resp.text.lower() for k in ["token", "session", "dashboard", "welcome"]
+                k in resp.text.lower()
+                for k in ["token", "session", "dashboard", "welcome"]
             ):
                 vulns.append(
                     {
@@ -203,10 +214,15 @@ def _check_username_enumeration(target, path):
         )
         r_invalid = requests.post(
             f"http://{target}{path}",
-            json={"email": "nonexistent_cascavel_probe@test.com", "password": "wrongpass"},
+            json={
+                "email": "nonexistent_cascavel_probe@test.com",
+                "password": "wrongpass",
+            },
             timeout=5,
         )
-        if r_valid.status_code != r_invalid.status_code or len(r_valid.text) != len(r_invalid.text):
+        if r_valid.status_code != r_invalid.status_code or len(r_valid.text) != len(
+            r_invalid.text
+        ):
             return {
                 "tipo": "USERNAME_ENUMERATION",
                 "endpoint": path,

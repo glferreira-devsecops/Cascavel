@@ -14,7 +14,9 @@ def run(target, ip, open_ports, banners):
     ftp_ports_found = []
     creds_found = []
 
-    ports_to_check = sorted(set(ftp_default_ports + [p for p in open_ports if p in ftp_default_ports]))
+    ports_to_check = sorted(
+        set(ftp_default_ports + [p for p in open_ports if p in ftp_default_ports])
+    )
 
     for port in ports_to_check:
         s = socket.socket()
@@ -47,7 +49,11 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "ftp_brute",
         "resultados": {
-            "ftp_ports": ftp_ports_found if ftp_ports_found else "Nenhuma porta FTP aberta",
-            "credenciais": creds_found if creds_found else "Nenhuma credencial encontrada",
+            "ftp_ports": (
+                ftp_ports_found if ftp_ports_found else "Nenhuma porta FTP aberta"
+            ),
+            "credenciais": (
+                creds_found if creds_found else "Nenhuma credencial encontrada"
+            ),
         },
     }

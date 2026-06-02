@@ -186,7 +186,10 @@ def test_oidc_poisoning_vulnerable(mock_socket):
 
 @patch("plugins.oidc_poisoning.socket.socket")
 def test_oidc_poisoning_safe(mock_socket):
-    mock_socket.return_value.recv.side_effect = [b"HTTP/1.1 400 Bad Request\r\n\r\nInvalid URI", b""]
+    mock_socket.return_value.recv.side_effect = [
+        b"HTTP/1.1 400 Bad Request\r\n\r\nInvalid URI",
+        b"",
+    ]
     result = plugin_oidc.run("example.com", "127.0.0.1", [80], {})
     assert result is None
 
@@ -205,7 +208,10 @@ def test_coerced_auth_web_vulnerable(mock_socket):
 
 @patch("plugins.coerced_auth_web.socket.socket")
 def test_coerced_auth_web_safe(mock_socket):
-    mock_socket.return_value.recv.side_effect = [b"HTTP/1.1 400 Bad Request\r\n\r\nInvalid path", b""]
+    mock_socket.return_value.recv.side_effect = [
+        b"HTTP/1.1 400 Bad Request\r\n\r\nInvalid path",
+        b"",
+    ]
     result = plugin_coerced.run("example.com", "127.0.0.1", [80], {})
     assert result is None
 
@@ -213,7 +219,10 @@ def test_coerced_auth_web_safe(mock_socket):
 # --- CLOUD GHOSTING ---
 @patch("plugins.cloud_ghosting.socket.socket")
 def test_cloud_ghosting_vulnerable(mock_socket):
-    mock_socket.return_value.recv.side_effect = [b"HTTP/1.1 200 OK\r\n\r\nami-0abcdef123456", b""]
+    mock_socket.return_value.recv.side_effect = [
+        b"HTTP/1.1 200 OK\r\n\r\nami-0abcdef123456",
+        b"",
+    ]
     result = plugin_cloud.run("example.com", "127.0.0.1", [80], {})
     assert result is not None
     assert result["severity"] == "CRITICAL"
@@ -221,7 +230,10 @@ def test_cloud_ghosting_vulnerable(mock_socket):
 
 @patch("plugins.cloud_ghosting.socket.socket")
 def test_cloud_ghosting_safe(mock_socket):
-    mock_socket.return_value.recv.side_effect = [b"HTTP/1.1 403 Forbidden\r\n\r\nIMDSv2 token required", b""]
+    mock_socket.return_value.recv.side_effect = [
+        b"HTTP/1.1 403 Forbidden\r\n\r\nIMDSv2 token required",
+        b"",
+    ]
     result = plugin_cloud.run("example.com", "127.0.0.1", [80], {})
     assert result is None
 
@@ -229,7 +241,10 @@ def test_cloud_ghosting_safe(mock_socket):
 # --- WASM REVERSER ---
 @patch("plugins.wasm_reverser.socket.socket")
 def test_wasm_reverser_vulnerable(mock_socket):
-    mock_socket.return_value.recv.side_effect = [b"HTTP/1.1 200 OK\r\n\r\n\x00asm...verify_signature...", b""]
+    mock_socket.return_value.recv.side_effect = [
+        b"HTTP/1.1 200 OK\r\n\r\n\x00asm...verify_signature...",
+        b"",
+    ]
     result = plugin_wasm.run("example.com", "127.0.0.1", [80], {})
     assert result is not None
     assert result["severity"] == "HIGH"
@@ -237,6 +252,9 @@ def test_wasm_reverser_vulnerable(mock_socket):
 
 @patch("plugins.wasm_reverser.socket.socket")
 def test_wasm_reverser_safe(mock_socket):
-    mock_socket.return_value.recv.side_effect = [b"HTTP/1.1 404 Not Found\r\n\r\nNot found", b""]
+    mock_socket.return_value.recv.side_effect = [
+        b"HTTP/1.1 404 Not Found\r\n\r\nNot found",
+        b"",
+    ]
     result = plugin_wasm.run("example.com", "127.0.0.1", [80], {})
     assert result is None

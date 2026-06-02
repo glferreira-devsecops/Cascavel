@@ -2,7 +2,17 @@
 
 import requests
 
-PAGES = ["/", "/login", "/forgot-password", "/reset-password", "/api/", "/admin/", "/register", "/signup", "/contact"]
+PAGES = [
+    "/",
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/api/",
+    "/admin/",
+    "/register",
+    "/signup",
+    "/contact",
+]
 
 
 def _verify_waf_blind_reflection(target, page, header_name):
@@ -183,7 +193,13 @@ def _test_duplicate_host(target, page):
 def _test_password_reset_poisoning(target):
     """Testa password reset poisoning via Host header."""
     vulns = []
-    reset_paths = ["/forgot-password", "/reset-password", "/api/auth/forgot", "/users/password/new", "/account/recover"]
+    reset_paths = [
+        "/forgot-password",
+        "/reset-password",
+        "/api/auth/forgot",
+        "/users/password/new",
+        "/account/recover",
+    ]
     for path in reset_paths:
         try:
             resp = requests.post(
@@ -193,7 +209,9 @@ def _test_password_reset_poisoning(target):
                 timeout=5,
             )
             if resp.status_code in [200, 302]:
-                if "evil.com" in resp.text or "evil.com" in resp.headers.get("Location", ""):
+                if "evil.com" in resp.text or "evil.com" in resp.headers.get(
+                    "Location", ""
+                ):
                     vulns.append(
                         {
                             "tipo": "PASSWORD_RESET_POISONING",

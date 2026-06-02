@@ -79,7 +79,10 @@ def _analyze_forms(resp_text, page):
         action_url = action.group(1) if action else "N/A"
 
         # Check if form performs sensitive action
-        is_sensitive = any(act in form_lower or act in str(action_url).lower() for act in SENSITIVE_ACTIONS)
+        is_sensitive = any(
+            act in form_lower or act in str(action_url).lower()
+            for act in SENSITIVE_ACTIONS
+        )
 
         if not has_csrf:
             vulns.append(
@@ -135,7 +138,10 @@ def _analyze_cookies(resp, page):
 
     for cookie_part in set_cookies.split(","):
         lower = cookie_part.lower().strip()
-        is_session = any(name in lower for name in ["session", "sess_", "jsessionid", "phpsessid", "connect.sid"])
+        is_session = any(
+            name in lower
+            for name in ["session", "sess_", "jsessionid", "phpsessid", "connect.sid"]
+        )
         if not is_session:
             continue
 
@@ -230,7 +236,9 @@ def _check_json_csrf(target, page):
 def _check_cors_csrf(target):
     """Verifica se CORS misconfiguration permite CSRF cross-origin."""
     try:
-        resp = requests.get(f"http://{target}/", headers={"Origin": "https://evil.com"}, timeout=5)
+        resp = requests.get(
+            f"http://{target}/", headers={"Origin": "https://evil.com"}, timeout=5
+        )
         acao = resp.headers.get("Access-Control-Allow-Origin", "")
         acac = resp.headers.get("Access-Control-Allow-Credentials", "")
         if acao == "https://evil.com" and acac.lower() == "true":
@@ -250,12 +258,24 @@ def _check_referer_validation(target):
     for page in ["/settings", "/profile", "/api/settings"]:
         try:
             # Request sem Referer
-            resp_no = requests.post(f"http://{target}{page}", data={"test": "csrf"}, timeout=5, headers={"Referer": ""})
+            resp_no = requests.post(
+                f"http://{target}{page}",
+                data={"test": "csrf"},
+                timeout=5,
+                headers={"Referer": ""},
+            )
             # Request com Referer evil
             resp_evil = requests.post(
-                f"http://{target}{page}", data={"test": "csrf"}, timeout=5, headers={"Referer": "https://evil.com/"}
+                f"http://{target}{page}",
+                data={"test": "csrf"},
+                timeout=5,
+                headers={"Referer": "https://evil.com/"},
             )
-            if resp_no.status_code in (200, 201, 204) or resp_evil.status_code in (200, 201, 204):
+            if resp_no.status_code in (200, 201, 204) or resp_evil.status_code in (
+                200,
+                201,
+                204,
+            ):
                 vulns.append(
                     {
                         "tipo": "CSRF_NO_REFERER_CHECK",

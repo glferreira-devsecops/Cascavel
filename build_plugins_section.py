@@ -9,6 +9,7 @@ external assets/js/plugin-search.js.
 
 Idempotent: safe to re-run.
 """
+
 import html as html_mod
 import re
 
@@ -82,8 +83,7 @@ def render_blocks(categories, th):
         count = len(cat["plugins"])
         rows = "\n".join(
             "          <tr><td><strong>%s</strong></td><td><code>%s</code></td>"
-            "<td class=\"techniques\">%s</td></tr>"
-            % (esc(p[0]), esc(p[1]), esc(p[2]))
+            '<td class="techniques">%s</td></tr>' % (esc(p[0]), esc(p[1]), esc(p[2]))
             for p in cat["plugins"]
         )
         block = (
@@ -95,8 +95,8 @@ def render_blocks(categories, th):
             'vertical-align: middle; margin-left: 0.5rem;">%d</span></h3>\n'
             '    <div class="table-wrapper">\n'
             '      <table class="plugin-table">\n'
-            "        <thead><tr><th style=\"width: 25%%;\">%s</th>"
-            "<th style=\"width: 25%%;\">%s</th><th>%s</th></tr></thead>\n"
+            '        <thead><tr><th style="width: 25%%;">%s</th>'
+            '<th style="width: 25%%;">%s</th><th>%s</th></tr></thead>\n'
             "        <tbody>\n"
             "%s\n"
             "        </tbody>\n"
@@ -127,7 +127,7 @@ def build_section(page, blocks_html):
 def replace_section(doc, new_section):
     start = doc.find('<section id="plugins">')
     if start == -1:
-        raise SystemExit("ERROR: <section id=\"plugins\"> not found")
+        raise SystemExit('ERROR: <section id="plugins"> not found')
     line_start = doc.rfind("\n", 0, start) + 1
     end = doc.find("</section>", start)
     if end == -1:

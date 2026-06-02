@@ -32,8 +32,8 @@ def run(target, ip, open_ports, banners):
     if shutil.which("nmap"):
         try:
             proc = subprocess.run(
-                f"nmap -O -T4 {safe_target}",
-                shell=True,
+                ["nmap", "-O", "-T4", safe_target],
+                shell=False,
                 capture_output=True,
                 timeout=60,
                 encoding="utf-8",
@@ -51,8 +51,8 @@ def run(target, ip, open_ports, banners):
     if whatweb_bin:
         try:
             proc = subprocess.run(
-                f"{whatweb_bin} {safe_target}",
-                shell=True,
+                [whatweb_bin, safe_target],
+                shell=False,
                 capture_output=True,
                 timeout=30,
                 encoding="utf-8",
@@ -69,8 +69,15 @@ def run(target, ip, open_ports, banners):
     if shutil.which("nmap"):
         try:
             proc = subprocess.run(
-                f"nmap --script ssl-cert,ssl-enum-ciphers -p 443 {safe_target}",
-                shell=True,
+                [
+                    "nmap",
+                    "--script",
+                    "ssl-cert,ssl-enum-ciphers",
+                    "-p",
+                    "443",
+                    safe_target,
+                ],
+                shell=False,
                 capture_output=True,
                 timeout=30,
                 encoding="utf-8",

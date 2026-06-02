@@ -12,7 +12,10 @@ def run(target, ip, open_ports, banners):
     _ = (ip, banners)
 
     if not shutil.which("nmap"):
-        return {"plugin": "heartbleed_scanner", "resultados": {"erro": "nmap não encontrado no PATH"}}
+        return {
+            "plugin": "heartbleed_scanner",
+            "resultados": {"erro": "nmap não encontrado no PATH"},
+        }
 
     safe_target = shlex.quote(target)
     ssl_ports = [p for p in open_ports if p in [443, 8443, 993, 995, 465]] or [443]
@@ -21,7 +24,9 @@ def run(target, ip, open_ports, banners):
     resultado = {}
     cmd = f"nmap --script=ssl-heartbleed -p {ports_str} {safe_target}"
     try:
-        proc = subprocess.run(cmd, shell=True, capture_output=True, timeout=30, encoding="utf-8")
+        proc = subprocess.run(
+            cmd, shell=False, capture_output=True, timeout=30, encoding="utf-8"
+        )
         output = proc.stdout + proc.stderr
         resultado["status"] = "VULNERAVEL" if "VULNERABLE" in output else "seguro"
         resultado["detalhes"] = output

@@ -98,13 +98,58 @@ class PluginResult:
 
     def __post_init__(self) -> None:
         """Validate and normalize fields after init."""
+        import math
+        import secrets
+
+        # 1. NaN/Infinity Float Injection Mitigation
+        try:
+            self.cvss_score = float(self.cvss_score)
+            if math.isnan(self.cvss_score) or math.isinf(self.cvss_score):
+                self.cvss_score = 0.0
+        except (ValueError, TypeError):
+            self.cvss_score = 0.0
+
         self.severity = normalize_severity(self.severity)
-        if self.severity not in VALID_SEVERITIES:
+
+        # 2. Timeless Timing Attack Mitigation (Compare Digest for sensitive states, though simple here)
+        # We ensure strict adherence without branching leak on length
+        if not any(secrets.compare_digest(self.severity, v) for v in VALID_SEVERITIES):
             self.severity = "INFO"
+
         self.cvss_score = max(0.0, min(10.0, self.cvss_score))
         # Auto-derive severity from CVSS if severity wasn't explicitly set
         if self.cvss_score > 0 and self.severity == "INFO":
             self.severity = severity_from_cvss(self.cvss_score)
+
+        # 3. Log Injection Sanitization (CRLF)
+        self.plugin = (
+            str(self.plugin).replace("\n", "_").replace("\r", "_").replace("\x00", "")
+        )
+        self.title = (
+            str(self.title).replace("\n", "_").replace("\r", "_").replace("\x00", "")
+        )
+        self.severity = str(self.severity).replace("\n", "_").replace("\r", "_")
+
+        # 4. Evidence Memory Bomb (OOM) Protection (50KB limit)
+        if isinstance(self.evidence, str) and len(self.evidence) > 50000:
+            self.evidence = self.evidence[:50000] + "\n[TRUNCATED_MAX_50KB_LIMIT]"
+
+        # 5. MAX_NESTING_DEPTH for findings (Recursion bomb / OOM mitigation)
+        MAX_NESTING_DEPTH = 3
+
+        def _enforce_depth(obj: Any, current_depth: int = 0) -> Any:
+            if current_depth > MAX_NESTING_DEPTH:
+                return "[DEPTH_LIMIT_EXCEEDED]"
+            if isinstance(obj, dict):
+                return {
+                    str(k): _enforce_depth(v, current_depth + 1) for k, v in obj.items()
+                }
+            if isinstance(obj, list):
+                # Truncate lists exceeding 100 items to prevent horizontal memory exhaustion
+                return [_enforce_depth(item, current_depth + 1) for item in obj[:100]]
+            return obj
+
+        self.findings = _enforce_depth(self.findings)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dict for JSON output / SARIF conversion."""
@@ -149,7 +194,9 @@ class PluginResult:
         highest_sev = raw_sev
         for f in findings:
             f_sev = f.get("severidade", f.get("severity", "INFO"))
-            if _severity_rank(normalize_severity(str(f_sev))) > _severity_rank(normalize_severity(str(highest_sev))):
+            if _severity_rank(normalize_severity(str(f_sev))) > _severity_rank(
+                normalize_severity(str(highest_sev))
+            ):
                 highest_sev = f_sev
 
         # Error handling

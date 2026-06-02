@@ -89,7 +89,53 @@ jobs:
           category: semgrep
 
   dependency-audit:
-    name: "📦 Dependency CVE Audit"
+    name: "📦 OSV-Scanner Audit"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Run OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@v1.9.2
+        with:
+          scan-args: |-
+            --lockfile=requirements.txt
+
+  secrets:
+    name: "🔑 TruffleHog Secret Detection"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@v3.81.9
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  actionlint:
+    name: "🧹 Actionlint & Zizmor"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Run actionlint
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint
+      - name: Run zizmor
+        uses: woodruffw/zizmor-github-action@e811c7fbfa2135c34cb1394f1de261fdb932375f # v1
+        with:
+          project: .
+
+  sbom:
+    name: "🧾 Generate SBOM & Pip-Audit"
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -98,50 +144,9 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
-          cache: "pip"
-      - run: pip install -r requirements.txt
-      - name: pip-audit (CVE check)
-        run: |
-          pip install pip-audit==2.9.0
-          pip-audit --format json --output audit-results.json || true
-          pip-audit --desc || true
-      - name: Check critical CVEs
-        run: |
-          python3 -c "
-          import importlib.metadata as meta
-          checks = {
-              'PyJWT': ('2.12.0', 'CVE-2022-29217'),
-              'reportlab': ('3.6.13', 'CVE-2023-33733'),
-              'requests': ('2.32.4', 'GHSA-9hjg-9r4m-mvj7 + GHSA-9wx4-h78v-vm56'),
-              'dnspython': ('2.7.0', 'GHSA-3rq5-2g8h-59hc'),
-              'pyOpenSSL': ('25.0.0', 'GHSA-5pwr-322w-8jr4 + GHSA-vp96-hxj8-p424'),
-          }
-          failed = False
-          for pkg, (min_ver, cve) in checks.items():
-              try:
-                  ver = meta.version(pkg)
-                  parts_cur = [int(x) for x in ver.split('.')]
-                  parts_min = [int(x) for x in min_ver.split('.')]
-                  if parts_cur < parts_min:
-                      print(f'FAIL: {pkg} {ver} < {min_ver} ({cve})')
-                      failed = True
-                  else:
-                      print(f'  OK: {pkg} {ver} >= {min_ver}')
-              except meta.PackageNotFoundError:
-                  print(f'SKIP: {pkg} not installed')
-          if failed:
-              raise SystemExit(1)
-          "
-
-  secrets:
-    name: "🔑 Secret Detection"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install tools
+        run: pip install cyclonedx-bom pip-audit
+      - name: Generate SBOM
+        run: cyclonedx-py requirements requirements.txt -o sbom.json
+      - name: Run pip-audit
+        run: pip-audit -r requirements.txt

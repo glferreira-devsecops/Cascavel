@@ -1,6 +1,6 @@
 # 🔌 Cascavel — Plugin Documentation
 
-> **85 security plugins** across 14 attack categories. Every plugin follows the standardized `run(target, ip, open_ports, banners) -> dict` interface.
+> **108 security plugins** across 14 attack categories. Every plugin follows the standardized `run(target, ip, open_ports, banners) -> dict` interface.
 
 ---
 
@@ -199,4 +199,4 @@ def run(target: str, ip: str, open_ports: list, banners: dict) -> dict:
 
 ---
 
-> **Total: 85 plugins** | Last updated: v3.0.1 (2026-05-04)
+> **Total: 108 plugins** | Last updated: 2026-06-02

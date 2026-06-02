@@ -114,5 +114,7 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "email_spoof_check",
-        "resultados": vulns if vulns else "Email authentication configurada corretamente",
+        "resultados": (
+            vulns if vulns else "Email authentication configurada corretamente"
+        ),
     }

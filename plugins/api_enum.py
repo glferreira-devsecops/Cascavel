@@ -76,7 +76,10 @@ def _classify_doc(path, resp):
             entry["endpoints_expostos"] = len(paths)
             entry["amostra"] = paths[:15]
             # Extract security schemes
-            sec = spec.get("securityDefinitions", spec.get("components", {}).get("securitySchemes", {}))
+            sec = spec.get(
+                "securityDefinitions",
+                spec.get("components", {}).get("securitySchemes", {}),
+            )
             if sec:
                 entry["auth_schemes"] = list(sec.keys())
         except Exception:

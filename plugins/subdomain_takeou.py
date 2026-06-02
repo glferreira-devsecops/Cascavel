@@ -204,6 +204,12 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "subdomain_takeou",
         "versao": "2026.1",
-        "tecnicas": ["fingerprint_34", "cname_dangling", "dns_nxdomain", "http_probe", "multi_service_detection"],
+        "tecnicas": [
+            "fingerprint_34",
+            "cname_dangling",
+            "dns_nxdomain",
+            "http_probe",
+            "multi_service_detection",
+        ],
         "resultados": takeover if takeover else "Nenhum takeover detectado",
     }

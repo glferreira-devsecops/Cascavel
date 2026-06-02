@@ -31,7 +31,10 @@ GCP_PATHS = [
     ("/computeMetadata/v1/instance/service-accounts/default/token", "SA_TOKEN"),
     ("/computeMetadata/v1/instance/attributes/ssh-keys", "SSH_KEYS"),
     ("/computeMetadata/v1/instance/attributes/kube-env", "KUBE_ENV"),
-    ("/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip", "EXTERNAL_IP"),
+    (
+        "/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip",
+        "EXTERNAL_IP",
+    ),
 ]
 
 AZURE_PATHS = [
@@ -40,9 +43,18 @@ AZURE_PATHS = [
         "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
         "MANAGED_ID_TOKEN",
     ),
-    ("/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net", "KEYVAULT_TOKEN"),
-    ("/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/", "STORAGE_TOKEN"),
-    ("/metadata/instance/compute/userData?api-version=2021-01-01&format=text", "USER_DATA"),
+    (
+        "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net",
+        "KEYVAULT_TOKEN",
+    ),
+    (
+        "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/",
+        "STORAGE_TOKEN",
+    ),
+    (
+        "/metadata/instance/compute/userData?api-version=2021-01-01&format=text",
+        "USER_DATA",
+    ),
 ]
 
 ORACLE_PATH = "/opc/v2/instance/"
@@ -107,7 +119,9 @@ def _scan_aws(resultado):
                         }
                     )
                 if not _has_provider(resultado, "AWS"):
-                    resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v1"})
+                    resultado["providers_detectados"].append(
+                        {"provider": "AWS", "imds_version": "v1"}
+                    )
         except Exception:
             continue
 
@@ -147,7 +161,9 @@ def _scan_aws_v2(resultado):
             )
             if v2_resp.status_code == 200:
                 if not _has_provider(resultado, "AWS"):
-                    resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v2"})
+                    resultado["providers_detectados"].append(
+                        {"provider": "AWS", "imds_version": "v2"}
+                    )
                 resultado["vulns"].append(
                     {
                         "tipo": "AWS_IMDSv2_ATIVO",

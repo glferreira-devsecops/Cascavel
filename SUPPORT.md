@@ -33,7 +33,7 @@
 | 💡 **Feature Requests** | Sugestões de funcionalidade | [Abrir Request](https://github.com/glferreira-devsecops/Cascavel/issues/new/choose) |
 | 🔒 **Vulnerabilidades** | Reporte privado de segurança | [Security Advisory](https://github.com/glferreira-devsecops/Cascavel/security/advisories) |
 | 💼 **LinkedIn** | Contato profissional | [DevFerreiraG](https://linkedin.com/in/DevFerreiraG) |
-| 📧 **Email** | Contato direto | devferreirag@proton.me |
+| 📧 **Email** | Contato direto | contato@rettecnologia.org |
 | 🌐 **Website** | RET Tecnologia | [rettecnologia.org](https://rettecnologia.org) |
 
 ## ⏱ Tempo de Resposta

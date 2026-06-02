@@ -55,7 +55,17 @@ def _probe_git_files(target):
             if resp.status_code == 200 and len(resp.text) > 5:
                 content = resp.text
                 is_git = any(
-                    k in content for k in ["[core]", "ref:", "PACK", "commit", "[remote", "gitdir", "[branch", "[user"]
+                    k in content
+                    for k in [
+                        "[core]",
+                        "ref:",
+                        "PACK",
+                        "commit",
+                        "[remote",
+                        "gitdir",
+                        "[branch",
+                        "[user",
+                    ]
                 )
                 if is_git or path.endswith("HEAD"):
                     vuln = {
@@ -194,6 +204,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "git_dumper",
         "versao": "2026.1",
-        "tecnicas": ["git_files", "config_secrets", "git_log", "svn", "mercurial", "bazaar", "cvs", "pack_clone"],
+        "tecnicas": [
+            "git_files",
+            "config_secrets",
+            "git_log",
+            "svn",
+            "mercurial",
+            "bazaar",
+            "cvs",
+            "pack_clone",
+        ],
         "resultados": vulns if vulns else "Nenhum VCS exposto",
     }

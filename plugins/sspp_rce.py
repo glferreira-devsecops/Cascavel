@@ -19,7 +19,13 @@ logger = logging.getLogger("Cascavel.Plugins.SSPP_RCE")
 
 def get_target_endpoints(url: str, session: requests.Session) -> list:
     """Finds common endpoints that might perform deep merges (JSON parsing)."""
-    endpoints = [f"{url}/", f"{url}/api/user/update", f"{url}/api/config", f"{url}/api/settings", f"{url}/profile"]
+    endpoints = [
+        f"{url}/",
+        f"{url}/api/user/update",
+        f"{url}/api/config",
+        f"{url}/api/settings",
+        f"{url}/profile",
+    ]
     return endpoints
 
 
@@ -34,7 +40,7 @@ def check_sspp(url: str, session: requests.Session) -> tuple[bool, str]:
     # via child_process.exec environment variables (NODE_OPTIONS).
     # We use a mathematical payload (echo 9801547) to avoid false positives.
 
-    pollution_payloads = [
+    pollution_payloads: list[dict[str, Any]] = [
         # JSON parsing pollution targeting env vars
         {
             "__proto__": {
@@ -64,7 +70,11 @@ def check_sspp(url: str, session: requests.Session) -> tuple[bool, str]:
                 # We send the payload and if the server processes it with a vulnerable deepMerge
                 # the prototype will be polluted.
                 session.post(
-                    endpoint, json=payload, headers={"Content-Type": "application/json"}, timeout=5, verify=False
+                    endpoint,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=5,
+                    verify=False,  # nosec B501
                 )
 
                 # 2. Trigger and Verify
@@ -74,7 +84,10 @@ def check_sspp(url: str, session: requests.Session) -> tuple[bool, str]:
 
                 # Check for RCE execution result
                 if "9801547" in trigger_response.text:
-                    return True, f"Prototype pollution led to RCE. Math payload executed successfully on {endpoint}."
+                    return (
+                        True,
+                        f"Prototype pollution led to RCE. Math payload executed successfully on {endpoint}.",
+                    )
 
                 # Check for state pollution (less severe, but confirms SSPP)
                 if "cascavel_polluted" in trigger_response.text:
@@ -106,7 +119,10 @@ def run(target: str, ip: str, ports: list, banners: dict) -> dict[str, Any] | No
     url = f"https://{target}" if 443 in ports else f"http://{target}"
     session = requests.Session()
     session.headers.update(
-        {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Accept": "application/json"}
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json",
+        }
     )
 
     is_vuln, evidence = check_sspp(url, session)

@@ -233,7 +233,9 @@ def _check_session_logout(target):
                 timeout=5,
                 cookies=pre_cookies,
             )
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in ["email", "username", "profile"]):
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["email", "username", "profile"]
+            ):
                 vulns.append(
                     {
                         "tipo": "SESSION_NOT_INVALIDATED",
@@ -266,8 +268,12 @@ def run(target, ip, open_ports, banners):
             vulns.extend(_check_cookie_flags(set_cookie, path))
 
             # Session rotation
-            post_cookies, post_status = _check_session_rotation(target, path, pre_cookies)
-            vulns.extend(_analyze_fixation(path, pre_cookies, post_cookies, post_status))
+            post_cookies, post_status = _check_session_rotation(
+                target, path, pre_cookies
+            )
+            vulns.extend(
+                _analyze_fixation(path, pre_cookies, post_cookies, post_status)
+            )
 
             # Session entropy
             vulns.extend(_check_session_entropy(pre_cookies, path))

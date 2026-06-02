@@ -75,7 +75,13 @@ def _test_origin_reflection(target, page, origins):
                 )
                 break
         except Exception as e:
-            vulns.append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha na requisicao: {str(e)}"})
+            vulns.append(
+                {
+                    "tipo": "SILENT_ERROR",
+                    "severidade": "INFO",
+                    "descricao": f"Falha na requisicao: {str(e)}",
+                }
+            )
             break
     return vulns
 
@@ -119,14 +125,22 @@ def _test_preflight(target, page):
                 }
             )
     except Exception as e:
-        vulns.append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha de preflight: {str(e)}"})
+        vulns.append(
+            {
+                "tipo": "SILENT_ERROR",
+                "severidade": "INFO",
+                "descricao": f"Falha de preflight: {str(e)}",
+            }
+        )
     return vulns
 
 
 def _test_vary_header(target, page):
     """Verifica se Vary: Origin está presente (cache poisoning prevention)."""
     try:
-        resp = requests.get(f"http://{target}{page}", headers={"Origin": "https://test.com"}, timeout=5)
+        resp = requests.get(
+            f"http://{target}{page}", headers={"Origin": "https://test.com"}, timeout=5
+        )
         vary = resp.headers.get("Vary", "")
         acao = resp.headers.get("Access-Control-Allow-Origin", "")
         if acao and acao != "*" and "Origin" not in vary:
@@ -137,17 +151,25 @@ def _test_vary_header(target, page):
                 "descricao": "CORS reflete origin sem Vary: Origin — cache poisoning possível!",
             }
     except Exception as e:
-        return {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha no teste Vary: {str(e)}"}
+        return {
+            "tipo": "SILENT_ERROR",
+            "severidade": "INFO",
+            "descricao": f"Falha no teste Vary: {str(e)}",
+        }
     return None
 
 
 def _test_expose_headers(target, page):
     """Verifica se headers sensíveis são expostos via CORS."""
     try:
-        resp = requests.get(f"http://{target}{page}", headers={"Origin": "https://evil.com"}, timeout=5)
+        resp = requests.get(
+            f"http://{target}{page}", headers={"Origin": "https://evil.com"}, timeout=5
+        )
         exposed = resp.headers.get("Access-Control-Expose-Headers", "")
         sensitive = [
-            h for h in ["Authorization", "X-API-Key", "Set-Cookie", "X-CSRF-Token"] if h.lower() in exposed.lower()
+            h
+            for h in ["Authorization", "X-API-Key", "Set-Cookie", "X-CSRF-Token"]
+            if h.lower() in exposed.lower()
         ]
         if sensitive:
             return {
@@ -158,7 +180,11 @@ def _test_expose_headers(target, page):
                 "descricao": f"CORS expõe headers sensíveis: {', '.join(sensitive)}",
             }
     except Exception as e:
-        return {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha de exposicao de header: {str(e)}"}
+        return {
+            "tipo": "SILENT_ERROR",
+            "severidade": "INFO",
+            "descricao": f"Falha de exposicao de header: {str(e)}",
+        }
     return None
 
 
@@ -167,7 +193,10 @@ def _test_max_age(target, page):
     try:
         resp = requests.options(
             f"http://{target}{page}",
-            headers={"Origin": "https://evil.com", "Access-Control-Request-Method": "GET"},
+            headers={
+                "Origin": "https://evil.com",
+                "Access-Control-Request-Method": "GET",
+            },
             timeout=5,
         )
         max_age = resp.headers.get("Access-Control-Max-Age", "")
@@ -180,7 +209,11 @@ def _test_max_age(target, page):
                 "descricao": f"Preflight cache {max_age}s (> 24h) — mudanças de policy demoram a propagar",
             }
     except Exception as e:
-        return {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": f"Falha no max-age: {str(e)}"}
+        return {
+            "tipo": "SILENT_ERROR",
+            "severidade": "INFO",
+            "descricao": f"Falha no max-age: {str(e)}",
+        }
     return None
 
 

@@ -9,7 +9,17 @@ def run(target, ip, open_ports, banners):
     """
     _ = (ip, open_ports, banners)
 
-    metodos = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "TRACE", "HEAD", "CONNECT"]
+    metodos = [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+        "OPTIONS",
+        "TRACE",
+        "HEAD",
+        "CONNECT",
+    ]
     perigosos = {"PUT", "DELETE", "TRACE", "CONNECT"}
     paths = ["/", "/api/", "/admin/", "/upload/"]
     resultados = []
@@ -48,5 +58,7 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "http_methods",
-        "resultados": resultados if resultados else "Nenhum método HTTP perigoso detectado",
+        "resultados": (
+            resultados if resultados else "Nenhum método HTTP perigoso detectado"
+        ),
     }

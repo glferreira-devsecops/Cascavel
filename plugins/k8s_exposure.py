@@ -21,7 +21,10 @@ K8S_PATHS = {
     "/apis/batch/v1/cronjobs": ("K8S_CRONJOBS", "MEDIO"),
     "/apis/networking.k8s.io/v1/ingresses": ("K8S_INGRESSES", "ALTO"),
     "/apis/rbac.authorization.k8s.io/v1/clusterroles": ("K8S_RBAC", "CRITICO"),
-    "/apis/rbac.authorization.k8s.io/v1/clusterrolebindings": ("K8S_RBAC_BINDINGS", "CRITICO"),
+    "/apis/rbac.authorization.k8s.io/v1/clusterrolebindings": (
+        "K8S_RBAC_BINDINGS",
+        "CRITICO",
+    ),
     "/healthz": ("K8S_HEALTHZ", "BAIXO"),
     "/livez": ("K8S_LIVEZ", "BAIXO"),
     "/readyz": ("K8S_READYZ", "BAIXO"),
@@ -104,9 +107,15 @@ def _check_kubelet(target):
         scheme = "https" if port == 10250 else "http"
         for path, tipo in kubelet_paths.items():
             try:
-                resp = requests.get(f"{scheme}://{target}:{port}{path}", timeout=5, verify=False)
+                resp = requests.get(
+                    f"{scheme}://{target}:{port}{path}", timeout=5, verify=False
+                )
                 if resp.status_code == 200 and len(resp.text) > 10:
-                    sev = "CRITICO" if path in ("/pods", "/runningpods/", "/stats/summary") else "ALTO"
+                    sev = (
+                        "CRITICO"
+                        if path in ("/pods", "/runningpods/", "/stats/summary")
+                        else "ALTO"
+                    )
                     vulns.append(
                         {
                             "tipo": tipo,
@@ -127,8 +136,12 @@ def _check_dashboard(target):
     for port in [443, 8443, 8001, 30000]:
         for path in DASHBOARD_PATHS:
             try:
-                resp = requests.get(f"https://{target}:{port}{path}", timeout=5, verify=False)
-                if resp.status_code == 200 and any(k in resp.text.lower() for k in ["dashboard", "kubernetes"]):
+                resp = requests.get(
+                    f"https://{target}:{port}{path}", timeout=5, verify=False
+                )
+                if resp.status_code == 200 and any(
+                    k in resp.text.lower() for k in ["dashboard", "kubernetes"]
+                ):
                     vulns.append(
                         {
                             "tipo": "K8S_DASHBOARD_UNAUTH",
@@ -201,6 +214,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "k8s_exposure",
         "versao": "2026.1",
-        "tecnicas": ["k8s_api", "kubelet", "dashboard", "etcd", "rbac_enum", "version_disclosure"],
+        "tecnicas": [
+            "k8s_api",
+            "kubelet",
+            "dashboard",
+            "etcd",
+            "rbac_enum",
+            "version_disclosure",
+        ],
         "resultados": vulns if vulns else "Nenhuma exposição K8s detectada",
     }

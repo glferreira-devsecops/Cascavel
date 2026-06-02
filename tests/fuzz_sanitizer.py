@@ -20,10 +20,10 @@ crashes, hangs, and unexpected exceptions in security-critical code paths.
 import os
 import sys
 
+import atheris
+
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import atheris
 
 
 def fuzz_sanitize_html(data: bytes) -> None:

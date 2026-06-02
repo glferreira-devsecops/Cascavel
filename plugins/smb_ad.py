@@ -13,17 +13,26 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
 
     if not shutil.which("smbclient"):
-        return {"plugin": "smb_ad", "resultados": {"erro": "smbclient não encontrado no PATH"}}
+        return {
+            "plugin": "smb_ad",
+            "resultados": {"erro": "smbclient não encontrado no PATH"},
+        }
 
     safe_target = shlex.quote(target)
     resultado = {}
     try:
-        cmd = f"smbclient -L //{safe_target} -N"
-        proc = subprocess.run(cmd, shell=True, capture_output=True, timeout=20, encoding="utf-8")
+        cmd = ["smbclient", "-L", f"//{safe_target}", "-N"]
+        proc = subprocess.run(
+            cmd, shell=False, capture_output=True, timeout=20, encoding="utf-8"
+        )
         saida = proc.stdout
-        compartilhamentos = re.findall(r"^\s*([A-Za-z0-9\$\-_]+)\s+Disk", saida, re.MULTILINE)
+        compartilhamentos = re.findall(
+            r"^\s*([A-Za-z0-9\$\-_]+)\s+Disk", saida, re.MULTILINE
+        )
         resultado["compartilhamentos"] = (
-            compartilhamentos if compartilhamentos else "Nenhum compartilhamento encontrado"
+            compartilhamentos
+            if compartilhamentos
+            else "Nenhum compartilhamento encontrado"
         )
         if proc.stderr:
             resultado["stderr"] = proc.stderr[:500]

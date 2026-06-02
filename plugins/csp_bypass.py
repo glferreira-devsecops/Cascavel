@@ -4,7 +4,11 @@ import re
 import requests
 
 BYPASS_INDICATORS = {
-    "'unsafe-inline'": ("CSP_UNSAFE_INLINE", "ALTO", "unsafe-inline permite XSS inline"),
+    "'unsafe-inline'": (
+        "CSP_UNSAFE_INLINE",
+        "ALTO",
+        "unsafe-inline permite XSS inline",
+    ),
     "'unsafe-eval'": ("CSP_UNSAFE_EVAL", "ALTO", "unsafe-eval permite eval() — XSS!"),
     "data:": ("CSP_DATA_URI", "MEDIO", "data: URI permitida — bypass via data: scheme"),
     "blob:": ("CSP_BLOB_URI", "MEDIO", "blob: URI permitida — bypass via blob: scheme"),
@@ -49,7 +53,11 @@ def _parse_csp(target):
             resp = requests.get(f"http://{target}{page}", timeout=8)
             csp = resp.headers.get("Content-Security-Policy", "")
             csp_ro = resp.headers.get("Content-Security-Policy-Report-Only", "")
-            meta_csp = re.findall(r'<meta[^>]*content-security-policy[^>]*content="([^"]+)"', resp.text, re.IGNORECASE)
+            meta_csp = re.findall(
+                r'<meta[^>]*content-security-policy[^>]*content="([^"]+)"',
+                resp.text,
+                re.IGNORECASE,
+            )
             results[page] = {
                 "csp": csp,
                 "csp_ro": csp_ro,

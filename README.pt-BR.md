@@ -9,7 +9,7 @@
 <h3 align="center">Framework Quântico de Segurança — Motor de Inteligência Red Team</h3>
 
 <p align="center">
-  <strong>85 plugins de segurança · 30+ ferramentas de recon · CLI-first · Cross-platform · Relatórios PDF</strong><br />
+  <strong>108 plugins de segurança · 30+ ferramentas de recon · CLI-first · Cross-platform · Relatórios PDF</strong><br />
   Um comando para enumerar, escanear, atacar, analisar e gerar relatórios de pentest nível enterprise.
 </p>
 
@@ -28,7 +28,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-00D4FF.svg?style=flat-square" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
-  <img src="https://img.shields.io/badge/Plugins-85-blueviolet.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Plugins-108-blueviolet.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Plataforma-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/v3.0.1-C89F5D.svg?style=flat-square" /></a>
   <img src="https://img.shields.io/badge/Relat%C3%B3rios-PDF%20|%20MD%20|%20JSON-28A745.svg?style=flat-square" />
@@ -101,7 +101,7 @@ A maioria dos workflows de pentest envolve **mais de 20 ferramentas separadas**,
 
 | Capacidade | Cascavel | Outras Ferramentas |
 |:---|:---|:---|
-| **Pipeline unificado** | 85 plugins + 30 ferramentas em um comando | Scripts fragmentados |
+| **Pipeline unificado** | 108 plugins + 30 ferramentas em um comando | Scripts fragmentados |
 | **Dashboard ao vivo** | Split-screen com stats em tempo real + intel | Sem feedback ao vivo |
 | **Relatórios PDF** | 12 disclaimers legais, CVSS v4.0, PTES | Formatação manual |
 | **UX Terminal** | Preloader cinematográfico, animações fade | Plain stdout |
@@ -198,7 +198,7 @@ python3 cascavel.py -t target.com -o json  # JSON para CI/CD
 
 ---
 
-## 🔌 Arsenal de Plugins (85)
+## 🔌 Arsenal de Plugins (108)
 
 Zero tolerância a falsos positivos. Interface `run()` padronizada. Cada plugin retorna resultados estruturados com classificação de severidade.
 
@@ -271,7 +271,7 @@ python3 cascavel.py -t example.com --pdf      # Gerar relatório PDF
 python3 cascavel.py -t example.com -o json    # Saída JSON (integração CI/CD)
 python3 cascavel.py -t example.com -q         # Modo silencioso (sem animações)
 python3 cascavel.py --plugins-only            # Pular ferramentas externas
-python3 cascavel.py --list-plugins            # Listar todos os 85 plugins
+python3 cascavel.py --list-plugins            # Listar todos os 108 plugins
 python3 cascavel.py --check-tools             # Verificar ferramentas instaladas
 ```
 
@@ -321,10 +321,11 @@ O Cascavel é blindado contra vetores de ataque modernos que miram as próprias 
 | Vetor | Mitigação |
 |:---|:---|
 | **Injeção de terminal** (CSI/OSC/DCS) | `_sanitize_output()` remove escapes ANSI perigosos de toda saída, preservando apenas códigos de cor SGR |
-| **Timeout de plugin** | Enforcement baseado em `SIGALRM` previne plugins de travarem indefinidamente |
-| **Deadlock em signal handler** | Handler SIGINT usa `os.write()` (async-signal-safe) em vez de `print()`/logging |
-| **Vazamento de processos zombie** | `os.killpg()` mata grupos de processos inteiros no timeout |
+| **Path Traversal Sandboxing** | Geração de relatórios rigorosamente isolada com `pathlib.resolve().is_relative_to()`, impedindo gravação arbitrária de arquivos |
+| **Server-Side Request Forgery (SSRF)** | IPs de metadados da nuvem (`169.254.169.254`) bloqueados e `allow_redirects=False` forçado nas requisições do motor |
+| **ReDoS & Log Injection (CRLF)** | Limite de memória pré-processamento de regex e sanitização restrita de quebras de carro (`\r`) para imunidade CWE-117 |
 | **Injeção de input** | Todos os alvos de ferramentas externas sanitizados com `shlex.quote()` |
+| **Desserialização Segura** | Bloqueio absoluto do módulo `pickle` e enforcing de `yaml.safe_load` para prevenção total contra RCE |
 
 ### Proteções do Instalador (v2.4.0 — 15 hardenings)
 
@@ -355,7 +356,7 @@ Cascavel/
 ├── cascavel.py           # Motor principal (3000+ linhas)
 ├── report_generator.py   # Relatórios PDF (ReportLab Platypus)
 ├── install.sh            # Instalador universal (v2.4.0, 15 hardenings)
-├── plugins/              # 85 plugins de segurança
+├── plugins/              # 108 plugins de segurança
 │   ├── xss_scanner.py    #   └── Interface run() padronizada
 │   ├── jwt_analyzer.py
 │   └── ...

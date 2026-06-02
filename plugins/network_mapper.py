@@ -21,13 +21,15 @@ def run(target, ip, open_ports, banners):
         try:
             proc = subprocess.run(
                 f"echo {safe_host} | asnmap -silent",
-                shell=True,
+                shell=False,
                 capture_output=True,
                 timeout=30,
                 encoding="utf-8",
             )
             ranges = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
-            resultado["asn_ranges"] = ranges if ranges else "Nenhum range ASN encontrado"
+            resultado["asn_ranges"] = (
+                ranges if ranges else "Nenhum range ASN encontrado"
+            )
         except subprocess.TimeoutExpired:
             resultado["asn_ranges"] = "Timeout (30s)"
         except Exception as e:
@@ -42,7 +44,7 @@ def run(target, ip, open_ports, banners):
             proc = subprocess.run(
                 "mapcidr -silent -count",
                 input=ranges_input,
-                shell=True,
+                shell=False,
                 capture_output=True,
                 timeout=15,
                 encoding="utf-8",
@@ -55,14 +57,22 @@ def run(target, ip, open_ports, banners):
     try:
         proc = subprocess.run(
             f"whois {safe_host}",
-            shell=True,
+            shell=False,
             capture_output=True,
             timeout=15,
             encoding="utf-8",
         )
         whois_lines = proc.stdout.splitlines()
         whois_info = {}
-        keys = ["OrgName", "Organization", "NetName", "CIDR", "Country", "descr", "origin"]
+        keys = [
+            "OrgName",
+            "Organization",
+            "NetName",
+            "CIDR",
+            "Country",
+            "descr",
+            "origin",
+        ]
         for line in whois_lines:
             for key in keys:
                 if line.strip().lower().startswith(key.lower()):

@@ -107,11 +107,31 @@ DANGEROUS_HEADERS = [
 
 # CSP directives that indicate weak configuration
 CSP_WEAK_DIRECTIVES = {
-    "unsafe-inline": ("CSP_UNSAFE_INLINE", "ALTO", "CSP permite unsafe-inline — XSS não mitigado"),
-    "unsafe-eval": ("CSP_UNSAFE_EVAL", "ALTO", "CSP permite unsafe-eval — eval()/Function() habilitados"),
-    "data:": ("CSP_DATA_URI", "MEDIO", "CSP permite data: URI — bypass de CSP via data: URLs"),
-    "blob:": ("CSP_BLOB_URI", "BAIXO", "CSP permite blob: URI — possível bypass via Blob URLs"),
-    "*": ("CSP_WILDCARD", "CRITICO", "CSP com wildcard (*) — qualquer origem permitida"),
+    "unsafe-inline": (
+        "CSP_UNSAFE_INLINE",
+        "ALTO",
+        "CSP permite unsafe-inline — XSS não mitigado",
+    ),
+    "unsafe-eval": (
+        "CSP_UNSAFE_EVAL",
+        "ALTO",
+        "CSP permite unsafe-eval — eval()/Function() habilitados",
+    ),
+    "data:": (
+        "CSP_DATA_URI",
+        "MEDIO",
+        "CSP permite data: URI — bypass de CSP via data: URLs",
+    ),
+    "blob:": (
+        "CSP_BLOB_URI",
+        "BAIXO",
+        "CSP permite blob: URI — possível bypass via Blob URLs",
+    ),
+    "*": (
+        "CSP_WILDCARD",
+        "CRITICO",
+        "CSP com wildcard (*) — qualquer origem permitida",
+    ),
 }
 
 
@@ -125,7 +145,7 @@ def _fetch_headers(target):
             resp = requests.get(
                 f"{scheme}://{target}",
                 timeout=10,
-                verify=False,
+                verify=False,  # nosec B501
                 allow_redirects=True,
                 headers={"User-Agent": "Cascavel/3.0 SecurityAudit"},
             )
@@ -301,7 +321,9 @@ def run(target, ip, open_ports, banners):
         "score": f"{score}% ({len(present)}/{len(REQUIRED_HEADERS)} headers)",
         "headers_presentes": present,
         "headers_ausentes": missing,
-        "info_disclosure": disclosed if disclosed else "Nenhum header de info disclosure",
+        "info_disclosure": (
+            disclosed if disclosed else "Nenhum header de info disclosure"
+        ),
         "csp_raw": csp if csp else "Ausente",
         "resultados": vulns if vulns else "Headers de segurança em conformidade OWASP",
         "severidade": max_sev,

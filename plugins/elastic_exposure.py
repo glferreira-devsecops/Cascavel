@@ -8,7 +8,11 @@ ELASTIC_PATHS = {
     "/": ("ES_ROOT", "MEDIO", "Elasticsearch root acessível"),
     "/_cluster/health": ("ES_CLUSTER_HEALTH", "ALTO", "Cluster health exposto"),
     "/_cluster/stats": ("ES_CLUSTER_STATS", "ALTO", "Estatísticas do cluster"),
-    "/_cluster/settings": ("ES_CLUSTER_SETTINGS", "CRITICO", "Configurações do cluster"),
+    "/_cluster/settings": (
+        "ES_CLUSTER_SETTINGS",
+        "CRITICO",
+        "Configurações do cluster",
+    ),
     "/_cat/indices?v": ("ES_INDICES", "CRITICO", "Listagem de índices"),
     "/_cat/nodes?v": ("ES_NODES", "ALTO", "Nós do cluster"),
     "/_cat/shards?v": ("ES_SHARDS", "MEDIO", "Shards expostos"),
@@ -26,7 +30,19 @@ ELASTIC_PATHS = {
     "/_tasks": ("ES_TASKS", "MEDIO", "Running tasks"),
 }
 
-PII_PATTERNS = ["email", "password", "ssn", "credit_card", "phone", "address", "name", "cpf", "rg", "token", "secret"]
+PII_PATTERNS = [
+    "email",
+    "password",
+    "ssn",
+    "credit_card",
+    "phone",
+    "address",
+    "name",
+    "cpf",
+    "rg",
+    "token",
+    "secret",
+]
 
 
 def _probe_elastic(target, port):
@@ -61,14 +77,18 @@ def _probe_elastic(target, port):
                     if pii_found:
                         vuln["pii_indicators"] = pii_found
                         vuln["severidade"] = "CRITICO"
-                        vuln["descricao"] += f" PII detectado: {', '.join(pii_found[:5])}"
+                        vuln[
+                            "descricao"
+                        ] += f" PII detectado: {', '.join(pii_found[:5])}"
 
                 # Check snapshots
                 if "snapshot" in path:
                     try:
                         snapshots = resp.json()
                         if snapshots:
-                            vuln["descricao"] = "Snapshots de backup acessíveis — exfiltração de dados!"
+                            vuln["descricao"] = (
+                                "Snapshots de backup acessíveis — exfiltração de dados!"
+                            )
                     except Exception:
                         pass
 
@@ -91,8 +111,14 @@ def _check_kibana(target):
     for port, path, label in kibana_paths:
         try:
             resp = requests.get(f"http://{target}:{port}{path}", timeout=5)
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in ["kibana", "opensearch", "elastic"]):
-                sev = "CRITICO" if "dev_tools" in path or "saved_objects" in path else "ALTO"
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["kibana", "opensearch", "elastic"]
+            ):
+                sev = (
+                    "CRITICO"
+                    if "dev_tools" in path or "saved_objects" in path
+                    else "ALTO"
+                )
                 vulns.append(
                     {
                         "tipo": f"{label}_UNAUTH",

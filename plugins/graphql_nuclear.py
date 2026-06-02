@@ -47,22 +47,30 @@ def check_graphql_ast_dos(url: str, session: requests.Session) -> tuple[bool, st
         try:
             # 1. Establish baseline
             start_baseline = time.time()
-            resp_baseline = session.post(endpoint, json=baseline_query, timeout=5, verify=False)
+            resp_baseline = session.post(
+                endpoint, json=baseline_query, timeout=5, verify=False
+            )
             baseline_time = time.time() - start_baseline
 
             # If the endpoint doesn't support GraphQL, skip it
-            if resp_baseline.status_code not in [200, 400] or "__schema" not in resp_baseline.text:
+            if (
+                resp_baseline.status_code not in [200, 400]
+                or "__schema" not in resp_baseline.text
+            ):
                 continue
 
             # 2. Trigger the Nuclear Payload
             start_bomb = time.time()
             try:
-                resp_bomb = session.post(endpoint, json=nuclear_query, timeout=10, verify=False)
+                resp_bomb = session.post(
+                    endpoint, json=nuclear_query, timeout=10, verify=False
+                )
                 bomb_time = time.time() - start_bomb
 
                 # Check if the server failed securely (e.g., returned 400 Max Depth Reached)
                 if resp_bomb.status_code == 400 and (
-                    "depth limit" in resp_bomb.text.lower() or "too many" in resp_bomb.text.lower()
+                    "depth limit" in resp_bomb.text.lower()
+                    or "too many" in resp_bomb.text.lower()
                 ):
                     continue  # Protected by query limiting
 
@@ -75,10 +83,16 @@ def check_graphql_ast_dos(url: str, session: requests.Session) -> tuple[bool, st
 
                 # If the server crashed
                 if resp_bomb.status_code >= 500:
-                    return True, "Server returned 5xx error when processing mathematically complex AST payload."
+                    return (
+                        True,
+                        "Server returned 5xx error when processing mathematically complex AST payload.",
+                    )
 
             except requests.exceptions.Timeout:
-                return True, "Server timed out completely while parsing/resolving the exponential AST payload."
+                return (
+                    True,
+                    "Server timed out completely while parsing/resolving the exponential AST payload.",
+                )
 
         except requests.exceptions.RequestException as e:
             logger.debug(f"GraphQL AST check failed on {endpoint}: {e}")

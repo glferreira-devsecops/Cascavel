@@ -215,7 +215,13 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "fast_webshell",
         "versao": "2026.1",
-        "tecnicas": ["options_method", "put_acceptance", "webdav_detection", "extension_test", "upload_path_enum"],
+        "tecnicas": [
+            "options_method",
+            "put_acceptance",
+            "webdav_detection",
+            "extension_test",
+            "upload_path_enum",
+        ],
         "resultados": {
             "vulns": vulns,
             "intel": intel,

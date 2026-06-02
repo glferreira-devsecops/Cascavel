@@ -40,7 +40,12 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     try:
         # Regex/Byte patterns to detect potentially sensitive exported functions or strings
         # looking like crypto keys or validation flags inside the WebAssembly binary Data Section
-        sensitive_patterns = [b"verify_signature", b"validate_transaction", b"decrypt_key", b"admin_override"]
+        sensitive_patterns = [
+            b"verify_signature",
+            b"validate_transaction",
+            b"decrypt_key",
+            b"admin_override",
+        ]
 
         for endpoint in test_endpoints:
             req = (
@@ -70,7 +75,9 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                     if not chunk:
                         break
                     response_data += chunk
-                    if len(response_data) > 524288:  # Maximum 512KB parse for performance
+                    if (
+                        len(response_data) > 524288
+                    ):  # Maximum 512KB parse for performance
                         break
 
                 # Verify WASM Magic Header \x00asm (0x00 0x61 0x73 0x6d)

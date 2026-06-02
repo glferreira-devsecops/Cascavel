@@ -4,7 +4,7 @@
 # ║  CASCAVEL — Quantum Security Framework                           ║
 # ║  One-Command Universal Installer v2.4.0 (Bulletproof 2026)       ║
 # ║  By RET Tecnologia (https://rettecnologia.org)                   ║
-# ║  Maintainer: DevFerreiraG <devferreirag@proton.me>               ║
+# ║  Maintainer: DevFerreiraG <contato@rettecnologia.org>              ║
 # ║                                                                   ║
 # ║  EDGE-CASE HARDENING (2026):                                      ║
 # ║  • trap cleanup para diretórios temporários                       ║
@@ -29,8 +29,17 @@
 # ╚═══════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
-# ─── Security: Restringir umask ──────────────────────────────────────
+# ─── Security: Restringir umask & Limites de Recursos (Anti-Forkbomb) ───────────────────
 umask 077
+# Limita processos e descritores de arquivo (Resource Exhaustion)
+ulimit -u 2048 2>/dev/null || true
+ulimit -n 4096 2>/dev/null || true
+
+# ─── Security: Anti-Hooking / Rootkit Verification ────────────────────
+if [ -n "${LD_PRELOAD:-}" ] || [ -n "${LD_LIBRARY_PATH:-}" ]; then
+    echo -e "\033[1;33m  ⚠ AVISO DE SEGURANÇA: LD_PRELOAD ou LD_LIBRARY_PATH detectado.\033[0m"
+    echo -e "\033[2m    Isso pode indicar hooking malicioso de bibliotecas (Rootkit / Malware).\033[0m"
+fi
 
 # ─── Security: Locale UTF-8 enforcement ──────────────────────────────
 # Previne encoding bugs em pipes/subprocessos com chars não-ASCII
@@ -83,19 +92,23 @@ _next_step() {
     ((CURRENT_STEP++)) || true
 }
 
-# ─── Spinner (visual feedback for long operations) ───────────────────
+# ─── Spinner (Unicode Avançado & Gradient Effects) ───────────────────
 _SPINNER_PID=""
 _spinner_start() {
     local msg="${1:-Processando...}"
     if [ "$IS_TTY" = "true" ]; then
         (
-            local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+            local frames=('⣾' '⣽' '⣻' '⢿' '⡿' '⣟' '⣯' '⣷')
+            # Gradiente de Verde-Ciano usando ANSI 256
+            local colors=('\033[38;5;46m' '\033[38;5;47m' '\033[38;5;48m' '\033[38;5;49m' '\033[38;5;50m' '\033[38;5;51m' '\033[38;5;45m' '\033[38;5;44m')
             local i=0
             while true; do
-                local frame="${frames:i%${#frames}:1}"
-                printf "\r  ${CYAN}%s${NC} %s" "$frame" "$msg"
+                local frame_idx=$((i % ${#frames[@]}))
+                local frame="${frames[$frame_idx]}"
+                local color="${colors[$frame_idx]}"
+                printf "\r  %b%s${NC} %s\033[K" "$color" "$frame" "$msg"
                 i=$((i + 1))
-                sleep 0.1
+                sleep 0.08
             done
         ) &
         _SPINNER_PID=$!
@@ -212,7 +225,18 @@ error()   { _spinner_stop; echo -e "  ${RED}✗${NC} $1"; _log "ERROR: $1"; exit
 step()    {
     _spinner_stop
     _next_step
-    echo -e "\n  ${MAGENTA}[${CURRENT_STEP}/${TOTAL_STEPS}]${NC} ${CYAN}▶${NC} ${BOLD}$1${NC}"
+
+    # Barra de Progresso Unicode Suave
+    local perc=$(( CURRENT_STEP * 100 / TOTAL_STEPS ))
+    local filled=$(( CURRENT_STEP * 30 / TOTAL_STEPS ))
+    local empty=$(( 30 - filled ))
+    local bar=""
+
+    for ((i=0; i<filled; i++)); do bar="${bar}█"; done
+    if [ $empty -gt 0 ]; then bar="${bar}▓"; empty=$((empty-1)); fi
+    for ((i=0; i<empty; i++)); do bar="${bar}░"; done
+
+    echo -e "\n  \033[38;5;33m${bar}\033[0m ${MAGENTA}[${perc}%]${NC} ${CYAN}▶${NC} ${BOLD}$1${NC}"
     _log "STEP [${CURRENT_STEP}/${TOTAL_STEPS}]: $1"
 }
 dimlog()  { echo -e "    ${DIM}$1${NC}"; }
@@ -291,9 +315,10 @@ _auto_clone_if_needed() {
         TMP_TAR=$(mktemp "${TMPDIR:-/tmp}/cascavel-XXXXXXXX.tar.gz")
         _spinner_start "Baixando tarball do repositório..."
         if command -v curl &>/dev/null; then
-            curl -fsSL "$TARBALL_URL" -o "$TMP_TAR" 2>/dev/null
+            # Técnicas Combinadas: Força TLS 1.2+ e protocolo HTTPS
+            curl --proto '=https' --tlsv1.2 -fsSL "$TARBALL_URL" -o "$TMP_TAR" 2>/dev/null
         else
-            wget -q "$TARBALL_URL" -O "$TMP_TAR" 2>/dev/null
+            wget -q --secure-protocol=TLSv1_2 "$TARBALL_URL" -O "$TMP_TAR" 2>/dev/null
         fi
 
         _spinner_stop

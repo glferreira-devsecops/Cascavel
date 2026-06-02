@@ -80,7 +80,11 @@ def _check_cicd_files(target):
         try:
             resp = requests.get(f"http://{target}{path}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 20:
-                sev = "CRITICO" if any(k in tipo for k in ["STATE", "VARS", "ENV_FILE", "ENV_PROD"]) else "ALTO"
+                sev = (
+                    "CRITICO"
+                    if any(k in tipo for k in ["STATE", "VARS", "ENV_FILE", "ENV_PROD"])
+                    else "ALTO"
+                )
                 vuln = {
                     "tipo": f"CICD_{tipo}",
                     "path": path,

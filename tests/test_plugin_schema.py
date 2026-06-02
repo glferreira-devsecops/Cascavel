@@ -24,7 +24,8 @@ def _discover_plugins() -> list[tuple[str, str]]:
     return [
         (os.path.splitext(os.path.basename(f))[0], f)
         for f in files
-        if not os.path.basename(f).startswith("__") and os.path.basename(f) != "schema.py"
+        if not os.path.basename(f).startswith("__")
+        and os.path.basename(f) != "schema.py"
     ]
 
 
@@ -65,16 +66,18 @@ class TestPluginDiscovery:
 
         sig = inspect.signature(mod.run)
         params = list(sig.parameters.keys())
-        assert len(params) >= 4, (
-            f"Plugin {name}.run() has {len(params)} params, expected >= 4: (target, ip, ports, banners). Got: {params}"
-        )
+        assert (
+            len(params) >= 4
+        ), f"Plugin {name}.run() has {len(params)} params, expected >= 4: (target, ip, ports, banners). Got: {params}"
 
 
 class TestPluginSchema:
     """Tests for plugin return value schema compliance."""
 
     @pytest.mark.parametrize("name,path", PLUGINS[:5], ids=[p[0] for p in PLUGINS[:5]])
-    def test_plugin_returns_dict(self, name: str, path: str, mock_target, mock_ip, mock_ports, mock_banners):
+    def test_plugin_returns_dict(
+        self, name: str, path: str, mock_target, mock_ip, mock_ports, mock_banners
+    ):
         """Plugin run() should return a dict."""
         mod = _load_plugin(name, path)
         assert mod is not None
@@ -84,10 +87,14 @@ class TestPluginSchema:
             # Network errors are expected in test env — skip
             pytest.skip(f"Plugin {name} raised network error (expected in test)")
         if result is not None:
-            assert isinstance(result, dict), f"Plugin {name}.run() returned {type(result).__name__}, expected dict"
+            assert isinstance(
+                result, dict
+            ), f"Plugin {name}.run() returned {type(result).__name__}, expected dict"
 
     @pytest.mark.parametrize("name,path", PLUGINS[:5], ids=[p[0] for p in PLUGINS[:5]])
-    def test_plugin_result_has_plugin_key(self, name: str, path: str, mock_target, mock_ip, mock_ports, mock_banners):
+    def test_plugin_result_has_plugin_key(
+        self, name: str, path: str, mock_target, mock_ip, mock_ports, mock_banners
+    ):
         """Plugin result dict should contain 'plugin' key."""
         mod = _load_plugin(name, path)
         assert mod is not None

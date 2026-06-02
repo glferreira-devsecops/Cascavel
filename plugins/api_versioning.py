@@ -26,7 +26,15 @@ API_PREFIXES = [
     "/api/debug",
 ]
 
-DEPRECATED_INDICATORS = ["deprecated", "sunset", "end-of-life", "legacy", "x-api-warn", "x-api-deprecated", "obsolete"]
+DEPRECATED_INDICATORS = [
+    "deprecated",
+    "sunset",
+    "end-of-life",
+    "legacy",
+    "x-api-warn",
+    "x-api-deprecated",
+    "obsolete",
+]
 
 HEADER_VERSION_HEADERS = [
     "X-API-Version",
@@ -77,7 +85,10 @@ def _enumerate_versions(target):
 
                 # Check for different auth requirements
                 if resp.status_code == 200 and (
-                    "internal" in prefix or "admin" in prefix or "debug" in prefix or "private" in prefix
+                    "internal" in prefix
+                    or "admin" in prefix
+                    or "debug" in prefix
+                    or "private" in prefix
                 ):
                     vulns.append(
                         {

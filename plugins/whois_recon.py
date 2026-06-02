@@ -87,7 +87,11 @@ def _parse_whois(raw):
     for key, pattern in patterns.items():
         matches = re.findall(pattern, raw, re.IGNORECASE)
         if matches:
-            fields[key] = matches[0].strip() if len(matches) == 1 else [m.strip() for m in matches]
+            fields[key] = (
+                matches[0].strip()
+                if len(matches) == 1
+                else [m.strip() for m in matches]
+            )
 
     # Nameservers
     ns = re.findall(r"Name\s*Server:\s*(.+)", raw, re.IGNORECASE)
@@ -114,7 +118,11 @@ def _parse_whois(raw):
 def _rdap_lookup(target):
     """RDAP JSON lookup — structured data."""
     try:
-        resp = requests.get(f"{RDAP_BOOTSTRAP}{target}", timeout=10, headers={"Accept": "application/rdap+json"})
+        resp = requests.get(
+            f"{RDAP_BOOTSTRAP}{target}",
+            timeout=10,
+            headers={"Accept": "application/rdap+json"},
+        )
         if resp.status_code == 200:
             return resp.json()
         return {"error": f"HTTP {resp.status_code}"}
@@ -125,7 +133,11 @@ def _rdap_lookup(target):
 def _rdap_ip_lookup(ip):
     """RDAP IP lookup — network/ASN info."""
     try:
-        resp = requests.get(f"{IP_RDAP_BOOTSTRAP}{ip}", timeout=10, headers={"Accept": "application/rdap+json"})
+        resp = requests.get(
+            f"{IP_RDAP_BOOTSTRAP}{ip}",
+            timeout=10,
+            headers={"Accept": "application/rdap+json"},
+        )
         if resp.status_code == 200:
             return resp.json()
         return {"error": f"HTTP {resp.status_code}"}
@@ -186,24 +198,32 @@ def _analyze_domain_age(creation_date_str):
         # Try ISO format
         for fmt in ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"]:
             try:
-                created = datetime.datetime.strptime(creation_date_str[:19], fmt[: len(creation_date_str[:19])])
+                created = datetime.datetime.strptime(
+                    creation_date_str[:19], fmt[: len(creation_date_str[:19])]
+                )
                 age_days = (datetime.datetime.now() - created).days
                 return {
                     "created": creation_date_str,
                     "age_days": age_days,
                     "age_years": round(age_days / 365.25, 1),
-                    "risk": "CRITICO"
-                    if age_days < 30
-                    else "ALTO"
-                    if age_days < 180
-                    else "MEDIO"
-                    if age_days < 365
-                    else "BAIXO",
-                    "nota": "Domínio muito recente — possível phishing!"
-                    if age_days < 30
-                    else "Domínio jovem"
-                    if age_days < 365
-                    else "Domínio estabelecido",
+                    "risk": (
+                        "CRITICO"
+                        if age_days < 30
+                        else (
+                            "ALTO"
+                            if age_days < 180
+                            else "MEDIO" if age_days < 365 else "BAIXO"
+                        )
+                    ),
+                    "nota": (
+                        "Domínio muito recente — possível phishing!"
+                        if age_days < 30
+                        else (
+                            "Domínio jovem"
+                            if age_days < 365
+                            else "Domínio estabelecido"
+                        )
+                    ),
                 }
             except ValueError:
                 continue
@@ -247,23 +267,27 @@ def _check_expiry(expiry_str):
     try:
         for fmt in ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d"]:
             try:
-                expiry = datetime.datetime.strptime(expiry_str[:19], fmt[: len(expiry_str[:19])])
+                expiry = datetime.datetime.strptime(
+                    expiry_str[:19], fmt[: len(expiry_str[:19])]
+                )
                 days_left = (expiry - datetime.datetime.now()).days
                 return {
                     "expiry_date": expiry_str,
                     "days_remaining": days_left,
-                    "risk": "CRITICO"
-                    if days_left < 0
-                    else "ALTO"
-                    if days_left < 30
-                    else "MEDIO"
-                    if days_left < 90
-                    else "BAIXO",
-                    "nota": "DOMÍNIO EXPIRADO!"
-                    if days_left < 0
-                    else f"Expira em {days_left} dias"
-                    if days_left < 90
-                    else "OK",
+                    "risk": (
+                        "CRITICO"
+                        if days_left < 0
+                        else (
+                            "ALTO"
+                            if days_left < 30
+                            else "MEDIO" if days_left < 90 else "BAIXO"
+                        )
+                    ),
+                    "nota": (
+                        "DOMÍNIO EXPIRADO!"
+                        if days_left < 0
+                        else f"Expira em {days_left} dias" if days_left < 90 else "OK"
+                    ),
                 }
             except ValueError:
                 continue
@@ -288,7 +312,9 @@ def run(target, ip, open_ports, banners):
     # 1. Domain WHOIS (native)
     raw_whois = _whois_native(target)
     if isinstance(raw_whois, str) and raw_whois.startswith("WHOIS_ERROR"):
-        resultado["vulns"].append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": raw_whois})
+        resultado["vulns"].append(
+            {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": raw_whois}
+        )
         whois_fields = {}
     else:
         whois_fields = _parse_whois(raw_whois)
@@ -297,7 +323,13 @@ def run(target, ip, open_ports, banners):
     # 2. RDAP (structured JSON)
     rdap_data = _rdap_lookup(target)
     if isinstance(rdap_data, dict) and "error" in rdap_data:
-        resultado["vulns"].append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": rdap_data["error"]})
+        resultado["vulns"].append(
+            {
+                "tipo": "SILENT_ERROR",
+                "severidade": "INFO",
+                "descricao": rdap_data["error"],
+            }
+        )
     else:
         rdap_info = _extract_rdap_info(rdap_data)
         if rdap_info:

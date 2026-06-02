@@ -144,10 +144,14 @@ def _inject_oob(target, param):
         for http_method in ["GET", "POST"]:
             try:
                 if http_method == "GET":
-                    requests.get(f"http://{target}/", params={param: payload}, timeout=5)
+                    requests.get(
+                        f"http://{target}/", params={param: payload}, timeout=5
+                    )
                 else:
                     requests.post(f"http://{target}/", data={param: payload}, timeout=5)
-                injected.append({"tecnica": method, "http": http_method, "payload": payload[:60]})
+                injected.append(
+                    {"tecnica": method, "http": http_method, "payload": payload[:60]}
+                )
                 break
             except Exception:
                 continue

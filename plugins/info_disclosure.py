@@ -5,7 +5,11 @@ import requests
 # ──────────── SENSITIVE PATHS (2026 Expanded) ────────────
 SENSITIVE_PATHS = [
     # Environment files
-    ("/.env", "CRITICO", ["DB_PASSWORD", "SECRET_KEY", "API_KEY", "APP_KEY", "AWS_SECRET"]),
+    (
+        "/.env",
+        "CRITICO",
+        ["DB_PASSWORD", "SECRET_KEY", "API_KEY", "APP_KEY", "AWS_SECRET"],
+    ),
     ("/.env.production", "CRITICO", ["DB_PASSWORD", "SECRET_KEY"]),
     ("/.env.local", "ALTO", ["DB_PASSWORD", "SECRET_KEY"]),
     ("/.env.staging", "ALTO", ["DB_PASSWORD", "SECRET_KEY"]),

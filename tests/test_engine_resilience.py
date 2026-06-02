@@ -24,7 +24,12 @@ def test_engine_handles_plugin_crash():
 
         try:
             res = cascavel._exec_plugin(
-                path="/fake/path.py", name="fake_plugin", target="example.com", ip="1.1.1.1", ports=[], banners={}
+                path="/fake/path.py",
+                name="fake_plugin",
+                target="example.com",
+                ip="1.1.1.1",
+                ports=[],
+                banners={},
             )
             assert "erro" in res
             assert "CRASH FATAL DO PLUGIN" in res["erro"]
@@ -34,7 +39,9 @@ def test_engine_handles_plugin_crash():
 
 def test_engine_handles_tool_timeout():
     """Testa o comportamento da engine ao receber um timeout em ferramentas externas"""
-    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="fake", timeout=1)):
+    with patch(
+        "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="fake", timeout=1)
+    ):
         try:
             res = cascavel.run_cmd("fake_tool --target example.com", timeout=1)
             assert "TIMEOUT" in res or res == ""

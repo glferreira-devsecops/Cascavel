@@ -40,7 +40,10 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
 
     if not shutil.which("nmap"):
-        return {"plugin": "nmap_advanc", "resultados": {"erro": "nmap não encontrado no PATH"}}
+        return {
+            "plugin": "nmap_advanc",
+            "resultados": {"erro": "nmap não encontrado no PATH"},
+        }
 
     safe_target = shlex.quote(target)
     nmap_cmd = f"nmap -sC -sV -p- --min-rate 5000 -T4 {safe_target} -oX -"
@@ -48,7 +51,7 @@ def run(target, ip, open_ports, banners):
     try:
         proc = subprocess.run(
             nmap_cmd,
-            shell=True,
+            shell=False,
             capture_output=True,
             timeout=300,
             encoding="utf-8",

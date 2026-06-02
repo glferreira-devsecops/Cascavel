@@ -3,7 +3,15 @@
 import requests
 
 CT_JSON = "application/json"
-GQL_ENDPOINTS = ["/graphql", "/graphiql", "/api/graphql", "/v1/graphql", "/query", "/gql", "/api/v1/graphql"]
+GQL_ENDPOINTS = [
+    "/graphql",
+    "/graphiql",
+    "/api/graphql",
+    "/v1/graphql",
+    "/query",
+    "/gql",
+    "/api/v1/graphql",
+]
 
 # ──────────── INJECTION PAYLOADS (2026 Expanded) ────────────
 INJECTION_PAYLOADS = {
@@ -120,7 +128,18 @@ def _test_injections(target, endpoint):
                     pass
 
             # Check for SQL error reflection if not already caught
-            if any(e in body for e in ["syntax error", "sql", "mysql", "postgres", "sqlite", "oracle", "mssql"]):
+            if any(
+                e in body
+                for e in [
+                    "syntax error",
+                    "sql",
+                    "mysql",
+                    "postgres",
+                    "sqlite",
+                    "oracle",
+                    "mssql",
+                ]
+            ):
                 vulns.append(
                     {
                         "tipo": f"GRAPHQL_ERROR_LEAK_{name}",
@@ -171,9 +190,15 @@ def _test_batched_attack(target, endpoint):
     url = f"http://{target}{endpoint}"
     batch = []
     for i in range(50):
-        batch.append({"query": f'mutation {{ login(email: "admin@target.com", password: "pass{i}") {{ token }} }}'})
+        batch.append(
+            {
+                "query": f'mutation {{ login(email: "admin@target.com", password: "pass{i}") {{ token }} }}'
+            }
+        )
     try:
-        resp = requests.post(url, json=batch, timeout=10, headers={"Content-Type": CT_JSON})
+        resp = requests.post(
+            url, json=batch, timeout=10, headers={"Content-Type": CT_JSON}
+        )
         if resp.status_code == 200:
             try:
                 results = resp.json()
@@ -223,6 +248,15 @@ def run(target, ip, open_ports, banners):
         "plugin": "graphql_injection",
         "versao": "2026.1",
         "endpoint": endpoint,
-        "tecnicas": ["sqli", "nosqli", "ssrf", "xss", "os_command", "dos", "mutation_abuse", "batch_bruteforce"],
+        "tecnicas": [
+            "sqli",
+            "nosqli",
+            "ssrf",
+            "xss",
+            "os_command",
+            "dos",
+            "mutation_abuse",
+            "batch_bruteforce",
+        ],
         "resultados": vulns if vulns else "Nenhuma injection GraphQL detectada",
     }

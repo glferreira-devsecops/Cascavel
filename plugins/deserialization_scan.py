@@ -35,9 +35,16 @@ JAVA_PAYLOADS = [
     },
     {
         "nome": "JAVA_YSOSERIAL_PROBE",
-        "data": base64.b64decode("rO0ABXNyADJvcmcuYXBhY2hlLmNvbW1vbnMuY29sbGVjdGlvbnMu"),
+        "data": base64.b64decode(
+            "rO0ABXNyADJvcmcuYXBhY2hlLmNvbW1vbnMuY29sbGVjdGlvbnMu"
+        ),
         "content_type": "application/x-java-serialized-object",
-        "indicadores": ["commons", "collections", "transformer", "InvocationTargetException"],
+        "indicadores": [
+            "commons",
+            "collections",
+            "transformer",
+            "InvocationTargetException",
+        ],
     },
 ]
 
@@ -46,7 +53,13 @@ PHP_PAYLOADS = [
         "nome": "PHP_SERIAL_STDCLASS",
         "data": 'O:8:"stdClass":1:{s:4:"test";s:4:"test";}',
         "content_type": "application/x-www-form-urlencoded",
-        "indicadores": ["unserialize", "stdClass", "__wakeup", "__destruct", "allowed_classes"],
+        "indicadores": [
+            "unserialize",
+            "stdClass",
+            "__wakeup",
+            "__destruct",
+            "allowed_classes",
+        ],
     },
     {
         "nome": "PHP_PHAR_PROBE",
@@ -59,9 +72,18 @@ PHP_PAYLOADS = [
 PYTHON_PAYLOADS = [
     {
         "nome": "PYTHON_PICKLE",
-        "data": base64.b64encode(b"\x80\x04\x95\x05\x00\x00\x00\x00\x00\x00\x00\x8c\x01X\x94.").decode(),
+        "data": base64.b64encode(
+            b"\x80\x04\x95\x05\x00\x00\x00\x00\x00\x00\x00\x8c\x01X\x94."
+        ).decode(),
         "content_type": "application/octet-stream",
-        "indicadores": ["pickle", "unpickle", "cPickle", "Unpickler", "_pickle", "UnpicklingError"],
+        "indicadores": [
+            "pickle",
+            "unpickle",
+            "cPickle",
+            "Unpickler",
+            "_pickle",
+            "UnpicklingError",
+        ],
     },
 ]
 
@@ -70,7 +92,12 @@ DOTNET_PAYLOADS = [
         "nome": "DOTNET_BINARYFORMATTER",
         "data": "AAEAAAD/////",
         "content_type": "application/octet-stream",
-        "indicadores": ["BinaryFormatter", "SerializationException", "TypeLoadException", "System.Runtime"],
+        "indicadores": [
+            "BinaryFormatter",
+            "SerializationException",
+            "TypeLoadException",
+            "System.Runtime",
+        ],
     },
 ]
 
@@ -119,8 +146,12 @@ def _test_payload(url, payload, junk_status=0, junk_text=""):
                     "status": resp.status_code,
                 }
         # Check for generic error disclosure ONLY if junk data did not trigger it
-        if resp.status_code == 500 and any(e in resp_text_lower for e in ["exception", "error", "traceback"]):
-            is_generic_fp = junk_status == 500 and any(e in junk_text for e in ["exception", "error", "traceback"])
+        if resp.status_code == 500 and any(
+            e in resp_text_lower for e in ["exception", "error", "traceback"]
+        ):
+            is_generic_fp = junk_status == 500 and any(
+                e in junk_text for e in ["exception", "error", "traceback"]
+            )
             if not is_generic_fp:
                 return {
                     "tipo": "DESER_ERROR_DISCLOSURE",
@@ -173,7 +204,10 @@ def _test_json_deserialization(url, junk_status=0, junk_text=""):
         # Jackson polymorphic
         {"@type": "java.net.URL", "val": "http://cascavel-test.com"},
         # FastJSON
-        {"@type": "com.sun.rowset.JdbcRowSetImpl", "dataSourceName": "rmi://cascavel-test:1099/obj"},
+        {
+            "@type": "com.sun.rowset.JdbcRowSetImpl",
+            "dataSourceName": "rmi://cascavel-test:1099/obj",
+        },
         # .NET TypeNameHandling
         {"$type": "System.Windows.Data.ObjectDataProvider, PresentationFramework"},
     ]
@@ -183,7 +217,14 @@ def _test_json_deserialization(url, junk_status=0, junk_text=""):
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 500:
                 body = resp.text.lower()
-                indicators = ["jackson", "fastjson", "typeloader", "remoting", "jdbcrowset", "objectdataprovider"]
+                indicators = [
+                    "jackson",
+                    "fastjson",
+                    "typeloader",
+                    "remoting",
+                    "jdbcrowset",
+                    "objectdataprovider",
+                ]
                 for ind in indicators:
                     if ind in body and ind not in junk_text:
                         vulns.append(
@@ -211,7 +252,9 @@ def run(target, ip, open_ports, banners):
     """
     _ = (ip, open_ports, banners)
     vulns = []
-    all_payloads = JAVA_PAYLOADS + PHP_PAYLOADS + PYTHON_PAYLOADS + DOTNET_PAYLOADS + YAML_PAYLOADS
+    all_payloads = (
+        JAVA_PAYLOADS + PHP_PAYLOADS + PYTHON_PAYLOADS + DOTNET_PAYLOADS + YAML_PAYLOADS
+    )
 
     for ep in ENDPOINTS:
         url = f"http://{target}{ep}"
@@ -234,7 +277,9 @@ def run(target, ip, open_ports, banners):
             vulns.append(vs)
 
         if "application/json" not in junk_baselines:
-            junk_baselines["application/json"] = _get_junk_data_response(url, "application/json")
+            junk_baselines["application/json"] = _get_junk_data_response(
+                url, "application/json"
+            )
         j_json_status, j_json_text = junk_baselines["application/json"]
 
         json_vulns = _test_json_deserialization(url, j_json_status, j_json_text)
@@ -256,5 +301,7 @@ def run(target, ip, open_ports, banners):
             "viewstate",
             "json_polymorphic",
         ],
-        "resultados": vulns if vulns else "Nenhum endpoint de deserialization detectado",
+        "resultados": (
+            vulns if vulns else "Nenhum endpoint de deserialization detectado"
+        ),
     }

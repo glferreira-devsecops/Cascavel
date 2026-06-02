@@ -118,7 +118,9 @@ def run(target, ip, open_ports, banners):
         url = f"https://storage.googleapis.com/{bucket}"
         try:
             resp = requests.get(url, timeout=5)
-            if resp.status_code == 200 and ("ListBucketResult" in resp.text or "<Contents>" in resp.text):
+            if resp.status_code == 200 and (
+                "ListBucketResult" in resp.text or "<Contents>" in resp.text
+            ):
                 vulns.append(
                     {
                         "tipo": "GCS_BUCKET_OPEN",

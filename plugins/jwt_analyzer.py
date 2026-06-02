@@ -339,7 +339,15 @@ def _analyze_token(token, resultado):
             )
 
     # 11. Role/privilege claims
-    for claim in ["role", "roles", "is_admin", "isAdmin", "admin", "permissions", "scope"]:
+    for claim in [
+        "role",
+        "roles",
+        "is_admin",
+        "isAdmin",
+        "admin",
+        "permissions",
+        "scope",
+    ]:
         if claim in payload:
             resultado["vulns"].append(
                 {
@@ -360,7 +368,11 @@ def _is_fp_by_baseline(target, ep, vuln_resp_text):
     """
     try:
         invalid_token = "invalid_header.invalid_payload.invalid_signature"  # noqa: S105
-        resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {invalid_token}"}, timeout=5)
+        resp = requests.get(
+            f"http://{target}{ep}",
+            headers={"Authorization": f"Bearer {invalid_token}"},
+            timeout=5,
+        )
         # Se a resposta com token inválido for 200 e tiver o mesmo tamanho/conteúdo
         # significa que o endpoint é público ou é um FP do WAF/App (ignora auth).
         if resp.status_code == 200 and len(resp.text) == len(vuln_resp_text):
@@ -377,14 +389,26 @@ def _test_none_alg(target, token, resultado):
         return
 
     # Craft none-algorithm token
-    none_header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).rstrip(b"=").decode()
-    none_payload = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
+    none_header = (
+        base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+        .rstrip(b"=")
+        .decode()
+    )
+    none_payload = (
+        base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
+    )
     none_token = f"{none_header}.{none_payload}."
 
     for ep in ["/api/me", "/api/profile", "/api/v1/me", "/api/user", "/api/v1/user"]:
         try:
-            resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {none_token}"}, timeout=5)
-            if resp.status_code == 200 and any(k in resp.text.lower() for k in ["email", "username", "name"]):
+            resp = requests.get(
+                f"http://{target}{ep}",
+                headers={"Authorization": f"Bearer {none_token}"},
+                timeout=5,
+            )
+            if resp.status_code == 200 and any(
+                k in resp.text.lower() for k in ["email", "username", "name"]
+            ):
                 # Baseline validation to prevent Soft-404 / Public endpoint FPs
                 if _is_fp_by_baseline(target, ep, resp.text):
                     continue
@@ -412,7 +436,11 @@ def _test_expired_acceptance(target, token, resultado):
 
     for ep in ["/api/me", "/api/profile", "/api/v1/me"]:
         try:
-            resp = requests.get(f"http://{target}{ep}", headers={"Authorization": f"Bearer {token}"}, timeout=5)
+            resp = requests.get(
+                f"http://{target}{ep}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5,
+            )
             if resp.status_code == 200:
                 # Baseline validation to prevent Soft-404 / Public endpoint FPs
                 if _is_fp_by_baseline(target, ep, resp.text):
@@ -443,7 +471,9 @@ def _test_token_endpoint_vulns(target, resultado):
     for path in jwks_paths:
         try:
             resp = requests.get(f"http://{target}{path}", timeout=5)
-            if resp.status_code == 200 and ("keys" in resp.text or "jwks_uri" in resp.text):
+            if resp.status_code == 200 and (
+                "keys" in resp.text or "jwks_uri" in resp.text
+            ):
                 resultado["vulns"].append(
                     {
                         "tipo": "JWT_JWKS_EXPOSED",

@@ -3,7 +3,9 @@
 import requests
 
 CT_JSON = "application/json"
-INTROSPECTION_QUERY = {"query": "{ __schema { types { name fields { name type { name } } } } }"}
+INTROSPECTION_QUERY = {
+    "query": "{ __schema { types { name fields { name type { name } } } } }"
+}
 
 ENDPOINTS = [
     "/graphql",
@@ -38,7 +40,12 @@ def run(target, ip, open_ports, banners):
     for ep in ENDPOINTS:
         url = f"http://{target}{ep}"
         try:
-            resp = requests.post(url, json={"query": "{ __typename }"}, headers={"Content-Type": CT_JSON}, timeout=5)
+            resp = requests.post(
+                url,
+                json={"query": "{ __typename }"},
+                headers={"Content-Type": CT_JSON},
+                timeout=5,
+            )
             if resp.status_code == 404:
                 continue
             if resp.status_code != 200 and "graphql" not in resp.text.lower():
@@ -63,7 +70,9 @@ def run(target, ip, open_ports, banners):
 
 def _test_introspection(url, ep, resultado):
     try:
-        resp = requests.post(url, json=INTROSPECTION_QUERY, timeout=8, headers={"Content-Type": CT_JSON})
+        resp = requests.post(
+            url, json=INTROSPECTION_QUERY, timeout=8, headers={"Content-Type": CT_JSON}
+        )
         if resp.status_code == 200 and "__schema" in resp.text:
             data = resp.json()
             types = data.get("data", {}).get("__schema", {}).get("types", [])
@@ -84,8 +93,14 @@ def _test_introspection(url, ep, resultado):
 def _test_batch(url, ep, resultado):
     batch = [{"query": "{ __typename }"} for _ in range(30)]
     try:
-        resp = requests.post(url, json=batch, timeout=8, headers={"Content-Type": CT_JSON})
-        if resp.status_code == 200 and isinstance(resp.json(), list) and len(resp.json()) >= 30:
+        resp = requests.post(
+            url, json=batch, timeout=8, headers={"Content-Type": CT_JSON}
+        )
+        if (
+            resp.status_code == 200
+            and isinstance(resp.json(), list)
+            and len(resp.json()) >= 30
+        ):
             resultado["vulns"].append(
                 {
                     "tipo": "BATCH_SEM_LIMITE",
@@ -101,7 +116,12 @@ def _test_batch(url, ep, resultado):
 def _test_alias(url, ep, resultado):
     aliases = " ".join([f"a{i}: __typename" for i in range(100)])
     try:
-        resp = requests.post(url, json={"query": f"{{ {aliases} }}"}, timeout=8, headers={"Content-Type": CT_JSON})
+        resp = requests.post(
+            url,
+            json={"query": f"{{ {aliases} }}"},
+            timeout=8,
+            headers={"Content-Type": CT_JSON},
+        )
         if resp.status_code == 200:
             data = resp.json()
             if data.get("data") and len(data["data"]) >= 100:
@@ -128,7 +148,8 @@ def _test_debug(url, ep, resultado):
         if resp.status_code == 200:
             data = resp.json()
             if "extensions" in data and any(
-                k in str(data["extensions"]) for k in ["tracing", "stacktrace", "resolvers"]
+                k in str(data["extensions"])
+                for k in ["tracing", "stacktrace", "resolvers"]
             ):
                 resultado["vulns"].append(
                     {
@@ -144,7 +165,9 @@ def _test_debug(url, ep, resultado):
 
 def _test_field_suggestion(url, ep, resultado):
     try:
-        resp = requests.post(url, json={"query": "{ use }"}, timeout=5, headers={"Content-Type": CT_JSON})
+        resp = requests.post(
+            url, json={"query": "{ use }"}, timeout=5, headers={"Content-Type": CT_JSON}
+        )
         if resp.status_code in [200, 400] and "Did you mean" in resp.text:
             resultado["vulns"].append(
                 {
@@ -162,7 +185,9 @@ def _test_field_suggestion(url, ep, resultado):
 def _test_depth(url, ep, resultado):
     deep = "{ __typename " + "".join(["{ __typename " for _ in range(20)]) + "}" * 21
     try:
-        resp = requests.post(url, json={"query": deep}, timeout=8, headers={"Content-Type": CT_JSON})
+        resp = requests.post(
+            url, json={"query": deep}, timeout=8, headers={"Content-Type": CT_JSON}
+        )
         if resp.status_code == 200 and "errors" not in resp.text.lower():
             resultado["vulns"].append(
                 {
@@ -226,10 +251,17 @@ def _test_cswsh(target, ep, resultado):
     try:
         resp = requests.get(
             f"http://{target}{ep}",
-            headers={"Upgrade": "websocket", "Connection": "Upgrade", "Origin": "https://evil.com"},
+            headers={
+                "Upgrade": "websocket",
+                "Connection": "Upgrade",
+                "Origin": "https://evil.com",
+            },
             timeout=5,
         )
-        if resp.status_code == 101 or "upgrade" in resp.headers.get("Connection", "").lower():
+        if (
+            resp.status_code == 101
+            or "upgrade" in resp.headers.get("Connection", "").lower()
+        ):
             resultado["vulns"].append(
                 {
                     "tipo": "CSWSH_GRAPHQL",
@@ -246,8 +278,14 @@ def _test_cost_analysis(url, ep, resultado):
     """Testa se cost analysis/complexity limit existe."""
     expensive = "{ users { friends { friends { friends { name email } } } } }"
     try:
-        resp = requests.post(url, json={"query": expensive}, timeout=8, headers={"Content-Type": CT_JSON})
-        if resp.status_code == 200 and "cost" not in resp.text.lower() and "complexity" not in resp.text.lower():
+        resp = requests.post(
+            url, json={"query": expensive}, timeout=8, headers={"Content-Type": CT_JSON}
+        )
+        if (
+            resp.status_code == 200
+            and "cost" not in resp.text.lower()
+            and "complexity" not in resp.text.lower()
+        ):
             if "errors" not in resp.text.lower():
                 resultado["vulns"].append(
                     {

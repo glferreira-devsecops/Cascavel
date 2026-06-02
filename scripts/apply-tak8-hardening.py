@@ -11,7 +11,9 @@ Applies the remediation from the TAK-6 security report:
 
 Safe to run multiple times. Run from the repository root.
 """
+
 from __future__ import annotations
+
 import re
 import sys
 import textwrap
@@ -20,10 +22,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LASTMOD = "2026-06-01"
 
-FRAME_JS = "if (window.top !== window.self) { window.top.location = window.self.location; }\n"
+FRAME_JS = (
+    "if (window.top !== window.self) { window.top.location = window.self.location; }\n"
+)
 
 META_BLOCK_RE = re.compile(
-    r'\n[ \t]*<!--[^\n]*Security Hardening Headers[^\n]*-->'
+    r"\n[ \t]*<!--[^\n]*Security Hardening Headers[^\n]*-->"
     r'(?:[ \t\r\n]*<meta http-equiv="(?:Content-Security-Policy|X-Content-Type-Options|'
     r'X-Frame-Options|Referrer-Policy|Permissions-Policy)"[^>]*/>)+',
     re.DOTALL,
@@ -34,7 +38,7 @@ META_REPLACEMENT = (
     "       are intentionally NOT duplicated here (a <meta> frame-ancestors is inert per spec). -->"
 )
 FRAME_INLINE_RE = re.compile(
-    r'<script>if\s*\(window\.top!==window\.self\)\{window\.top\.location=window\.self\.location;\}</script>'
+    r"<script>if\s*\(window\.top!==window\.self\)\{window\.top\.location=window\.self\.location;\}</script>"
 )
 
 
@@ -63,14 +67,20 @@ def process_html(rel_path: str, ui_out: str, prefix: str) -> None:
         (ROOT / ui_out).parent.mkdir(parents=True, exist_ok=True)
         (ROOT / ui_out).write_text(ui_body, encoding="utf-8", newline="\n")
         ui_src = ("../" if "/" in rel_path else "") + ui_out
-        html = html[: ui_match.start()] + f'<script src="{ui_src}" defer></script>' + html[ui_match.end():]
+        html = (
+            html[: ui_match.start()]
+            + f'<script src="{ui_src}" defer></script>'
+            + html[ui_match.end() :]
+        )
 
         fb_src = ("../" if "/" in rel_path else "") + "assets/js/frame-buster.js"
         html = FRAME_INLINE_RE.sub(f'<script src="{fb_src}"></script>', html)
 
     path.write_text(html, encoding="utf-8", newline="\n")
     remaining = len(re.findall(r"<script>(?!</)", html))
-    print(f"  {rel_path}: metas_removed_block={n} bare_inline_scripts_remaining={remaining}")
+    print(
+        f"  {rel_path}: metas_removed_block={n} bare_inline_scripts_remaining={remaining}"
+    )
 
 
 def write_frame_buster() -> None:
@@ -93,13 +103,15 @@ def patch_headers() -> None:
         "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self'; object-src 'none'; "
         "worker-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
     )
-    txt = re.sub(r"^[ \t]*Content-Security-Policy:.*$", new_csp, txt, count=1, flags=re.MULTILINE)
+    txt = re.sub(
+        r"^[ \t]*Content-Security-Policy:.*$", new_csp, txt, count=1, flags=re.MULTILINE
+    )
 
     # CORS override (idempotent)
     if "Access-Control-Allow-Origin" not in txt:
         cors = (
             "\n  # --- CORS (decision: restrict to own origin) ---\n"
-            "  # Cloudflare Pages injects \"Access-Control-Allow-Origin: *\" on static assets by default.\n"
+            '  # Cloudflare Pages injects "Access-Control-Allow-Origin: *" on static assets by default.\n'
             "  # This is a 100% public/static site with no credentials/cookies, so wildcard CORS exposes\n"
             "  # nothing today, but it is unnecessary. We override it to the canonical origin so no other\n"
             "  # origin can read responses via fetch/XHR. CORP: same-origin already covers no-cors embedding.\n"
@@ -123,7 +135,11 @@ def patch_robots() -> None:
         txt,
     )
     p.write_text(txt, encoding="utf-8", newline="\n")
-    print("  robots.txt: signpost Disallow removed" if "Disallow:" not in txt else "  robots.txt: WARNING Disallow still present")
+    print(
+        "  robots.txt: signpost Disallow removed"
+        if "Disallow:" not in txt
+        else "  robots.txt: WARNING Disallow still present"
+    )
 
 
 def patch_sitemap() -> None:

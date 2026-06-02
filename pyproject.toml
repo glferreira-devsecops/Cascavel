@@ -172,4 +172,5 @@ python_functions = ["test_*"]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::pytest.PytestConfigWarning",
+    "ignore::urllib3.exceptions.InsecureRequestWarning",
 ]

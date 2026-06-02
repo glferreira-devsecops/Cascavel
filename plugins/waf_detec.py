@@ -44,23 +44,39 @@ def run(target, ip, open_ports, banners):
             resp = requests.get(url, timeout=5)
             for ind in indicativos:
                 if ind in resp.text.lower():
-                    deteccoes.append({"url": url, "indicador": ind, "status": resp.status_code})
+                    deteccoes.append(
+                        {"url": url, "indicador": ind, "status": resp.status_code}
+                    )
                     break
             if resp.status_code in [403, 406, 501, 999]:
-                deteccoes.append({"url": url, "indicador": f"HTTP_{resp.status_code}", "status": resp.status_code})
+                deteccoes.append(
+                    {
+                        "url": url,
+                        "indicador": f"HTTP_{resp.status_code}",
+                        "status": resp.status_code,
+                    }
+                )
         except Exception as e:
-            deteccoes.append({"url": url, "indicador": f"ERRO_CONEXAO: {type(e).__name__}", "status": 0})
+            deteccoes.append(
+                {
+                    "url": url,
+                    "indicador": f"ERRO_CONEXAO: {type(e).__name__}",
+                    "status": 0,
+                }
+            )
             continue
 
-    resultado["heuristica"] = deteccoes if deteccoes else "Nenhum WAF detectado via heurística"
+    resultado["heuristica"] = (
+        deteccoes if deteccoes else "Nenhum WAF detectado via heurística"
+    )
 
     # Método 2: wafw00f (se disponível)
     if shutil.which("wafw00f"):
         safe_target = shlex.quote(target)
         try:
             proc = subprocess.run(
-                f"wafw00f {safe_target}",
-                shell=True,
+                ["wafw00f", safe_target],
+                shell=False,
                 capture_output=True,
                 timeout=20,
                 encoding="utf-8",

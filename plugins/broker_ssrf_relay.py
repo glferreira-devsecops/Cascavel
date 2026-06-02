@@ -40,14 +40,21 @@ def detect_ssrf_relay(url: str, session: requests.Session) -> tuple[bool, str]:
 
     payloads = [crlf_redis_payload, gopher_redis_payload]
 
-    test_endpoints = [f"{url}/api/fetch", f"{url}/webhook", f"{url}/proxy", f"{url}/upload"]
+    test_endpoints = [
+        f"{url}/api/fetch",
+        f"{url}/webhook",
+        f"{url}/proxy",
+        f"{url}/upload",
+    ]
 
     for endpoint in test_endpoints:
         for param in ssrf_params:
             for payload in payloads:
                 try:
                     # Test via GET
-                    resp = session.get(endpoint, params={param: payload}, timeout=5, verify=False)
+                    resp = session.get(
+                        endpoint, params={param: payload}, timeout=5, verify=False
+                    )
 
                     # If the SSRF successfully relayed the payload to Redis,
                     # Redis responds with "+PONG". Sometimes the web app reflects this error/response.
@@ -58,9 +65,14 @@ def detect_ssrf_relay(url: str, session: requests.Session) -> tuple[bool, str]:
                         )
 
                     # Test via POST JSON
-                    resp_post = session.post(endpoint, json={param: payload}, timeout=5, verify=False)
+                    resp_post = session.post(
+                        endpoint, json={param: payload}, timeout=5, verify=False
+                    )
                     if "+PONG" in resp_post.text or "PONG" in resp_post.text:
-                        return True, f"SSRF successfully relayed binary protocol (RESP) via JSON parameter '{param}'."
+                        return (
+                            True,
+                            f"SSRF successfully relayed binary protocol (RESP) via JSON parameter '{param}'.",
+                        )
 
                 except requests.exceptions.RequestException:
                     pass

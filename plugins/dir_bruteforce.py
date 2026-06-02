@@ -25,19 +25,27 @@ def run(target, ip, open_ports, banners):
             break
 
     if not wordlist:
-        return {"plugin": "dir_bruteforce", "resultados": {"erro": "Nenhuma wordlist encontrada em wordlists/"}}
+        return {
+            "plugin": "dir_bruteforce",
+            "resultados": {"erro": "Nenhuma wordlist encontrada em wordlists/"},
+        }
 
     if not shutil.which("feroxbuster"):
-        return {"plugin": "dir_bruteforce", "resultados": {"erro": "feroxbuster não encontrado no PATH"}}
+        return {
+            "plugin": "dir_bruteforce",
+            "resultados": {"erro": "feroxbuster não encontrado no PATH"},
+        }
 
     safe_target = shlex.quote(target)
     safe_wordlist = shlex.quote(wordlist)
-    ferox_cmd = f"feroxbuster -u http://{safe_target} -w {safe_wordlist} --depth 1 --json -q"
+    ferox_cmd = (
+        f"feroxbuster -u http://{safe_target} -w {safe_wordlist} --depth 1 --json -q"
+    )
     resultado = []
     try:
         proc = subprocess.run(
             ferox_cmd,
-            shell=True,
+            shell=False,
             capture_output=True,
             timeout=60,
             encoding="utf-8",
@@ -47,11 +55,16 @@ def run(target, ip, open_ports, banners):
             try:
                 obj = json.loads(line)
                 if "url" in obj:
-                    resultado.append({"url": obj.get("url"), "status": obj.get("status")})
+                    resultado.append(
+                        {"url": obj.get("url"), "status": obj.get("status")}
+                    )
             except Exception:
                 pass
     except subprocess.TimeoutExpired:
-        return {"plugin": "dir_bruteforce", "resultados": "Timeout no feroxbuster (limite: 60s)"}
+        return {
+            "plugin": "dir_bruteforce",
+            "resultados": "Timeout no feroxbuster (limite: 60s)",
+        }
     except Exception as e:
         return {"plugin": "dir_bruteforce", "resultados": f"Erro no feroxbuster: {e}"}
 
