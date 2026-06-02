@@ -47,4 +47,4 @@ censys>=2.2.0
 # yara-python     # Malware detection
 # netifaces       # Network interface enumeration
 matplotlib>=3.9.0
-psutil>=5.0.0
+psutil>=5.9.0
