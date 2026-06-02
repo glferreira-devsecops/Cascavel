@@ -2548,8 +2548,10 @@ def self_update() -> None:
 
     # Strategy 1: Git-based update
     if os.path.isdir(git_dir):
-        console.print("  [dim]Modo: git pull[/]")
+        console.print("  [dim]Modo: git pull & full pipeline update[/]")
         try:
+            # 1. Update source code via git
+            console.print("  [dim]Sincronizando com repositório remoto...[/]")
             result = subprocess.run(  # noqa: S603, S607
                 ["git", "-C", install_dir, "pull", "--rebase", "origin", "main"],
                 capture_output=True,
@@ -2557,17 +2559,39 @@ def self_update() -> None:
                 timeout=60,
             )
             if result.returncode == 0:
-                console.print(f"  [green]✅ Atualizado para v{latest} via git pull[/]")
+                console.print(f"  [green]✅ Código fonte atualizado para v{latest}[/]")
                 console.print(f"  [dim]{result.stdout.strip()}[/]\n")
-                # Re-install dependencies if requirements changed
-                req_file = os.path.join(install_dir, "requirements.txt")
-                if os.path.isfile(req_file):
-                    console.print("  [dim]Atualizando dependências...[/]")
-                    subprocess.run(  # noqa: S603, S607
-                        [sys.executable, "-m", "pip", "install", "-r", req_file, "-q"],
-                        timeout=120,
+
+                # 2. Executar pipeline do instalador para dependências completas
+                console.print("  [bold cyan]⚡ Executando Pipeline de Automação do Cascavel...[/]")
+                install_script = os.path.join(install_dir, "install.sh")
+                if os.path.isfile(install_script):
+                    console.print(
+                        "  [dim]O instalador verificará pacotes de OS, Go tools e requisitos do Python de forma inteligente.[/]\n"
                     )
-                    console.print("  [green]✅ Dependências atualizadas[/]\n")
+                    # Roda o instalador passando o stdout nativo para streaming realtime
+                    subprocess.run(  # noqa: S603, S607
+                        ["bash", "install.sh"], cwd=install_dir, check=False
+                    )
+                    console.print("\n  [green]✅ Pipeline de atualização concluído com sucesso![/]\n")
+                else:
+                    # Fallback caso install.sh não exista
+                    req_file = os.path.join(install_dir, "requirements.txt")
+                    if os.path.isfile(req_file):
+                        console.print("  [dim]Atualizando dependências Python...[/]")
+                        subprocess.run(  # noqa: S603, S607
+                            [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "install",
+                                "-r",
+                                req_file,
+                                "-q",
+                            ],
+                            timeout=120,
+                        )
+                        console.print("  [green]✅ Dependências Python atualizadas[/]\n")
             else:
                 console.print(f"  [red]❌ git pull falhou: {result.stderr.strip()}[/]")
         except Exception as e:

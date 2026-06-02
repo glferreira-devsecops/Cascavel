@@ -6,11 +6,10 @@
   <code>🐍 CASCAVEL</code>
 </h1>
 
-<h3 align="center">Framework Quântico de Segurança — Motor de Inteligência Red Team</h3>
+<h3 align="center">Uma engine unificada de segurança ofensiva que automatiza assessments de Red Team e relatórios de conformidade em um único comando.</h3>
 
 <p align="center">
-  <strong>108 plugins de segurança · 30+ ferramentas de recon · CLI-first · Cross-platform · Relatórios PDF</strong><br />
-  Um comando para enumerar, escanear, atacar, analisar e gerar relatórios de pentest nível enterprise.
+  <strong>O Cascavel é uma plataforma CTEM de atrito zero para times de DevSecOps validarem continuamente a exposição de segurança e gerarem relatórios executivos em PDF sem malabarismos com múltiplas ferramentas open-source.</strong>
 </p>
 
 <p align="center">

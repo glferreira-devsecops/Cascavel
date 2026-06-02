@@ -8,12 +8,10 @@
   <code>🐍 CASCAVEL</code>
 </h1>
 
-<h3 align="center">Continuous Threat Exposure Management (CTEM) for the 2026 Enterprise</h3>
+<h3 align="center">A unified offensive security engine that automates Red Team assessments and compliance reporting in a single command.</h3>
 
 <p align="center">
-<p align="center">
-  <strong>The complete Red Team intelligence engine in a single binary. 108 plugins · OWASP 2026 · CVSS v4.0.</strong><br />
-  Stop wrestling with fragmented security scripts. Unify your discovery, assessment, and compliance in one command.
+  <strong>Cascavel is a zero-friction CTEM platform for DevSecOps teams to continuously validate security exposure and generate executive PDF reports without juggling multiple open-source tools.</strong>
 </p>
 
 <p align="center">
