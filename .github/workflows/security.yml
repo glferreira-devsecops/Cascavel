@@ -128,7 +128,7 @@ jobs:
           bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint
       - name: Run zizmor
-        uses: woodruffw/zizmor-action@v1
+        uses: woodruffw/zizmor-github-action@v1
         with:
           project: .
 

@@ -88,7 +88,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest==8.3.5 pytest-cov==5.0.0
+          pip install pytest==8.3.5 pytest-cov==5.0.0 hypothesis schemathesis
 
       - name: Run Pytest suite
         run: |
