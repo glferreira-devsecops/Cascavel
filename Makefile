@@ -99,11 +99,9 @@ docker-run: ## Run Docker container (--help)
 
 # ── Documentation ────────────────────────────
 
-docs-sync: ## Synchronize plugins documentation to HTML
-	@echo "🔄 Generating plugins HTML from PLUGINS.md..."
-	@$(PYTHON) generate_plugins_html.py
-	@echo "💉 Injecting generated HTML into site pages..."
-	@$(PYTHON) apply_plugins_html.py
+docs-sync: ## Synchronize plugins documentation to HTML (index.html + en/index.html)
+	@echo "🔄 Rebuilding #plugins section from PLUGINS.md (14 categories / 85 plugins)..."
+	@$(PYTHON) build_plugins_section.py
 	@echo "✅ Documentation sync complete!"
 
 # ── Combined ─────────────────────────────────
