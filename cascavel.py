@@ -38,7 +38,13 @@ from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
 from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
@@ -1860,7 +1866,9 @@ def _build_intel_panel(
     suffix = "..." if was_truncated else ""
     next_text.append(f"  {truncated}{suffix}\n", style="dim")
 
-    from rich.console import Group  # noqa: E402 — import local para evitar circular em testes
+    from rich.console import (  # noqa: E402 — import local para evitar circular em testes
+        Group,
+    )
 
     content = Group(
         Panel(

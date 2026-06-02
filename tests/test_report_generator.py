@@ -4,7 +4,11 @@ import tempfile
 from hypothesis import given
 from hypothesis import strategies as st
 
-from report_generator import _build_risk_matrix_drawing, _sanitize_html, generate_pdf_report
+from report_generator import (
+    _build_risk_matrix_drawing,
+    _sanitize_html,
+    generate_pdf_report,
+)
 
 
 def test_sanitize_html():

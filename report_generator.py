@@ -1,4 +1,3 @@
-# flake8: noqa: E402
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -31,19 +30,23 @@ import io
 import os
 from typing import Any
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-from reportlab.lib import colors  # noqa: E402
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT  # noqa: E402
-from reportlab.lib.pagesizes import A4  # noqa: E402
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet  # noqa: E402
-from reportlab.lib.units import mm  # noqa: E402
-from reportlab.pdfgen import canvas  # noqa: E402
-from reportlab.platypus import SimpleDocTemplate  # noqa: E402
-from reportlab.platypus import Table  # noqa: E402
-from reportlab.platypus import HRFlowable, Image, KeepTogether, PageBreak, Paragraph, Spacer, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.platypus import (
+    HRFlowable,
+    Image,
+    KeepTogether,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 # Optional: QR Code (graceful degradation if not installed)
 try:
@@ -413,6 +416,11 @@ class _PremiumPageTemplate:
 
 def _build_risk_matrix_drawing(sev_counts: dict) -> Image:
     """Build a visual risk matrix (Donut Chart) using matplotlib as an Image flowable."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     labels = []
     sizes = []
     colors_hex = []

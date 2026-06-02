@@ -174,3 +174,6 @@ filterwarnings = [
     "ignore::pytest.PytestConfigWarning",
     "ignore::urllib3.exceptions.InsecureRequestWarning",
 ]
+
+[tool.isort]
+profile = "black"
