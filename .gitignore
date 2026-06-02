@@ -132,3 +132,7 @@ run_logs.txt
 protection.json
 .pages_deploy/
 bandit_results.json
+*.sarif
+*.metadata.json
+semgrep-results.json
+bandit_results.json
