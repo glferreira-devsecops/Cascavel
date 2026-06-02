@@ -17,6 +17,7 @@
 </p>
 
 <p align="center">
+  <a href="https://cascavel.pages.dev"><strong>🌐 cascavel.pages.dev</strong></a> ·
   🇺🇸 <strong>English</strong> ·
   <a href="README.pt-BR.md">🇧🇷 Português (Brasil)</a>
 </p>

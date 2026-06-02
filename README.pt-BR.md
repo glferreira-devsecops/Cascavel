@@ -14,6 +14,7 @@
 </p>
 
 <p align="center">
+  <a href="https://cascavel.pages.dev"><strong>🌐 cascavel.pages.dev</strong></a> ·
   <a href="#-idioma--language">🇺🇸 English</a> ·
   <a href="#-instala%C3%A7%C3%A3o">Instalação</a> ·
   <a href="#-por-que-o-cascavel">Por que Cascavel</a> ·
