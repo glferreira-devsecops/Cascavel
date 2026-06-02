@@ -46,3 +46,4 @@ censys>=2.2.0
 # impacket        # SMB/AD advanced
 # yara-python     # Malware detection
 # netifaces       # Network interface enumeration
+matplotlib>=3.9.0

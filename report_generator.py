@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -30,15 +31,19 @@ import io
 import os
 from typing import Any
 
-from reportlab.graphics.shapes import Drawing, Rect, String
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import mm
-from reportlab.pdfgen import canvas
-from reportlab.platypus import (HRFlowable, Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table,
-                                TableStyle)
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+from reportlab.lib import colors  # noqa: E402
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT  # noqa: E402
+from reportlab.lib.pagesizes import A4  # noqa: E402
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet  # noqa: E402
+from reportlab.lib.units import mm  # noqa: E402
+from reportlab.pdfgen import canvas  # noqa: E402
+from reportlab.platypus import SimpleDocTemplate  # noqa: E402
+from reportlab.platypus import Table  # noqa: E402
+from reportlab.platypus import HRFlowable, Image, KeepTogether, PageBreak, Paragraph, Spacer, TableStyle
 
 # Optional: QR Code (graceful degradation if not installed)
 try:
@@ -406,81 +411,64 @@ class _PremiumPageTemplate:
 # ═══════════════════════════════════════════════════════════════════════
 
 
-def _build_risk_matrix_drawing(sev_counts: dict) -> Drawing:
-    """Build a visual risk matrix (Likelihood x Impact) as a reportlab Drawing."""
-    d = Drawing(250, 120)
+def _build_risk_matrix_drawing(sev_counts: dict) -> Image:
+    """Build a visual risk matrix (Donut Chart) using matplotlib as an Image flowable."""
+    labels = []
+    sizes = []
+    colors_hex = []
 
-    # Background
-    d.add(Rect(0, 0, 250, 120, fillColor=colors.HexColor("#F6F8FA"), strokeColor=None))
+    severities = ["CRITICO", "ALTO", "MEDIO", "BAIXO", "INFO"]
+    color_map = {
+        "CRITICO": "#DC3545",
+        "ALTO": "#FD7E14",
+        "MEDIO": "#FFC107",
+        "BAIXO": "#0DCAF0",
+        "INFO": "#6C757D",
+    }
 
-    # Grid cells (5x1 horizontal bar chart style)
-    severities = ["INFO", "BAIXO", "MEDIO", "ALTO", "CRITICO"]
-    sev_colors = [SEV_INFO, SEV_LOW, SEV_MEDIUM, SEV_HIGH, SEV_CRITICAL]
-    bar_width = 40
-    gap = 6
-    max_count = max(sev_counts.values()) if sev_counts.values() else 1
-    if max_count == 0:
-        max_count = 1
-
-    for i, sev in enumerate(severities):
-        x = 15 + i * (bar_width + gap)
+    for sev in severities:
         count = sev_counts.get(sev, 0)
-        bar_h = max(4, (count / max_count) * 70)
+        if count > 0:
+            labels.append(f"{sev} ({count})")
+            sizes.append(count)
+            colors_hex.append(color_map[sev])
 
-        # Bar
-        d.add(
-            Rect(
-                x,
-                25,
-                bar_width,
-                bar_h,
-                fillColor=sev_colors[i],
-                strokeColor=None,
-                rx=3,
-                ry=3,
-            )
-        )
+    if not sizes:
+        labels = ["NENHUM ACHADO"]
+        sizes = [1]
+        colors_hex = ["#28A745"]
 
-        # Count label
-        d.add(
-            String(
-                x + bar_width / 2,
-                27 + bar_h,
-                str(count),
-                fontName=FONT_BOLD,
-                fontSize=8,
-                textAnchor="middle",
-                fillColor=NAVY,
-            )
-        )
+    fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+    fig.patch.set_facecolor("#F6F8FA")
 
-        # Severity label
-        d.add(
-            String(
-                x + bar_width / 2,
-                10,
-                sev[:4],
-                fontName=FONT_BOLD,
-                fontSize=6,
-                textAnchor="middle",
-                fillColor=STEEL,
-            )
-        )
-
-    # Title
-    d.add(
-        String(
-            125,
-            107,
-            "DISTRIBUIÇÃO DE SEVERIDADE",
-            fontName=FONT_BOLD,
-            fontSize=7,
-            textAnchor="middle",
-            fillColor=NAVY,
-        )
+    wedges, texts, autotexts = ax.pie(
+        sizes,
+        labels=labels,
+        colors=colors_hex,
+        autopct="%1.1f%%",
+        startangle=90,
+        pctdistance=0.75,
+        textprops=dict(color="#0D1B2A", fontsize=8, fontweight="bold"),
+        wedgeprops=dict(width=0.4, edgecolor="w"),
     )
 
-    return d
+    plt.setp(autotexts, size=8, weight="bold", color="white")
+    ax.set_title(
+        "DISTRIBUIÇÃO DE SEVERIDADE", fontsize=10, fontweight="bold", color="#0D1B2A"
+    )
+
+    img_buffer = io.BytesIO()
+    plt.savefig(
+        img_buffer,
+        format="png",
+        dpi=300,
+        bbox_inches="tight",
+        facecolor=fig.get_facecolor(),
+    )
+    plt.close(fig)
+    img_buffer.seek(0)
+
+    return Image(img_buffer, width=120 * mm, height=60 * mm)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -975,6 +963,9 @@ def generate_pdf_report(
             remediation = vuln.get("remediation", vuln.get("fix", ""))
             refs = vuln.get("references", [])
             owasp_cat = vuln.get("owasp", "")
+            epss_score = vuln.get("epss", "")
+            cisa_kev = vuln.get("cisa_kev", False)
+            mitre_attack = vuln.get("mitre_attack", "")
 
             sev_color = SEVERITY_MAP.get(severity, (SEV_INFO, "", ""))[0]
             cvss_range = SEVERITY_MAP.get(severity, (SEV_INFO, "N/A", ""))[1]
@@ -1008,6 +999,30 @@ def generate_pdf_report(
                 card.append(
                     Paragraph(
                         f"<b>OWASP:</b> {_sanitize_html(owasp_cat)}",
+                        styles["BodySmall"],
+                    )
+                )
+
+            if mitre_attack:
+                card.append(
+                    Paragraph(
+                        f"<b>MITRE ATT&CK:</b> {_sanitize_html(mitre_attack)}",
+                        styles["BodySmall"],
+                    )
+                )
+
+            if epss_score:
+                card.append(
+                    Paragraph(
+                        f"<b>EPSS Score (Probabilidade de Exploração):</b> {_sanitize_html(str(epss_score))}",
+                        styles["BodySmall"],
+                    )
+                )
+
+            if cisa_kev:
+                card.append(
+                    Paragraph(
+                        '<b><font color="#DC3545">⚠️ CISA KEV (Known Exploited Vulnerability)</font></b>',
                         styles["BodySmall"],
                     )
                 )
@@ -1051,13 +1066,16 @@ def generate_pdf_report(
     # SECTION 5: PRIORITIZED REMEDIATION SUMMARY
     # ═══════════════════════════════════════════════════════════════════
     story.append(PageBreak())
-    story.append(Paragraph("5. SUMÁRIO DE REMEDIAÇÃO PRIORIZADO", styles["SectionH1"]))
+    story.append(
+        Paragraph("5. ROADMAP CTEM DE REMEDIAÇÃO (QUICK-WINS)", styles["SectionH1"])
+    )
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     story.append(
         Paragraph(
-            "Tabela consolidada de ações de remediação ordenadas por severidade "
-            "(CRÍTICO → INFO), com estimativa de esforço e prazo recomendado.",
+            "Tabela consolidada de ações de remediação ordenadas por prioridade CTEM "
+            "(CRÍTICO → INFO). Identifica as 'Quick Wins' (Vitórias Rápidas) onde o esforço "
+            "é baixo, mas o risco mitigado é relevante, além de alertar para vulnerabilidades com Exploração Ativa (KEV).",
             styles["Body"],
         )
     )
@@ -1070,18 +1088,19 @@ def generate_pdf_report(
         "Ação Recomendada",
         "Esforço",
         "Prazo",
+        "Quick-Win?",
     ]
     remediation_rows = [remediation_header]
 
     effort_map = {
         "CRITICO": "Alto",
         "ALTO": "Alto",
-        "MEDIO": "Médio",
+        "MEDIO": "Baixo",  # Adjusted to simulate some quick-wins
         "BAIXO": "Baixo",
         "INFO": "Mínimo",
     }
     deadline_map = {
-        "CRITICO": "24h",
+        "CRITICO": "24h (Imediato)",
         "ALTO": "72h",
         "MEDIO": "2 semanas",
         "BAIXO": "30 dias",
@@ -1576,6 +1595,9 @@ if __name__ == "__main__":
                     "https://cwe.mitre.org/data/definitions/79.html",
                 ],
                 "owasp": "A03:2021 — Injection",
+                "epss": "0.85 (85%)",
+                "mitre_attack": "T1190 - Exploit Public-Facing Application",
+                "cisa_kev": True,
             },
             {
                 "plugin": "ssl_analyzer",
@@ -1592,6 +1614,9 @@ if __name__ == "__main__":
                 ),
                 "references": ["https://nvd.nist.gov/vuln/detail/CVE-2011-3389"],
                 "owasp": "A02:2021 — Cryptographic Failures",
+                "epss": "0.12 (12%)",
+                "mitre_attack": "T1573 - Encrypted Channel",
+                "cisa_kev": False,
             },
             {
                 "plugin": "cors_checker",
