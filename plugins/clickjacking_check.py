@@ -33,11 +33,7 @@ def _check_frame_protection(target, page):
         has_csp_frame = "frame-ancestors" in csp
 
         if not has_xfo and not has_csp_frame:
-            sev = (
-                "ALTO"
-                if page in ["/login", "/checkout", "/payment", "/transfer"]
-                else "MEDIO"
-            )
+            sev = "ALTO" if page in ["/login", "/checkout", "/payment", "/transfer"] else "MEDIO"
             vulns.append(
                 {
                     "tipo": "CLICKJACKING_VULNERAVEL",

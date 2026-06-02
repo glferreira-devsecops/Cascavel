@@ -95,10 +95,8 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                     #    which is a classic Windows SMB/UNC resolution error leaking that the path was processed.
                     # 2. Or server responds with a WWW-Authenticate: NTLM header in an unexpected context.
 
-                    if (
-                        "The network path was not found" in response_str
-                        and "cascavel-test"
-                        in payload_bytes.decode("utf-8", errors="ignore")
+                    if "The network path was not found" in response_str and "cascavel-test" in payload_bytes.decode(
+                        "utf-8", errors="ignore"
                     ):
                         return {
                             "vulnerability": vulnerability,
@@ -109,10 +107,7 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                         }
 
                     # Backup check for NTLM coercion initiation
-                    if (
-                        "WWW-Authenticate: NTLM" in response_str
-                        and response_str.startswith("HTTP/1.1 401")
-                    ):
+                    if "WWW-Authenticate: NTLM" in response_str and response_str.startswith("HTTP/1.1 401"):
                         # If we forced a 401 NTLM negotiation by passing a UNC path
                         return {
                             "vulnerability": vulnerability,

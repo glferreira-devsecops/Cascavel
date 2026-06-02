@@ -35,11 +35,7 @@ def run(target, ip, open_ports, banners):
         if urls:
             js_files = [u for u in urls if re.search(r"\.js(\?|$)", u, re.IGNORECASE)]
             forms = [u for u in urls if re.search(r"\?(.*=)", u)]
-            api_endpoints = [
-                u
-                for u in urls
-                if re.search(r"/api/|/v[0-9]+/|/graphql", u, re.IGNORECASE)
-            ]
+            api_endpoints = [u for u in urls if re.search(r"/api/|/v[0-9]+/|/graphql", u, re.IGNORECASE)]
             resultado["total_urls"] = len(urls)
             resultado["js_files"] = js_files[:20]
             resultado["forms_parametros"] = forms[:30]

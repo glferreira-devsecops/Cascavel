@@ -38,9 +38,7 @@ def run(target, ip, open_ports, banners):
 
     safe_target = shlex.quote(target)
     safe_wordlist = shlex.quote(wordlist)
-    ferox_cmd = (
-        f"feroxbuster -u http://{safe_target} -w {safe_wordlist} --depth 1 --json -q"
-    )
+    ferox_cmd = f"feroxbuster -u http://{safe_target} -w {safe_wordlist} --depth 1 --json -q"
     resultado = []
     try:
         proc = subprocess.run(
@@ -55,9 +53,7 @@ def run(target, ip, open_ports, banners):
             try:
                 obj = json.loads(line)
                 if "url" in obj:
-                    resultado.append(
-                        {"url": obj.get("url"), "status": obj.get("status")}
-                    )
+                    resultado.append({"url": obj.get("url"), "status": obj.get("status")})
             except Exception:
                 pass
     except subprocess.TimeoutExpired:

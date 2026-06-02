@@ -282,9 +282,7 @@ def _build_styles():
     )
 
     # Footer
-    _add(
-        "Footer", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE, alignment=TA_CENTER
-    )
+    _add("Footer", fontName=FONT_REG, fontSize=7, textColor=ICE_BLUE, alignment=TA_CENTER)
 
     return s
 
@@ -323,9 +321,7 @@ class _NumberedCanvas(canvas.Canvas):
         self.saveState()
         self.setFillColor(ICE_BLUE)
         self.setFont(FONT_REG, 6)
-        self.drawRightString(
-            w - 12 * mm, 8 * mm, f"Página {self._pageNumber} de {total}"
-        )
+        self.drawRightString(w - 12 * mm, 8 * mm, f"Página {self._pageNumber} de {total}")
         self.restoreState()
 
 
@@ -340,9 +336,7 @@ class _PremiumPageTemplate:
       • 'Página X de Y' via _NumberedCanvas two-pass
     """
 
-    def __init__(
-        self, target: str, report_id: str, classification: str = "CONFIDENCIAL"
-    ):
+    def __init__(self, target: str, report_id: str, classification: str = "CONFIDENCIAL"):
         self.target = target
         self.report_id = report_id
         self.classification = classification
@@ -461,9 +455,7 @@ def _build_risk_matrix_drawing(sev_counts: dict) -> Image:
     )
 
     plt.setp(autotexts, size=8, weight="bold", color="white")
-    ax.set_title(
-        "DISTRIBUIÇÃO DE SEVERIDADE", fontsize=10, fontweight="bold", color="#0D1B2A"
-    )
+    ax.set_title("DISTRIBUIÇÃO DE SEVERIDADE", fontsize=10, fontweight="bold", color="#0D1B2A")
 
     img_buffer = io.BytesIO()
     plt.savefig(
@@ -657,9 +649,7 @@ def generate_pdf_report(
     if output_path is None:
         reports_dir = os.path.join(BASE_PATH, "reports")
         os.makedirs(reports_dir, exist_ok=True)
-        output_path = os.path.join(
-            reports_dir, f"cascavel_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
+        output_path = os.path.join(reports_dir, f"cascavel_{now.strftime('%Y%m%d_%H%M%S')}.pdf")
 
     doc = SimpleDocTemplate(
         output_path,
@@ -709,11 +699,7 @@ def generate_pdf_report(
     story.append(Paragraph("Quantum Security Framework", styles["CoverSub"]))
     story.append(Spacer(1, 4 * mm))
 
-    story.append(
-        HRFlowable(
-            width="50%", thickness=2, color=CYAN_NEON, spaceAfter=6, hAlign="CENTER"
-        )
-    )
+    story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON, spaceAfter=6, hAlign="CENTER"))
 
     story.append(Paragraph("RELATÓRIO DE ANÁLISE DE SEGURANÇA", styles["CoverSub"]))
     story.append(Spacer(1, 8 * mm))
@@ -809,9 +795,7 @@ def generate_pdf_report(
     # ═══════════════════════════════════════════════════════════════════
     # PAGE 3-4: LEGAL DISCLAIMERS (12 cláusulas)
     # ═══════════════════════════════════════════════════════════════════
-    story.append(
-        Paragraph("1. DISCLAIMER JURÍDICO E TERMOS DE USO", styles["SectionH1"])
-    )
+    story.append(Paragraph("1. DISCLAIMER JURÍDICO E TERMOS DE USO", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     disclaimers = _build_disclaimers(company, now)
@@ -894,9 +878,7 @@ def generate_pdf_report(
         color, cvss_range, desc = SEVERITY_MAP[sev_name]
         sev_data.append([sev_name, cvss_range, str(count), desc])
 
-    sev_table = Table(
-        sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm], repeatRows=1
-    )
+    sev_table = Table(sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm], repeatRows=1)
     sev_style = [
         ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
@@ -1044,9 +1026,7 @@ def generate_pdf_report(
                 card.append(Paragraph(_sanitize_html(str(evidence)), styles["Code"]))
 
             if remediation:
-                card.append(
-                    Paragraph("<b>Remediação Recomendada:</b>", styles["BodySmall"])
-                )
+                card.append(Paragraph("<b>Remediação Recomendada:</b>", styles["BodySmall"]))
                 card.append(Paragraph(_sanitize_html(str(remediation)), styles["Body"]))
 
             if refs:
@@ -1074,9 +1054,7 @@ def generate_pdf_report(
     # SECTION 5: PRIORITIZED REMEDIATION SUMMARY
     # ═══════════════════════════════════════════════════════════════════
     story.append(PageBreak())
-    story.append(
-        Paragraph("5. ROADMAP CTEM DE REMEDIAÇÃO (QUICK-WINS)", styles["SectionH1"])
-    )
+    story.append(Paragraph("5. ROADMAP CTEM DE REMEDIAÇÃO (QUICK-WINS)", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
     story.append(
@@ -1117,9 +1095,7 @@ def generate_pdf_report(
 
     # Sort vulns by severity priority
     sev_priority = {"CRITICO": 0, "ALTO": 1, "MEDIO": 2, "BAIXO": 3, "INFO": 4}
-    sorted_vulns = sorted(
-        vulns, key=lambda v: sev_priority.get(v.get("severity", "INFO").upper(), 4)
-    )
+    sorted_vulns = sorted(vulns, key=lambda v: sev_priority.get(v.get("severity", "INFO").upper(), 4))
 
     for idx, vuln in enumerate(sorted_vulns, 1):
         name = vuln.get("plugin", vuln.get("name", f"Achado #{idx}"))
@@ -1128,12 +1104,8 @@ def generate_pdf_report(
         effort = effort_map.get(severity, "Médio")
         deadline = deadline_map.get(severity, "30 dias")
         # Truncate remediation text for table cell
-        rem_short = str(remediation)[:120] + (
-            "..." if len(str(remediation)) > 120 else ""
-        )
-        remediation_rows.append(
-            [str(idx), name[:30], severity, rem_short, effort, deadline]
-        )
+        rem_short = str(remediation)[:120] + ("..." if len(str(remediation)) > 120 else "")
+        remediation_rows.append([str(idx), name[:30], severity, rem_short, effort, deadline])
 
     if not vulns:
         remediation_rows.append(["—", "Nenhum achado", "—", "N/A", "—", "—"])
@@ -1280,9 +1252,7 @@ def generate_pdf_report(
     for t in tools_list:
         tools_rows.append(list(t))
 
-    tools_table = Table(
-        tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm], repeatRows=1
-    )
+    tools_table = Table(tools_rows, colWidths=[35 * mm, 28 * mm, 119 * mm], repeatRows=1)
     tools_table.setStyle(
         TableStyle(
             [
@@ -1443,9 +1413,7 @@ def generate_pdf_report(
             "Primeira versão do relatório — scan automatizado completo.",
         ],
     ]
-    revision_table = Table(
-        revision_data, colWidths=[18 * mm, 24 * mm, 40 * mm, 100 * mm], repeatRows=1
-    )
+    revision_table = Table(revision_data, colWidths=[18 * mm, 24 * mm, 40 * mm, 100 * mm], repeatRows=1)
     revision_table.setStyle(
         TableStyle(
             [
@@ -1613,9 +1581,7 @@ if __name__ == "__main__":
                 "details": (
                     "TLS 1.0 ainda habilitado no servidor. Protocolo considerado inseguro desde 2018 (PCI DSS 3.2.1)."
                 ),
-                "evidence": (
-                    "TLSv1.0 handshake successful\nCipher: TLS_RSA_WITH_AES_128_CBC_SHA"
-                ),
+                "evidence": ("TLSv1.0 handshake successful\nCipher: TLS_RSA_WITH_AES_128_CBC_SHA"),
                 "remediation": (
                     "Desabilitar TLS 1.0 e 1.1. Configurar servidor"
                     " para aceitar apenas TLS 1.2+ com cipher suites modernas."
@@ -1633,16 +1599,12 @@ if __name__ == "__main__":
                     "Política CORS wildcard detectada (Access-Control-Allow-Origin: *)."
                     " Permite que qualquer domínio faça requisições cross-origin."
                 ),
-                "evidence": (
-                    "Response header: Access-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true"
-                ),
+                "evidence": ("Response header: Access-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true"),
                 "remediation": (
                     "Restringir CORS para origens confiáveis específicas."
                     " Nunca combinar wildcard com Allow-Credentials."
                 ),
-                "references": [
-                    "https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"
-                ],
+                "references": ["https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"],
                 "owasp": "A05:2021 — Security Misconfiguration",
             },
             {
@@ -1653,9 +1615,7 @@ if __name__ == "__main__":
                     "Response headers:\nServer: nginx/1.24.0\nContent-Type: text/html\n(X-Frame-Options: ABSENT)"
                 ),
                 "remediation": "Adicionar X-Frame-Options: DENY ou SAMEORIGIN. Considerar também CSP frame-ancestors.",
-                "references": [
-                    "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"
-                ],
+                "references": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"],
                 "owasp": "A05:2021 — Security Misconfiguration",
             },
         ],

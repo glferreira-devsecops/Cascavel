@@ -85,10 +85,7 @@ def _enumerate_versions(target):
 
                 # Check for different auth requirements
                 if resp.status_code == 200 and (
-                    "internal" in prefix
-                    or "admin" in prefix
-                    or "debug" in prefix
-                    or "private" in prefix
+                    "internal" in prefix or "admin" in prefix or "debug" in prefix or "private" in prefix
                 ):
                     vulns.append(
                         {

@@ -54,11 +54,7 @@ def _scan_secrets(content, filename):
     for secret_name, pattern in SECRET_PATTERNS.items():
         matches = re.findall(pattern, content)
         for match in matches[:3]:
-            sev = (
-                "CRITICO"
-                if ("SECRET" in secret_name or "PRIVATE" in secret_name)
-                else "ALTO"
-            )
+            sev = "CRITICO" if ("SECRET" in secret_name or "PRIVATE" in secret_name) else "ALTO"
             findings.append(
                 {
                     "tipo": secret_name,

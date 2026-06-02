@@ -27,12 +27,7 @@ def _is_private_ip(ip_str):
         parts = ip_str.split(".")
         if len(parts) != 4:
             return False
-        ip_int = (
-            (int(parts[0]) << 24)
-            | (int(parts[1]) << 16)
-            | (int(parts[2]) << 8)
-            | int(parts[3])
-        )
+        ip_int = (int(parts[0]) << 24) | (int(parts[1]) << 16) | (int(parts[2]) << 8) | int(parts[3])
         return any(start <= ip_int <= end for start, end in PRIVATE_RANGES)
     except Exception:
         return False
@@ -94,9 +89,7 @@ def _parse_traceroute(raw):
             "ips": ips[:3],
             "hostnames": hostnames[:3],
             "latency_ms": latencies[:3],
-            "avg_latency": (
-                round(sum(latencies) / len(latencies), 2) if latencies else None
-            ),
+            "avg_latency": (round(sum(latencies) / len(latencies), 2) if latencies else None),
             "timeout": is_timeout,
             "private": any(_is_private_ip(ip) for ip in ips),
         }
@@ -198,9 +191,7 @@ def _analyze_hops(hops):
         "stackpath",
         "cdn",
     ]
-    detected_cdns = [
-        kw for kw in cdn_keywords if any(kw in hn.lower() for hn in all_hostnames)
-    ]
+    detected_cdns = [kw for kw in cdn_keywords if any(kw in hn.lower() for hn in all_hostnames)]
     if detected_cdns:
         intel["cdns_detected"] = detected_cdns
 
@@ -218,9 +209,7 @@ def _analyze_hops(hops):
         "lumen",
         "equinix",
     ]
-    detected_carriers = [
-        kw for kw in carrier_keywords if any(kw in hn.lower() for hn in all_hostnames)
-    ]
+    detected_carriers = [kw for kw in carrier_keywords if any(kw in hn.lower() for hn in all_hostnames)]
     if detected_carriers:
         intel["carriers_detected"] = detected_carriers
 

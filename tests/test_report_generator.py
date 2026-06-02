@@ -13,10 +13,7 @@ from report_generator import (
 
 def test_sanitize_html():
     """Ensure HTML is properly sanitized."""
-    assert (
-        _sanitize_html("<script>alert(1)</script>")
-        == "&lt;script&gt;alert(1)&lt;/script&gt;"
-    )
+    assert _sanitize_html("<script>alert(1)</script>") == "&lt;script&gt;alert(1)&lt;/script&gt;"
     assert _sanitize_html('onload="alert(1)"') == "onload=&quot;alert(1)&quot;"
     assert _sanitize_html("normal text") == "normal text"
 

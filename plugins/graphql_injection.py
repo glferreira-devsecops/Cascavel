@@ -190,15 +190,9 @@ def _test_batched_attack(target, endpoint):
     url = f"http://{target}{endpoint}"
     batch = []
     for i in range(50):
-        batch.append(
-            {
-                "query": f'mutation {{ login(email: "admin@target.com", password: "pass{i}") {{ token }} }}'
-            }
-        )
+        batch.append({"query": f'mutation {{ login(email: "admin@target.com", password: "pass{i}") {{ token }} }}'})
     try:
-        resp = requests.post(
-            url, json=batch, timeout=10, headers={"Content-Type": CT_JSON}
-        )
+        resp = requests.post(url, json=batch, timeout=10, headers={"Content-Type": CT_JSON})
         if resp.status_code == 200:
             try:
                 results = resp.json()

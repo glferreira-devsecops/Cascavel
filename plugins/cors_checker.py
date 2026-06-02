@@ -138,9 +138,7 @@ def _test_preflight(target, page):
 def _test_vary_header(target, page):
     """Verifica se Vary: Origin está presente (cache poisoning prevention)."""
     try:
-        resp = requests.get(
-            f"http://{target}{page}", headers={"Origin": "https://test.com"}, timeout=5
-        )
+        resp = requests.get(f"http://{target}{page}", headers={"Origin": "https://test.com"}, timeout=5)
         vary = resp.headers.get("Vary", "")
         acao = resp.headers.get("Access-Control-Allow-Origin", "")
         if acao and acao != "*" and "Origin" not in vary:
@@ -162,14 +160,10 @@ def _test_vary_header(target, page):
 def _test_expose_headers(target, page):
     """Verifica se headers sensíveis são expostos via CORS."""
     try:
-        resp = requests.get(
-            f"http://{target}{page}", headers={"Origin": "https://evil.com"}, timeout=5
-        )
+        resp = requests.get(f"http://{target}{page}", headers={"Origin": "https://evil.com"}, timeout=5)
         exposed = resp.headers.get("Access-Control-Expose-Headers", "")
         sensitive = [
-            h
-            for h in ["Authorization", "X-API-Key", "Set-Cookie", "X-CSRF-Token"]
-            if h.lower() in exposed.lower()
+            h for h in ["Authorization", "X-API-Key", "Set-Cookie", "X-CSRF-Token"] if h.lower() in exposed.lower()
         ]
         if sensitive:
             return {

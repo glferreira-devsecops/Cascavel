@@ -29,7 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ruff==0.15.7
+          pip install ruff>=0.3.0
           pip install -r requirements.txt
 
       - name: Run ruff check

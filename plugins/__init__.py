@@ -37,9 +37,7 @@ class ZeroTrustASTVisitor(ast.NodeVisitor):
         # Detect subclassing or attribute overrides (e.g. startswith)
         if isinstance(node.func, ast.Attribute):
             if node.func.attr in _BANNED_AST_NAMES:
-                raise SecurityError(
-                    f"Banned attribute access detected: {node.func.attr}"
-                )
+                raise SecurityError(f"Banned attribute access detected: {node.func.attr}")
         self.generic_visit(node)
 
     # In Python 3, Exec is not an AST node (it's a function), but just in case we hit older AST nodes.

@@ -321,9 +321,7 @@ def run(target, ip, open_ports, banners):
         "score": f"{score}% ({len(present)}/{len(REQUIRED_HEADERS)} headers)",
         "headers_presentes": present,
         "headers_ausentes": missing,
-        "info_disclosure": (
-            disclosed if disclosed else "Nenhum header de info disclosure"
-        ),
+        "info_disclosure": (disclosed if disclosed else "Nenhum header de info disclosure"),
         "csp_raw": csp if csp else "Ausente",
         "resultados": vulns if vulns else "Headers de segurança em conformidade OWASP",
         "severidade": max_sev,

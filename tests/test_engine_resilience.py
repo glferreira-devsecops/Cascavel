@@ -39,9 +39,7 @@ def test_engine_handles_plugin_crash():
 
 def test_engine_handles_tool_timeout():
     """Testa o comportamento da engine ao receber um timeout em ferramentas externas"""
-    with patch(
-        "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="fake", timeout=1)
-    ):
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="fake", timeout=1)):
         try:
             res = cascavel.run_cmd("fake_tool --target example.com", timeout=1)
             assert "TIMEOUT" in res or res == ""

@@ -24,9 +24,7 @@ FRAME_RST_STREAM = 0x03
 FLAG_END_HEADERS = 0x04
 
 
-def build_frame(
-    length: int, ftype: int, flags: int, stream_id: int, payload: bytes = b""
-) -> bytes:
+def build_frame(length: int, ftype: int, flags: int, stream_id: int, payload: bytes = b"") -> bytes:
     """Builds an HTTP/2 frame."""
     header = struct.pack(">I", (length << 8) | ftype)[1:]  # 24-bit length + 8-bit type
     header += struct.pack(">B", flags)
@@ -91,9 +89,7 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
             # Immediately Reset Stream
             # Error code 8 = CANCEL
             rst_payload = struct.pack(">I", 8)
-            payload.extend(
-                build_frame(4, FRAME_RST_STREAM, 0x00, stream_id, rst_payload)
-            )
+            payload.extend(build_frame(4, FRAME_RST_STREAM, 0x00, stream_id, rst_payload))
 
             stream_id += 2  # Client stream IDs must be odd
 

@@ -119,9 +119,7 @@ def _scan_aws(resultado):
                         }
                     )
                 if not _has_provider(resultado, "AWS"):
-                    resultado["providers_detectados"].append(
-                        {"provider": "AWS", "imds_version": "v1"}
-                    )
+                    resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v1"})
         except Exception:
             continue
 
@@ -161,9 +159,7 @@ def _scan_aws_v2(resultado):
             )
             if v2_resp.status_code == 200:
                 if not _has_provider(resultado, "AWS"):
-                    resultado["providers_detectados"].append(
-                        {"provider": "AWS", "imds_version": "v2"}
-                    )
+                    resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v2"})
                 resultado["vulns"].append(
                     {
                         "tipo": "AWS_IMDSv2_ATIVO",

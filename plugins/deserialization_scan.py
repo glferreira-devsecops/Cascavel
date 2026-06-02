@@ -35,9 +35,7 @@ JAVA_PAYLOADS = [
     },
     {
         "nome": "JAVA_YSOSERIAL_PROBE",
-        "data": base64.b64decode(
-            "rO0ABXNyADJvcmcuYXBhY2hlLmNvbW1vbnMuY29sbGVjdGlvbnMu"
-        ),
+        "data": base64.b64decode("rO0ABXNyADJvcmcuYXBhY2hlLmNvbW1vbnMuY29sbGVjdGlvbnMu"),
         "content_type": "application/x-java-serialized-object",
         "indicadores": [
             "commons",
@@ -72,9 +70,7 @@ PHP_PAYLOADS = [
 PYTHON_PAYLOADS = [
     {
         "nome": "PYTHON_PICKLE",
-        "data": base64.b64encode(
-            b"\x80\x04\x95\x05\x00\x00\x00\x00\x00\x00\x00\x8c\x01X\x94."
-        ).decode(),
+        "data": base64.b64encode(b"\x80\x04\x95\x05\x00\x00\x00\x00\x00\x00\x00\x8c\x01X\x94.").decode(),
         "content_type": "application/octet-stream",
         "indicadores": [
             "pickle",
@@ -146,12 +142,8 @@ def _test_payload(url, payload, junk_status=0, junk_text=""):
                     "status": resp.status_code,
                 }
         # Check for generic error disclosure ONLY if junk data did not trigger it
-        if resp.status_code == 500 and any(
-            e in resp_text_lower for e in ["exception", "error", "traceback"]
-        ):
-            is_generic_fp = junk_status == 500 and any(
-                e in junk_text for e in ["exception", "error", "traceback"]
-            )
+        if resp.status_code == 500 and any(e in resp_text_lower for e in ["exception", "error", "traceback"]):
+            is_generic_fp = junk_status == 500 and any(e in junk_text for e in ["exception", "error", "traceback"])
             if not is_generic_fp:
                 return {
                     "tipo": "DESER_ERROR_DISCLOSURE",
@@ -252,9 +244,7 @@ def run(target, ip, open_ports, banners):
     """
     _ = (ip, open_ports, banners)
     vulns = []
-    all_payloads = (
-        JAVA_PAYLOADS + PHP_PAYLOADS + PYTHON_PAYLOADS + DOTNET_PAYLOADS + YAML_PAYLOADS
-    )
+    all_payloads = JAVA_PAYLOADS + PHP_PAYLOADS + PYTHON_PAYLOADS + DOTNET_PAYLOADS + YAML_PAYLOADS
 
     for ep in ENDPOINTS:
         url = f"http://{target}{ep}"
@@ -277,9 +267,7 @@ def run(target, ip, open_ports, banners):
             vulns.append(vs)
 
         if "application/json" not in junk_baselines:
-            junk_baselines["application/json"] = _get_junk_data_response(
-                url, "application/json"
-            )
+            junk_baselines["application/json"] = _get_junk_data_response(url, "application/json")
         j_json_status, j_json_text = junk_baselines["application/json"]
 
         json_vulns = _test_json_deserialization(url, j_json_status, j_json_text)
@@ -301,7 +289,5 @@ def run(target, ip, open_ports, banners):
             "viewstate",
             "json_polymorphic",
         ],
-        "resultados": (
-            vulns if vulns else "Nenhum endpoint de deserialization detectado"
-        ),
+        "resultados": (vulns if vulns else "Nenhum endpoint de deserialization detectado"),
     }

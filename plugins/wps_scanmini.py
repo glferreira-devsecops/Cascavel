@@ -41,9 +41,5 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "wps_scanmini",
-        "resultados": (
-            encontrados
-            if encontrados
-            else "Nenhum endpoint WordPress típico detectado."
-        ),
+        "resultados": (encontrados if encontrados else "Nenhum endpoint WordPress típico detectado."),
     }

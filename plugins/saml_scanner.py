@@ -81,8 +81,7 @@ def _check_saml_endpoints(target):
         try:
             resp = requests.get(f"http://{target}{endpoint}", timeout=8)
             if resp.status_code == 200 and any(
-                k in resp.text.lower()
-                for k in ["saml", "entityid", "singlesignonservice", "idp"]
+                k in resp.text.lower() for k in ["saml", "entityid", "singlesignonservice", "idp"]
             ):
                 vuln = {
                     "tipo": "SAML_ENDPOINT_EXPOSED",
@@ -127,9 +126,7 @@ def _test_saml_attacks(target):
                 )
 
                 # Check for XXE
-                if attack_name.startswith("XXE") and any(
-                    d in resp.text for d in attack_data["detect"]
-                ):
+                if attack_name.startswith("XXE") and any(d in resp.text for d in attack_data["detect"]):
                     vulns.append(
                         {
                             "tipo": "SAML_XXE",
@@ -147,10 +144,7 @@ def _test_saml_attacks(target):
                 ):
                     if resp.status_code in (200, 302):
                         location = resp.headers.get("Location", "")
-                        if any(
-                            d in location.lower() or d in resp.text.lower()
-                            for d in attack_data["detect"]
-                        ):
+                        if any(d in location.lower() or d in resp.text.lower() for d in attack_data["detect"]):
                             vulns.append(
                                 {
                                     "tipo": f"SAML_{attack_name}",
@@ -162,10 +156,7 @@ def _test_saml_attacks(target):
 
                 # Replay attack
                 if attack_name == "SAML_REPLAY" and resp.status_code in (200, 302):
-                    if (
-                        "expired" not in resp.text.lower()
-                        and "invalid" not in resp.text.lower()
-                    ):
+                    if "expired" not in resp.text.lower() and "invalid" not in resp.text.lower():
                         vulns.append(
                             {
                                 "tipo": "SAML_REPLAY_ACCEPTED",

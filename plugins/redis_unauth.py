@@ -70,11 +70,7 @@ def _check_redis_rce(target, port):
     vulns = []
     # CONFIG GET dir
     response = _send_redis_cmd(target, port, "CONFIG GET dir\r\n")
-    if (
-        "dir" in response.lower()
-        and "-ERR" not in response
-        and "-NOAUTH" not in response
-    ):
+    if "dir" in response.lower() and "-ERR" not in response and "-NOAUTH" not in response:
         vulns.append(
             {
                 "tipo": "REDIS_RCE_VIA_CONFIG",

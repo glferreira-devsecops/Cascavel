@@ -55,9 +55,7 @@ def _test_headers(url, callback_base, timeout):
             payload = payload_tpl.replace("{{CALLBACK}}", callback)
             try:
                 headers = {header: payload}
-                r = requests.get(
-                    url, headers=headers, timeout=timeout, allow_redirects=False
-                )
+                r = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
                 results.append(
                     {
                         "header": header,
@@ -103,9 +101,7 @@ def _detect_java_indicators(url, timeout):
 
         # Server header
         server = headers_lower.get("server", "")
-        if any(
-            kw in server.lower() for kw in ["tomcat", "jetty", "wildfly", "glassfish"]
-        ):
+        if any(kw in server.lower() for kw in ["tomcat", "jetty", "wildfly", "glassfish"]):
             indicators.append({"type": "server_header", "value": server})
 
         # X-Powered-By
@@ -126,9 +122,7 @@ def _detect_java_indicators(url, timeout):
                 ".jsp",
             ]
         ):
-            indicators.append(
-                {"type": "body_indicator", "value": "Java patterns in response body"}
-            )
+            indicators.append({"type": "body_indicator", "value": "Java patterns in response body"})
 
     except Exception:
         pass
@@ -163,9 +157,7 @@ def run(target, ip, open_ports, banners):
     # 4. Detect anomalies (timeouts ou delays suspeitos)
     suspicious_timeouts = [r for r in header_results if r.get("status") == "TIMEOUT"]
     slow_responses = [
-        r
-        for r in header_results
-        if isinstance(r.get("response_time_ms"), int) and r["response_time_ms"] > 5000
+        r for r in header_results if isinstance(r.get("response_time_ms"), int) and r["response_time_ms"] > 5000
     ]
 
     if suspicious_timeouts:
@@ -215,9 +207,7 @@ def run(target, ip, open_ports, banners):
         "resultados": {
             "java_indicators": java_indicators,
             "headers_tested": len(header_results),
-            "tokens_generated": [
-                r.get("token") for r in header_results if r.get("token")
-            ][:5],
+            "tokens_generated": [r.get("token") for r in header_results if r.get("token")][:5],
             "vulns": vulns,
             "nota": "Configure 'YOUR_OOB_CALLBACK.example.com' com interactsh/Burp "
             "Collaborator para confirmação real de callbacks JNDI",

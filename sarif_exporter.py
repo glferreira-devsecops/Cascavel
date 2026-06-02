@@ -21,9 +21,7 @@ _SARIF_LEVEL = {
 }
 
 
-def _result_to_sarif(
-    result: dict[str, Any], index: int
-) -> tuple[dict[str, Any], dict[str, Any]]:
+def _result_to_sarif(result: dict[str, Any], index: int) -> tuple[dict[str, Any], dict[str, Any]]:
     plugin = result.get("plugin", "unknown")
     severity = str(result.get("severity", "INFO")).upper()
     title = str(result.get("title", f"Finding from {plugin}"))
@@ -44,21 +42,11 @@ def _result_to_sarif(
         "ruleId": rule_id,
         "level": sarif_level,
         "message": {"text": title},
-        "locations": [
-            {
-                "physicalLocation": {
-                    "artifactLocation": {
-                        "uri": result.get("target", "target_environment")
-                    }
-                }
-            }
-        ],
+        "locations": [{"physicalLocation": {"artifactLocation": {"uri": result.get("target", "target_environment")}}}],
     }
 
     if evidence:
-        sarif_result["attachments"] = [
-            {"description": {"text": "Evidence"}, "contents": {"text": evidence}}
-        ]
+        sarif_result["attachments"] = [{"description": {"text": "Evidence"}, "contents": {"text": evidence}}]
 
     return sarif_result, rule
 

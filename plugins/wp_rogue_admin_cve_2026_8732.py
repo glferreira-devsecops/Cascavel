@@ -24,14 +24,10 @@ def run(target, ip, open_ports, banners):
 
         try:
             # Enviamos um POST inofensivo para admin-ajax.php
-            resp = requests.post(
-                url, data={"action": "heartbeat"}, timeout=5, verify=False
-            )  # nosec B501
+            resp = requests.post(url, data={"action": "heartbeat"}, timeout=5, verify=False)  # nosec B501
 
             # Se admin-ajax.php está respondendo e é um WP
-            if resp.status_code in (200, 400) and (
-                "wp-admin" in resp.text or resp.text == "0"
-            ):
+            if resp.status_code in (200, 400) and ("wp-admin" in resp.text or resp.text == "0"):
                 resultados.append(
                     {
                         "porta": porta,

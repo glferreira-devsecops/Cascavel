@@ -90,9 +90,7 @@ GRAPHQL_QUERIES = [
 def _get_404_baseline_len(target):
     """Obtém o tamanho do body de erro padrão para endpoints que não existem."""
     try:
-        resp = requests.get(
-            f"http://{target}/api/non_existent_endpoint_12345", timeout=5
-        )
+        resp = requests.get(f"http://{target}/api/non_existent_endpoint_12345", timeout=5)
         return len(resp.text)
     except Exception:
         return 0
@@ -120,9 +118,7 @@ def _probe_endpoint(target, ep_template, id_list):
 def _analyze_responses(responses, ep_template, baseline_len):
     """Analisa padrões de resposta para detectar IDOR/BOLA com diff checking rigoroso."""
     vulns = []
-    success = [
-        tid for tid, r in responses.items() if r["status"] == 200 and r["has_data"]
-    ]
+    success = [tid for tid, r in responses.items() if r["status"] == 200 and r["has_data"]]
     success_200 = [tid for tid, r in responses.items() if r["status"] == 200]
 
     # Verifica se os sucessos não são apenas soft-404 refletindo ID ou body genérico
@@ -227,9 +223,7 @@ def _check_method_override(target):
     for ep in ["/api/users/1", "/api/v1/users/1", "/api/v1/accounts/1"]:
         for method in ["PUT", "DELETE", "PATCH"]:
             try:
-                resp = requests.request(
-                    method, f"http://{target}{ep}", timeout=5, json={"role": "admin"}
-                )
+                resp = requests.request(method, f"http://{target}{ep}", timeout=5, json={"role": "admin"})
                 if resp.status_code in (200, 204):
                     vulns.append(
                         {
@@ -257,9 +251,7 @@ def _check_graphql_idor(target):
                     timeout=5,
                     headers={"Content-Type": "application/json"},
                 )
-                if resp.status_code == 200 and any(
-                    k in resp.text.lower() for k in PII_KEYWORDS
-                ):
+                if resp.status_code == 200 and any(k in resp.text.lower() for k in PII_KEYWORDS):
                     vulns.append(
                         {
                             "tipo": "IDOR_GRAPHQL",
@@ -286,9 +278,7 @@ def _check_parameter_pollution(target):
     for url_path in hpp_urls:
         try:
             resp = requests.get(f"http://{target}{url_path}", timeout=5)
-            if resp.status_code == 200 and any(
-                k in resp.text.lower() for k in PII_KEYWORDS
-            ):
+            if resp.status_code == 200 and any(k in resp.text.lower() for k in PII_KEYWORDS):
                 vulns.append(
                     {
                         "tipo": "IDOR_HPP",
@@ -310,9 +300,7 @@ def _check_uuid_prediction(target, baseline_len):
         success = [
             uid
             for uid, r in responses.items()
-            if r["status"] == 200
-            and r.get("has_data")
-            and abs(r["length"] - baseline_len) > (baseline_len * 0.05)
+            if r["status"] == 200 and r.get("has_data") and abs(r["length"] - baseline_len) > (baseline_len * 0.05)
         ]
         if success:
             vulns.append(

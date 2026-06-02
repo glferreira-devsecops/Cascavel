@@ -107,15 +107,9 @@ def _check_kubelet(target):
         scheme = "https" if port == 10250 else "http"
         for path, tipo in kubelet_paths.items():
             try:
-                resp = requests.get(
-                    f"{scheme}://{target}:{port}{path}", timeout=5, verify=False
-                )
+                resp = requests.get(f"{scheme}://{target}:{port}{path}", timeout=5, verify=False)
                 if resp.status_code == 200 and len(resp.text) > 10:
-                    sev = (
-                        "CRITICO"
-                        if path in ("/pods", "/runningpods/", "/stats/summary")
-                        else "ALTO"
-                    )
+                    sev = "CRITICO" if path in ("/pods", "/runningpods/", "/stats/summary") else "ALTO"
                     vulns.append(
                         {
                             "tipo": tipo,
@@ -136,12 +130,8 @@ def _check_dashboard(target):
     for port in [443, 8443, 8001, 30000]:
         for path in DASHBOARD_PATHS:
             try:
-                resp = requests.get(
-                    f"https://{target}:{port}{path}", timeout=5, verify=False
-                )
-                if resp.status_code == 200 and any(
-                    k in resp.text.lower() for k in ["dashboard", "kubernetes"]
-                ):
+                resp = requests.get(f"https://{target}:{port}{path}", timeout=5, verify=False)
+                if resp.status_code == 200 and any(k in resp.text.lower() for k in ["dashboard", "kubernetes"]):
                     vulns.append(
                         {
                             "tipo": "K8S_DASHBOARD_UNAUTH",

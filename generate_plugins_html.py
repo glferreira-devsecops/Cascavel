@@ -38,9 +38,7 @@ def parse_plugins_md(md_file):
                 plugin_name = parts[0].replace("**", "")
                 plugin_file = parts[1].replace("`", "")
                 techniques = parts[2]
-                plugins.append(
-                    {"name": plugin_name, "file": plugin_file, "techniques": techniques}
-                )
+                plugins.append({"name": plugin_name, "file": plugin_file, "techniques": techniques})
         categories.append({"icon": icon, "name": name, "plugins": plugins})
 
     return categories

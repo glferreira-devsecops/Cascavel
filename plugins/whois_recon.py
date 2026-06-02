@@ -87,11 +87,7 @@ def _parse_whois(raw):
     for key, pattern in patterns.items():
         matches = re.findall(pattern, raw, re.IGNORECASE)
         if matches:
-            fields[key] = (
-                matches[0].strip()
-                if len(matches) == 1
-                else [m.strip() for m in matches]
-            )
+            fields[key] = matches[0].strip() if len(matches) == 1 else [m.strip() for m in matches]
 
     # Nameservers
     ns = re.findall(r"Name\s*Server:\s*(.+)", raw, re.IGNORECASE)
@@ -198,9 +194,7 @@ def _analyze_domain_age(creation_date_str):
         # Try ISO format
         for fmt in ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"]:
             try:
-                created = datetime.datetime.strptime(
-                    creation_date_str[:19], fmt[: len(creation_date_str[:19])]
-                )
+                created = datetime.datetime.strptime(creation_date_str[:19], fmt[: len(creation_date_str[:19])])
                 age_days = (datetime.datetime.now() - created).days
                 return {
                     "created": creation_date_str,
@@ -209,20 +203,12 @@ def _analyze_domain_age(creation_date_str):
                     "risk": (
                         "CRITICO"
                         if age_days < 30
-                        else (
-                            "ALTO"
-                            if age_days < 180
-                            else "MEDIO" if age_days < 365 else "BAIXO"
-                        )
+                        else ("ALTO" if age_days < 180 else "MEDIO" if age_days < 365 else "BAIXO")
                     ),
                     "nota": (
                         "Domínio muito recente — possível phishing!"
                         if age_days < 30
-                        else (
-                            "Domínio jovem"
-                            if age_days < 365
-                            else "Domínio estabelecido"
-                        )
+                        else ("Domínio jovem" if age_days < 365 else "Domínio estabelecido")
                     ),
                 }
             except ValueError:
@@ -267,9 +253,7 @@ def _check_expiry(expiry_str):
     try:
         for fmt in ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d"]:
             try:
-                expiry = datetime.datetime.strptime(
-                    expiry_str[:19], fmt[: len(expiry_str[:19])]
-                )
+                expiry = datetime.datetime.strptime(expiry_str[:19], fmt[: len(expiry_str[:19])])
                 days_left = (expiry - datetime.datetime.now()).days
                 return {
                     "expiry_date": expiry_str,
@@ -277,16 +261,14 @@ def _check_expiry(expiry_str):
                     "risk": (
                         "CRITICO"
                         if days_left < 0
-                        else (
-                            "ALTO"
-                            if days_left < 30
-                            else "MEDIO" if days_left < 90 else "BAIXO"
-                        )
+                        else ("ALTO" if days_left < 30 else "MEDIO" if days_left < 90 else "BAIXO")
                     ),
                     "nota": (
                         "DOMÍNIO EXPIRADO!"
                         if days_left < 0
-                        else f"Expira em {days_left} dias" if days_left < 90 else "OK"
+                        else f"Expira em {days_left} dias"
+                        if days_left < 90
+                        else "OK"
                     ),
                 }
             except ValueError:
@@ -312,9 +294,7 @@ def run(target, ip, open_ports, banners):
     # 1. Domain WHOIS (native)
     raw_whois = _whois_native(target)
     if isinstance(raw_whois, str) and raw_whois.startswith("WHOIS_ERROR"):
-        resultado["vulns"].append(
-            {"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": raw_whois}
-        )
+        resultado["vulns"].append({"tipo": "SILENT_ERROR", "severidade": "INFO", "descricao": raw_whois})
         whois_fields = {}
     else:
         whois_fields = _parse_whois(raw_whois)

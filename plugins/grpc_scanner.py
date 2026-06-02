@@ -38,10 +38,7 @@ def _check_grpc_web(target, port):
             data=b"\x00\x00\x00\x00\x00",
             timeout=5,
         )
-        if (
-            resp.status_code in (200, 415)
-            or "grpc" in resp.headers.get("Content-Type", "").lower()
-        ):
+        if resp.status_code in (200, 415) or "grpc" in resp.headers.get("Content-Type", "").lower():
             vulns.append(
                 {
                     "tipo": "GRPC_WEB_ENABLED",

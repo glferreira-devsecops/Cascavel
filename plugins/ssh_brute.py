@@ -32,9 +32,7 @@ def run(target, ip, open_ports, banners):
             for senha in senhas:
                 try:
                     client = paramiko.SSHClient()
-                    client.set_missing_host_key_policy(
-                        paramiko.AutoAddPolicy()
-                    )  # nosec B507
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # nosec B507
                     client.connect(
                         target,
                         port=porta,
@@ -44,9 +42,7 @@ def run(target, ip, open_ports, banners):
                         allow_agent=False,
                         look_for_keys=False,
                     )
-                    encontrados.append(
-                        {"porta": porta, "usuario": user, "senha": senha}
-                    )
+                    encontrados.append({"porta": porta, "usuario": user, "senha": senha})
                     client.close()
                 except (
                     OSError,
@@ -59,7 +55,5 @@ def run(target, ip, open_ports, banners):
 
     return {
         "plugin": "ssh_brute",
-        "resultados": (
-            encontrados if encontrados else "Nenhum acesso SSH padrão identificado"
-        ),
+        "resultados": (encontrados if encontrados else "Nenhum acesso SSH padrão identificado"),
     }

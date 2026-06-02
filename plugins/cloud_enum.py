@@ -52,9 +52,7 @@ def _detect_by_domain(target):
     for name, patterns in CLOUD_PATTERNS.items():
         for pattern in patterns:
             if pattern in target.lower():
-                providers.append(
-                    {"provider": name, "match": pattern, "metodo": "domain_pattern"}
-                )
+                providers.append({"provider": name, "match": pattern, "metodo": "domain_pattern"})
                 break
     return providers
 
@@ -66,9 +64,7 @@ def _detect_by_headers(target):
         resp = requests.get(f"http://{target}", timeout=5)
         headers = resp.headers
         # AWS
-        if any(
-            h in str(headers) for h in ["x-amz", "x-amzn", "AmazonS3", "CloudFront"]
-        ):
+        if any(h in str(headers) for h in ["x-amz", "x-amzn", "AmazonS3", "CloudFront"]):
             providers.append({"provider": "AWS", "metodo": "http_headers"})
         # Cloudflare
         if headers.get("server", "").lower() == "cloudflare" or "cf-ray" in headers:
@@ -80,10 +76,7 @@ def _detect_by_headers(target):
         if any(h in str(headers) for h in ["x-goog", "x-cloud-trace", "x-gfe"]):
             providers.append({"provider": "Google", "metodo": "http_headers"})
         # Fastly
-        if (
-            "x-served-by" in headers
-            and "cache" in headers.get("x-served-by", "").lower()
-        ):
+        if "x-served-by" in headers and "cache" in headers.get("x-served-by", "").lower():
             providers.append({"provider": "Fastly", "metodo": "http_headers"})
         # Vercel
         if headers.get("x-vercel-id"):
@@ -107,9 +100,7 @@ def _detect_by_dns(target, ip):
             for name, patterns in CLOUD_PATTERNS.items():
                 for pattern in patterns:
                     if pattern.strip(".") in rdns:
-                        providers.append(
-                            {"provider": name, "metodo": "reverse_dns", "rdns": rdns}
-                        )
+                        providers.append({"provider": name, "metodo": "reverse_dns", "rdns": rdns})
                         break
         except Exception:
             pass
@@ -117,9 +108,7 @@ def _detect_by_dns(target, ip):
         # IP range heuristic
         for prefix in AWS_IP_RANGES:
             if host_ip.startswith(prefix):
-                providers.append(
-                    {"provider": "AWS_POSSIBLE", "metodo": "ip_range", "ip": host_ip}
-                )
+                providers.append({"provider": "AWS_POSSIBLE", "metodo": "ip_range", "ip": host_ip})
                 break
     except Exception:
         pass

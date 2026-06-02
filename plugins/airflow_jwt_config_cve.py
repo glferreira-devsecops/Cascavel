@@ -25,9 +25,7 @@ def run(target, ip, open_ports, banners):
         try:
             resp = requests.get(url, timeout=5, verify=False)  # nosec B501
 
-            if "Airflow" in resp.text or "Apache Airflow" in resp.headers.get(
-                "Server", ""
-            ):
+            if "Airflow" in resp.text or "Apache Airflow" in resp.headers.get("Server", ""):
                 resultados.append(
                     {
                         "porta": porta,

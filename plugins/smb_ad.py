@@ -22,17 +22,11 @@ def run(target, ip, open_ports, banners):
     resultado = {}
     try:
         cmd = ["smbclient", "-L", f"//{safe_target}", "-N"]
-        proc = subprocess.run(
-            cmd, shell=False, capture_output=True, timeout=20, encoding="utf-8"
-        )
+        proc = subprocess.run(cmd, shell=False, capture_output=True, timeout=20, encoding="utf-8")
         saida = proc.stdout
-        compartilhamentos = re.findall(
-            r"^\s*([A-Za-z0-9\$\-_]+)\s+Disk", saida, re.MULTILINE
-        )
+        compartilhamentos = re.findall(r"^\s*([A-Za-z0-9\$\-_]+)\s+Disk", saida, re.MULTILINE)
         resultado["compartilhamentos"] = (
-            compartilhamentos
-            if compartilhamentos
-            else "Nenhum compartilhamento encontrado"
+            compartilhamentos if compartilhamentos else "Nenhum compartilhamento encontrado"
         )
         if proc.stderr:
             resultado["stderr"] = proc.stderr[:500]

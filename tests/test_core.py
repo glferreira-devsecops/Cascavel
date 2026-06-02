@@ -81,9 +81,7 @@ class TestSarifExporter:
         ]
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = export_sarif(
-                "example.com", "93.184.216.34", results, 12.5, output_dir=tmpdir
-            )
+            path = export_sarif("example.com", "93.184.216.34", results, 12.5, output_dir=tmpdir)
             assert os.path.isfile(path)
             assert path.endswith(".sarif")
 

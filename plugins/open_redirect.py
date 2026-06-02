@@ -120,10 +120,7 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
 
         # JS redirect
         if resp.status_code == 200 and not reflects_blindly:
-            if (
-                any(p in resp.text for p in JS_REDIRECT_PATTERNS)
-                and "evil.com" in resp.text
-            ):
+            if any(p in resp.text for p in JS_REDIRECT_PATTERNS) and "evil.com" in resp.text:
                 return {
                     "tipo": "OPEN_REDIRECT_JS",
                     "metodo": method,
@@ -248,9 +245,7 @@ def run(target, ip, open_ports, banners):
         reflects_blindly = _verify_waf_blind_reflection(target, param)
 
         for payload, method in payloads:
-            result = _test_get_redirect(
-                target, param, payload, method, reflects_blindly
-            )
+            result = _test_get_redirect(target, param, payload, method, reflects_blindly)
             if result:
                 vulns.append(result)
                 break

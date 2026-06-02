@@ -27,9 +27,7 @@ def run(target, ip, open_ports, banners):
                 encoding="utf-8",
             )
             ranges = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
-            resultado["asn_ranges"] = (
-                ranges if ranges else "Nenhum range ASN encontrado"
-            )
+            resultado["asn_ranges"] = ranges if ranges else "Nenhum range ASN encontrado"
         except subprocess.TimeoutExpired:
             resultado["asn_ranges"] = "Timeout (30s)"
         except Exception as e:

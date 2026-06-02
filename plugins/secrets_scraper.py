@@ -130,9 +130,7 @@ def _calculate_entropy(text):
     for c in text:
         freq[c] = freq.get(c, 0) + 1
     length = len(text)
-    entropy = -sum(
-        (count / length) * math.log2(count / length) for count in freq.values()
-    )
+    entropy = -sum((count / length) * math.log2(count / length) for count in freq.values())
     return round(entropy, 2)
 
 

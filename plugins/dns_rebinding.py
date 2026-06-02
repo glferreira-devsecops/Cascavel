@@ -135,11 +135,7 @@ def _check_multiple_a(target, resultado):
         if len(unique_ips) > 1:
             # Check for internal IPs
             internal = [
-                ip
-                for ip in unique_ips
-                if ip.startswith("10.")
-                or ip.startswith("192.168.")
-                or ip.startswith("172.")
+                ip for ip in unique_ips if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172.")
             ]
             if internal:
                 resultado["vulns"].append(
@@ -218,9 +214,7 @@ def _check_zone_transfer(target, resultado):
         ns = ns.strip().rstrip(".")
         if not ns:
             continue
-        output = _run_dig(
-            ["@" + shlex.quote(ns), shlex.quote(target), "AXFR", "+short"]
-        )
+        output = _run_dig(["@" + shlex.quote(ns), shlex.quote(target), "AXFR", "+short"])
         if output and len(output) > 50:
             resultado["vulns"].append(
                 {

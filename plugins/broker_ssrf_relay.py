@@ -52,9 +52,7 @@ def detect_ssrf_relay(url: str, session: requests.Session) -> tuple[bool, str]:
             for payload in payloads:
                 try:
                     # Test via GET
-                    resp = session.get(
-                        endpoint, params={param: payload}, timeout=5, verify=False
-                    )
+                    resp = session.get(endpoint, params={param: payload}, timeout=5, verify=False)
 
                     # If the SSRF successfully relayed the payload to Redis,
                     # Redis responds with "+PONG". Sometimes the web app reflects this error/response.
@@ -65,9 +63,7 @@ def detect_ssrf_relay(url: str, session: requests.Session) -> tuple[bool, str]:
                         )
 
                     # Test via POST JSON
-                    resp_post = session.post(
-                        endpoint, json={param: payload}, timeout=5, verify=False
-                    )
+                    resp_post = session.post(endpoint, json={param: payload}, timeout=5, verify=False)
                     if "+PONG" in resp_post.text or "PONG" in resp_post.text:
                         return (
                             True,

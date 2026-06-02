@@ -71,11 +71,7 @@ def _check_openid_config(target):
                     try:
                         config = resp.json()
                         scopes = config.get("scopes_supported", [])
-                        dangerous_scopes = [
-                            s
-                            for s in scopes
-                            if s in ["admin", "write", "delete", "all"]
-                        ]
+                        dangerous_scopes = [s for s in scopes if s in ["admin", "write", "delete", "all"]]
                         if dangerous_scopes:
                             vulns.append(
                                 {
@@ -227,9 +223,7 @@ def _check_device_flow(target):
     vulns = []
     for ep in ["/oauth/device/code", "/oauth2/device/code"]:
         try:
-            resp = requests.post(
-                f"http://{target}{ep}", data={"client_id": "test"}, timeout=5
-            )
+            resp = requests.post(f"http://{target}{ep}", data={"client_id": "test"}, timeout=5)
             if resp.status_code == 200 and "device_code" in resp.text:
                 vulns.append(
                     {
@@ -249,9 +243,7 @@ def _check_state_parameter(target):
         url = f"http://{target}{ep}?response_type=code&client_id=test&redirect_uri=http://localhost"
         try:
             resp = requests.get(url, timeout=5, allow_redirects=False)
-            if resp.status_code in (302, 303) and "state=" not in resp.headers.get(
-                "Location", ""
-            ):
+            if resp.status_code in (302, 303) and "state=" not in resp.headers.get("Location", ""):
                 return {
                     "tipo": "OAUTH_NO_STATE",
                     "severidade": "ALTO",

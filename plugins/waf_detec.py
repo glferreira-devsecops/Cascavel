@@ -44,9 +44,7 @@ def run(target, ip, open_ports, banners):
             resp = requests.get(url, timeout=5)
             for ind in indicativos:
                 if ind in resp.text.lower():
-                    deteccoes.append(
-                        {"url": url, "indicador": ind, "status": resp.status_code}
-                    )
+                    deteccoes.append({"url": url, "indicador": ind, "status": resp.status_code})
                     break
             if resp.status_code in [403, 406, 501, 999]:
                 deteccoes.append(
@@ -66,9 +64,7 @@ def run(target, ip, open_ports, banners):
             )
             continue
 
-    resultado["heuristica"] = (
-        deteccoes if deteccoes else "Nenhum WAF detectado via heurística"
-    )
+    resultado["heuristica"] = deteccoes if deteccoes else "Nenhum WAF detectado via heurística"
 
     # Método 2: wafw00f (se disponível)
     if shutil.which("wafw00f"):

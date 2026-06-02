@@ -126,9 +126,7 @@ def _check_email_security(target):
             if "v=spf1" in line:
                 security["spf"] = line.strip()[:100]
                 if "~all" in line:
-                    security["spf_policy"] = (
-                        "SOFTFAIL (emails spoofados podem ser entregues)"
-                    )
+                    security["spf_policy"] = "SOFTFAIL (emails spoofados podem ser entregues)"
                 elif "-all" in line:
                     security["spf_policy"] = "HARDFAIL (proteção forte)"
                 elif "+all" in line:
@@ -147,9 +145,7 @@ def _check_email_security(target):
             if "v=DMARC1" in line:
                 security["dmarc"] = line.strip()[:100]
                 if "p=none" in line:
-                    security["dmarc_policy"] = (
-                        "NONE (monitoramento apenas — sem bloqueio!)"
-                    )
+                    security["dmarc_policy"] = "NONE (monitoramento apenas — sem bloqueio!)"
                 elif "p=quarantine" in line:
                     security["dmarc_policy"] = "QUARANTINE (emails suspeitos para spam)"
                 elif "p=reject" in line:
@@ -191,12 +187,8 @@ def run(target, ip, open_ports, banners):
     domain_emails = sorted([e for e in emails if target in e])
     other_emails = sorted([e for e in emails if target not in e])
 
-    resultado["emails_do_dominio"] = (
-        domain_emails if domain_emails else "Nenhum encontrado"
-    )
-    resultado["emails_externos"] = (
-        other_emails[:20] if other_emails else "Nenhum encontrado"
-    )
+    resultado["emails_do_dominio"] = domain_emails if domain_emails else "Nenhum encontrado"
+    resultado["emails_externos"] = other_emails[:20] if other_emails else "Nenhum encontrado"
     resultado["total_unico"] = len(emails)
 
     return {

@@ -14,9 +14,7 @@ from typing import Any
 logger = logging.getLogger("Cascavel.Plugins.SMTPSmuggling")
 
 
-def test_smtp_smuggling_sequence(
-    target_ip: str, port: int = 25, timeout: int = 5
-) -> tuple[bool, str]:
+def test_smtp_smuggling_sequence(target_ip: str, port: int = 25, timeout: int = 5) -> tuple[bool, str]:
     """
     Connects to the SMTP server and attempts to send a smuggled message
     using non-standard End-of-Data sequences.
@@ -33,7 +31,9 @@ def test_smtp_smuggling_sequence(
     # treats it as End-of-Data, the second message is smuggled.
 
     # Message 1 (Legitimate)
-    msg1_data = f"From: {sender}\r\nTo: {recipient}\r\nSubject: Legitimate Message\r\n\r\nThis is the legitimate message body."
+    msg1_data = (
+        f"From: {sender}\r\nTo: {recipient}\r\nSubject: Legitimate Message\r\n\r\nThis is the legitimate message body."
+    )
 
     # The Smuggling Sequence: <LF>.<LF> or <CR>.<CR>
     smuggling_sequence = "\n.\n"
@@ -103,11 +103,7 @@ def test_smtp_smuggling_sequence(
             # Strict validation: The server must accept the data.
             # If it throws a 500 error (unrecognized command) for the smuggled part,
             # it means the smuggling sequence failed and the commands were treated as body text.
-            if (
-                "250" in final_resp
-                and "500" not in final_resp
-                and "502" not in final_resp
-            ):
+            if "250" in final_resp and "500" not in final_resp and "502" not in final_resp:
                 # To be absolutely sure, we send a QUIT. If we get a response, the connection is still alive,
                 # meaning the server processed our sequence.
                 sock.sendall(b"QUIT\r\n")

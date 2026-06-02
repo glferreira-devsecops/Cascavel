@@ -56,9 +56,7 @@ def get_pypi_latest(package: str) -> str | None:
     """Query PyPI JSON API for latest version."""
     try:
         url = f"https://pypi.org/pypi/{package}/json"
-        req = urllib.request.Request(
-            url, headers={"User-Agent": "Cascavel-Updater/1.0"}
-        )
+        req = urllib.request.Request(url, headers={"User-Agent": "Cascavel-Updater/1.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read())
             return str(data["info"]["version"])
@@ -216,9 +214,7 @@ def audit(update: bool = False, ci: bool = False) -> int:
 
     print()
     if issues:
-        print(
-            f"{'❌ AUDIT FAILED' if ci else '⚠️  Issues found'}: {len(issues)} issue(s)"
-        )
+        print(f"{'❌ AUDIT FAILED' if ci else '⚠️  Issues found'}: {len(issues)} issue(s)")
         return 1 if ci else 0
     else:
         print("✅ ALL CHECKS PASSED")

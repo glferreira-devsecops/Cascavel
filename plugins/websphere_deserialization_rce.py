@@ -28,9 +28,7 @@ def run(target, ip, open_ports, banners):
             resp = requests.get(url, timeout=5, verify=False)  # nosec B501
 
             # Identificação básica de WebSphere
-            if "WebSphere" in resp.text or "WebSphere" in resp.headers.get(
-                "Server", ""
-            ):
+            if "WebSphere" in resp.text or "WebSphere" in resp.headers.get("Server", ""):
                 resultados.append(
                     {
                         "porta": porta,

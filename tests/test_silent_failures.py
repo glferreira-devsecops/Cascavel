@@ -14,11 +14,7 @@ def test_cors_checker_silent_failures():
         # Deve haver múltiplos itens na lista de resultados indicando erros
         assert isinstance(resultados, list)
 
-        info_vulns = [
-            v
-            for v in resultados
-            if v["severidade"] == "INFO" and "Falha" in v["descricao"]
-        ]
+        info_vulns = [v for v in resultados if v["severidade"] == "INFO" and "Falha" in v["descricao"]]
         assert len(info_vulns) > 0
         assert "Connection Timeout Forçado" in info_vulns[0]["descricao"]
 
@@ -81,8 +77,7 @@ def test_subdomain_takeou_silent_failures():
         info_vulns = [
             v
             for v in resultados
-            if v.get("severidade") == "INFO"
-            and "ERRO: CNAME Lookup Failed" in v.get("descricao", "")
+            if v.get("severidade") == "INFO" and "ERRO: CNAME Lookup Failed" in v.get("descricao", "")
         ]
         assert len(info_vulns) > 0, "Deveria ter propagado o ERRO do CNAME check"
 
@@ -146,18 +141,12 @@ def test_ssl_check_hsts_silent_failure():
     # Mock _check_certificate para retornar limpo
     with patch("plugins.ssl_check._check_certificate", return_value=({}, [])):
         # Mock requests.get para falhar no HSTS e no redirect check
-        with patch(
-            "requests.get", side_effect=ConnectionError("DNS resolution failed")
-        ):
+        with patch("requests.get", side_effect=ConnectionError("DNS resolution failed")):
             res = ssl_check.run("example.com", "1.1.1.1", [443], {})
             resultados = res.get("resultados", [])
-            assert isinstance(
-                resultados, list
-            ), "Resultados deve ser lista com erros reportados"
+            assert isinstance(resultados, list), "Resultados deve ser lista com erros reportados"
             silent_errors = [v for v in resultados if v.get("tipo") == "SILENT_ERROR"]
-            assert (
-                len(silent_errors) >= 2
-            ), f"Deveria ter SILENT_ERROR para HSTS e redirect, tem {len(silent_errors)}"
+            assert len(silent_errors) >= 2, f"Deveria ter SILENT_ERROR para HSTS e redirect, tem {len(silent_errors)}"
             # Verificar que ambas as falhas estão documentadas
             descs = " ".join([e["descricao"] for e in silent_errors])
             assert "HSTS" in descs, "Falha HSTS deveria estar documentada"
@@ -198,13 +187,8 @@ def test_ssl_check_cert_expiry_parse_failure():
     ):
         cert_info, vulns = ssl_check._check_certificate("example.com", 443)
         silent = [v for v in vulns if v.get("tipo") == "SILENT_ERROR"]
-        assert (
-            len(silent) >= 1
-        ), "Deveria ter SILENT_ERROR para data de expiração inválida"
-        assert (
-            "parsear" in silent[0]["descricao"].lower()
-            or "expiração" in silent[0]["descricao"].lower()
-        )
+        assert len(silent) >= 1, "Deveria ter SILENT_ERROR para data de expiração inválida"
+        assert "parsear" in silent[0]["descricao"].lower() or "expiração" in silent[0]["descricao"].lower()
 
 
 def test_s3_bucket_acl_check_failure():

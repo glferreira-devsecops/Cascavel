@@ -103,9 +103,7 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
 
                     # Analisando a resposta de registro do client OIDC
                     if "201 Created" in response_str or "200 OK" in response_str:
-                        if "client_id" in response_str and (
-                            "169.254" in response_str or "127.0.0.1" in response_str
-                        ):
+                        if "client_id" in response_str and ("169.254" in response_str or "127.0.0.1" in response_str):
                             return {
                                 "vulnerability": vulnerability,
                                 "severity": severity,

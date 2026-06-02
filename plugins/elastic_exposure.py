@@ -77,18 +77,14 @@ def _probe_elastic(target, port):
                     if pii_found:
                         vuln["pii_indicators"] = pii_found
                         vuln["severidade"] = "CRITICO"
-                        vuln[
-                            "descricao"
-                        ] += f" PII detectado: {', '.join(pii_found[:5])}"
+                        vuln["descricao"] += f" PII detectado: {', '.join(pii_found[:5])}"
 
                 # Check snapshots
                 if "snapshot" in path:
                     try:
                         snapshots = resp.json()
                         if snapshots:
-                            vuln["descricao"] = (
-                                "Snapshots de backup acessíveis — exfiltração de dados!"
-                            )
+                            vuln["descricao"] = "Snapshots de backup acessíveis — exfiltração de dados!"
                     except Exception:
                         pass
 
@@ -111,14 +107,8 @@ def _check_kibana(target):
     for port, path, label in kibana_paths:
         try:
             resp = requests.get(f"http://{target}:{port}{path}", timeout=5)
-            if resp.status_code == 200 and any(
-                k in resp.text.lower() for k in ["kibana", "opensearch", "elastic"]
-            ):
-                sev = (
-                    "CRITICO"
-                    if "dev_tools" in path or "saved_objects" in path
-                    else "ALTO"
-                )
+            if resp.status_code == 200 and any(k in resp.text.lower() for k in ["kibana", "opensearch", "elastic"]):
+                sev = "CRITICO" if "dev_tools" in path or "saved_objects" in path else "ALTO"
                 vulns.append(
                     {
                         "tipo": f"{label}_UNAUTH",

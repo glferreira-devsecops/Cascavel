@@ -118,9 +118,7 @@ BYPASS_HEADERS = [
     {"X-Forwarded-For": "127.0.0.1"},
     {"X-Originating-IP": "127.0.0.1"},
     {"X-Custom-IP-Authorization": "127.0.0.1"},
-    {
-        "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-    },
+    {"User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},
 ]
 
 
@@ -170,11 +168,7 @@ def _test_reflected(target, param, is_waf_reflection):
                         "payload": payload[:80],
                         "reflexao": True,
                         "status_http": resp.status_code,
-                        "severidade": (
-                            "CRITICO"
-                            if "RCE" in method or "ESCAPE" in method
-                            else "ALTO"
-                        ),
+                        "severidade": ("CRITICO" if "RCE" in method or "ESCAPE" in method else "ALTO"),
                         "bypass_header": list(headers.keys())[0] if headers else None,
                     }
             except Exception:
@@ -211,9 +205,7 @@ def _detect_dom_xss(target):
         body = resp.text
 
         # Buscar scripts inline e externos
-        scripts = re.findall(
-            r"<script[^>]*>(.*?)</script>", body, re.DOTALL | re.IGNORECASE
-        )
+        scripts = re.findall(r"<script[^>]*>(.*?)</script>", body, re.DOTALL | re.IGNORECASE)
         js_content = "\n".join(scripts) + "\n" + body
 
         for source in DOM_SOURCES:

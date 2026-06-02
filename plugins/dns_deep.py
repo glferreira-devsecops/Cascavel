@@ -24,9 +24,7 @@ def run(target, ip, open_ports, banners):
                 timeout=30,
                 encoding="utf-8",
             )
-            registros = [
-                line.strip() for line in proc.stdout.splitlines() if line.strip()
-            ]
+            registros = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
             resultado["dnsx"] = registros if registros else "Sem resultados"
         except subprocess.TimeoutExpired:
             resultado["dnsx"] = "Timeout (30s)"
@@ -45,9 +43,7 @@ def run(target, ip, open_ports, banners):
                 timeout=60,
                 encoding="utf-8",
             )
-            resultado["dnsrecon"] = (
-                proc.stdout[:3000] if proc.stdout else "Sem resultados"
-            )
+            resultado["dnsrecon"] = proc.stdout[:3000] if proc.stdout else "Sem resultados"
         except subprocess.TimeoutExpired:
             resultado["dnsrecon"] = "Timeout (60s)"
         except Exception as e:
@@ -65,9 +61,7 @@ def run(target, ip, open_ports, banners):
                 timeout=60,
                 encoding="utf-8",
             )
-            resultado["fierce"] = (
-                proc.stdout[:3000] if proc.stdout else "Sem resultados"
-            )
+            resultado["fierce"] = proc.stdout[:3000] if proc.stdout else "Sem resultados"
         except subprocess.TimeoutExpired:
             resultado["fierce"] = "Timeout (60s)"
         except Exception as e:
@@ -86,9 +80,7 @@ def run(target, ip, open_ports, banners):
                 timeout=10,
                 encoding="utf-8",
             )
-            registros[tipo] = [
-                line.strip() for line in proc.stdout.splitlines() if line.strip()
-            ]
+            registros[tipo] = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
         resultado["dig_records"] = registros
     except Exception as e:
         resultado["dig_records"] = f"Erro: {e}"

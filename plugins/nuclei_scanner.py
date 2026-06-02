@@ -48,9 +48,7 @@ def run(target, ip, open_ports, banners):
                                 "severidade": obj.get("info", {}).get("severity", sev),
                                 "matched_at": obj.get("matched-at", ""),
                                 "tipo": obj.get("type", ""),
-                                "descricao": obj.get("info", {}).get("description", "")[
-                                    :200
-                                ],
+                                "descricao": obj.get("info", {}).get("description", "")[:200],
                             }
                         )
                     except json.JSONDecodeError:

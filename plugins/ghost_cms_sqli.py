@@ -23,8 +23,7 @@ def run(target, ip, open_ports, banners):
 
             # Heurística para Ghost CMS API V3 e V4 (Vulneráveis se desatualizados)
             if resp.status_code in (200, 401, 403) and (
-                "Ghost" in resp.text
-                or "ghost" in resp.headers.get("X-Powered-By", "").lower()
+                "Ghost" in resp.text or "ghost" in resp.headers.get("X-Powered-By", "").lower()
             ):
                 resultados.append(
                     {

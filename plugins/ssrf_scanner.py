@@ -171,9 +171,7 @@ def _get_baseline_latency(target):
     """Calcula a latência base do alvo para evitar falsos positivos time-based."""
     try:
         start = time.time()
-        requests.get(
-            f"http://{target}/?url=http://non_existent_cascavel_123.local/", timeout=5
-        )
+        requests.get(f"http://{target}/?url=http://non_existent_cascavel_123.local/", timeout=5)
         return time.time() - start
     except Exception:
         return 0.5
@@ -193,10 +191,7 @@ def _test_cloud_metadata(target, param):
             resp = requests.get(url, timeout=8, allow_redirects=True, headers=headers)
             if resp.status_code == 200:
                 resp_len = len(resp.text)
-                if (
-                    baseline_len > 0
-                    and abs(resp_len - baseline_len) / baseline_len < 0.05
-                ):
+                if baseline_len > 0 and abs(resp_len - baseline_len) / baseline_len < 0.05:
                     continue  # Falso positivo: Soft-404 genérico
 
                 for indicator in indicators:
@@ -234,9 +229,7 @@ def _test_localhost_bypass(target, param):
             resp = requests.get(url, timeout=6, allow_redirects=True)
             if resp.status_code == 200 and len(resp.text) > 50:
                 # Check if response is different from a normal 404/error
-                baseline = requests.get(
-                    f"http://{target}/?{param}=http://invalid.cascavel.test/", timeout=4
-                )
+                baseline = requests.get(f"http://{target}/?{param}=http://invalid.cascavel.test/", timeout=4)
                 if len(resp.text) != len(baseline.text):
                     vulns.append(
                         {

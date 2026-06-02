@@ -45,11 +45,7 @@ def _test_bypass(target, name, config):
     extra_headers = config.get("headers", {})
     ct = config.get("content_type", None)
 
-    url = (
-        f"http://{target}/?test={payload}"
-        if "HPP" not in name
-        else f"http://{target}/{payload}"
-    )
+    url = f"http://{target}/?test={payload}" if "HPP" not in name else f"http://{target}/{payload}"
     headers = {"User-Agent": "Mozilla/5.0 (Cascavel WAF Bypass Tester)"}
     headers.update(extra_headers)
     if ct:

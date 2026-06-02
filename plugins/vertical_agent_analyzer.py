@@ -95,9 +95,7 @@ def heuristic_chain_analyzer(target, open_ports, banners):
         )
 
     if not chains:
-        chains.append(
-            "O agente heurístico não encontrou vetores de encadeamento óbvios nas portas informadas."
-        )
+        chains.append("O agente heurístico não encontrou vetores de encadeamento óbvios nas portas informadas.")
 
     return chains
 

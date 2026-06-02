@@ -175,9 +175,7 @@ def _is_evaluated(resp_text, payload, indicator):
     """Verifica avaliação real (não reflexão literal do payload)."""
     if indicator not in resp_text:
         return False
-    return resp_text.count(payload) == 0 or resp_text.count(
-        indicator
-    ) > resp_text.count(payload)
+    return resp_text.count(payload) == 0 or resp_text.count(indicator) > resp_text.count(payload)
 
 
 def _build_vuln(engine, param, payload, severity="CRITICO"):
@@ -218,10 +216,7 @@ def run(target, ip, open_ports, banners):
 
     # Verifica WAF reflection no param
     def check_fp(param_name, resp_text):
-        if (
-            baseline_len > 0
-            and abs(len(resp_text) - baseline_len) / baseline_len < 0.05
-        ):
+        if baseline_len > 0 and abs(len(resp_text) - baseline_len) / baseline_len < 0.05:
             return True
         return False
 
@@ -233,9 +228,7 @@ def run(target, ip, open_ports, banners):
                 resp = requests.get(url, timeout=6)
                 if check_fp(param, resp.text):
                     continue
-                if resp.status_code == 200 and _is_evaluated(
-                    resp.text, payload, indicator
-                ):
+                if resp.status_code == 200 and _is_evaluated(resp.text, payload, indicator):
                     if not _verify_waf_blind_reflection(target, param, payload):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         detected_params.add(param)
@@ -265,9 +258,7 @@ def run(target, ip, open_ports, banners):
                 resp = requests.get(url, timeout=6)
                 if check_fp(param, resp.text):
                     continue
-                if resp.status_code == 200 and (
-                    indicator in resp.text if indicator else len(resp.text) > 500
-                ):
+                if resp.status_code == 200 and (indicator in resp.text if indicator else len(resp.text) > 500):
                     if not _verify_waf_blind_reflection(target, param, payload):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         break
@@ -281,9 +272,7 @@ def run(target, ip, open_ports, banners):
                 try:
                     resp = requests.get(url, timeout=6)
                     if indicator and indicator in resp.text:
-                        vulns.append(
-                            _build_vuln(f"WAF_BYPASS_{engine}", param, payload)
-                        )
+                        vulns.append(_build_vuln(f"WAF_BYPASS_{engine}", param, payload))
                         break
                 except Exception:
                     continue
@@ -301,9 +290,7 @@ def run(target, ip, open_ports, banners):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         break
                 except requests.exceptions.Timeout:
-                    vulns.append(
-                        _build_vuln(f"{engine}_TIMEOUT", param, payload, "ALTO")
-                    )
+                    vulns.append(_build_vuln(f"{engine}_TIMEOUT", param, payload, "ALTO"))
                     break
                 except Exception:
                     continue

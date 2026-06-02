@@ -19,9 +19,7 @@ def run(target, ip, open_ports, banners):
         }
 
     safe_target = shlex.quote(target)
-    http_ports = [p for p in open_ports if p in [80, 443, 8080, 8443, 8000, 8888]] or [
-        80
-    ]
+    http_ports = [p for p in open_ports if p in [80, 443, 8080, 8443, 8000, 8888]] or [80]
     resultados = []
 
     for port in http_ports[:2]:
@@ -35,18 +33,12 @@ def run(target, ip, open_ports, banners):
                 timeout=150,
                 encoding="utf-8",
             )
-            vulns = [
-                line.strip()
-                for line in proc.stdout.splitlines()
-                if line.strip().startswith("+")
-            ]
+            vulns = [line.strip() for line in proc.stdout.splitlines() if line.strip().startswith("+")]
             resultados.append(
                 {
                     "porta": port,
                     "scheme": scheme,
-                    "vulnerabilidades": (
-                        vulns[:50] if vulns else "Nenhuma vulnerabilidade detectada"
-                    ),
+                    "vulnerabilidades": (vulns[:50] if vulns else "Nenhuma vulnerabilidade detectada"),
                     "total_achados": len(vulns),
                 }
             )

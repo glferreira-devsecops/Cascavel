@@ -34,9 +34,7 @@ def run(target, ip, ports, banners):
         try:
             # 1. Medir latência Baseline
             t0 = time.time()
-            baseline_resp = requests.post(
-                url, json=baseline_payload, headers=headers, timeout=5, verify=False
-            )
+            baseline_resp = requests.post(url, json=baseline_payload, headers=headers, timeout=5, verify=False)
             baseline_time = time.time() - t0
 
             # Se não retornar 200 pro typename, não é um endpoint graphql válido ou exige auth.
@@ -45,9 +43,7 @@ def run(target, ip, ports, banners):
 
             # 2. Enviar a Bomba AST
             t1 = time.time()
-            bomb_resp = requests.post(
-                url, json=bomb_payload, headers=headers, timeout=10, verify=False
-            )
+            bomb_resp = requests.post(url, json=bomb_payload, headers=headers, timeout=10, verify=False)
             bomb_time = time.time() - t1
 
             # Se a bomba demorar 5x mais que o baseline e retornar Erro HTTP 50x (e não apenas bloqueio WAF 4xx)

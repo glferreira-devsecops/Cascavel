@@ -209,9 +209,7 @@ def _test_password_reset_poisoning(target):
                 timeout=5,
             )
             if resp.status_code in [200, 302]:
-                if "evil.com" in resp.text or "evil.com" in resp.headers.get(
-                    "Location", ""
-                ):
+                if "evil.com" in resp.text or "evil.com" in resp.headers.get("Location", ""):
                     vulns.append(
                         {
                             "tipo": "PASSWORD_RESET_POISONING",

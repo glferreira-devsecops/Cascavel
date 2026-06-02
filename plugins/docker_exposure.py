@@ -54,9 +54,7 @@ def _check_docker_api(target, port):
                                 if c.get("HostConfig", {}).get("Privileged"):
                                     vuln["privileged_container"] = True
                                     vuln["severidade"] = "CRITICO"
-                                    vuln[
-                                        "descricao"
-                                    ] += " Container privilegiado detectado!"
+                                    vuln["descricao"] += " Container privilegiado detectado!"
                                 mounts = c.get("Mounts", [])
                                 for m in mounts:
                                     if m.get("Source") in [
@@ -65,9 +63,7 @@ def _check_docker_api(target, port):
                                         "/var/run/docker.sock",
                                     ]:
                                         vuln["dangerous_mount"] = m["Source"]
-                                        vuln[
-                                            "descricao"
-                                        ] += f" Mount perigoso: {m['Source']}"
+                                        vuln["descricao"] += f" Mount perigoso: {m['Source']}"
                     except Exception:
                         pass
 
@@ -77,9 +73,7 @@ def _check_docker_api(target, port):
                         secrets = resp.json()
                         if isinstance(secrets, list) and len(secrets) > 0:
                             vuln["secrets_count"] = len(secrets)
-                            vuln["descricao"] = (
-                                f"{len(secrets)} Docker secrets expostos!"
-                            )
+                            vuln["descricao"] = f"{len(secrets)} Docker secrets expostos!"
                     except Exception:
                         pass
 
@@ -116,9 +110,7 @@ def _check_registry(target):
                                 verify=False,  # nosec B501
                             )
                             if tags_resp.status_code == 200:
-                                vuln["tags_amostra"] = tags_resp.json().get("tags", [])[
-                                    :10
-                                ]
+                                vuln["tags_amostra"] = tags_resp.json().get("tags", [])[:10]
                     except Exception:
                         pass
                     vulns.append(vuln)
@@ -145,12 +137,7 @@ def _check_compose_files(target):
             resp = requests.get(f"http://{target}{f}", timeout=5)
             if resp.status_code == 200 and len(resp.text) > 20:
                 sev = (
-                    "CRITICO"
-                    if any(
-                        s in resp.text.lower()
-                        for s in ["password", "secret", "key", "token"]
-                    )
-                    else "ALTO"
+                    "CRITICO" if any(s in resp.text.lower() for s in ["password", "secret", "key", "token"]) else "ALTO"
                 )
                 vulns.append(
                     {

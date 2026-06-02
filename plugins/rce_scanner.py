@@ -226,13 +226,9 @@ def _test_post_rce(target, param, reflects_blindly):
         ]:
             try:
                 if content_type == "application/json":
-                    resp = requests.post(
-                        f"http://{target}/", json={param: payload}, timeout=6
-                    )
+                    resp = requests.post(f"http://{target}/", json={param: payload}, timeout=6)
                 else:
-                    resp = requests.post(
-                        f"http://{target}/", data={param: payload}, timeout=6
-                    )
+                    resp = requests.post(f"http://{target}/", data={param: payload}, timeout=6)
                 if indicator and indicator in resp.text:
                     # Se o payload reflete e o payload contem o proprio indicador, ignora
                     if reflects_blindly and indicator in payload:
@@ -259,9 +255,7 @@ def _test_header_injection(target, header_reflects_blindly):
     ]
     for header, payload, indicator, method in injectable_headers:
         try:
-            resp = requests.get(
-                f"http://{target}/", headers={header: payload}, timeout=6
-            )
+            resp = requests.get(f"http://{target}/", headers={header: payload}, timeout=6)
             if indicator in resp.text:
                 if header_reflects_blindly and indicator in payload:
                     continue

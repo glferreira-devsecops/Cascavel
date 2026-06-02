@@ -24,9 +24,7 @@ def run(target, ip, open_ports, banners):
     resultado = {}
     cmd = f"nmap --script=ssl-heartbleed -p {ports_str} {safe_target}"
     try:
-        proc = subprocess.run(
-            cmd, shell=False, capture_output=True, timeout=30, encoding="utf-8"
-        )
+        proc = subprocess.run(cmd, shell=False, capture_output=True, timeout=30, encoding="utf-8")
         output = proc.stdout + proc.stderr
         resultado["status"] = "VULNERAVEL" if "VULNERABLE" in output else "seguro"
         resultado["detalhes"] = output

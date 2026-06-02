@@ -40,9 +40,7 @@ def run(target, ip, ports, banners):
                     "endpoint": f"http://{ip}:{port}",
                     "payload": "eth_accounts",
                     "evidence": (
-                        f"Accounts found: {accounts[:3]}..."
-                        if accounts
-                        else "RPC Active, no accounts unlocked."
+                        f"Accounts found: {accounts[:3]}..." if accounts else "RPC Active, no accounts unlocked."
                     ),
                 }
                 break

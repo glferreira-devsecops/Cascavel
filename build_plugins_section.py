@@ -161,9 +161,7 @@ def main():
         with open(page["file"], "w", encoding="utf-8") as f:
             f.write(doc)
         table_count = doc.count('class="plugin-table"')
-        print(
-            f'OK: {page["file"]}  {before} -> {len(doc)} bytes  ({table_count} tables)'
-        )
+        print(f"OK: {page['file']}  {before} -> {len(doc)} bytes  ({table_count} tables)")
 
 
 if __name__ == "__main__":

@@ -122,12 +122,8 @@ class PluginResult:
             self.severity = severity_from_cvss(self.cvss_score)
 
         # 3. Log Injection Sanitization (CRLF)
-        self.plugin = (
-            str(self.plugin).replace("\n", "_").replace("\r", "_").replace("\x00", "")
-        )
-        self.title = (
-            str(self.title).replace("\n", "_").replace("\r", "_").replace("\x00", "")
-        )
+        self.plugin = str(self.plugin).replace("\n", "_").replace("\r", "_").replace("\x00", "")
+        self.title = str(self.title).replace("\n", "_").replace("\r", "_").replace("\x00", "")
         self.severity = str(self.severity).replace("\n", "_").replace("\r", "_")
 
         # 4. Evidence Memory Bomb (OOM) Protection (50KB limit)
@@ -141,9 +137,7 @@ class PluginResult:
             if current_depth > max_nesting_depth:
                 return "[DEPTH_LIMIT_EXCEEDED]"
             if isinstance(obj, dict):
-                return {
-                    str(k): _enforce_depth(v, current_depth + 1) for k, v in obj.items()
-                }
+                return {str(k): _enforce_depth(v, current_depth + 1) for k, v in obj.items()}
             if isinstance(obj, list):
                 # Truncate lists exceeding 100 items to prevent horizontal memory exhaustion
                 return [_enforce_depth(item, current_depth + 1) for item in obj[:100]]
@@ -194,9 +188,7 @@ class PluginResult:
         highest_sev = raw_sev
         for f in findings:
             f_sev = f.get("severidade", f.get("severity", "INFO"))
-            if _severity_rank(normalize_severity(str(f_sev))) > _severity_rank(
-                normalize_severity(str(highest_sev))
-            ):
+            if _severity_rank(normalize_severity(str(f_sev))) > _severity_rank(normalize_severity(str(highest_sev))):
                 highest_sev = f_sev
 
         # Error handling

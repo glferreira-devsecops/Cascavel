@@ -66,33 +66,18 @@ def verify_math_execution(url: str, session: requests.Session) -> bool:
         for payload in payloads:
             try:
                 # Test via POST JSON
-                response_json = session.post(
-                    endpoint, json=payload, timeout=5, verify=False
-                )
-                if (
-                    response_json.status_code in [200, 500]
-                    and "9801547" in response_json.text
-                ):
+                response_json = session.post(endpoint, json=payload, timeout=5, verify=False)
+                if response_json.status_code in [200, 500] and "9801547" in response_json.text:
                     return True
 
                 # Test via Form Data
-                response_form = session.post(
-                    endpoint, data=payload, timeout=5, verify=False
-                )
-                if (
-                    response_form.status_code in [200, 500]
-                    and "9801547" in response_form.text
-                ):
+                response_form = session.post(endpoint, data=payload, timeout=5, verify=False)
+                if response_form.status_code in [200, 500] and "9801547" in response_form.text:
                     return True
 
                 # Test via GET parameters
-                response_get = session.get(
-                    endpoint, params=payload, timeout=5, verify=False
-                )
-                if (
-                    response_get.status_code in [200, 500]
-                    and "9801547" in response_get.text
-                ):
+                response_get = session.get(endpoint, params=payload, timeout=5, verify=False)
+                if response_get.status_code in [200, 500] and "9801547" in response_get.text:
                     return True
 
             except requests.exceptions.RequestException:
@@ -180,17 +165,11 @@ def run(target: str, ip: str, ports: list, banners: dict) -> dict[str, Any] | No
                     "Mathematical payload (7331*1337) evaluated and matched expected result (9801547)."
                 )
             if memshell_injected:
-                evidence_details.append(
-                    "Dynamic route successfully injected and responded to commands."
-                )
+                evidence_details.append("Dynamic route successfully injected and responded to commands.")
             if is_spring:
-                evidence_details.append(
-                    "Spring Boot Actuator exposed, facilitating context manipulation."
-                )
+                evidence_details.append("Spring Boot Actuator exposed, facilitating context manipulation.")
             if is_tomcat:
-                evidence_details.append(
-                    "Tomcat Manager accessible, indicating potential deployment vector."
-                )
+                evidence_details.append("Tomcat Manager accessible, indicating potential deployment vector.")
 
             return {
                 "vulnerability": vulnerability,
