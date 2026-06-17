@@ -106,8 +106,8 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-      - name: Run OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@347b2c6eeb411f12da34444988771485db83af07 # v1.9.2
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action@v1.9.0
 
   secrets:
     name: "🔑 TruffleHog Secret Detection"
