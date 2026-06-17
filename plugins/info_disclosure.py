@@ -194,7 +194,7 @@ def _check_error_pages(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Information Disclosure 2026-Grade — Files, Headers, Errors.
 

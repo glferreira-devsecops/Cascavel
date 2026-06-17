@@ -6,7 +6,7 @@ import string
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner DNS Rebinding & Security 2026-Grade.
 

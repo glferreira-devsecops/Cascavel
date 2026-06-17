@@ -5,7 +5,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Enumeração de URLs históricas via gau e waybackurls.
     Descobre endpoints antigos, APIs expostas e arquivos sensíveis.

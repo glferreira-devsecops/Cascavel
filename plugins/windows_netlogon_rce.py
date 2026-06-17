@@ -2,7 +2,7 @@
 import socket
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Verificador heurístico para Netlogon RCE (CVE-2026-41089).
     A vulnerabilidade afeta Domain Controllers via RPC no Netlogon.

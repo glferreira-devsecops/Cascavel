@@ -253,7 +253,7 @@ def _check_http_redirect(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner SSL/TLS 2026-Grade — Certificate, Protocol, Cipher, HSTS.
 

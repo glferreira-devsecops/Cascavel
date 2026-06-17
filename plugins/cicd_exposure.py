@@ -159,7 +159,7 @@ def _check_github_actions_artifacts(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner CI/CD Pipeline Exposure 2026-Grade.
 

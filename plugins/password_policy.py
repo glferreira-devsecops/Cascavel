@@ -289,7 +289,7 @@ def _check_password_reset(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Password Policy 2026-Grade — NIST 800-63B, Credential Stuffing, Rate Limit.
 

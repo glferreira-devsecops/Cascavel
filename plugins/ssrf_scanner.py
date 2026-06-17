@@ -345,7 +345,7 @@ def _test_post_ssrf(target, param):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner SSRF 2026-Grade — Cloud Metadata, Protocol Smuggling, Bypass.
 

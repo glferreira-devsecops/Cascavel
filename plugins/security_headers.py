@@ -228,7 +228,7 @@ def _check_cache_headers(headers):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     HTTP Security Headers Analyzer — OWASP Secure Headers compliance.
 

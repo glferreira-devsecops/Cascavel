@@ -160,7 +160,7 @@ def _classify_proto_vuln(method, text):
     return "MEDIO", f"Possível prototype pollution via {method}"
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Prototype Pollution 2026-Grade — POST, GET, PUT, RCE Gadgets.
 

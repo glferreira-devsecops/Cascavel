@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Busca páginas administrativas comuns no alvo.
     Retorna uma lista de caminhos encontrados com seus status HTTP.

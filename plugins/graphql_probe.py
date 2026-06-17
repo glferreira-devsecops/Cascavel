@@ -22,7 +22,7 @@ ENDPOINTS = [
 ]
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Auditor GraphQL 2026-Grade — Introspection, Batch, Alias, CSWSH.
 

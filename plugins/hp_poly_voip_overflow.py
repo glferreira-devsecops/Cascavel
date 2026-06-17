@@ -1,7 +1,7 @@
 # plugins/hp_poly_voip_overflow.py
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Verificador para HP Poly VoIP Phones (CVE-2026-0826).
     Checa portas associadas a VoIP SIP e web de gerenciamento.

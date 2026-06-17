@@ -78,7 +78,7 @@ def _test_bypass(target, name, config):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner de WAF Bypass techniques.
     2026 Intel: Cloudflare/Akamai/ModSecurity bypass, double encoding,

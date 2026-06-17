@@ -32,7 +32,7 @@ def _parse_nmap_xml(xml_output):
     return hosts
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Varredura Nmap avançada: all ports, scripts NSE, detecção de versão.
     Usa saída XML parseada. Requer nmap 7.80+.

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Enumeração massiva de subdomínios combinando subfinder + amass + httpx.
     Agrega resultados, remove duplicatas, e faz probe HTTP para detectar ativos.

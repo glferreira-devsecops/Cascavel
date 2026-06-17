@@ -152,7 +152,7 @@ def _test_method_override(target, prefix):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     API Enumerator 2026-Grade — Docs, Actuators, Methods, Override.
 

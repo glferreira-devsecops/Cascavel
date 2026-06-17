@@ -226,7 +226,7 @@ def _test_path_redirect(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Open Redirect 2026-Grade — GET, POST, Header, Path-Based.
 

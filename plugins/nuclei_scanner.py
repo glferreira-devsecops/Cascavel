@@ -5,7 +5,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner de vulnerabilidades via ProjectDiscovery Nuclei com templates.
     Executa varredura categorizada por severidade (critical, high, medium).

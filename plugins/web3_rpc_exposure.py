@@ -9,7 +9,7 @@
 import requests
 
 
-def run(target, ip, ports, banners):
+def run(target, ip, ports, banners, context=None):
     finding = None
     # Portas comuns de RPC (Geth, Besu, Erigon, Hardhat)
     web3_ports = [8545, 8546, 7545]

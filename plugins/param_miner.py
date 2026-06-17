@@ -6,7 +6,7 @@ SENSITIVE_PARAMS = {"admin", "role", "secret", "token", "key", "api_key"}
 INJECTION_PARAMS = {"file", "path", "include", "template"}
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Parameter Mining / Hidden Parameter Discovery.
     Descobre parâmetros GET ocultos que podem revelar funcionalidades escondidas.

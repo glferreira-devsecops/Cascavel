@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Identificador para a injeção SQL cega crítica (CVE-2026-26980) afetando Ghost CMS.
     """

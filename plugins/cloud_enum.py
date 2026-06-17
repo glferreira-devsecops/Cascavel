@@ -115,7 +115,7 @@ def _detect_by_dns(target, ip):
     return providers
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Cloud Provider Enumerator 2026-Grade — Domain, Headers, DNS.
 

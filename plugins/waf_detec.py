@@ -6,7 +6,7 @@ import subprocess
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Detecta presença de Web Application Firewall (WAF) de forma heurística.
     Analisa respostas HTTP suspeitas a payloads típicos de SQLi/XSS.

@@ -129,7 +129,7 @@ def _detect_java_indicators(url, timeout):
     return indicators
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Log4Shell (CVE-2021-44228) 2026-Grade — JNDI Injection Detection.
 

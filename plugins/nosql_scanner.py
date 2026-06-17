@@ -384,7 +384,7 @@ def _test_content_type_bypass(target, endpoint, baseline_len):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner NoSQL Injection 2026-Grade — MongoDB/CouchDB.
 

@@ -1628,6 +1628,7 @@ def _exec_plugin(
     ports: list[int],
     banners: dict[int, str],
     timeout: int = 120,
+    global_context: dict | None = None,
 ) -> dict[str, Any]:
     """Executa um plugin com timeout guard (SIGALRM, 120s padrão).
 
@@ -1646,9 +1647,16 @@ def _exec_plugin(
     mod = importlib.util.module_from_spec(spec)
     loader.exec_module(mod)
 
+    # Injetando contexto no run() do plugin
+    try:
+        import inspect
+        sig = inspect.signature(mod.run)
+        has_context = "context" in sig.parameters
+    except Exception:
+        has_context = False
+
     if not hasattr(mod, "run"):
         return {"plugin": name, "erro": "Sem função run()"}
-
     # Per-plugin timeout via SIGALRM (Unix only)
     _has_alarm = hasattr(signal, "SIGALRM")
 
@@ -1664,7 +1672,19 @@ def _exec_plugin(
         signal.alarm(timeout)
 
     try:
-        result = mod.run(target, ip, ports, banners)
+        # Se os baselines ainda nao tiverem sido calculados, cria um context mock
+        if not global_context:
+            global_context = {
+                "baseline_latency": 0.5,
+                "baseline_404_len": 0,
+                "discovered_params": []
+            }
+            
+        if has_context:
+            result = mod.run(target, ip, ports, banners, context=global_context)
+        else:
+            result = mod.run(target, ip, ports, banners)
+            
         # SEGURANÇA 2026: Sanitiza saída contra ANSI escape injection
         result = _sanitize_output(result) if result else {"plugin": name, "resultados": "Sem retorno"}
         return result  # type: ignore
@@ -1804,6 +1824,63 @@ def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: floa
     )
 
 
+import urllib.request
+import urllib.parse
+from bs4 import BeautifulSoup
+import time
+
+def _calculate_baselines(target: str) -> dict:
+    """Calcula baselines dinâmicos para eliminação de Falsos Positivos e Negativos."""
+    # Latency Baseline
+    latencies = []
+    for _ in range(3):
+        try:
+            start = time.time()
+            requests.get(f"http://{target}/", timeout=8)
+            latencies.append(time.time() - start)
+        except Exception:
+            continue
+    baseline_latency = sum(latencies) / len(latencies) if latencies else 0.5
+    
+    # 404 Baseline
+    try:
+        resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
+        baseline_404_len = len(resp.text)
+    except Exception:
+        baseline_404_len = 0
+        
+    return {
+        "baseline_latency": baseline_latency,
+        "baseline_404_len": baseline_404_len
+    }
+
+def _discover_parameters(target: str) -> list[str]:
+    """Spidering rápido para descoberta de parâmetros reais."""
+    params = set()
+    try:
+        resp = requests.get(f"http://{target}/", timeout=5)
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        
+        # Encontra params em URLs
+        for a in soup.find_all('a', href=True):
+            parsed = urllib.parse.urlparse(a['href'])
+            query = urllib.parse.parse_qs(parsed.query)
+            params.update(query.keys())
+            
+        # Encontra nomes em forms
+        for form in soup.find_all('form'):
+            for input_tag in form.find_all(['input', 'select', 'textarea']):
+                name = input_tag.get('name')
+                if name:
+                    params.add(name)
+    except Exception:
+        pass
+        
+    default_params = ["id", "user", "username", "page", "name", "search", "query", "email", "key"]
+    params.update(default_params)
+    return list(params)
+
+
 def run_plugins(
     target: str,
     ip: str,
@@ -1843,6 +1920,20 @@ def run_plugins(
 
     console.print(Rule(f"[bold magenta]🔌 PLUGIN ENGINE — {total} PLUGINS[/]", style="magenta"))
     console.print()
+
+    # Calculate global baselines & parameters
+    with console.status("[bold cyan]🕸️ Calculando Baselines e Descobrindo Parâmetros...[/]", spinner="dots"):
+        baselines = _calculate_baselines(target)
+        discovered_params = _discover_parameters(target)
+        global_context = {
+            "baseline_latency": baselines["baseline_latency"],
+            "baseline_404_len": baselines["baseline_404_len"],
+            "discovered_params": discovered_params,
+            "oob_server": f"{target}.oob.cascavel.io"
+        }
+    
+    console.print(f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes")
+    console.print(f"    [green]✓[/] Parâmetros Descobertos: {len(discovered_params)} parâmetros para fuzzing.\n")
 
     # Randomize intel order for variety
     intel_order = list(range(len(SECURITY_INTEL)))
@@ -1931,7 +2022,7 @@ def run_plugins(
                 t0 = time.time()
 
                 try:
-                    result = _exec_plugin(file_path, name, target, ip, ports, banners)
+                    result = _exec_plugin(file_path, name, target, ip, ports, banners, global_context=global_context)
                 except Exception as e:
                     result = {"plugin": name, "erro": f"Crash: {e}"}
                 results.append(result)
@@ -1992,7 +2083,7 @@ def run_plugins(
         console.print(f"  [dim]Live display falhou ({layout_err}), executando sem UI...[/]")
         for idx, (file_path, name) in enumerate(valid, 1):
             try:
-                result = _exec_plugin(file_path, name, target, ip, ports, banners)
+                result = _exec_plugin(file_path, name, target, ip, ports, banners, global_context=global_context)
             except Exception as e:
                 result = {"plugin": name, "erro": f"Crash: {e}"}
             results.append(result)
@@ -2668,6 +2759,7 @@ class CascavelArgumentParser(argparse.ArgumentParser):
         console.print(f"  [{S_DIM}]Uso:[/]")
         console.print(f"  [{S_CYAN}]  cascavel target.com[/]                    [dim]# Scan direto[/]")
         console.print(f"  [{S_CYAN}]  cascavel -t target.com --plugins-only[/]  [dim]# Apenas plugins[/]")
+        console.print(f"  [{S_CYAN}]  cascavel --plugin-filter sqli_scanner[/]  [dim]# Filtra plugins[/]")
         console.print(f"  [{S_CYAN}]  cascavel --help[/]                        [dim]# Ajuda completa[/]")
         console.print()
         sys.exit(2)
@@ -2682,10 +2774,11 @@ def build_parser() -> argparse.ArgumentParser:
         "  cascavel target.com                     Scan direto\n"
         "  cascavel -t target.com                  Full scan\n"
         "  cascavel -t target.com --plugins-only   Plugins only\n"
-        "  cascavel -t target.com -q -o json       Quiet + JSON\n"
-        "  cascavel --list-plugins                 Show arsenal\n"
-        "  cascavel --check-tools                  Verify tools\n"
-        "  cascavel --install-global               Instalar globalmente",
+        "  cascavel -t target.com -q -o json                   Quiet + JSON\n"
+        "  cascavel -t target.com --plugins-only --plugin-filter sqli_scanner xss_scanner\n"
+        "  cascavel --list-plugins                             Show arsenal\n"
+        "  cascavel --check-tools                              Verify tools\n"
+        "  cascavel --install-global                           Instalar globalmente",
     )
     # Target posicional (opcional) — permite 'cascavel target.com'
     parser.add_argument(
@@ -2762,6 +2855,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--ai-fix",
         action="store_true",
         help="[2026 AI] Tenta gerar scripts de mitigação via IA no final do scan",
+    )
+    parser.add_argument(
+        "--plugin-filter",
+        nargs="+",
+        help="Filtra a execução apenas para plugins específicos (ex: sqli_scanner xss_scanner)",
     )
 
     def _positive_int(value: str) -> int:

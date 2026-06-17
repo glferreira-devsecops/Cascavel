@@ -100,7 +100,7 @@ def _check_dkim_selector(domain):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Verificação de SPF/DKIM/DMARC para email spoofing.
     2026 Intel: BEC (Business Email Compromise) prevention,

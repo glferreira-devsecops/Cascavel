@@ -262,7 +262,7 @@ def _check_meta_vs_header(header_csp, meta_csp, page):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner CSP Bypass 2026-Grade — JSONP, CDN, Nonce, base-uri, strict-dynamic.
 

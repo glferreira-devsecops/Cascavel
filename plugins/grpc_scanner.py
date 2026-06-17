@@ -73,7 +73,7 @@ def _check_health_endpoint(target, port):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner de gRPC service enumeration.
     2026 Intel: gRPC reflection abuse, unauth service discovery,

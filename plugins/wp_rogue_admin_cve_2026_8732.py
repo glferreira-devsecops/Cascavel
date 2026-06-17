@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner heurístico para CVE-2026-8732 (WordPress Plugin AJAX Rogue Admin Creation).
     Vulnerabilidade crítica CVSS 9.8.

@@ -211,7 +211,7 @@ def _test_header_blind(target):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Blind/OOB RCE 2026-Grade — Time/OOB/Encoding/Header.
 

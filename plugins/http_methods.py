@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Audita métodos HTTP disponíveis no servidor.
     Detecta métodos perigosos: PUT, DELETE, TRACE, CONNECT, PATCH.

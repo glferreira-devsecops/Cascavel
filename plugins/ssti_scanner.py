@@ -196,7 +196,7 @@ def _build_vuln(engine, param, payload, severity="CRITICO"):
     return vuln
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner SSTI 2026-Grade — Detection + Exploitation + WAF Bypass.
 

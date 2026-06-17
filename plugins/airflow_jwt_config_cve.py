@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Detector do CVE-2026-41017 (Apache Airflow JWTRefreshMiddleware).
     Airflow geralmente roda na porta 8080.

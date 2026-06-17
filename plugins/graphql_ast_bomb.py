@@ -11,7 +11,7 @@ import time
 import requests
 
 
-def run(target, ip, ports, banners):
+def run(target, ip, ports, banners, context=None):
     finding = None
     endpoints = ["/graphql", "/api/graphql", "/v1/graphql"]
     base_url = f"https://{target}" if target else f"http://{ip}"

@@ -100,7 +100,7 @@ def heuristic_chain_analyzer(target, open_ports, banners):
     return chains
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Motor Vertical AI - Agentic Security.
     Analisa encadeamento de exploits e recomenda IA ideal para o host atual.

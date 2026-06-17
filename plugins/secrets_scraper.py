@@ -154,7 +154,7 @@ def _scan_for_high_entropy(text, min_length=20, min_entropy=4.0):
     return findings
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner de Secrets 2026-Grade — 50+ Regex, Entropy Analysis.
 

@@ -374,7 +374,7 @@ def _test_encoding_bypass(target, endpoint):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner XXE 2026-Grade — Classic, Blind/OOB, SVG, XLSX, XInclude, Encoding.
 

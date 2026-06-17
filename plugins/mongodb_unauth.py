@@ -125,7 +125,7 @@ def _check_mongos(target):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner MongoDB 2026-Grade — Unauth, HTTP, Mongo Express, Mongos.
 

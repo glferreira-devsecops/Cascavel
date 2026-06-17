@@ -104,7 +104,7 @@ def _check_supply_chain(content, js_url, filename):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Análise de JavaScript para segredos, endpoints, e supply chain risks.
     2026 Intel: OWASP A03 (Supply Chain Failures), client-side supply chain,

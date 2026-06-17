@@ -130,7 +130,7 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Mass Assignment 2026-Grade — POST, PATCH, PUT, Hidden Fields.
 

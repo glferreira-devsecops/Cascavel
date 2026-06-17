@@ -205,7 +205,7 @@ def _test_socketio_info(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner WebSocket 2026-Grade — CSWSH, Smuggling, Socket.IO, Auth.
 

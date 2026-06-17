@@ -6,7 +6,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Faz brute-force de diretórios usando feroxbuster, salva resultados em JSON.
     Usa wordlist do framework (não mais hardcoded).

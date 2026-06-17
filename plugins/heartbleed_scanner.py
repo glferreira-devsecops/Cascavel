@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Heartbleed usando Nmap NSE (CVE-2014-0160).
     Verifica portas SSL/TLS relevantes do alvo. Requer nmap com scripts NSE.

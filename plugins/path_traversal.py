@@ -267,7 +267,7 @@ def _test_header_traversal(target, baseline_len):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Path Traversal 2026-Grade — GET/POST/API/Header/Download/ZipSlip.
 

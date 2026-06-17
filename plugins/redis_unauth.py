@@ -123,7 +123,7 @@ def _check_sentinel(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Redis 2026-Grade — Unauth, RCE, Lua, Sentinel, SLAVEOF.
 

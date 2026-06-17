@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Heurística para detectar o CVE-2026-9319 (IBM WebSphere Deserialization RCE).
     Geralmente afeta portas 9080, 9443, etc.

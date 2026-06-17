@@ -4,7 +4,7 @@ import re
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Cloud Storage Enumerator 2026-Grade — S3, GCS, Azure Blob, DO Spaces.
 
