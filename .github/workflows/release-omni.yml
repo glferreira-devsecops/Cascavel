@@ -6,14 +6,15 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
-  packages: write
-  id-token: write
+  contents: read
 
 jobs:
   build-and-release:
     name: Build Tarballs & PyInstaller
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -108,6 +109,9 @@ jobs:
     name: Publish Docker Hub & GHCR
     needs: build-and-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
