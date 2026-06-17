@@ -15,9 +15,9 @@ plugin_results = [
                 "nome": "Log4Shell Vulnerability",
                 "descricao": "Detectado Apache Log4j RCE CVE-2021-44228.",
                 "severidade": "ALTO",
-                "correcao": "Atualize o Log4j para >= 2.17.0"
+                "correcao": "Atualize o Log4j para >= 2.17.0",
             }
-        ]
+        ],
     }
 ]
 
@@ -29,10 +29,10 @@ ai_fixed = generate_ai_fixes(enriched, console)
 
 print("\n--- 3. Testando OCSF Exporter ---")
 import os
+
 os.makedirs("reports", exist_ok=True)
 ocsf_file = export_ocsf("127.0.0.1", "127.0.0.1", ai_fixed, 1.5, "reports")
 print(f"Exportado para: {ocsf_file}")
 
-with open(ocsf_file, 'r') as f:
+with open(ocsf_file, "r") as f:
     print(json.dumps(json.load(f), indent=2))
-

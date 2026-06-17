@@ -3,9 +3,7 @@ import time
 
 def generate_ai_fixes(plugin_results: list[dict], console) -> list[dict]:
     """Integração 2026 com LLM para gerar scripts bash de mitigação via IA."""
-    console.print(
-        "  [bold cyan]🤖 AI Remediation:[/] Sintetizando mitigação autônoma..."
-    )
+    console.print("  [bold cyan]🤖 AI Remediation:[/] Sintetizando mitigação autônoma...")
 
     time.sleep(1.5)
 
@@ -37,20 +35,13 @@ EOF
 systemctl reload nginx
 echo "✅ Mitigação aplicada com sucesso via WAF virtual."
 """
-        console.print(
-            f"  [bold green]✓ IA concluiu a análise. Script gerado para:[/] {vuln_name}"
-        )
+        console.print(f"  [bold green]✓ IA concluiu a análise. Script gerado para:[/] {vuln_name}")
 
         critical_vuln["ai_remediation_script"] = script
         critical_vuln["correcao"] = (
-            critical_vuln.get("correcao", "")
-            + "\n\n**🤖 AI Remediation Script**:\n```bash\n"
-            + script
-            + "\n```"
+            critical_vuln.get("correcao", "") + "\n\n**🤖 AI Remediation Script**:\n```bash\n" + script + "\n```"
         )
     else:
-        console.print(
-            "  [dim] Nenhuma vulnerabilidade CRÍTICA encontrada para gerar script de IA.[/]"
-        )
+        console.print("  [dim] Nenhuma vulnerabilidade CRÍTICA encontrada para gerar script de IA.[/]")
 
     return plugin_results

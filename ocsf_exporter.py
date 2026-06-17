@@ -3,9 +3,7 @@ import os
 import datetime
 
 
-def export_ocsf(
-    target: str, ip: str, plugin_results: list[dict], elapsed: float, output_dir: str
-) -> str:
+def export_ocsf(target: str, ip: str, plugin_results: list[dict], elapsed: float, output_dir: str) -> str:
     """Exporta resultados no formato Open Cybersecurity Schema Framework (OCSF v1.1.0)"""
     ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
     filename = os.path.join(
@@ -35,9 +33,7 @@ def export_ocsf(
                     vuln_dict = {
                         "title": v.get("nome", plugin_name),
                         "desc": v.get("descricao", ""),
-                        "remediation": {
-                            "desc": v.get("correcao", "No remediation provided")
-                        },
+                        "remediation": {"desc": v.get("correcao", "No remediation provided")},
                     }
                     event = {
                         "category_name": "Findings",
@@ -49,9 +45,7 @@ def export_ocsf(
                         "severity_id": severity_id,
                         "severity": sev_str.capitalize(),
                         "time": ts,
-                        "message": v.get(
-                            "descricao", v.get("nome", "Vulnerability detected")
-                        ),
+                        "message": v.get("descricao", v.get("nome", "Vulnerability detected")),
                         "vulnerability": vuln_dict,
                         "observables": [
                             {"name": "hostname", "type_id": 1, "value": target},

@@ -53,9 +53,7 @@ def enrich_results(plugin_results: list[dict], console) -> list[dict]:
     if not cves_found:
         return plugin_results
 
-    console.print(
-        f"  [bold cyan]🧠 Threat Intel:[/] Consultando EPSS/CISA KEV para {len(cves_found)} CVE(s)..."
-    )
+    console.print(f"  [bold cyan]🧠 Threat Intel:[/] Consultando EPSS/CISA KEV para {len(cves_found)} CVE(s)...")
 
     cisa_kev_set = fetch_cisa_kev()
 
@@ -89,11 +87,11 @@ def enrich_results(plugin_results: list[dict], console) -> list[dict]:
                             max_epss = epss_scores[cve]
 
                     if max_epss > 0.5 or in_kev:
-                        v["epss_score"] = f"{max_epss*100:.1f}%"
+                        v["epss_score"] = f"{max_epss * 100:.1f}%"
                         v["cisa_kev"] = in_kev
                         if v.get("severidade") in ["BAIXO", "MEDIO", "ALTO"]:
                             console.print(
-                                f"    [bold red]🔺 Elevando severidade (KEV/EPSS {max_epss*100:.1f}%):[/] {v.get('nome')}"
+                                f"    [bold red]🔺 Elevando severidade (KEV/EPSS {max_epss * 100:.1f}%):[/] {v.get('nome')}"
                             )
                             v["severidade_original"] = v.get("severidade")
                             v["severidade"] = "CRITICO"
@@ -101,8 +99,8 @@ def enrich_results(plugin_results: list[dict], console) -> list[dict]:
                             if in_kev:
                                 intel_reason.append("Listado no CISA KEV (Exploração Ativa Confirmada)")
                             if max_epss > 0.5:
-                                intel_reason.append(f"Alta probabilidade de ataque EPSS ({max_epss*100:.1f}%)")
-                            
+                                intel_reason.append(f"Alta probabilidade de ataque EPSS ({max_epss * 100:.1f}%)")
+
                             v["descricao"] = (
                                 v.get("descricao", "")
                                 + f"\n\n[INTEL] Elevado para CRÍTICO: {' | '.join(intel_reason)}."
