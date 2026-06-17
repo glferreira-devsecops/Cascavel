@@ -1,6 +1,6 @@
+import datetime
 import json
 import os
-import datetime
 
 
 def export_ocsf(target: str, ip: str, plugin_results: list[dict], elapsed: float, output_dir: str) -> str:

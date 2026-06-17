@@ -1679,12 +1679,12 @@ def _exec_plugin(
                 "baseline_404_len": 0,
                 "discovered_params": []
             }
-            
+
         if has_context:
             result = mod.run(target, ip, ports, banners, context=global_context)
         else:
             result = mod.run(target, ip, ports, banners)
-            
+
         # SEGURANÇA 2026: Sanitiza saída contra ANSI escape injection
         result = _sanitize_output(result) if result else {"plugin": name, "resultados": "Sem retorno"}
         return result  # type: ignore
@@ -1824,10 +1824,12 @@ def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: floa
     )
 
 
-import urllib.request
 import urllib.parse
+import urllib.request
+
+import requests
 from bs4 import BeautifulSoup
-import time
+
 
 def _calculate_baselines(target: str) -> dict:
     """Calcula baselines dinâmicos para eliminação de Falsos Positivos e Negativos."""
@@ -1841,14 +1843,14 @@ def _calculate_baselines(target: str) -> dict:
         except Exception:
             continue
     baseline_latency = sum(latencies) / len(latencies) if latencies else 0.5
-    
+
     # 404 Baseline
     try:
         resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
         baseline_404_len = len(resp.text)
     except Exception:
         baseline_404_len = 0
-        
+
     return {
         "baseline_latency": baseline_latency,
         "baseline_404_len": baseline_404_len
@@ -1860,22 +1862,22 @@ def _discover_parameters(target: str) -> list[str]:
     try:
         resp = requests.get(f"http://{target}/", timeout=5)
         soup = BeautifulSoup(resp.text, 'html.parser')
-        
+
         # Encontra params em URLs
         for a in soup.find_all('a', href=True):
             parsed = urllib.parse.urlparse(a['href'])
             query = urllib.parse.parse_qs(parsed.query)
             params.update(query.keys())
-            
+
         # Encontra nomes em forms
         for form in soup.find_all('form'):
             for input_tag in form.find_all(['input', 'select', 'textarea']):
                 name = input_tag.get('name')
                 if name:
                     params.add(name)
-    except Exception:
-        pass
-        
+    except Exception as exc:
+        console.print(f"[yellow][!] Falha na descoberta dinâmica de parâmetros: {exc}[/yellow]")
+
     default_params = ["id", "user", "username", "page", "name", "search", "query", "email", "key"]
     params.update(default_params)
     return list(params)
@@ -1931,7 +1933,7 @@ def run_plugins(
             "discovered_params": discovered_params,
             "oob_server": f"{target}.oob.cascavel.io"
         }
-    
+
     console.print(f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes")
     console.print(f"    [green]✓[/] Parâmetros Descobertos: {len(discovered_params)} parâmetros para fuzzing.\n")
 

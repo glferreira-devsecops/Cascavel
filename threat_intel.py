@@ -1,9 +1,10 @@
-import re
-import requests
 import json
 import os
+import re
 import tempfile
 import time
+
+import requests
 
 CISA_KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 EPSS_API_URL = "https://api.first.org/epss"
@@ -15,7 +16,7 @@ def fetch_cisa_kev() -> set:
     if os.path.exists(cache_file):
         if time.time() - os.path.getmtime(cache_file) < 86400:
             try:
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     return set(json.load(f))
             except Exception:
                 pass
