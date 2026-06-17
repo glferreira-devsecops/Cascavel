@@ -153,7 +153,7 @@ def _check_compose_files(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Docker Exposure 2026-Grade — API, Registry, Compose.
 

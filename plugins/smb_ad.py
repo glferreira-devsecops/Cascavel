@@ -5,7 +5,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Enumera compartilhamentos SMB abertos no alvo usando smbclient.
     Retorna lista de shares ou erro no formato estruturado.

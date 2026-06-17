@@ -169,7 +169,7 @@ def _check_old_version_vulns(target, active_versions):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     API Versioning Scanner 2026-Grade — Shadow APIs, Deprecation, Data Leak.
 

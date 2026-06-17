@@ -266,7 +266,7 @@ def _test_path_in_url(target, baseline_len):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner LFI 2026-Grade — Traversal, PHP Wrappers, Proc, Logs, Sensitive Files.
 

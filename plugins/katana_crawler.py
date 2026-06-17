@@ -5,7 +5,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Web crawler moderno via ProjectDiscovery Katana.
     Crawl ativo do alvo para descobrir endpoints, forms, links e JS files.

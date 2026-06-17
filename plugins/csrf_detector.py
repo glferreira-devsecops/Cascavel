@@ -281,7 +281,7 @@ def _check_referer_validation(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Detector CSRF 2026-Grade — Forms, Cookies, JSON, CORS, Referer.
 

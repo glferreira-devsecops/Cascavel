@@ -244,7 +244,7 @@ def _analyze_cache_headers(target, page):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Web Cache Poisoning 2026-Grade — Unkeyed Headers, WCD, Fat GET.
 

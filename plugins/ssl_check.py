@@ -253,7 +253,7 @@ def _check_http_redirect(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner SSL/TLS 2026-Grade — Certificate, Protocol, Cipher, HSTS.
 
@@ -264,10 +264,15 @@ def run(target, ip, open_ports, banners):
     HTTP→HTTPS redirect verification.
     """
     _ = (ip, banners)
+    if not open_ports:
+        return {"plugin": "ssl_check", "resultados": "Nenhuma porta aberta"}
+
     ssl_port = 443
     ssl_ports = [p for p in open_ports if p in [443, 8443]]
     if ssl_ports:
         ssl_port = ssl_ports[0]
+    else:
+        ssl_port = open_ports[0]
 
     cert_info, vulns = _check_certificate(target, ssl_port)
     vulns.extend(_check_hsts(target))

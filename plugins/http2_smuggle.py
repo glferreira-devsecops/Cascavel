@@ -177,7 +177,7 @@ def _test_websocket_h2(target):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner HTTP/2 Smuggling 2026-Grade — H2.CL, H2.TE, h2c, Desync.
 

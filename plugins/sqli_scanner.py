@@ -321,7 +321,7 @@ def _test_post_injection(target, param, baseline_len):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner SQL Injection 2026-Grade — Error/Union/Time/Boolean/Stacked/OOB.
 
@@ -334,11 +334,17 @@ def run(target, ip, open_ports, banners):
     _ = (ip, open_ports, banners)
     vulns = []
 
-    # 1. Calcular Baseline
-    baseline_latency = _get_baseline_latency(target)
-    baseline_len = _get_404_baseline(target)
+    # 1. Obter Baseline e Params do Contexto Global
+    if context:
+        baseline_latency = context.get("baseline_latency", 0.5)
+        baseline_len = context.get("baseline_404_len", 0)
+        params_to_test = context.get("discovered_params", PARAMS)
+    else:
+        baseline_latency = _get_baseline_latency(target)
+        baseline_len = _get_404_baseline(target)
+        params_to_test = PARAMS
 
-    for param in PARAMS:
+    for param in params_to_test:
         # Error + Union + WAF bypass + OOB + Stacked
         vulns.extend(_test_error_and_union(target, param, baseline_len))
 

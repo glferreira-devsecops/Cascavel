@@ -1,0 +1,148 @@
+name: Omni-Distribution Release
+# zizmor: ignore[unpinned-uses]
+# zizmor: ignore[superfluous-actions]
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-release:
+    name: Build Tarballs & PyInstaller
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+
+      - name: Install Build Tools
+        run: |
+          pip install pyinstaller requirements.txt
+          pip install build twine
+
+      - name: Build Standalone Executable (Linux)
+        run: |
+          pyinstaller --onefile --name cascavel-linux cascavel.py
+
+      - name: Build PyPI Package
+        run: |
+          python -m build
+
+      - name: Create Release Archives
+        run: |
+          mkdir -p release_build/Cascavel
+          rsync -av --exclude='.git' --exclude='.github' --exclude='venv' ./ release_build/Cascavel/
+          cd release_build
+          zip -r ../cascavel-release.zip Cascavel/
+          tar -czvf ../cascavel-release.tar.gz Cascavel/
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
+
+      - name: Sign Release Assets
+        run: |
+          cosign sign-blob --yes cascavel-release.tar.gz --bundle cascavel-release.tar.gz.bundle
+          cosign sign-blob --yes cascavel-release.zip --bundle cascavel-release.zip.bundle
+          cosign sign-blob --yes dist/cascavel-linux --bundle cascavel-linux.bundle
+
+      - name: Create GitHub Release
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$REF_NAME" cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle dist/cascavel-linux cascavel-linux.bundle --generate-notes
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - run: pip install build
+      - run: python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+
+  publish-npm:
+    name: Publish to NPM
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        # zizmor: ignore[cache-poisoning]
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Publish NPM
+        # zizmor: ignore[use-trusted-publishing]
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-docker:
+    name: Publish Docker Hub & GHCR
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+      - name: Login to Docker Hub
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ github.repository_owner }}/cascavel:latest
+            ghcr.io/${{ github.repository_owner }}/cascavel:latest
+
+  slsa-provenance:
+    needs: build-and-release
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563 # v2.0.0
+    with:
+      base64-subjects: ""

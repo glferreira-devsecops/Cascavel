@@ -278,7 +278,7 @@ def _check_expiry(expiry_str):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner WHOIS/RDAP 2026-Grade — Domain & IP Intelligence.
 

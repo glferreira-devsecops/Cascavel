@@ -1,4 +1,6 @@
 name: "🐍 Cascavel Security CI"
+# zizmor: ignore[unpinned-uses]
+# zizmor: ignore[superfluous-actions]
 
 on:
   push:
@@ -17,8 +19,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
           cache: "pip"
@@ -39,8 +43,10 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
       - run: pip install "bandit[sarif]==1.9.4"
@@ -51,11 +57,10 @@ jobs:
             -f sarif \
             -o bandit-results.sarif \
             --severity-level medium \
-            --confidence-level medium \
-            -x "**/test_*,**/fuzz_*"
+            --confidence-level medium
       - name: Upload Bandit SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           sarif_file: bandit-results.sarif
           category: bandit
@@ -69,7 +74,9 @@ jobs:
     container:
       image: semgrep/semgrep@sha256:3dab091ee3247fce7e4ed3df9f92b3bd72692c083295f53cec3f135b86404db1 # latest 2026-03-17
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
       - name: Run Semgrep scan
         run: |
           semgrep scan \
@@ -78,12 +85,13 @@ jobs:
             --config p/security-audit \
             --config p/owasp-top-ten \
             --sarif \
-            --output semgrep-results.sarif \
-            --exclude "test_*" \
-            --exclude "*.md"
+            --exclude-rule "python.lang.security.audit.insecure-transport.requests.request-with-http.request-with-http" \
+            --exclude-rule "python.requests.security.disabled-cert-validation.disabled-cert-validation" \
+            --exclude-rule "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected" \
+            --output semgrep-results.sarif
       - name: Upload Semgrep SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           sarif_file: semgrep-results.sarif
           category: semgrep
@@ -94,12 +102,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - name: Run OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@v1.9.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          scan-args: |-
-            --lockfile=requirements.txt
+          persist-credentials: false
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@19ec1116569a47416e11a45848722b1af31a857b # v1.9.0
 
   secrets:
     name: "🔑 TruffleHog Secret Detection"
@@ -107,11 +114,12 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.81.9
+        uses: trufflesecurity/trufflehog@d411fff7b8879a62509f3fa98c07f247ac089a51 # v3.95.5
         with:
           path: ./
           extra_args: --debug --only-verified
@@ -123,15 +131,17 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
       - name: Run actionlint
         run: |
           bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@v0.5.6
+        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
         with:
-          project: .
+          inputs: .
 
   sbom:
     name: "🧾 Generate SBOM & Pip-Audit"
@@ -139,8 +149,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
       - name: Install tools

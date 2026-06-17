@@ -4,7 +4,7 @@ import time
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Testa ausência de rate limiting em endpoints sensíveis.
     Importante para brute-force, credential stuffing e DoS.

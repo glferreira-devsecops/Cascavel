@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔═══════════════════════════════════════════════════════════════╗
-║  CASCAVEL — Quantum Security Framework v3.0.0                ║
+║  CASCAVEL — Advanced Security Framework v3.0.0                ║
 ║  Por DevFerreiraG | github.com/glferreira-devsecops          ║
 ║  Framework de automação pentest plugável, multi-plataforma   ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -52,7 +52,7 @@ from rich.text import Text
 try:
     import pyfiglet
 except ImportError:
-    pyfiglet = None
+    pyfiglet = None  # type: ignore[assignment]
 
 try:
     from notifypy import Notify as DesktopNotify
@@ -323,7 +323,7 @@ COBRA_ART = [
 ]
 
 BOOT_SEQUENCE = [
-    ("SYS", f"Iniciando CASCAVEL Quantum Security Framework v{__version__}"),
+    ("SYS", f"Iniciando CASCAVEL Advanced Security Framework v{__version__}"),
     ("CPU", "Detectando plataforma: {platform}"),
     ("MEM", "Python runtime: {python}"),
     ("NET", "Verificando conectividade de rede..."),
@@ -444,7 +444,7 @@ def _fade_in_logo() -> None:
 
         # Phase 3: Subtitle materializa
         time.sleep(0.2)
-        subtitle = f"  Quantum Security Framework v{__version__} — Red Team Intelligence"
+        subtitle = f"  Advanced Security Framework v{__version__} — Red Team Intelligence"
         console.print()
         console.print(f"  [bold bright_cyan]{subtitle}[/]")
         time.sleep(0.4)
@@ -591,7 +591,7 @@ SNAKE_ART = r"""[green]
                  .~))>>
                 .~)>>
               .~))))>>>
-            .~))>>              [bold bright_green]Quantum Security Framework[/]
+            .~))>>              [bold bright_green]Advanced Security Framework[/]
           .~))>>)>              [bold bright_green]v{ver} — {plugins} plugins[/]
         .~))>>
       .~))>>
@@ -651,7 +651,7 @@ def print_header() -> None:
             Align.center(info_table),
             border_style="bright_green",
             title=f"[{S_GREEN}]🐍 CASCAVEL[/]",
-            subtitle="[dim]Quantum Security Framework[/]",
+            subtitle="[dim]Advanced Security Framework[/]",
             box=box.DOUBLE_EDGE,
         )
     )
@@ -1628,6 +1628,7 @@ def _exec_plugin(
     ports: list[int],
     banners: dict[int, str],
     timeout: int = 120,
+    global_context: dict | None = None,
 ) -> dict[str, Any]:
     """Executa um plugin com timeout guard (SIGALRM, 120s padrão).
 
@@ -1646,9 +1647,17 @@ def _exec_plugin(
     mod = importlib.util.module_from_spec(spec)
     loader.exec_module(mod)
 
+    # Injetando contexto no run() do plugin
+    try:
+        import inspect
+
+        sig = inspect.signature(mod.run)
+        has_context = "context" in sig.parameters
+    except Exception:
+        has_context = False
+
     if not hasattr(mod, "run"):
         return {"plugin": name, "erro": "Sem função run()"}
-
     # Per-plugin timeout via SIGALRM (Unix only)
     _has_alarm = hasattr(signal, "SIGALRM")
 
@@ -1664,7 +1673,15 @@ def _exec_plugin(
         signal.alarm(timeout)
 
     try:
-        result = mod.run(target, ip, ports, banners)
+        # Se os baselines ainda nao tiverem sido calculados, cria um context mock
+        if not global_context:
+            global_context = {"baseline_latency": 0.5, "baseline_404_len": 0, "discovered_params": []}
+
+        if has_context:
+            result = mod.run(target, ip, ports, banners, context=global_context)
+        else:
+            result = mod.run(target, ip, ports, banners)
+
         # SEGURANÇA 2026: Sanitiza saída contra ANSI escape injection
         result = _sanitize_output(result) if result else {"plugin": name, "resultados": "Sem retorno"}
         return result  # type: ignore
@@ -1804,6 +1821,63 @@ def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: floa
     )
 
 
+import urllib.parse
+import urllib.request
+
+import requests
+from bs4 import BeautifulSoup
+
+
+def _calculate_baselines(target: str) -> dict:
+    """Calcula baselines dinâmicos para eliminação de Falsos Positivos e Negativos."""
+    # Latency Baseline
+    latencies = []
+    for _ in range(3):
+        try:
+            start = time.time()
+            requests.get(f"http://{target}/", timeout=8)
+            latencies.append(time.time() - start)
+        except Exception:
+            continue
+    baseline_latency = sum(latencies) / len(latencies) if latencies else 0.5
+
+    # 404 Baseline
+    try:
+        resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
+        baseline_404_len = len(resp.text)
+    except Exception:
+        baseline_404_len = 0
+
+    return {"baseline_latency": baseline_latency, "baseline_404_len": baseline_404_len}
+
+
+def _discover_parameters(target: str) -> list[str]:
+    """Spidering rápido para descoberta de parâmetros reais."""
+    params: set[str] = set()
+    try:
+        resp = requests.get(f"http://{target}/", timeout=5)
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # Encontra params em URLs
+        for a in soup.find_all("a", href=True):
+            parsed = urllib.parse.urlparse(a["href"])
+            query = urllib.parse.parse_qs(parsed.query)
+            params.update(query.keys())
+
+        # Encontra nomes em forms
+        for form in soup.find_all("form"):
+            for input_tag in form.find_all(["input", "select", "textarea"]):
+                name = input_tag.get("name")
+                if name:
+                    params.add(name)
+    except Exception as exc:
+        console.print(f"[yellow][!] Falha na descoberta dinâmica de parâmetros: {exc}[/yellow]")
+
+    default_params = ["id", "user", "username", "page", "name", "search", "query", "email", "key"]
+    params.update(default_params)
+    return list(params)
+
+
 def run_plugins(
     target: str,
     ip: str,
@@ -1843,6 +1917,22 @@ def run_plugins(
 
     console.print(Rule(f"[bold magenta]🔌 PLUGIN ENGINE — {total} PLUGINS[/]", style="magenta"))
     console.print()
+
+    # Calculate global baselines & parameters
+    with console.status("[bold cyan]🕸️ Calculando Baselines e Descobrindo Parâmetros...[/]", spinner="dots"):
+        baselines = _calculate_baselines(target)
+        discovered_params = _discover_parameters(target)
+        global_context = {
+            "baseline_latency": baselines["baseline_latency"],
+            "baseline_404_len": baselines["baseline_404_len"],
+            "discovered_params": discovered_params,
+            "oob_server": f"{target}.oob.cascavel.io",
+        }
+
+    console.print(
+        f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes"
+    )
+    console.print(f"    [green]✓[/] Parâmetros Descobertos: {len(discovered_params)} parâmetros para fuzzing.\n")
 
     # Randomize intel order for variety
     intel_order = list(range(len(SECURITY_INTEL)))
@@ -1931,7 +2021,7 @@ def run_plugins(
                 t0 = time.time()
 
                 try:
-                    result = _exec_plugin(file_path, name, target, ip, ports, banners)
+                    result = _exec_plugin(file_path, name, target, ip, ports, banners, global_context=global_context)
                 except Exception as e:
                     result = {"plugin": name, "erro": f"Crash: {e}"}
                 results.append(result)
@@ -1992,7 +2082,7 @@ def run_plugins(
         console.print(f"  [dim]Live display falhou ({layout_err}), executando sem UI...[/]")
         for idx, (file_path, name) in enumerate(valid, 1):
             try:
-                result = _exec_plugin(file_path, name, target, ip, ports, banners)
+                result = _exec_plugin(file_path, name, target, ip, ports, banners, global_context=global_context)
             except Exception as e:
                 result = {"plugin": name, "erro": f"Crash: {e}"}
             results.append(result)
@@ -2598,45 +2688,60 @@ def self_update() -> None:
             console.print(f"  [red]❌ Erro no git pull: {e}[/]")
         return
 
-    # Strategy 2: Direct download of core files
-    console.print("  [dim]Modo: download direto (sem .git)[/]")
-    core_files = [
-        "cascavel.py",
-        "sarif_exporter.py",
-        "report_generator.py",
-        "requirements.txt",
-    ]
-    tag = f"v{latest}"
-    updated = 0
+    # Strategy 2: Direct download of release bundle
+    console.print("  [dim]Modo: download direto do pacote de release (sem .git)[/]")
+    import tarfile
+    import tempfile
 
-    for fname in core_files:
-        try:
-            url = f"{_GITHUB_RAW_BASE}/{tag}/{fname}"
-            resp = requests.get(
-                url,
-                headers={"User-Agent": f"Cascavel/{__version__}"},
-                timeout=(3.05, 10),
-                stream=True,
-                allow_redirects=False,
+    release_url = (
+        f"https://github.com/glferreira-devsecops/Cascavel/releases/download/v{latest}/cascavel-release.tar.gz"
+    )
+
+    try:
+        console.print(f"  [dim]Baixando pacote de atualização v{latest}...[/]")
+        resp = requests.get(
+            release_url,
+            headers={"User-Agent": f"Cascavel/{__version__}"},
+            timeout=(5.0, 30),
+            stream=True,
+            allow_redirects=True,
+        )
+        resp.raise_for_status()
+
+        # Save to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".tar.gz") as tmp:
+            tmp_path = tmp.name
+            for chunk in resp.iter_content(chunk_size=8192):
+                tmp.write(chunk)
+
+        console.print("  [dim]Extraindo arquivos e sobrescrevendo instalação atual...[/]")
+        # Extract the tar.gz. Since our GitHub action packages the files inside a "Cascavel/" dir,
+        # we need to extract them correctly, or if we extract directly, strip the top dir.
+        with tarfile.open(tmp_path, "r:gz") as tar:
+            for member in tar.getmembers():
+                # Remove the top-level "Cascavel/" directory from the member path
+                # so it extracts directly into install_dir
+                if member.name.startswith("Cascavel/"):
+                    member.name = member.name[len("Cascavel/") :]
+                if member.name:  # Don't extract the root dir itself
+                    tar.extract(member, path=install_dir)
+
+        os.remove(tmp_path)
+        console.print(f"  [green]✅ Arquivos atualizados para v{latest}[/]")
+
+        # Run install.sh to fix dependencies
+        console.print("  [bold cyan]⚡ Executando Pipeline de Automação do Cascavel...[/]")
+        install_script = os.path.join(install_dir, "install.sh")
+        if os.path.isfile(install_script):
+            subprocess.run(["bash", "install.sh"], cwd=install_dir, check=False)  # noqa: S603, S607
+            console.print("\n  [green]✅ Atualização via release concluída com sucesso![/]\n")
+        else:
+            console.print(
+                "  [yellow]⚠ install.sh não encontrado. Dependências podem precisar de atualização manual.[/]\n"
             )
-            resp.raise_for_status()
 
-            target_path = os.path.join(install_dir, fname)
-            fd = os.open(target_path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o644)
-            with os.fdopen(fd, "wb") as f:
-                for chunk in resp.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            console.print(f"    ✅ {fname}")
-            updated += 1
-        except Exception as e:
-            console.print(f"    ❌ {fname}: {e}")
-
-    if updated > 0:
-        console.print(f"\n  [green]✅ {updated}/{len(core_files)} arquivos atualizados para v{latest}[/]")
-        # Update plugins directory
-        console.print("  [dim]Para atualizar plugins, execute: cascavel --update-plugins[/]\n")
-    else:
-        console.print("  [red]❌ Nenhum arquivo atualizado.[/]\n")
+    except Exception as e:
+        console.print(f"  [red]❌ Erro na atualização via pacote de release: {e}[/]\n")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2653,6 +2758,7 @@ class CascavelArgumentParser(argparse.ArgumentParser):
         console.print(f"  [{S_DIM}]Uso:[/]")
         console.print(f"  [{S_CYAN}]  cascavel target.com[/]                    [dim]# Scan direto[/]")
         console.print(f"  [{S_CYAN}]  cascavel -t target.com --plugins-only[/]  [dim]# Apenas plugins[/]")
+        console.print(f"  [{S_CYAN}]  cascavel --plugin-filter sqli_scanner[/]  [dim]# Filtra plugins[/]")
         console.print(f"  [{S_CYAN}]  cascavel --help[/]                        [dim]# Ajuda completa[/]")
         console.print()
         sys.exit(2)
@@ -2661,16 +2767,17 @@ class CascavelArgumentParser(argparse.ArgumentParser):
 def build_parser() -> argparse.ArgumentParser:
     parser = CascavelArgumentParser(
         prog="cascavel",
-        description="🐍 Cascavel — Quantum Security Framework",
+        description="🐍 Cascavel — Advanced Security Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Examples:\n"
         "  cascavel target.com                     Scan direto\n"
         "  cascavel -t target.com                  Full scan\n"
         "  cascavel -t target.com --plugins-only   Plugins only\n"
-        "  cascavel -t target.com -q -o json       Quiet + JSON\n"
-        "  cascavel --list-plugins                 Show arsenal\n"
-        "  cascavel --check-tools                  Verify tools\n"
-        "  cascavel --install-global               Instalar globalmente",
+        "  cascavel -t target.com -q -o json                   Quiet + JSON\n"
+        "  cascavel -t target.com --plugins-only --plugin-filter sqli_scanner xss_scanner\n"
+        "  cascavel --list-plugins                             Show arsenal\n"
+        "  cascavel --check-tools                              Verify tools\n"
+        "  cascavel --install-global                           Instalar globalmente",
     )
     # Target posicional (opcional) — permite 'cascavel target.com'
     parser.add_argument(
@@ -2703,9 +2810,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-o",
         "--output-format",
-        choices=["md", "json", "pdf", "sarif"],
+        choices=["md", "json", "pdf", "sarif", "ocsf"],
         default="md",
-        help="Formato do relatório: md (padrão), json, pdf ou sarif",
+        help="Formato do relatório: md (padrão), json, pdf, sarif ou ocsf",
     )
     parser.add_argument(
         "--pdf",
@@ -2737,6 +2844,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--check-update",
         action="store_true",
         help="Verifica se há atualizações disponíveis no GitHub",
+    )
+    parser.add_argument(
+        "--stealth-eval",
+        action="store_true",
+        help="[2026 COST] Injeta headers 'X-Cascavel-Test' para testar SOCs/WAFs",
+    )
+    parser.add_argument(
+        "--ai-fix",
+        action="store_true",
+        help="[2026 AI] Tenta gerar scripts de mitigação via IA no final do scan",
+    )
+    parser.add_argument(
+        "--plugin-filter",
+        nargs="+",
+        help="Filtra a execução apenas para plugins específicos (ex: sqli_scanner xss_scanner)",
     )
 
     def _positive_int(value: str) -> int:
@@ -2843,6 +2965,8 @@ def run_scan(
     output_format: str = "md",
     global_timeout: int = 90,
     profile: str | None = None,
+    stealth_eval: bool = False,
+    ai_fix: bool = False,
 ) -> None:
     """Executa o scan completo contra o target.
 
@@ -2850,6 +2974,25 @@ def run_scan(
         profile: Nome do scan profile (web, api, cloud, network, full) ou None para todos.
     """
     mission_start = time.time()
+
+    if stealth_eval:
+        console.print(
+            f"  [{S_YELLOW}]🥷 Modo COST Ativado: Headers stealth-eval sendo injetados nas requisições Python.[/]"
+        )
+        import requests
+
+        _orig_request = requests.Session.request
+
+        def _stealth_request(self, method, url, **kwargs):
+            headers = kwargs.get("headers", {})
+            if isinstance(headers, dict):
+                h = dict(headers)
+                h["X-Cascavel-Test"] = "true"
+                h["X-COST-Simulation"] = "active"
+                kwargs["headers"] = h
+            return _orig_request(self, method, url, **kwargs)
+
+        requests.Session.request = _stealth_request  # type: ignore[method-assign,assignment]
 
     # Load scan profile if specified
     _profile_plugins: list[str] | None = None
@@ -2918,6 +3061,27 @@ def run_scan(
     # Plugins
     plugin_results = run_plugins(target, ip, open_ports, banners, report, plugin_filter=_profile_plugins)
 
+    # 2026 CTEM: Threat Intel Enrichment (EPSS/CISA KEV)
+    try:
+        from threat_intel import enrich_results
+
+        plugin_results = enrich_results(plugin_results, console)
+    except ImportError:
+        console.print(f"  [{S_YELLOW}]⚠ threat_intel.py não encontrado. Pulando enrichment.[/]")
+    except Exception as e:
+        console.print(f"  [{S_YELLOW}]⚠ Erro no Threat Intel: {e}[/]")
+
+    # 2026 CTEM: AI Remediation
+    if ai_fix:
+        try:
+            from ai_remediation import generate_ai_fixes
+
+            plugin_results = generate_ai_fixes(plugin_results, console)
+        except ImportError:
+            console.print(f"  [{S_YELLOW}]⚠ ai_remediation.py não encontrado.[/]")
+        except Exception as e:
+            console.print(f"  [{S_YELLOW}]⚠ Erro na IA Remediation: {e}[/]")
+
     # Report
     elapsed_total = time.time() - mission_start
     if output_format == "json":
@@ -2957,6 +3121,15 @@ def run_scan(
             console.print(f"  [bold bright_green]📄 PDF Report: {report_path}[/]")
         except ImportError:
             console.print(f"  [{S_YELLOW}]⚠ reportlab não instalado. Gerando MD.[/]")
+            report_path = save_report("\n".join(report))
+    elif output_format == "ocsf":
+        try:
+            from ocsf_exporter import export_ocsf
+
+            report_path = export_ocsf(target, ip, plugin_results, elapsed_total, output_dir=str(REPORTS_PATH))
+            console.print(f"  [bold bright_green]📋 OCSF Report: {report_path}[/]")
+        except ImportError:
+            console.print(f"  [{S_YELLOW}]⚠ ocsf_exporter não encontrado. Gerando MD.[/]")
             report_path = save_report("\n".join(report))
     else:
         report_path = save_report("\n".join(report))
@@ -3002,21 +3175,52 @@ def _install_global() -> None:
 
     console.print(f"  [{S_CYAN}]▶ Instalando Cascavel via pip (editable mode)...[/]")
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-e", BASE_PATH, "--no-cache-dir"],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
-            # Fallback: tenta sem -e (install normal)
-            console.print(f"  [{S_YELLOW}]⚠ Editable mode falhou. Tentando install padrão...[/]")
+        from rich.status import Status
+
+        with Status(
+            f"[{S_CYAN}]Instalando dependências e linkando executável...[/]",
+            console=console,
+            spinner="aesthetic",
+            speed=1.5,
+        ):
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", BASE_PATH, "--no-cache-dir"],
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "-e",
+                    BASE_PATH,
+                    "--no-cache-dir",
+                    "--break-system-packages",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
+        if result.returncode != 0:
+            # Fallback: tenta sem -e (install normal)
+            console.print(f"  [{S_YELLOW}]⚠ Editable mode falhou. Tentando install padrão...[/]")
+            with Status(
+                f"[{S_CYAN}]Instalação fallback em andamento...[/]",
+                console=console,
+                spinner="material",
+                speed=1.5,
+            ):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        BASE_PATH,
+                        "--no-cache-dir",
+                        "--break-system-packages",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
             if result.returncode != 0:
                 console.print(f"  [{S_RED}]✗ pip install falhou:[/]")
                 err_lines: list[str] = (result.stderr or result.stdout).strip().split("\n")
@@ -3031,7 +3235,7 @@ def _install_global() -> None:
         console.print(f"  [{S_RED}]✗ pip não encontrado. Instale: python -m ensurepip[/]")
         sys.exit(1)
 
-    console.print(f"  [{S_GREEN}]✓ Pacote instalado via pip.[/]")
+    console.print(f"  [{S_GREEN}]✓ Pacote instalado via pip com sucesso.[/]")
 
     # Verificar se 'cascavel' já está no PATH
     cascavel_bin = shutil.which("cascavel")
@@ -3262,6 +3466,8 @@ def main() -> None:
         output_format=out_fmt,
         global_timeout=args.timeout,
         profile=getattr(args, "profile", None),
+        stealth_eval=getattr(args, "stealth_eval", False),
+        ai_fix=getattr(args, "ai_fix", False),
     )
 
     # Final

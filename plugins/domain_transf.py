@@ -3,7 +3,7 @@ import shlex
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Tenta realizar transferência de zona DNS AXFR (zone transfer) no domínio alvo.
     Retorna resultado estruturado para o core do Cascavel.

@@ -254,7 +254,7 @@ def _check_state_parameter(target):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner OAuth/OIDC 2026-Grade — Misconfig, Redirect Bypass, PKCE, Device Flow.
 

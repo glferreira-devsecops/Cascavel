@@ -210,7 +210,7 @@ def _test_batched_attack(target, endpoint):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner GraphQL Injection 2026-Grade — SQLi, NoSQLi, SSRF, XSS, DoS.
 

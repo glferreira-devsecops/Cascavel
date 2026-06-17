@@ -5,7 +5,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Profiler completo: info do host local, OS detection via nmap,
     fingerprint via whatweb (se disponível), SSL scan e mapeamento MITRE ATT&CK.

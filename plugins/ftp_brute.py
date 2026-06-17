@@ -3,7 +3,7 @@ import ftplib
 import socket
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner e brute-force básico para FTP.
     Detecta portas FTP abertas, coleta banners e tenta credenciais comuns.

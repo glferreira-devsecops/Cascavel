@@ -211,7 +211,7 @@ def _test_max_age(target, page):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner CORS 2026-Grade — Origin Reflection, Preflight, Cache Poisoning.
 

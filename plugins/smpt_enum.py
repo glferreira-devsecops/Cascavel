@@ -2,7 +2,7 @@
 import smtplib
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Enumera usuários SMTP comuns via comando VRFY.
     Verifica porta 25 antes de tentar conexão.

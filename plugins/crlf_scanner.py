@@ -255,7 +255,7 @@ def _analyze_response(resp, injection_point, method, baseline_text="", baseline_
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner CRLF 2026-Grade — Headers, Body, Cookies, CORS, CSP, Smuggling.
 

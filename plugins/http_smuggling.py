@@ -139,7 +139,7 @@ def _test_transfer_encoding_support(target):
     return False
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner HTTP Smuggling 2026-Grade — CL.TE, TE.CL, TE.TE, Time-Based.
 

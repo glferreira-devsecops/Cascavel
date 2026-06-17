@@ -109,7 +109,7 @@ def _check_extension_acceptance(base_url, timeout):
     return accepted_exts
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Upload Passivo 2026-Grade — HTTP PUT/PATCH Method Detection.
 

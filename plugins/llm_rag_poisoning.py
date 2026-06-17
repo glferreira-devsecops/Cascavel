@@ -9,7 +9,7 @@
 import requests
 
 
-def run(target, ip, ports, banners):
+def run(target, ip, ports, banners, context=None):
     finding = None
     # Endpoints comuns de LLM/Chat
     endpoints = ["/api/chat", "/query", "/v1/completions", "/chat", "/llm", "/rag"]

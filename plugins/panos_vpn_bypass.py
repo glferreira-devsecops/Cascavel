@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Detector heurístico para CVE-2026-0257 (Palo Alto PAN-OS GlobalProtect Auth Bypass).
     A vulnerabilidade permite o estabelecimento de conexões VPN não autorizadas.

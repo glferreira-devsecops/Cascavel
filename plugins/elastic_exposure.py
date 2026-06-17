@@ -142,7 +142,7 @@ def _check_opensearch(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Elasticsearch/Kibana/OpenSearch 2026-Grade.
 

@@ -156,7 +156,7 @@ def _check_email_security(target):
     return security
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Email Harvester 2026-Grade — Web Scrape, DNS, Security Assessment.
 

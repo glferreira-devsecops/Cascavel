@@ -26,7 +26,7 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     """
     Checks for Coerced Authentication via Web vulnerability.
     """
-    if not verify_math_execution():
+    if not verify_math_execution() or not ports:
         return None
 
     vulnerability = "Coerced Authentication via Web (NTLM Relay)"
@@ -39,6 +39,9 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     )
 
     test_endpoints = ["/api/upload", "/webhook/configure", "/config/import"]
+
+    if not ports:
+        return {"plugin": "coerced_auth_web", "resultados": "Nenhuma porta aberta"}
 
     target_port = 443 if 443 in ports else (80 if 80 in ports else ports[0])
     use_ssl = target_port in [443, 8443]

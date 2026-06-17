@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Mapeamento de rede e ASN via asnmap + mapcidr.
     Identifica o ASN do alvo, ranges de IP associados e informações de rede.

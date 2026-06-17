@@ -12,7 +12,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def run(target, ip, ports, banners):
+def run(target, ip, ports, banners, context=None):
     finding = None
     # Kubelet default port
     if 10250 not in ports:

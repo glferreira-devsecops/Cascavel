@@ -233,7 +233,7 @@ def _test_json_deserialization(url, junk_status=0, junk_text=""):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Insecure Deserialization 2026-Grade — Java/PHP/Python/.NET/YAML.
 

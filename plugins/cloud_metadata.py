@@ -65,7 +65,7 @@ ALIBABA_PATHS = [
 ]
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Cloud Metadata Exposure 2026-Grade — AWS/GCP/Azure/Oracle/DO/Alibaba.
 

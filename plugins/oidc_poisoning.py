@@ -25,7 +25,7 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     """
     Checks for OIDC Poisoning and SSRF via Dynamic Client Registration.
     """
-    if not verify_math_execution():
+    if not verify_math_execution() or not ports:
         return None
 
     vulnerability = "OIDC Poisoning & Dynamic Registration SSRF"
@@ -43,6 +43,9 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
         "/oidc/register",
         "/auth/realms/master/clients-registrations/openid-connect",
     ]
+
+    if not ports:
+        return {"plugin": "oidc_poisoning", "resultados": "Nenhuma porta aberta"}
 
     target_port = 443 if 443 in ports else (80 if 80 in ports else ports[0])
     use_ssl = target_port in [443, 8443]

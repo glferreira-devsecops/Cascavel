@@ -171,7 +171,7 @@ def _test_saml_attacks(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner SAML Authentication Bypass 2026-Grade.
 

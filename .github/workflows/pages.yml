@@ -1,0 +1,38 @@
+name: Deploy to Cloudflare Pages
+# zizmor: ignore[unpinned-uses]
+# zizmor: ignore[superfluous-actions]
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+      - 'en/index.html'
+      - '404.html'
+      - 'assets/**'
+      - 'docs/**'
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    name: Deploy to Pages
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Deploy to Cloudflare Pages
+        # zizmor: ignore[unpinned-uses]
+        uses: cloudflare/pages-action@f0a1cd58cd66095dee69bfa18fa5efd1dde93bca # v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: 'cascavel'
+          directory: '.'
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

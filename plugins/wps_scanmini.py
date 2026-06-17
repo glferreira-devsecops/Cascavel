@@ -2,7 +2,7 @@
 import requests
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Mini WordPress scan: detecta endpoints típicos e extrai informações.
     """

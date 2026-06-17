@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     DNS profundo: integra dnsx, dnsrecon e fierce para enumeração DNS completa.
     Descobre registros DNS, zone transfers, subdomínios e nameservers.

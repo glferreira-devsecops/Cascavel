@@ -295,7 +295,7 @@ def _inject_oob(target, param):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner RCE 2026-Grade — Output/Time/OOB/Header/POST.
 

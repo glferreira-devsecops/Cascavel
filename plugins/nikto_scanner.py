@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner de vulnerabilidades web via Nikto.
     Executa scan completo nos serviços HTTP/HTTPS do alvo.

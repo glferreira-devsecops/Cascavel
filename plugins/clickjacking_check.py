@@ -161,7 +161,7 @@ def _check_drag_drop(target, page):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Clickjacking 2026-Grade — XFO, CSP, Double Framing, Drag-Drop.
 

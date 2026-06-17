@@ -66,7 +66,7 @@ LOGIN_ENDPOINTS = [
 ]
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Analisador JWT 2026-Grade — Harvest, Decode, Attack.
 

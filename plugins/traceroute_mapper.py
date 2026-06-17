@@ -225,7 +225,7 @@ def _reverse_dns(ip):
         return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Traceroute 2026-Grade — Network Path Intelligence.
 

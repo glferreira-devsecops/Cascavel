@@ -124,7 +124,7 @@ def _check_cname_dangling(subdomain):
     return None, False
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Subdomain Takeover 2026-Grade — 50+ Fingerprints, CNAME Dangling.
 

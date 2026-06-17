@@ -6,7 +6,7 @@ except ImportError:
     paramiko = None  # type: ignore
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Tenta brute force SSH em portas padrão e comuns.
     Integrado com open_ports do core.

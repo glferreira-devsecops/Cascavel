@@ -20,7 +20,7 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     """
     Checks for Wasm Exposure vulnerability via raw socket GET and binary parsing.
     """
-    if not verify_math_execution():
+    if not verify_math_execution() or not ports:
         return None
 
     vulnerability = "WebAssembly (Wasm) Logic Exposure"
@@ -33,6 +33,9 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
     )
 
     test_endpoints = ["/static/js/main.wasm", "/assets/core.wasm", "/wasm/app.wasm"]
+
+    if not ports:
+        return {"plugin": "wasm_reverser", "resultados": "Nenhuma porta aberta"}
 
     target_port = 443 if 443 in ports else (80 if 80 in ports else ports[0])
     use_ssl = target_port in [443, 8443]

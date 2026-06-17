@@ -9,7 +9,7 @@ except ImportError:
     _HAS_SHODAN = False
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Reconnaissance via Shodan API.
     Busca informações públicas sobre o IP do alvo: portas, serviços, vulns, geo.

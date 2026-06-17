@@ -180,7 +180,7 @@ def _check_git_objects(target):
     return None
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Git/VCS Exposure 2026-Grade — .git, SVN, Mercurial, CVS.
 

@@ -256,7 +256,7 @@ def _detect_waf(resp):
     return detected
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Tech Fingerprint & Security Headers 2026-Grade.
 

@@ -223,7 +223,7 @@ def _test_password_reset_poisoning(target):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner Host Header Injection 2026-Grade — Poisoning, Bypass, CRLF.
 

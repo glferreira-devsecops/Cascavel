@@ -315,7 +315,7 @@ def _check_uuid_prediction(target, baseline_len):
     return vulns
 
 
-def run(target, ip, open_ports, banners):
+def run(target, ip, open_ports, banners, context=None):
     """
     Scanner IDOR 2026-Grade — BOLA/BFLA, GraphQL, UUID, HPP, Privilege Escalation.
 

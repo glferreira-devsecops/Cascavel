@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Cascavel** — Quantum Security Framework
+**Cascavel** — Advanced Security Framework
 <br>Maintained by [RET Tecnologia](https://rettecnologia.org)
 
 </div>
