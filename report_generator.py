@@ -696,7 +696,7 @@ def generate_pdf_report(
             pass
 
     story.append(Paragraph("CASCAVEL", styles["CoverTitle"]))
-    story.append(Paragraph("Quantum Security Framework", styles["CoverSub"]))
+    story.append(Paragraph("Advanced Security Framework", styles["CoverSub"]))
     story.append(Spacer(1, 4 * mm))
 
     story.append(HRFlowable(width="50%", thickness=2, color=CYAN_NEON, spaceAfter=6, hAlign="CENTER"))
@@ -860,7 +860,7 @@ def generate_pdf_report(
 
     summary_text = (
         f"A análise de segurança automatizada do alvo <b>{target}</b> foi conduzida "
-        f"utilizando o Cascavel Quantum Security Framework v{VERSION}, operado por "
+        f"utilizando o Cascavel Advanced Security Framework v{VERSION}, operado por "
         f"<b>{company}</b>. Foram executados <b>{plugins_count}</b> plugins de segurança "
         f"especializados e <b>{tools_count}</b> ferramentas externas em um período de "
         f"<b>{round(duration, 1)} segundos</b>. "
@@ -1507,7 +1507,7 @@ def generate_pdf_report(
     story.append(
         Paragraph(
             f"<b>AVISO LEGAL FINAL:</b> Este relatório foi gerado automaticamente pelo Cascavel "
-            f"Quantum Security Framework v{VERSION}, produto de {company} "
+            f"Advanced Security Framework v{VERSION}, produto de {company} "
             f'(<a href="https://{COMPANY_SITE}" color="#0066CC">{COMPANY_SITE}</a>). '
             f"As informações contidas neste documento são CONFIDENCIAIS e destinadas exclusivamente "
             f"ao uso do destinatário autorizado. A disseminação, distribuição ou cópia não autorizada "

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔═══════════════════════════════════════════════════════════════╗
-║  CASCAVEL — Quantum Security Framework v3.0.0                ║
+║  CASCAVEL — Advanced Security Framework v3.0.0                ║
 ║  Por DevFerreiraG | github.com/glferreira-devsecops          ║
 ║  Framework de automação pentest plugável, multi-plataforma   ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -323,7 +323,7 @@ COBRA_ART = [
 ]
 
 BOOT_SEQUENCE = [
-    ("SYS", f"Iniciando CASCAVEL Quantum Security Framework v{__version__}"),
+    ("SYS", f"Iniciando CASCAVEL Advanced Security Framework v{__version__}"),
     ("CPU", "Detectando plataforma: {platform}"),
     ("MEM", "Python runtime: {python}"),
     ("NET", "Verificando conectividade de rede..."),
@@ -444,7 +444,7 @@ def _fade_in_logo() -> None:
 
         # Phase 3: Subtitle materializa
         time.sleep(0.2)
-        subtitle = f"  Quantum Security Framework v{__version__} — Red Team Intelligence"
+        subtitle = f"  Advanced Security Framework v{__version__} — Red Team Intelligence"
         console.print()
         console.print(f"  [bold bright_cyan]{subtitle}[/]")
         time.sleep(0.4)
@@ -591,7 +591,7 @@ SNAKE_ART = r"""[green]
                  .~))>>
                 .~)>>
               .~))))>>>
-            .~))>>              [bold bright_green]Quantum Security Framework[/]
+            .~))>>              [bold bright_green]Advanced Security Framework[/]
           .~))>>)>              [bold bright_green]v{ver} — {plugins} plugins[/]
         .~))>>
       .~))>>
@@ -651,7 +651,7 @@ def print_header() -> None:
             Align.center(info_table),
             border_style="bright_green",
             title=f"[{S_GREEN}]🐍 CASCAVEL[/]",
-            subtitle="[dim]Quantum Security Framework[/]",
+            subtitle="[dim]Advanced Security Framework[/]",
             box=box.DOUBLE_EDGE,
         )
     )
@@ -2676,7 +2676,7 @@ class CascavelArgumentParser(argparse.ArgumentParser):
 def build_parser() -> argparse.ArgumentParser:
     parser = CascavelArgumentParser(
         prog="cascavel",
-        description="🐍 Cascavel — Quantum Security Framework",
+        description="🐍 Cascavel — Advanced Security Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Examples:\n"
         "  cascavel target.com                     Scan direto\n"

@@ -34,7 +34,7 @@ FROM python:3.14-slim
 
 LABEL maintainer="DevFerreiraG <devferreirag@proton.me>"
 LABEL org.opencontainers.image.source="https://github.com/glferreira-devsecops/Cascavel"
-LABEL org.opencontainers.image.description="Cascavel — Quantum Security Framework v3.0.0"
+LABEL org.opencontainers.image.description="Cascavel — Advanced Security Framework v3.0.0"
 LABEL org.opencontainers.image.version="3.0.0"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.vendor="RET Tecnologia"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2024,SC2034
 # ╔═══════════════════════════════════════════════════════════════════╗
-# ║  CASCAVEL — Quantum Security Framework                           ║
+# ║  CASCAVEL — Advanced Security Framework                           ║
 # ║  One-Command Universal Installer v2.4.0 (Bulletproof 2026)       ║
 # ║  By RET Tecnologia (https://rettecnologia.org)                   ║
 # ║  Maintainer: DevFerreiraG <contato@rettecnologia.org>              ║

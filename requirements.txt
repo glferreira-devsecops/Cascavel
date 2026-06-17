@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────
-# Cascavel — Quantum Security Framework
+# Cascavel — Advanced Security Framework
 # Core Dependencies (Pinned for Reproducibility)
 # ──────────────────────────────────────────────────
 
