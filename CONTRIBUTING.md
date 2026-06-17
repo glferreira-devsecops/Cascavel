@@ -2,14 +2,14 @@
 
 <div align="center">
 
-**Cascavel** — Quantum Security Framework
+**Cascavel** — Advanced Security Framework
 <br>Open Source by [RET Tecnologia](https://rettecnologia.org)
 
 </div>
 
 ---
 
-Sua colaboração é fundamental para o crescimento do **Cascavel — Quantum Security Framework**! Agradecemos seu interesse em contribuir.
+Sua colaboração é fundamental para o crescimento do **Cascavel — Advanced Security Framework**! Agradecemos seu interesse em contribuir.
 
 ## 🤝 Como Contribuir
 

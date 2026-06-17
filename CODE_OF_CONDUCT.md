@@ -2,7 +2,7 @@
 
 ## Nosso Compromisso
 
-Como colaboradores e mantenedores do projeto **Cascavel — Quantum Security Framework**, nos comprometemos a criar e manter um ambiente acolhedor e inclusivo para todos, independentemente de idade, tamanho corporal, deficiência visível ou invisível, etnia, características sexuais, identidade e expressão de gênero, nível de experiência, educação, status socioeconômico, nacionalidade, aparência pessoal, raça, religião ou orientação e identidade sexual. Estamos dedicados a proporcionar uma experiência livre de assédio para todos os participantes.
+Como colaboradores e mantenedores do projeto **Cascavel — Advanced Security Framework**, nos comprometemos a criar e manter um ambiente acolhedor e inclusivo para todos, independentemente de idade, tamanho corporal, deficiência visível ou invisível, etnia, características sexuais, identidade e expressão de gênero, nível de experiência, educação, status socioeconômico, nacionalidade, aparência pessoal, raça, religião ou orientação e identidade sexual. Estamos dedicados a proporcionar uma experiência livre de assédio para todos os participantes.
 
 ## Padrões de Conduta Esperados
 
