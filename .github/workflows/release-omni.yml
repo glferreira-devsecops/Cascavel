@@ -31,7 +31,7 @@ jobs:
 
       - name: Install Build Tools
         run: |
-          pip install pyinstaller requirements.txt
+          pip install pyinstaller -r requirements.txt
           pip install build twine
 
       - name: Build Standalone Executable (Linux)
