@@ -1,7 +1,0 @@
-rules:
-  unpinned-uses:
-    ignore:
-      - "**"
-  superfluous-actions:
-    ignore:
-      - "**"

@@ -1,4 +1,6 @@
 name: "🐍 Cascavel Security CI"
+# zizmor: ignore[unpinned-uses]
+# zizmor: ignore[superfluous-actions]
 
 on:
   push:

@@ -1,4 +1,6 @@
 name: Omni-Distribution Release
+# zizmor: ignore[unpinned-uses]
+# zizmor: ignore[superfluous-actions]
 
 on:
   push:
@@ -137,8 +139,8 @@ jobs:
           context: .
           push: true
           tags: |
-            devferreirag/cascavel:latest
-            ghcr.io/devferreirag/cascavel:latest
+            ${{ github.repository_owner }}/cascavel:latest
+            ghcr.io/${{ github.repository_owner }}/cascavel:latest
 
   slsa-provenance:
     needs: build-and-release
