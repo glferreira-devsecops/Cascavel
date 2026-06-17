@@ -107,7 +107,7 @@ jobs:
         with:
           persist-credentials: false
       - name: OSV-Scanner
-        uses: google/osv-scanner-action@v1.9.0
+        uses: google/osv-scanner-action/osv-scanner-action@v1.9.0
 
   secrets:
     name: "🔑 TruffleHog Secret Detection"
