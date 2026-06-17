@@ -107,8 +107,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run OSV-Scanner
-        # zizmor: ignore[unpinned-uses]
-        uses: google/osv-scanner-action@v1
+        uses: google/osv-scanner-action/osv-scanner-action@347b2c6eeb411f12da34444988771485db83af07 # v1.9.2
 
   secrets:
     name: "🔑 TruffleHog Secret Detection"
