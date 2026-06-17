@@ -60,7 +60,9 @@ jobs:
           cosign sign-blob --yes dist/cascavel-linux --bundle cascavel-linux.bundle
 
       - name: Create GitHub Release
-        run: gh release create ${{ github.ref_name }} cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle dist/cascavel-linux cascavel-linux.bundle --generate-notes
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: gh release create "$REF_NAME" cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle dist/cascavel-linux cascavel-linux.bundle --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -79,7 +81,7 @@ jobs:
       - run: pip install build
       - run: python -m build
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fd0420e # release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
 
   publish-npm:
     name: Publish to NPM
@@ -89,7 +91,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
@@ -109,7 +111,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
       - name: Login to Docker Hub
@@ -138,6 +140,6 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@bdccb222fb20e985834d615e47c162eb09cd3497 # v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563 # v2.0.0
     with:
       base64-subjects: ""

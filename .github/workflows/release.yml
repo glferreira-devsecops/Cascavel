@@ -66,7 +66,9 @@ jobs:
           cosign sign-blob --yes cascavel-release.zip --bundle cascavel-release.zip.bundle
 
       - name: Create GitHub Release
-        run: gh release create ${{ github.ref_name }} cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle --generate-notes
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: gh release create "$REF_NAME" cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -76,6 +78,6 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@bdccb222fb20e985834d615e47c162eb09cd3497 # v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563 # v2.0.0
     with:
       base64-subjects: ""

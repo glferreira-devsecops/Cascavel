@@ -29,7 +29,7 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         # zizmor: ignore[unpinned-uses]
-        uses: cloudflare/pages-action@f0a1dbbe0dc921e222ebdfec3ca8483b8b936233 # v1
+        uses: cloudflare/pages-action@f0a1cd58cd66095dee69bfa18fa5efd1dde93bca # v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

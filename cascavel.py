@@ -2603,7 +2603,9 @@ def self_update() -> None:
     import tarfile
     import tempfile
 
-    release_url = f"https://github.com/glferreira-devsecops/Cascavel/releases/download/v{latest}/cascavel-release.tar.gz"
+    release_url = (
+        f"https://github.com/glferreira-devsecops/Cascavel/releases/download/v{latest}/cascavel-release.tar.gz"
+    )
 
     try:
         console.print(f"  [dim]Baixando pacote de atualização v{latest}...[/]")
