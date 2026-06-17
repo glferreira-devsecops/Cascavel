@@ -1858,7 +1858,7 @@ def _calculate_baselines(target: str) -> dict:
 
 def _discover_parameters(target: str) -> list[str]:
     """Spidering rápido para descoberta de parâmetros reais."""
-    params = set()
+    params: set[str] = set()
     try:
         resp = requests.get(f"http://{target}/", timeout=5)
         soup = BeautifulSoup(resp.text, 'html.parser')
