@@ -30,10 +30,10 @@ def fetch_cisa_kev() -> set:
             try:
                 with open(cache_file, "w") as f:
                     json.dump(list(cisa_set), f)
-            except Exception:
-                pass
-    except Exception:
-        pass
+            except Exception as e:
+                print(f"[threat_intel] Falha ao escrever cache CISA KEV '{cache_file}': {e}")
+    except Exception as e:
+        print(f"[threat_intel] Falha ao consultar CISA KEV: {e}")
     return cisa_set
 
 

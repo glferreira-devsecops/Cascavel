@@ -3158,7 +3158,9 @@ def run_scan(
 
         plugin_results = enrich_results(plugin_results, console)
     except ImportError:
-        pass
+        console.print(
+            f"  [{S_YELLOW}]⚠ threat_intel.py não encontrado. Pulando enrichment.[/]"
+        )
     except Exception as e:
         console.print(f"  [{S_YELLOW}]⚠ Erro no Threat Intel: {e}[/]")
 
