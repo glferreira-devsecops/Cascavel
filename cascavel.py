@@ -55,7 +55,7 @@ except ImportError:
     pyfiglet = None  # type: ignore[assignment]
 
 try:
-    from notifypy import Notify as DesktopNotify
+    from notifypy import Notify as DesktopNotify  # type: ignore
 except ImportError:
     DesktopNotify = None
 
@@ -1860,7 +1860,10 @@ def _discover_parameters(target: str) -> list[str]:
 
         # Encontra params em URLs
         for a in soup.find_all("a", href=True):
-            parsed = urllib.parse.urlparse(a["href"])
+            href_val = a["href"]
+            if isinstance(href_val, list):
+                href_val = href_val[0]
+            parsed = urllib.parse.urlparse(str(href_val))
             query = urllib.parse.parse_qs(parsed.query)
             params.update(query.keys())
 
@@ -1869,7 +1872,9 @@ def _discover_parameters(target: str) -> list[str]:
             for input_tag in form.find_all(["input", "select", "textarea"]):
                 name = input_tag.get("name")
                 if name:
-                    params.add(name)
+                    if isinstance(name, list):
+                        name = name[0]
+                    params.add(str(name))
     except Exception as exc:
         console.print(f"[yellow][!] Falha na descoberta dinâmica de parâmetros: {exc}[/yellow]")
 
