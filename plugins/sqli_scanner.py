@@ -338,7 +338,8 @@ def run(target, ip, open_ports, banners, context=None):
     if context:
         baseline_latency = context.get("baseline_latency", 0.5)
         baseline_len = context.get("baseline_404_len", 0)
-        params_to_test = context.get("discovered_params", PARAMS)
+        discovered = context.get("discovered_params", [])
+        params_to_test = list(set(PARAMS).union(discovered))
     else:
         baseline_latency = _get_baseline_latency(target)
         baseline_len = _get_404_baseline(target)

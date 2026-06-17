@@ -35,7 +35,7 @@ def fuzz_sanitize_html(data: bytes) -> None:
     """
     from report_generator import _sanitize_html
 
-    fdp = atheris.FuzzedDataProvider(data)
+    fdp = atheris.FuzzedDataProvider(data)  # type: ignore
     test_input = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 10000))
 
     try:
@@ -53,7 +53,7 @@ def fuzz_severity_lookup(data: bytes) -> None:
     """Fuzz severity classification lookup."""
     from report_generator import SEVERITY_MAP
 
-    fdp = atheris.FuzzedDataProvider(data)
+    fdp = atheris.FuzzedDataProvider(data)  # type: ignore
     severity = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 50))
 
     try:
@@ -70,7 +70,7 @@ def fuzz_report_id_generation(data: bytes) -> None:
     """Fuzz report ID and metadata generation for format robustness."""
     import datetime
 
-    fdp = atheris.FuzzedDataProvider(data)
+    fdp = atheris.FuzzedDataProvider(data)  # type: ignore
 
     try:
         year = fdp.ConsumeIntInRange(2020, 2099)

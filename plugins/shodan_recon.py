@@ -2,7 +2,7 @@
 import os
 
 try:
-    import shodan as _shodan
+    import shodan as _shodan  # type: ignore
 
     _HAS_SHODAN = True
 except ImportError:

@@ -321,7 +321,8 @@ class _NumberedCanvas(canvas.Canvas):
         self.saveState()
         self.setFillColor(ICE_BLUE)
         self.setFont(FONT_REG, 6)
-        self.drawRightString(w - 12 * mm, 8 * mm, f"Página {self._pageNumber} de {total}")
+        page_num = self._pageNumber  # type: ignore
+        self.drawRightString(w - 12 * mm, 8 * mm, f"Página {page_num} de {total}")
         self.restoreState()
 
 
@@ -665,7 +666,7 @@ def generate_pdf_report(
     )
 
     page_tpl = _PremiumPageTemplate(target, report_id, classification)
-    story = []
+    story: list[Any] = []
 
     vulns = scan_results.get("vulns", [])
     duration = scan_results.get("duration", 0)
@@ -709,7 +710,7 @@ def generate_pdf_report(
         f'{company} — <a href="https://{COMPANY_SITE}" color="#0066CC">{COMPANY_SITE}</a>',
         styles["Link"],
     )
-    cover_rows = [
+    cover_rows: list[Any] = [
         ["Alvo", target],
         ["Report ID", report_id],
         ["Classificação", classification],
@@ -750,7 +751,7 @@ def generate_pdf_report(
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="#0D1B2A", back_color="white")
             qr_buffer = io.BytesIO()
-            qr_img.save(qr_buffer, format="PNG")
+            qr_img.save(qr_buffer, format="PNG")  # type: ignore
             qr_buffer.seek(0)
             qr_flowable = Image(qr_buffer, width=22 * mm, height=22 * mm)
             qr_flowable.hAlign = "CENTER"
@@ -872,14 +873,14 @@ def generate_pdf_report(
 
     # Severity breakdown table
     story.append(Paragraph("Distribuição por Severidade", styles["SectionH2"]))
-    sev_data = [["Severidade", "CVSS Range", "Quantidade", "Descrição de Impacto"]]
+    sev_data: list[Any] = [["Severidade", "CVSS Range", "Quantidade", "Descrição de Impacto"]]
     for sev_name in ["CRITICO", "ALTO", "MEDIO", "BAIXO", "INFO"]:
         count = sev_count.get(sev_name, 0)
         color, cvss_range, desc = SEVERITY_MAP[sev_name]
         sev_data.append([sev_name, cvss_range, str(count), desc])
 
     sev_table = Table(sev_data, colWidths=[25 * mm, 25 * mm, 20 * mm, 112 * mm], repeatRows=1)
-    sev_style = [
+    sev_style: list[Any] = [
         ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
         ("BACKGROUND", (0, 0), (-1, 0), NAVY),
@@ -960,10 +961,10 @@ def generate_pdf_report(
             sev_color = SEVERITY_MAP.get(severity, (SEV_INFO, "", ""))[0]
             cvss_range = SEVERITY_MAP.get(severity, (SEV_INFO, "N/A", ""))[1]
 
-            card = []
+            card: list[Any] = []
 
             # Title with severity badge
-            title_data = [[f"#{idx}", name, f"{severity} (CVSS {cvss_range})"]]
+            title_data: list[Any] = [[f"#{idx}", name, f"{severity} (CVSS {cvss_range})"]]
             title_table = Table(title_data, colWidths=[12 * mm, 115 * mm, 55 * mm])
             title_table.setStyle(
                 TableStyle(
@@ -1115,7 +1116,7 @@ def generate_pdf_report(
         colWidths=[8 * mm, 30 * mm, 20 * mm, 80 * mm, 18 * mm, 18 * mm],
         repeatRows=1,
     )
-    rem_style = [
+    rem_style: list[Any] = [
         ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
         ("FONTSIZE", (0, 0), (-1, -1), 7),
         ("BACKGROUND", (0, 0), (-1, 0), NAVY),
@@ -1146,7 +1147,7 @@ def generate_pdf_report(
     story.append(Paragraph("6. MAPEAMENTO DE COMPLIANCE", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
-    comp_data = [["Framework", "Referência", "Aplicação"]]
+    comp_data: list[Any] = [["Framework", "Referência", "Aplicação"]]
     for fw, ref, app in COMPLIANCE_FRAMEWORKS:
         comp_data.append([fw, ref, app])
 
@@ -1231,7 +1232,7 @@ def generate_pdf_report(
     story.append(Paragraph("7. FERRAMENTAS UTILIZADAS", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
-    tools_rows = [["Ferramenta", "Categoria", "Propósito"]]
+    tools_rows: list[Any] = [["Ferramenta", "Categoria", "Propósito"]]
     tools_list = [
         (
             "Cascavel Core",
@@ -1372,7 +1373,7 @@ def generate_pdf_report(
         ),
     ]
 
-    glossary_data = [["Termo", "Definição"]]
+    glossary_data: list[Any] = [["Termo", "Definição"]]
     for term, definition in glossary:
         glossary_data.append([term, definition])
 
@@ -1404,7 +1405,7 @@ def generate_pdf_report(
     story.append(Paragraph("10. HISTÓRICO DE REVISÕES", styles["SectionH1"]))
     story.append(HRFlowable(width="100%", thickness=1, color=NAVY, spaceAfter=6))
 
-    revision_data = [
+    revision_data: list[Any] = [
         ["Versão", "Data", "Autor", "Descrição"],
         [
             "1.0",

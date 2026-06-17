@@ -293,7 +293,8 @@ def run(target, ip, open_ports, banners, context=None):
     _ = (ip, open_ports, banners)
     vulns = []
 
-    params_to_test = context.get("discovered_params", PARAMS) if context else PARAMS
+    discovered = context.get("discovered_params", []) if context else []
+    params_to_test = list(set(PARAMS).union(discovered))
 
     # 1. Reflected XSS — GET + headers bypass
     for param in params_to_test:

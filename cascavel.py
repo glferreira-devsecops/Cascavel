@@ -55,7 +55,7 @@ except ImportError:
     pyfiglet = None  # type: ignore[assignment]
 
 try:
-    from notifypy import Notify as DesktopNotify
+    from notifypy import Notify as DesktopNotify  # type: ignore
 except ImportError:
     DesktopNotify = None
 
@@ -1860,7 +1860,10 @@ def _discover_parameters(target: str) -> list[str]:
 
         # Encontra params em URLs
         for a in soup.find_all("a", href=True):
-            parsed = urllib.parse.urlparse(a["href"])
+            href_val = a["href"]
+            if isinstance(href_val, list):
+                href_val = href_val[0]
+            parsed = urllib.parse.urlparse(str(href_val))
             query = urllib.parse.parse_qs(parsed.query)
             params.update(query.keys())
 
@@ -1869,7 +1872,9 @@ def _discover_parameters(target: str) -> list[str]:
             for input_tag in form.find_all(["input", "select", "textarea"]):
                 name = input_tag.get("name")
                 if name:
-                    params.add(name)
+                    if isinstance(name, list):
+                        name = name[0]
+                    params.add(str(name))
     except Exception as exc:
         console.print(f"[yellow][!] Falha na descoberta dinâmica de parâmetros: {exc}[/yellow]")
 
@@ -2099,12 +2104,6 @@ def run_plugins(
             console.print(f"  [{style}]{icon}[/] {name} [dim]({idx}/{total})[/]")
 
     console.print()
-
-    if results:
-        report.append("\n## 🔌 Plugins\n")
-        for r in results:
-            content = json.dumps(r, indent=2, ensure_ascii=False)
-            report.append(f"### {r.get('plugin', '?')}\n```json\n{content}\n```")
 
     return results
 
@@ -2967,6 +2966,7 @@ def run_scan(
     profile: str | None = None,
     stealth_eval: bool = False,
     ai_fix: bool = False,
+    plugin_filter: list[str] | None = None,
 ) -> None:
     """Executa o scan completo contra o target.
 
@@ -2995,9 +2995,15 @@ def run_scan(
         requests.Session.request = _stealth_request  # type: ignore[method-assign,assignment]
 
     # Load scan profile if specified
-    _profile_plugins: list[str] | None = None
+    _active_plugins: list[str] | None = None
     if profile:
-        _profile_plugins = _load_profile(profile)
+        _active_plugins = _load_profile(profile)
+
+    if plugin_filter:
+        if _active_plugins is not None:
+            _active_plugins = list(set(_active_plugins).intersection(plugin_filter))
+        else:
+            _active_plugins = plugin_filter
 
     with console.status(f"[{S_GREEN}]🐍 Resolvendo IP...[/]", spinner="dots"):
         ip = detect_ip(target)
@@ -3059,7 +3065,7 @@ def run_scan(
         console.print()
 
     # Plugins
-    plugin_results = run_plugins(target, ip, open_ports, banners, report, plugin_filter=_profile_plugins)
+    plugin_results = run_plugins(target, ip, open_ports, banners, report, plugin_filter=_active_plugins)
 
     # 2026 CTEM: Threat Intel Enrichment (EPSS/CISA KEV)
     try:
@@ -3081,6 +3087,13 @@ def run_scan(
             console.print(f"  [{S_YELLOW}]⚠ ai_remediation.py não encontrado.[/]")
         except Exception as e:
             console.print(f"  [{S_YELLOW}]⚠ Erro na IA Remediation: {e}[/]")
+
+    # Update report with final (enriched) plugin results
+    if plugin_results:
+        report.append("\n## 🔌 Plugins\n")
+        for r in plugin_results:
+            content = json.dumps(r, indent=2, ensure_ascii=False)
+            report.append(f"### {r.get('plugin', '?')}\n```json\n{content}\n```")
 
     # Report
     elapsed_total = time.time() - mission_start
@@ -3468,6 +3481,7 @@ def main() -> None:
         profile=getattr(args, "profile", None),
         stealth_eval=getattr(args, "stealth_eval", False),
         ai_fix=getattr(args, "ai_fix", False),
+        plugin_filter=getattr(args, "plugin_filter", None),
     )
 
     # Final
