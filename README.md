@@ -1,17 +1,15 @@
 <p align="center">
-  <img src="docs/cascavel_logo.png" alt="Cascavel Logo" width="120" />
-  <br>
-  <img src="docs/cascavel_banner.png" alt="Cascavel Banner" width="800" />
+  <img src="docs/cascavel_banner.png" alt="Cascavel" width="800" />
 </p>
 
 <h1 align="center">
-  <code>🐍 CASCAVEL</code>
+  <code>CASCAVEL CTEM ENGINE</code>
 </h1>
 
-<h3 align="center">A unified offensive security engine that automates Red Team assessments and compliance reporting in a single command.</h3>
+<h3 align="center">Autonomous Adversarial Exposure Validation (AEV) and Red Team orchestration platform.</h3>
 
 <p align="center">
-  <strong>Cascavel is a zero-friction CTEM platform for DevSecOps teams to continuously validate security exposure and generate executive PDF reports without juggling multiple open-source tools.</strong>
+  <strong>Cascavel is a zero-friction Continuous Threat Exposure Management (CTEM) engine. It orchestrates complex attack chains, enriches findings with Threat Intel (EPSS/CISA KEV), generates AI-driven remediation, and exports native telemetry (OCSF) in a single command.</strong>
 </p>
 
 <p align="center">
@@ -24,132 +22,194 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00D4FF.svg?style=flat-square" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat-square&logo=python&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Plugins-108-blueviolet.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20WSL-0D1B2A.svg?style=flat-square" />
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/CTEM-v2.0-C89F5D.svg?style=flat-square" /></a>
+  <img src="https://img.shields.io/badge/Reports-OCSF%20|%20PDF%20|%20JSON-28A745.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Security-Hardened%202026-critical?style=flat-square" />
-  <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/security.yml?style=flat-square&label=CI%20Security&logo=github" /></a>
+  <a href="https://github.com/devferreirag/Cascavel/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/devferreirag/Cascavel/security.yml?style=flat-square&label=CI%20Security&logo=github" /></a>
+  <a href="https://github.com/devferreirag/Cascavel/stargazers"><img src="https://img.shields.io/github/stars/devferreirag/Cascavel?style=flat-square&color=FFD700" /></a>
 </p>
-
----
-
-## 🚀 Why Cascavel?
-
-**The Problem:** Modern DevSecOps teams waste hundreds of hours integrating disjointed open-source tools (Nmap, Nuclei, Feroxbuster), parsing their incompatible JSON outputs, and manually compiling PDF reports for compliance. Vulnerability management is broken, fragmented, and slow.
-
-**The Cascavel Solution:** Cascavel is a **zero-friction CTEM platform** that orchestrates 30+ industry-standard binaries and 108 bespoke security plugins into a unified, high-performance execution graph.
-
-### Core Value Propositions:
-1. **Unparalleled Orchestration:** One command triggers a multi-stage attack chain (DNS Recon ➔ Port Scan ➔ Web Crawl ➔ Exploit ➔ Report).
-2. **Enterprise-Grade Reporting:** Generates heavily-stylized, legal-grade PDF reports featuring CVSS v4.0 matrices, executive summaries, and compliance mappings (ISO 27001, SOC 2, LGPD) in seconds.
-3. **Hardened to the Core:** Built with paranoid 2026 security architectures—featuring AST-based payload sanitization, Path Traversal sandboxing, anti-SSRF redirect blocks, ReDoS mitigation, and supply-chain CI blocks (`zizmor` + `pip-audit`).
 
 ---
 
 ## 🎬 See it in Action
 
 <p align="center">
-  <img src="docs/cascavel_scan.png" width="48%" />
-  <img src="docs/cascavel_results.png" width="48%" />
+  <img src="docs/cascavel_scan.png" width="700" />
 </p>
 
 <p align="center">
-  <sub><strong>Left:</strong> Cinematic boot sequence and auto-detection engine. <strong>Right:</strong> Split-screen live dashboard and severity tracking.</sub>
+  <sub><strong>Cinematic AEV Boot Sequence</strong> · Real-time Threat Preloader · Stealth Simulation</sub>
+</p>
+
+<p align="center">
+  <img src="docs/cascavel_results.png" width="700" />
+</p>
+
+<p align="center">
+  <sub><strong>Interactive CTEM Dashboard</strong> · EPSS Tracking · CISA KEV Cross-Correlation</sub>
 </p>
 
 ---
 
-## ⚡ Zero-Friction Installation
+## The Problem vs. The Solution (CTEM Model)
 
-We've engineered an installation experience that respects your time. Works on macOS, Linux, WSL2, and Docker.
+Standard vulnerability management causes critical alert fatigue. SOC analysts waste hours triaging non-exploitable findings from dozens of non-integrated tools that output incompatible JSON formats.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
+The **Cascavel AEV (Adversarial Exposure Validation)** engine replaces this fragmented workflow with a unified orchestrated pipeline:
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│  $ python3 cascavel.py -t target.com -o ocsf --ai-fix --stealth-eval   │
+│                                                                        │
+│  ┌────────────┐  ┌───────────┐  ┌────────────┐  ┌───────────────────┐  │
+│  │ DISCOVERY  │→ │ EXPOSURE  │→ │   ATTACK   │→ │    ENRICHMENT     │  │
+│  └────────────┘  └───────────┘  └────────────┘  └───────────────────┘  │
+│   Stealth Recon   WAF Bypass     Exploitation    CISA KEV Match        │
+│   OSINT/WHOIS     Cloud Enum     Injections      FIRST.org EPSS Score  │
+│                                                                        │
+│  ┌────────────┐  ┌──────────────────────────────────────────────────┐  │
+│  │REMEDIATION │→ │        OCSF TELEMETRY & PDF REPORTING            │  │
+│  └────────────┘  └──────────────────────────────────────────────────┘  │
+│   Bash Fixes      Linux Foundation OCSF v1.1.0 Standard                │
+│   Python Mitig.   CVSS v4.0 · ISO 27001/SOC 2 Legal Mappings           │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-**What it does automatically:** Detects OS, validates `git` & `python3`, creates a secure virtual environment, installs 108 plugins + 30 binaries, enforces SHA-256 integrity, and registers the `cascavel` global command.
+| Capability | Cascavel CTEM Engine | Traditional Tools |
+|:---|:---|:---|
+| **Unified CTEM Pipeline** | 108 plugins + 30 orchestrated binaries | Fragmented scripts (Nmap + Nuclei) |
+| **Intelligence Enrichment** | Automatic CISA KEV and EPSS probability | Requires paid third-party platforms |
+| **AI Remediation** | Generates localized corrective scripts (Bash) | Zero active remediation support |
+| **Telemetry Standard** | OCSF v1.1.0 output for Splunk/Elastic | Incompatible proprietary JSONs |
+| **Evasion (Stealth)** | Advanced `requests` hooks + `X-COST` header | Highly noisy standard User-Agents |
+| **Runtime Security** | ANSI Sanitizer, SSRF & TOCTOU Prevention | Blindly trusts external binary output |
 
 ---
 
-## 💻 CLI Reference & DevSecOps Workflows
+## Deterministic Installation
 
-### Standard Scanning
+The installer is engineered under a strict 2026 Threat Model, guaranteeing total dependency isolation and preventing supply chain RCE. **Does not require `git`. Compatible with macOS, Linux, WSL2, and Docker.**
+
 ```bash
-# Full Attack Chain (Internal Plugins + External Binaries)
-cascavel -t example.com
-
-# Stealth Mode (Internal Plugins Only)
-cascavel -t example.com --plugins-only
-
-# CI/CD Friendly (Quiet + JSON Export)
-cascavel -t example.com -q -o json
-
-# Executive Presentation (PDF Report)
-cascavel -t example.com --pdf
+curl -sL https://github.com/devferreirag/Cascavel/releases/latest/download/cascavel-release.tar.gz | tar xz && cd Cascavel && bash install.sh
 ```
 
-### ♾️ Zero-Friction CI/CD Integration
-Drop this into your `.github/workflows/dast.yml` for instant, blocking security gates:
+### Installer Protections (Hardening v2.0)
+
+| Defense Mechanism | Security Outcome |
+|:--|:---|
+| **Hermetic Environment** | Isolates via virtualenv (`mktemp -d`) preventing OS-level conflicts. |
+| **Zero Supply Chain** | Enforces integrity via hardcoded SHA-256 hashes in `requirements.txt`. |
+| **TOCTOU Prevention** | Uses anti-symlink locks and strict `umask 077` permissions. |
+| **Clean Exit Hooks** | POSIX `trap` handlers ensure secure deletion of `/tmp` artifacts on exit. |
+| **$PATH Isolation** | Prevents Binary Hijacking by stripping relative `.` entries from PATH. |
+
+---
+
+## CLI Reference: Red Team Workflows
+
+The terminal API is designed to be highly tactical and straightforward.
+
+```bash
+# Full CTEM Scan (Integrates external binaries + plugins)
+python3 cascavel.py -t target.com
+
+# Stealth Mode: SOC/WAF bypass simulation (Ignores noisy binaries)
+python3 cascavel.py -t target.com --plugins-only --stealth-eval
+
+# Autonomous Workflow: CISA KEV + AI Remediation + OCSF Telemetry
+python3 cascavel.py -t target.com -o ocsf --ai-fix
+
+# Executive Workflow: Generate Legal PDF Report (CVSS v4, ISO 27001)
+python3 cascavel.py -t target.com --pdf
+
+# CI/CD Integration: Silent Headless Mode
+python3 cascavel.py -t target.com -q -o json
+```
+
+### CI/CD Orchestration (GitHub Actions)
+Add this as a blocking security gate in your `.github/workflows/ctem.yml`:
 
 ```yaml
-name: "Cascavel DAST"
+name: "Cascavel AEV Pipeline"
 on: [push, pull_request]
 jobs:
-  scan:
+  validate-exposure:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Cascavel
-        run: curl -fsSL https://raw.githubusercontent.com/glferreira-devsecops/Cascavel/main/install.sh | bash
-      - name: Run CTEM Pipeline
-        run: cascavel -t staging.myapp.internal -q -o json
-      - name: Upload Report
+      - name: Install
+        run: curl -sL https://github.com/devferreirag/Cascavel/releases/latest/download/cascavel-release.tar.gz | tar xz && cd Cascavel && bash install.sh
+      - name: Execute CTEM (OCSF + AI Fixes)
+        run: cascavel -t staging.internal -q -o ocsf --ai-fix
+      - name: Upload Telemetry
         uses: actions/upload-artifact@v4
         with:
-          name: cascavel-results
-          path: exports/*.json
+          name: ocsf-logs
+          path: exports/*.jsonl
 ```
 
 ---
 
-## 🛡️ The 2026 Security Architecture
+## Plugin Arsenal (108) and Architecture
 
-Cascavel doesn't just find vulnerabilities; it is highly resilient against exploitation.
+Our architecture prioritizes the absolute elimination of false positives via AST parsing and deep semantic detection. 
 
-| Vector | Mitigation Strategy |
+### Core Engine
+```text
+cascavel.py (3000+ lines)
+├── Stealth Engine ─────────── Requests Hooks, X-COST headers, WAF Rate-Limit Bypass
+├── Threat Intel Analyzer ──── Dynamic EPSS (FIRST) and CISA KEV Mapping
+├── AI Fix Module ──────────── Sandbox Generation of Mitigation Scripts (Bash/Python)
+├── OCSF Telemetry ─────────── EventUID 2002 Export (Linux Foundation Standard)
+├── ANSI/Regex Sanitizer ───── Anti-Terminal Injection (CSI/OSC), Anti-ReDoS mitigation
+└── PDF Engine ─────────────── Auditable ReportLab PDFs (SHA-256 Checksums)
+```
+
+### Infiltration Categories
+
+1. **Injection & Code Exec (7):** `xss_scanner`, `sqli_scanner`, `ssti_scanner`, `rce_scanner`, `nosql_scanner`...
+2. **Cloud & K8s Infra (8):** `cloud_metadata` (SSRF via 169.254.x), `docker_exposure`, `s3_bucket_enum`...
+3. **Authentication (6):** `jwt_analyzer` (Alg Bypass, Null Signature), `oauth_scanner`, `idor_scanner`...
+4. **Defense Bypass (7):** `cors_checker`, `csp_bypass`, `waf_evasion`, `cache_poisoning`...
+5. **API Logic Attacks (6):** `graphql_probe`, `mass_assignment`, `api_versioning`...
+6. **OSINT and Recon (11):** `shodan_recon`, `dns_rebinding`, `subdomain_takeover`...
+
+For the complete matrix of vectors and pre-calculated CVSS severities, consult our [Plugin Documentation](PLUGINS.md).
+
+---
+
+## Defensive Hardening Model
+
+An offensive engine must be immune to retaliation. Cascavel shields its host from traps laid by Blue Teams in HoneyPots.
+
+| Retaliation Vector | Core Defensive Mitigation |
 |:---|:---|
-| **Terminal Injection** | Strict regex filtering strips malicious CSI/OSC/DCS ANSI escape sequences from plugin output, preventing arbitrary cursor manipulations and clip-board hijacking. |
-| **Argument Injection** | Employs `--` delimiters across all `subprocess.run` invocations (e.g., `notify-send`) to thwart parameter injection. |
-| **Race Conditions (TOCTOU)** | Eliminates `O_TRUNC` and `O_CREAT` race conditions via low-level `os.open` system calls with `O_EXCL` flags for all output generations. |
-| **Supply Chain Defense** | Enforces OSV-scanner dependency audits, Zizmor GitHub Action analysis, and pinned SHA requirements. |
-| **Path Traversal Sandboxing** | All generated files are heavily sandboxed using `pathlib.resolve().is_relative_to()` to prevent arbitrary file writes via directory traversal attacks. |
-| **Server-Side Request Forgery (SSRF)** | Restricts internal cloud metadata IPs (`169.254.169.254`, `100.100.100.200`) and enforces `allow_redirects=False` to prevent request hijacking. |
-| **ReDoS & Log Injection (CRLF)** | Applies length capping (memory exhaustion protection) before regex evaluation and aggressively strips `\r\n` characters to prevent CWE-117. |
-| **Safe Deserialization** | Strict enforcement of `yaml.safe_load` and complete ban of `pickle`, enforcing AST parsing and JSON structures only. |
+| **Terminal Injection (ANSI)** | Strict Regex filters remove malicious Escape payloads (CSI/OSC/DCS), preventing terminal clipboard hijacking. |
+| **Command Injection (OS)** | Mandates `--` binary delimiters and blocks native variables in `subprocess.run(shell=False)`. |
+| **Server-Side Request Forgery** | Internal IP lock (`169.254.x`) prevents malicious instances from rebounding attacks. `redirects=False` strictly enforced. |
+| **Path Traversal Sandboxing** | Utlizes `pathlib.resolve().is_relative_to()` ensuring total containment of OCSF logs and Reports. |
+| **Arbitrary Deserialization** | Rejects `pickle` functions and globally enforces `yaml.safe_load()`. |
 
 ---
 
-## 🔌 Arsenal Overview (108 Plugins)
+## Contributing
 
-Cascavel's internal engines provide zero-false-positive detection across 12 distinct attack categories. For a full breakdown, see our [Plugin Documentation](PLUGINS.md).
+Rigid rules ensure Framework integrity:
+- All code must pass the Mypy Type Hinting pipeline.
+- PEP8 (Flake8) compliance is non-negotiable.
+- No arbitrary external packages allowed, preventing dependency chain contamination.
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Security Policy](SECURITY.md).
 
-* **Injection & Code Execution:** XSS, SQLi, SSTI, RCE, NoSQLi, Log4j
-* **Server-Side Attacks:** SSRF, XXE, LFI, Path Traversal
-* **Auth & Authorization:** JWT Analysis, OAuth flaws, CSRF, IDOR
-* **Defense Bypass:** CORS misconfigurations, CSP bypass, WAF Evasion
-* **Infrastructure:** Docker/K8s misconfigurations, S3 bucket enumeration, Cloud Metadata SSRF
-
----
-
-## 🤝 Contributing & Security Policy
-
-We welcome pull requests for new plugins, tools, and bug fixes!
-* Review our [Contributing Guidelines](CONTRIBUTING.md) to understand our AST-based plugin architecture.
-* Please read our [Security Policy](SECURITY.md) before disclosing vulnerabilities. **Cascavel is a dual-use administrative tool; we strictly forbid its use for illegal activities.**
+*Cascavel is classified as "Dual-Use". The author repudiates its usage against unauthorized assets.*
 
 ---
 
 <p align="center">
-  <strong><code>MÉTODO CASCAVEL™</code></strong><br />
+  <strong>CASCAVEL METHOD</strong><br />
   <sub>
-    A product of <a href="https://rettecnologia.org"><strong>RET Tecnologia</strong></a> — Engenharia de Software & Cibersegurança Ofensiva<br />
-    <a href="https://github.com/glferreira-devsecops">Gabriel L. Ferreira</a> · Fundador & DevSecOps Lead
+    Engineered and maintained by <strong>DevFerreiraG</strong><br />
+    <a href="https://github.com/devferreirag">GitHub Profile</a>
   </sub>
 </p>

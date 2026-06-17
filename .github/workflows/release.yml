@@ -1,0 +1,86 @@
+name: Release Cascavel
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Release Archives
+        run: |
+          echo "Packaging Cascavel..."
+          # Create a directory to hold the release structure
+          mkdir -p release_build/Cascavel
+          
+          # Copy everything except .git, venv, and other local dev folders
+          rsync -av --exclude='.git' \
+                    --exclude='.github' \
+                    --exclude='venv' \
+                    --exclude='__pycache__' \
+                    --exclude='.pytest_cache' \
+                    --exclude='.ruff_cache' \
+                    --exclude='reports' \
+                    --exclude='exports' \
+                    --exclude='logs' \
+                    --exclude='output' \
+                    --exclude='cascavel.egg-info' \
+                    ./ release_build/Cascavel/
+          
+          # Ensure empty necessary directories exist in the bundle
+          mkdir -p release_build/Cascavel/reports
+          mkdir -p release_build/Cascavel/exports
+          mkdir -p release_build/Cascavel/logs
+          mkdir -p release_build/Cascavel/plugins
+          mkdir -p release_build/Cascavel/wordlists
+          mkdir -p release_build/Cascavel/nuclei-templates
+
+          cd release_build
+          
+          # Create zip
+          zip -r ../cascavel-release.zip Cascavel/
+          
+          # Create tar.gz
+          tar -czvf ../cascavel-release.tar.gz Cascavel/
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Sign Release Assets
+        run: |
+          cosign sign-blob --yes cascavel-release.tar.gz --bundle cascavel-release.tar.gz.bundle
+          cosign sign-blob --yes cascavel-release.zip --bundle cascavel-release.zip.bundle
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cascavel-release.zip
+            cascavel-release.tar.gz
+            cascavel-release.tar.gz.bundle
+            cascavel-release.zip.bundle
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  provenance:
+    needs: build-and-release
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: ""

@@ -1,47 +1,42 @@
-## Descrição
+## What does this PR do?
 
-<!-- Descreva suas alterações de forma clara e concisa. -->
+*(Provide a clear and concise summary of the changes. Example: "Integrates CTEM stealth evaluation" or "Fixes null pointer in OCSF export")*
 
-## Tipo de Alteração
+## Why is this change necessary?
 
-- [ ] 🐛 Bug fix (correção sem breaking change)
-- [ ] ✨ Nova feature (funcionalidade sem breaking change)
-- [ ] 🔌 Novo plugin (`plugins/nome_do_plugin.py`)
-- [ ] 💥 Breaking change (alteração que quebra compatibilidade)
-- [ ] 📚 Documentação
-- [ ] ♻️ Refatoração (sem mudança funcional)
-- [ ] ⚡ Performance
-- [ ] 🔒 Segurança
+*(Explain the security motivation or business need behind this change.)*
 
-## Checklist
+## Scope of Changes
 
-- [ ] Meu código segue as [diretrizes de contribuição](CONTRIBUTING.md)
-- [ ] Realizei self-review do meu código
-- [ ] Comentei trechos complexos ou não-óbvios
-- [ ] Atualizei a documentação relevante (README, PLUGINS.md, CHANGELOG)
-- [ ] Minhas alterações não geram novos warnings
-- [ ] Testei localmente com `python3 cascavel.py --check-tools`
-- [ ] Testei com `python3 cascavel.py --list-plugins`
-- [ ] Usei [Conventional Commits](https://conventionalcommits.org/) nas mensagens
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] Security patch (resolves a vulnerability or hardens the framework)
+- [ ] Refactor (code quality improvement without behavioral change)
+- [ ] Documentation update
+- [ ] Breaking change (fix or feature that causes existing functionality to change)
 
-## Plugin Checklist (se aplicável)
+## Validation & Verification
 
-- [ ] Assinatura: `run(target, ip, open_ports, banners)` — 4 args
-- [ ] `_ = (ip, open_ports, banners)` para suprimir unused warnings
-- [ ] Imports no top-level (não dentro de `run()`)
-- [ ] Retorna `dict` com `"plugin"` e `"resultados"`
-- [ ] `shlex.quote()` em inputs de shell
-- [ ] Timeouts em `subprocess.run()` e `requests`
-- [ ] Erros capturados com `try/except`
+*(Describe the tests you ran to verify your changes. If this is a security patch, describe how you verified the bypass or vulnerability is mitigated.)*
 
-## Screenshots / Output
+- [ ] Executed `test_ctem.py` successfully.
+- [ ] Ran `mypy` and `flake8` with no outstanding warnings.
+- [ ] Verified that output complies with expected schemas (e.g., OCSF, JSON).
+- [ ] Tested in an isolated sandbox environment.
 
-<!-- Se aplicável, adicione screenshots ou output do terminal. -->
+## Context & References
 
-## Contexto Adicional
+*(Link any relevant GitHub issues, CVEs, or external documentation.)*
 
-<!-- Links, issues relacionadas, motivação. -->
+- Relates to issue: #
+- Threat Intel reference: 
+
+## PR Checklist (For Maintainers)
+
+- [ ] Semantic Title (`feat:`, `fix:`, `docs:`, etc.)
+- [ ] Code is formatted according to project standards.
+- [ ] Appropriate documentation updates included.
+- [ ] Dependencies audited for supply-chain risks.
 
 ---
-
-> **Cascavel** — Quantum Security Framework by [RET Tecnologia](https://rettecnologia.org)
+*By submitting this pull request, I confirm that my contribution is made under the terms of the MIT License and follows the Cascavel Security Policy.*

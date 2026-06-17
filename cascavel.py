@@ -2,7 +2,7 @@
 """
 ╔═══════════════════════════════════════════════════════════════╗
 ║  CASCAVEL — Quantum Security Framework v3.0.0                ║
-║  Por DevFerreiraG | github.com/glferreira-devsecops          ║
+║  Por DevFerreiraG | github.com/devferreirag          ║
 ║  Framework de automação pentest plugável, multi-plataforma   ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
@@ -52,7 +52,7 @@ from rich.text import Text
 try:
     import pyfiglet
 except ImportError:
-    pyfiglet = None
+    pyfiglet = None  # type: ignore[assignment]
 
 try:
     from notifypy import Notify as DesktopNotify
@@ -444,7 +444,9 @@ def _fade_in_logo() -> None:
 
         # Phase 3: Subtitle materializa
         time.sleep(0.2)
-        subtitle = f"  Quantum Security Framework v{__version__} — Red Team Intelligence"
+        subtitle = (
+            f"  Quantum Security Framework v{__version__} — Red Team Intelligence"
+        )
         console.print()
         console.print(f"  [bold bright_cyan]{subtitle}[/]")
         time.sleep(0.4)
@@ -479,7 +481,9 @@ def _clear_block(num_lines: int) -> None:
         pass  # Silencia erros em terminais incompatíveis
 
 
-def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
+def run_preloader(
+    plugin_count: int, tools_count: int, *, target_hint: str | None = None
+) -> None:
     """Preloader cinematográfico Awwwards-level com logo fade.
 
     SEGURANÇA UX: Todo o preloader é wrapped em try/except para que
@@ -498,7 +502,9 @@ def run_preloader(plugin_count: int, tools_count: int, *, target_hint: str | Non
         console.print(f"  [dim]Preloader desativado: {type(e).__name__}[/]\n")
 
 
-def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str | None = None) -> None:
+def _run_preloader_impl(
+    plugin_count: int, tools_count: int, *, target_hint: str | None = None
+) -> None:
     """Implementação interna do preloader — isolada para try/except."""
     os_name = f"{platform.system()} {platform.release()}"
     py_ver = f"{sys.version.split()[0]}"
@@ -510,7 +516,9 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
     time.sleep(0.5)
 
     # === PHASE 2: Fade-Out (limpa para boot) ===
-    total_logo_lines = len(COBRA_ART) + len(CASCAVEL_LOGO_ASCII) + 3  # +3 spacing/subtitle
+    total_logo_lines = (
+        len(COBRA_ART) + len(CASCAVEL_LOGO_ASCII) + 3
+    )  # +3 spacing/subtitle
     _clear_block(total_logo_lines)
 
     # === PHASE 3: Boot Sequence ===
@@ -544,7 +552,9 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
     # === PHASE 3.5: Target Acquisition (quando target é conhecido) ===
     if target_hint:
         console.print()
-        console.print(f"  [{S_RED}]█▓▒░  TARGET LOCKED: [bold]{target_hint}[/]  ░▒▓█[/]")
+        console.print(
+            f"  [{S_RED}]█▓▒░  TARGET LOCKED: [bold]{target_hint}[/]  ░▒▓█[/]"
+        )
         time.sleep(0.3)
 
     console.print()
@@ -552,7 +562,9 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
     # === PHASE 4: Loading bar — 2s para leitura confortável ===
     loading_label = "[bold green]Armando sistema...[/]"
     if target_hint:
-        loading_label = f"[bold green]Preparando ataque: [bright_red]{target_hint}[/][/]"
+        loading_label = (
+            f"[bold green]Preparando ataque: [bright_red]{target_hint}[/][/]"
+        )
 
     with Progress(
         SpinnerColumn("dots2"),
@@ -596,7 +608,7 @@ SNAKE_ART = r"""[green]
         .~))>>
       .~))>>
     .~))>>
-  .~)>>                        [bold yellow]⚡ github.com/glferreira-devsecops[/]
+  .~)>>                        [bold yellow]⚡ github.com/devferreirag[/]
  .~)>>[/]"""
 
 
@@ -604,7 +616,8 @@ def _count_plugins() -> int:
     return sum(
         1
         for f in glob.glob(os.path.join(PLUGINS_PATH, "*.py"))
-        if not os.path.basename(f).startswith("__") and os.path.basename(f) != "schema.py"
+        if not os.path.basename(f).startswith("__")
+        and os.path.basename(f) != "schema.py"
     )
 
 
@@ -884,7 +897,11 @@ def validate_target(target: str, allow_self: bool = False) -> str:
     target_lower: str = target.lower()
     for prefix in ("https://", "http://", "ftp://", "ftps://"):
         if target_lower.startswith(prefix):
-            clean_target: str = target.replace(prefix, "", 1) if target.lower().startswith(prefix) else target
+            clean_target: str = (
+                target.replace(prefix, "", 1)
+                if target.lower().startswith(prefix)
+                else target
+            )
             target = clean_target
             break
 
@@ -934,15 +951,21 @@ def validate_target(target: str, allow_self: bool = False) -> str:
         has_punycode = any(label.startswith("xn--") for label in host_part.split("."))
         if not has_unicode and not has_punycode:
             console.print(f"  [{S_RED}]✗ Target inválido: {target}[/]")
-            console.print(f"  [{S_DIM}]Formatos aceitos: dominio.com │ 1.2.3.4 │ host:porta[/]")
-            console.print(f"  [{S_DIM}]Exemplos: example.com, 93.184.216.34, api.target.io:8443[/]")
+            console.print(
+                f"  [{S_DIM}]Formatos aceitos: dominio.com │ 1.2.3.4 │ host:porta[/]"
+            )
+            console.print(
+                f"  [{S_DIM}]Exemplos: example.com, 93.184.216.34, api.target.io:8443[/]"
+            )
             return ""
 
     # ── Phase 3: IDNA/Homograph detection ─────────────────────────────────
     homograph = _detect_idna_homograph(host_part)
     if homograph:
         console.print(f"  [{S_YELLOW}]⚠ ALERTA: {homograph}[/]")
-        console.print(f"  [{S_DIM}]Verifique se o domínio é legítimo antes de prosseguir.[/]")
+        console.print(
+            f"  [{S_DIM}]Verifique se o domínio é legítimo antes de prosseguir.[/]"
+        )
         # Warn but don't block — user may legitimately test punycode domains
 
     # ── Phase 4: IP normalization + private/reserved check ────────────────
@@ -952,9 +975,13 @@ def validate_target(target: str, allow_self: bool = False) -> str:
         if normalized_ip:
             blocked, reason = _is_blocked_ip(normalized_ip)
             if blocked:
-                console.print(f"  [{S_RED}]✗ Target bloqueado: {host_part} → {normalized_ip}[/]")
+                console.print(
+                    f"  [{S_RED}]✗ Target bloqueado: {host_part} → {normalized_ip}[/]"
+                )
                 console.print(f"  [{S_DIM}]Motivo: {reason}[/]")
-                console.print(f"  [{S_DIM}]Use --allow-localhost para red-teaming consentido.[/]")
+                console.print(
+                    f"  [{S_DIM}]Use --allow-localhost para red-teaming consentido.[/]"
+                )
                 return ""
 
         # Check hostname against cloud metadata blocklist
@@ -971,20 +998,28 @@ def validate_target(target: str, allow_self: bool = False) -> str:
             old_timeout = socket.getdefaulttimeout()
             socket.setdefaulttimeout(5)
             try:
-                addrs = socket.getaddrinfo(host_part, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+                addrs = socket.getaddrinfo(
+                    host_part, None, socket.AF_UNSPEC, socket.SOCK_STREAM
+                )
                 for _family, _, _, _, sockaddr in addrs:
                     resolved_ip: str = str(sockaddr[0])
                     blocked, reason = _is_blocked_ip(resolved_ip)
                     if blocked:
                         console.print(f"  [{S_RED}]✗ DNS rebinding detectado![/]")
-                        console.print(f"  [{S_DIM}]{host_part} resolve para {resolved_ip} ({reason})[/]")
-                        console.print(f"  [{S_DIM}]Use --allow-localhost se isso é intencional.[/]")
+                        console.print(
+                            f"  [{S_DIM}]{host_part} resolve para {resolved_ip} ({reason})[/]"
+                        )
+                        console.print(
+                            f"  [{S_DIM}]Use --allow-localhost se isso é intencional.[/]"
+                        )
                         return ""
             finally:
                 socket.setdefaulttimeout(old_timeout)
         except (TimeoutError, socket.gaierror, OSError):
             # DNS failed — target may not exist, but let the scan handle it
-            console.print(f"  [{S_YELLOW}]⚠ DNS não resolveu {host_part} — continuando mesmo assim.[/]")
+            console.print(
+                f"  [{S_YELLOW}]⚠ DNS não resolveu {host_part} — continuando mesmo assim.[/]"
+            )
 
     return target
 
@@ -1005,10 +1040,14 @@ def inputx(prompt: str, max_retries: int = 3, validator=None) -> str:
             if not value:
                 remaining = max_retries - attempt
                 if remaining > 0:
-                    console.print(f"  [{S_YELLOW}]⚠ Entrada vazia. {remaining} tentativa(s) restante(s).[/]")
+                    console.print(
+                        f"  [{S_YELLOW}]⚠ Entrada vazia. {remaining} tentativa(s) restante(s).[/]"
+                    )
                     continue
                 else:
-                    console.print(f"  [{S_RED}]✗ Máximo de tentativas atingido. Abortando.[/]")
+                    console.print(
+                        f"  [{S_RED}]✗ Máximo de tentativas atingido. Abortando.[/]"
+                    )
                     sys.exit(1)
             # Custom validation
             if validator:
@@ -1017,15 +1056,23 @@ def inputx(prompt: str, max_retries: int = 3, validator=None) -> str:
                     remaining = max_retries - attempt
                     if remaining > 0:
                         console.print(f"  [{S_RED}]✗ {error}[/]")
-                        console.print(f"  [{S_DIM}]{remaining} tentativa(s) restante(s).[/]")
+                        console.print(
+                            f"  [{S_DIM}]{remaining} tentativa(s) restante(s).[/]"
+                        )
                         continue
                     else:
-                        console.print(f"  [{S_RED}]✗ {error} — máximo de tentativas.[/]")
+                        console.print(
+                            f"  [{S_RED}]✗ {error} — máximo de tentativas.[/]"
+                        )
                         sys.exit(1)
             return value  # type: ignore
         except EOFError:
-            console.print(f"\n  [{S_RED}]✗ EOF — entrada não disponível (pipe/redirecionamento).[/]")
-            console.print(f"  [{S_DIM}]Use: cascavel -t target.com para modo não-interativo.[/]")
+            console.print(
+                f"\n  [{S_RED}]✗ EOF — entrada não disponível (pipe/redirecionamento).[/]"
+            )
+            console.print(
+                f"  [{S_DIM}]Use: cascavel -t target.com para modo não-interativo.[/]"
+            )
             sys.exit(1)
         except KeyboardInterrupt:
             console.print(f"\n  [{S_RED}]✗ Interrompido pelo usuário.[/]\n")
@@ -1127,7 +1174,9 @@ def _preflight_check() -> bool:
         pass
     finally:
         socket.setdefaulttimeout(None)
-    checks.append(("DNS funcional", dns_ok, "dns.google", "Verifique sua conexão de rede e DNS"))
+    checks.append(
+        ("DNS funcional", dns_ok, "dns.google", "Verifique sua conexão de rede e DNS")
+    )
 
     # 7. Pelo menos 1 plugin
     plugin_count = _count_plugins()
@@ -1153,7 +1202,9 @@ def _preflight_check() -> bool:
     )
 
     # 9. Permissão de escrita em reports/
-    write_ok = os.access(REPORTS_PATH, os.W_OK) if os.path.isdir(REPORTS_PATH) else False
+    write_ok = (
+        os.access(REPORTS_PATH, os.W_OK) if os.path.isdir(REPORTS_PATH) else False
+    )
     checks.append(
         (
             "Escrita reports/",
@@ -1186,7 +1237,9 @@ def _preflight_check() -> bool:
     console.print()
 
     if not all_ok:
-        console.print(f"  [{S_YELLOW}]⚠ Alguns checks falharam. O scan pode ter limitações.[/]")
+        console.print(
+            f"  [{S_YELLOW}]⚠ Alguns checks falharam. O scan pode ter limitações.[/]"
+        )
         console.print()
 
     return all_ok
@@ -1364,7 +1417,9 @@ def ensure_nuclei_templates() -> str:
                     )
     except Exception:
         pass
-    if not os.path.isdir(NUCLEI_TEMPLATES_PATH) or not os.listdir(NUCLEI_TEMPLATES_PATH):
+    if not os.path.isdir(NUCLEI_TEMPLATES_PATH) or not os.listdir(
+        NUCLEI_TEMPLATES_PATH
+    ):
         try:
             subprocess.run(
                 ["nuclei", "-update-templates", "-ut", NUCLEI_TEMPLATES_PATH],
@@ -1388,8 +1443,12 @@ def detect_ip(target: str) -> str:
             addrs = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
             if addrs:
                 # Prefer IPv4 for display, fallback to IPv6
-                ipv4: list[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET]
-                ipv6: list[str] = [str(a[4][0]) for a in addrs if a[0] == socket.AF_INET6]
+                ipv4: list[str] = [
+                    str(a[4][0]) for a in addrs if a[0] == socket.AF_INET
+                ]
+                ipv6: list[str] = [
+                    str(a[4][0]) for a in addrs if a[0] == socket.AF_INET6
+                ]
                 if ipv4:
                     return ipv4[0]
                 if ipv6:
@@ -1477,7 +1536,11 @@ def _stderr_log(tool_name: str, stderr_content: str) -> None:
         with open(log_path, "a", encoding="utf-8") as f:
             ts = datetime.datetime.now().strftime("%H:%M:%S")
             stderr_lines: list[str] = stderr_content.split("\n")
-            first_ten: list[str] = stderr_lines if len(stderr_lines) <= 10 else [stderr_lines[i] for i in range(10)]
+            first_ten: list[str] = (
+                stderr_lines
+                if len(stderr_lines) <= 10
+                else [stderr_lines[i] for i in range(10)]
+            )
             for line in first_ten:  # Max 10 linhas por tool
                 f.write(f"[{ts}] [{tool_name}] {line}\n")
     except (PermissionError, OSError):
@@ -1504,11 +1567,21 @@ def enum_tools(
         "httpx": f"echo {safe} | httpx -silent -title -tech-detect -ip",
         "nmap": f"nmap -Pn -A {safe}",
         "ffuf": (
-            (f"ffuf -u http://{safe}/FUZZ -w {wordlist} -mc 200,204,301,302,307,401,403 -t 40") if wordlist else ""
+            (
+                f"ffuf -u http://{safe}/FUZZ -w {wordlist} -mc 200,204,301,302,307,401,403 -t 40"
+            )
+            if wordlist
+            else ""
         ),
-        "gobuster": (f"gobuster dir -u http://{safe} -w {wordlist} -q" if wordlist else ""),
+        "gobuster": (
+            f"gobuster dir -u http://{safe} -w {wordlist} -q" if wordlist else ""
+        ),
         "naabu": f"echo {safe} | naabu -silent",
-        "nuclei": (f"echo {safe} | nuclei -silent -t {nuclei_templates}" if nuclei_templates else ""),
+        "nuclei": (
+            f"echo {safe} | nuclei -silent -t {nuclei_templates}"
+            if nuclei_templates
+            else ""
+        ),
         "curl": f"curl -sI http://{safe}",
         "katana": f"echo http://{safe} | katana -silent -d 2 -jc -ct 30",
         "gau": f"echo {safe} | gau --threads 3 --blacklist png,jpg,gif,css,woff",
@@ -1531,7 +1604,9 @@ def enum_tools(
         TimeElapsedColumn(),
         console=console,
     ) as progress:
-        overall = progress.add_task("Pipeline", total=len(active), tool_name="Inicializando...")
+        overall = progress.add_task(
+            "Pipeline", total=len(active), tool_name="Inicializando..."
+        )
         for name, cmd in active.items():
             progress.update(overall, tool_name=name)
             t0 = time.time()
@@ -1539,8 +1614,12 @@ def enum_tools(
             elapsed = time.time() - t0
             results[name] = out
             # Sanitiza surrogates para evitar UnicodeEncodeError no report
-            truncated_out: str = out if len(out) <= 5000 else "".join([out[i] for i in range(5000)])
-            safe_out: str = truncated_out.encode("utf-8", errors="replace").decode("utf-8")
+            truncated_out: str = (
+                out if len(out) <= 5000 else "".join([out[i] for i in range(5000)])
+            )
+            safe_out: str = truncated_out.encode("utf-8", errors="replace").decode(
+                "utf-8"
+            )
             report.append(f"\n### {name}\n```\n{safe_out}\n```")
             progress.advance(overall)
             console.print(f"    [green]✓[/] {name} [{S_DIM}]({elapsed:.1f}s)[/]")
@@ -1599,7 +1678,11 @@ def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, s
                 except (TimeoutError, OSError):
                     break
             raw_banner: str = b"".join(chunks).decode(errors="ignore").strip()
-            banners[port] = raw_banner if len(raw_banner) <= 512 else "".join([raw_banner[i] for i in range(512)])
+            banners[port] = (
+                raw_banner
+                if len(raw_banner) <= 512
+                else "".join([raw_banner[i] for i in range(512)])
+            )
         except (TimeoutError, ConnectionRefusedError, OSError):
             banners[port] = "N/A"
         except Exception:
@@ -1666,7 +1749,11 @@ def _exec_plugin(
     try:
         result = mod.run(target, ip, ports, banners)
         # SEGURANÇA 2026: Sanitiza saída contra ANSI escape injection
-        result = _sanitize_output(result) if result else {"plugin": name, "resultados": "Sem retorno"}
+        result = (
+            _sanitize_output(result)
+            if result
+            else {"plugin": name, "resultados": "Sem retorno"}
+        )
         return result  # type: ignore
     except _PluginTimeoutError:
         return {"plugin": name, "erro": f"TIMEOUT ({timeout}s)"}
@@ -1739,7 +1826,9 @@ def _count_sev(resultados: Any) -> dict[str, int]:
     return counts
 
 
-def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: float) -> Panel:
+def _build_intel_panel(
+    intel_idx: int, scan_stats: dict[str, int], elapsed: float
+) -> Panel:
     """Constrói painel lateral de Security Intel para retenção de atenção.
 
     Protege contra lista vazia e índices fora de range.
@@ -1794,7 +1883,9 @@ def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: floa
             title="[bold green]📊 LIVE STATS[/]",
             box=box.ROUNDED,
         ),
-        Panel(next_text, border_style="dim cyan", title="[dim]PRÓXIMO[/]", box=box.SIMPLE),
+        Panel(
+            next_text, border_style="dim cyan", title="[dim]PRÓXIMO[/]", box=box.SIMPLE
+        ),
     )
     return Panel(
         content,
@@ -1823,7 +1914,8 @@ def run_plugins(
     valid = [
         (f, os.path.splitext(os.path.basename(f))[0])
         for f in plugin_files
-        if not os.path.basename(f).startswith("__") and os.path.basename(f) != "schema.py"
+        if not os.path.basename(f).startswith("__")
+        and os.path.basename(f) != "schema.py"
     ]
     # Apply profile filter if specified
     if plugin_filter is not None:
@@ -1841,7 +1933,9 @@ def run_plugins(
         "INFO": 0,
     }
 
-    console.print(Rule(f"[bold magenta]🔌 PLUGIN ENGINE — {total} PLUGINS[/]", style="magenta"))
+    console.print(
+        Rule(f"[bold magenta]🔌 PLUGIN ENGINE — {total} PLUGINS[/]", style="magenta")
+    )
     console.print()
 
     # Randomize intel order for variety
@@ -1879,7 +1973,9 @@ def run_plugins(
         if row_count > 15:
             start_idx: int = row_count - 15
             display_rows: list = [rows[i] for i in range(start_idx, row_count)]
-            t.add_row("", f"[dim]... {row_count - 15} anteriores ...[/]", "", "", "", "")
+            t.add_row(
+                "", f"[dim]... {row_count - 15} anteriores ...[/]", "", "", "", ""
+            )
         else:
             display_rows = list(rows)
         for row in display_rows:
@@ -1941,7 +2037,11 @@ def run_plugins(
 
                 if cls == "erro":
                     err_desc: str = str(result.get("erro", "?"))
-                    err_trunc: str = err_desc if len(err_desc) <= 30 else "".join([err_desc[i] for i in range(30)])
+                    err_trunc: str = (
+                        err_desc
+                        if len(err_desc) <= 30
+                        else "".join([err_desc[i] for i in range(30)])
+                    )
                     desc = f"[red]{err_trunc}[/]"
                     sev_str = ""
                     err_count: int = scan_stats.get("err", 0)
@@ -1963,8 +2063,16 @@ def run_plugins(
                 else:
                     r = result.get("resultados", "")
                     r_str: str = str(r)
-                    r_trunc: str = r_str if len(r_str) <= 30 else "".join([r_str[i] for i in range(30)])
-                    desc = f"[green]{r_trunc}[/]" if isinstance(r, str) else "[green]Limpo[/]"
+                    r_trunc: str = (
+                        r_str
+                        if len(r_str) <= 30
+                        else "".join([r_str[i] for i in range(30)])
+                    )
+                    desc = (
+                        f"[green]{r_trunc}[/]"
+                        if isinstance(r, str)
+                        else "[green]Limpo[/]"
+                    )
                     sev_str = "[green]—[/]"
                     ok_count: int = scan_stats.get("ok", 0)
                     scan_stats["ok"] = ok_count + 1
@@ -1986,10 +2094,14 @@ def run_plugins(
 
                 # SEGURANÇA UX: Bounds check para evitar IndexError quando idx == total
                 next_name = valid[idx][1] if idx < len(valid) else "Concluindo..."
-                live.update(_build_layout(table_rows, min(idx + 1, total), next_name, intel_idx))
+                live.update(
+                    _build_layout(table_rows, min(idx + 1, total), next_name, intel_idx)
+                )
     except Exception as layout_err:
         # Fallback para terminais estreitos ou sem suporte a Live Layout
-        console.print(f"  [dim]Live display falhou ({layout_err}), executando sem UI...[/]")
+        console.print(
+            f"  [dim]Live display falhou ({layout_err}), executando sem UI...[/]"
+        )
         for idx, (file_path, name) in enumerate(valid, 1):
             try:
                 result = _exec_plugin(file_path, name, target, ip, ports, banners)
@@ -2058,8 +2170,12 @@ def print_dashboard(
     info.add_column(style=S_WHITE, width=14)
     info.add_column(style="bright_cyan", min_width=25)
     info.add_row("🎯 Target", target, "📡 IP", ip)
-    info.add_row("⏱️  Duração", f"{elapsed_total:.1f}s", "📦 Plugins", str(len(results)))
-    info.add_row("📄 Report", os.path.basename(report_path), "🐍 Versão", f"v{__version__}")
+    info.add_row(
+        "⏱️  Duração", f"{elapsed_total:.1f}s", "📦 Plugins", str(len(results))
+    )
+    info.add_row(
+        "📄 Report", os.path.basename(report_path), "🐍 Versão", f"v{__version__}"
+    )
 
     console.print(Panel(info, border_style="bright_green", box=box.DOUBLE_EDGE))
     console.print()
@@ -2142,8 +2258,12 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
     if sys.platform == "darwin":
         try:
             # Sanitize: remove newlines (injection vector) + escape quotes
-            safe_msg = message.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
-            safe_title = title.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
+            safe_msg = (
+                message.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
+            )
+            safe_title = (
+                title.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
+            )
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
             subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
         except Exception:
@@ -2189,7 +2309,9 @@ def post_scan_menu(report_path: str) -> None:
     console.print(Rule(f"[{S_GREEN}]🐍 O QUE DESEJA FAZER?[/]", style="bright_green"))
     console.print()
 
-    menu = Table(show_header=False, box=box.ROUNDED, border_style="green", padding=(0, 2))
+    menu = Table(
+        show_header=False, box=box.ROUNDED, border_style="green", padding=(0, 2)
+    )
     menu.add_column(style=S_GREEN, width=4, justify="center")
     menu.add_column(style=S_WHITE, min_width=40)
     menu.add_row("1", "📂 Abrir pasta do relatório")
@@ -2230,7 +2352,9 @@ def post_scan_menu(report_path: str) -> None:
                 return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
             return ""
 
-        new_target_raw = inputx("Novo target (IP/domain): ", validator=_target_validator)
+        new_target_raw = inputx(
+            "Novo target (IP/domain): ", validator=_target_validator
+        )
         new_target = validate_target(new_target_raw, allow_self=allow_self)
         if new_target:
             run_scan(new_target, no_notify=False, output_format="md", global_timeout=90)
@@ -2283,7 +2407,9 @@ def post_scan_menu(report_path: str) -> None:
             else:
                 console.print(f"  [{S_YELLOW}]⚠ Relatório não encontrado.[/]")
         except ImportError:
-            console.print(f"  [{S_YELLOW}]⚠ reportlab não instalado. Use: pip install reportlab[/]")
+            console.print(
+                f"  [{S_YELLOW}]⚠ reportlab não instalado. Use: pip install reportlab[/]"
+            )
         except Exception as e:
             console.print(f"  [{S_RED}]✗ Falha ao gerar PDF: {e}[/]")
 
@@ -2294,7 +2420,9 @@ def post_scan_menu(report_path: str) -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # FEROXBUSTER
 # ═══════════════════════════════════════════════════════════════════════════════
-def run_feroxbuster(target: str, wordlist: str, available: dict[str, bool]) -> list[dict[str, Any]]:
+def run_feroxbuster(
+    target: str, wordlist: str, available: dict[str, bool]
+) -> list[dict[str, Any]]:
     if not available.get("feroxbuster") or not wordlist:
         return [{"aviso": "feroxbuster/wordlist não disponível"}]
 
@@ -2416,7 +2544,9 @@ def list_plugins_table() -> None:
         try:
             import importlib.machinery as _ilm_p
 
-            spec_p: _ilm_p.ModuleSpec | None = importlib.util.spec_from_file_location(name, fp)
+            spec_p: _ilm_p.ModuleSpec | None = importlib.util.spec_from_file_location(
+                name, fp
+            )
             if spec_p is None:
                 table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
                 continue
@@ -2453,7 +2583,7 @@ def list_plugins_table() -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🔄 SELF-UPDATE (GitHub Releases)
 # ═══════════════════════════════════════════════════════════════════════════════
-_GITHUB_REPO = "glferreira-devsecops/Cascavel"
+_GITHUB_REPO = "devferreirag/Cascavel"
 _GITHUB_API_RELEASES = f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest"
 _GITHUB_RAW_BASE = f"https://raw.githubusercontent.com/{_GITHUB_REPO}"
 
@@ -2490,16 +2620,22 @@ def check_for_update(quiet: bool = False) -> str | None:
 
         if _parse_semver(latest) > _parse_semver(__version__):
             if not quiet:
-                console.print(f"\n  [bold green]🆕 Nova versão disponível: v{latest}[/] (atual: v{__version__})")
+                console.print(
+                    f"\n  [bold green]🆕 Nova versão disponível: v{latest}[/] (atual: v{__version__})"
+                )
                 console.print("  [dim]Execute: cascavel --update[/]\n")
             return str(latest)
         else:
             if not quiet:
-                console.print(f"\n  [green]✅ Cascavel v{__version__} está atualizado.[/]\n")
+                console.print(
+                    f"\n  [green]✅ Cascavel v{__version__} está atualizado.[/]\n"
+                )
             return None
     except Exception as e:
         if not quiet:
-            console.print(f"  [yellow]⚠ Não foi possível verificar atualizações: {e}[/]")
+            console.print(
+                f"  [yellow]⚠ Não foi possível verificar atualizações: {e}[/]"
+            )
         return None
 
 
@@ -2531,11 +2667,15 @@ def self_update() -> None:
         data = resp.json()
         latest = data.get("tag_name", "").lstrip("v")
         if not latest:
-            console.print("  [red]❌ Não foi possível determinar a versão mais recente.[/]")
+            console.print(
+                "  [red]❌ Não foi possível determinar a versão mais recente.[/]"
+            )
             return
 
         if _parse_semver(latest) <= _parse_semver(__version__):
-            console.print(f"  [green]✅ Já está na versão mais recente (v{__version__}).[/]\n")
+            console.print(
+                f"  [green]✅ Já está na versão mais recente (v{__version__}).[/]\n"
+            )
             return
 
         console.print(f"  [green]📦 Atualizando para v{latest}...[/]")
@@ -2563,7 +2703,9 @@ def self_update() -> None:
                 console.print(f"  [dim]{result.stdout.strip()}[/]\n")
 
                 # 2. Executar pipeline do instalador para dependências completas
-                console.print("  [bold cyan]⚡ Executando Pipeline de Automação do Cascavel...[/]")
+                console.print(
+                    "  [bold cyan]⚡ Executando Pipeline de Automação do Cascavel...[/]"
+                )
                 install_script = os.path.join(install_dir, "install.sh")
                 if os.path.isfile(install_script):
                     console.print(
@@ -2573,7 +2715,9 @@ def self_update() -> None:
                     subprocess.run(  # noqa: S603, S607
                         ["bash", "install.sh"], cwd=install_dir, check=False
                     )
-                    console.print("\n  [green]✅ Pipeline de atualização concluído com sucesso![/]\n")
+                    console.print(
+                        "\n  [green]✅ Pipeline de atualização concluído com sucesso![/]\n"
+                    )
                 else:
                     # Fallback caso install.sh não exista
                     req_file = os.path.join(install_dir, "requirements.txt")
@@ -2591,52 +2735,75 @@ def self_update() -> None:
                             ],
                             timeout=120,
                         )
-                        console.print("  [green]✅ Dependências Python atualizadas[/]\n")
+                        console.print(
+                            "  [green]✅ Dependências Python atualizadas[/]\n"
+                        )
             else:
                 console.print(f"  [red]❌ git pull falhou: {result.stderr.strip()}[/]")
         except Exception as e:
             console.print(f"  [red]❌ Erro no git pull: {e}[/]")
         return
 
-    # Strategy 2: Direct download of core files
-    console.print("  [dim]Modo: download direto (sem .git)[/]")
-    core_files = [
-        "cascavel.py",
-        "sarif_exporter.py",
-        "report_generator.py",
-        "requirements.txt",
-    ]
-    tag = f"v{latest}"
-    updated = 0
+    # Strategy 2: Direct download of release bundle
+    console.print("  [dim]Modo: download direto do pacote de release (sem .git)[/]")
+    import tarfile
+    import tempfile
 
-    for fname in core_files:
-        try:
-            url = f"{_GITHUB_RAW_BASE}/{tag}/{fname}"
-            resp = requests.get(
-                url,
-                headers={"User-Agent": f"Cascavel/{__version__}"},
-                timeout=(3.05, 10),
-                stream=True,
-                allow_redirects=False,
+    release_url = f"https://github.com/devferreirag/Cascavel/releases/download/v{latest}/cascavel-release.tar.gz"
+
+    try:
+        console.print(f"  [dim]Baixando pacote de atualização v{latest}...[/]")
+        resp = requests.get(
+            release_url,
+            headers={"User-Agent": f"Cascavel/{__version__}"},
+            timeout=(5.0, 30),
+            stream=True,
+            allow_redirects=True,
+        )
+        resp.raise_for_status()
+
+        # Save to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".tar.gz") as tmp:
+            tmp_path = tmp.name
+            for chunk in resp.iter_content(chunk_size=8192):
+                tmp.write(chunk)
+
+        console.print(
+            "  [dim]Extraindo arquivos e sobrescrevendo instalação atual...[/]"
+        )
+        # Extract the tar.gz. Since our GitHub action packages the files inside a "Cascavel/" dir,
+        # we need to extract them correctly, or if we extract directly, strip the top dir.
+        with tarfile.open(tmp_path, "r:gz") as tar:
+            for member in tar.getmembers():
+                # Remove the top-level "Cascavel/" directory from the member path
+                # so it extracts directly into install_dir
+                if member.name.startswith("Cascavel/"):
+                    member.name = member.name[len("Cascavel/") :]
+                if member.name:  # Don't extract the root dir itself
+                    tar.extract(member, path=install_dir)
+
+        os.remove(tmp_path)
+        console.print(f"  [green]✅ Arquivos atualizados para v{latest}[/]")
+
+        # Run install.sh to fix dependencies
+        console.print(
+            "  [bold cyan]⚡ Executando Pipeline de Automação do Cascavel...[/]"
+        )
+        install_script = os.path.join(install_dir, "install.sh")
+        if os.path.isfile(install_script):
+            subprocess.run(
+                ["bash", "install.sh"], cwd=install_dir, check=False
+            )  # noqa: S603, S607
+            console.print(
+                "\n  [green]✅ Atualização via release concluída com sucesso![/]\n"
             )
-            resp.raise_for_status()
+        else:
+            console.print(
+                "  [yellow]⚠ install.sh não encontrado. Dependências podem precisar de atualização manual.[/]\n"
+            )
 
-            target_path = os.path.join(install_dir, fname)
-            fd = os.open(target_path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o644)
-            with os.fdopen(fd, "wb") as f:
-                for chunk in resp.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            console.print(f"    ✅ {fname}")
-            updated += 1
-        except Exception as e:
-            console.print(f"    ❌ {fname}: {e}")
-
-    if updated > 0:
-        console.print(f"\n  [green]✅ {updated}/{len(core_files)} arquivos atualizados para v{latest}[/]")
-        # Update plugins directory
-        console.print("  [dim]Para atualizar plugins, execute: cascavel --update-plugins[/]\n")
-    else:
-        console.print("  [red]❌ Nenhum arquivo atualizado.[/]\n")
+    except Exception as e:
+        console.print(f"  [red]❌ Erro na atualização via pacote de release: {e}[/]\n")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2649,11 +2816,19 @@ class CascavelArgumentParser(argparse.ArgumentParser):
     """
 
     def error(self, message: str) -> NoReturn:
-        console.print(f"\n  [{S_RED}]✗ Erro de argumento: {message}[/]", highlight=False)
+        console.print(
+            f"\n  [{S_RED}]✗ Erro de argumento: {message}[/]", highlight=False
+        )
         console.print(f"  [{S_DIM}]Uso:[/]")
-        console.print(f"  [{S_CYAN}]  cascavel target.com[/]                    [dim]# Scan direto[/]")
-        console.print(f"  [{S_CYAN}]  cascavel -t target.com --plugins-only[/]  [dim]# Apenas plugins[/]")
-        console.print(f"  [{S_CYAN}]  cascavel --help[/]                        [dim]# Ajuda completa[/]")
+        console.print(
+            f"  [{S_CYAN}]  cascavel target.com[/]                    [dim]# Scan direto[/]"
+        )
+        console.print(
+            f"  [{S_CYAN}]  cascavel -t target.com --plugins-only[/]  [dim]# Apenas plugins[/]"
+        )
+        console.print(
+            f"  [{S_CYAN}]  cascavel --help[/]                        [dim]# Ajuda completa[/]"
+        )
         console.print()
         sys.exit(2)
 
@@ -2679,9 +2854,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Target direto (IP/domínio) — ex: cascavel target.com",
     )
-    parser.add_argument("-t", "--target", help="Target (IP/domínio) — forma alternativa")
+    parser.add_argument(
+        "-t", "--target", help="Target (IP/domínio) — forma alternativa"
+    )
     parser.add_argument("-v", "--version", action="version", version=f"v{__version__}")
-    parser.add_argument("--list-plugins", action="store_true", help="Lista plugins disponíveis")
+    parser.add_argument(
+        "--list-plugins", action="store_true", help="Lista plugins disponíveis"
+    )
     parser.add_argument(
         "--plugins-only",
         action="store_true",
@@ -2692,8 +2871,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Verifica ferramentas externas instaladas",
     )
-    parser.add_argument("--no-preloader", action="store_true", help="Desativa preloader cinematográfico")
-    parser.add_argument("--no-notify", action="store_true", help="Desativa notificação nativa pós-scan")
+    parser.add_argument(
+        "--no-preloader", action="store_true", help="Desativa preloader cinematográfico"
+    )
+    parser.add_argument(
+        "--no-notify", action="store_true", help="Desativa notificação nativa pós-scan"
+    )
     parser.add_argument(
         "-q",
         "--quiet",
@@ -2703,9 +2886,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-o",
         "--output-format",
-        choices=["md", "json", "pdf", "sarif"],
+        choices=["md", "json", "pdf", "sarif", "ocsf"],
         default="md",
-        help="Formato do relatório: md (padrão), json, pdf ou sarif",
+        help="Formato do relatório: md (padrão), json, pdf, sarif ou ocsf",
     )
     parser.add_argument(
         "--pdf",
@@ -2738,17 +2921,33 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Verifica se há atualizações disponíveis no GitHub",
     )
+    parser.add_argument(
+        "--stealth-eval",
+        action="store_true",
+        help="[2026 COST] Injeta headers 'X-Cascavel-Test' para testar SOCs/WAFs",
+    )
+    parser.add_argument(
+        "--ai-fix",
+        action="store_true",
+        help="[2026 AI] Tenta gerar scripts de mitigação via IA no final do scan",
+    )
 
     def _positive_int(value: str) -> int:
         """Validação de argparse: aceita apenas inteiros positivos."""
         try:
             ivalue = int(value)
         except ValueError:
-            raise argparse.ArgumentTypeError(f"'{value}' não é um inteiro válido") from None
+            raise argparse.ArgumentTypeError(
+                f"'{value}' não é um inteiro válido"
+            ) from None
         if ivalue <= 0:
-            raise argparse.ArgumentTypeError(f"Timeout deve ser > 0, recebido: {ivalue}")
+            raise argparse.ArgumentTypeError(
+                f"Timeout deve ser > 0, recebido: {ivalue}"
+            )
         if ivalue > 600:
-            raise argparse.ArgumentTypeError(f"Timeout máximo: 600s, recebido: {ivalue}")
+            raise argparse.ArgumentTypeError(
+                f"Timeout máximo: 600s, recebido: {ivalue}"
+            )
         return ivalue
 
     parser.add_argument(
@@ -2778,14 +2977,18 @@ def _load_profile(profile_name: str) -> list[str] | None:
     profile_path = os.path.join(profiles_dir, f"{profile_name}.yaml")
 
     if not os.path.isfile(profile_path):
-        console.print(f"  [{S_YELLOW}]⚠ Profile '{profile_name}' não encontrado. Usando todos os plugins.[/]")
+        console.print(
+            f"  [{S_YELLOW}]⚠ Profile '{profile_name}' não encontrado. Usando todos os plugins.[/]"
+        )
         return None
 
     try:
         import yaml  # type: ignore[import-untyped]
     except ImportError:
         # Fallback: parse YAML manually for simple lists
-        console.print(f"  [{S_DIM}]PyYAML não instalado, parsing manual do profile...[/]")
+        console.print(
+            f"  [{S_DIM}]PyYAML não instalado, parsing manual do profile...[/]"
+        )
         plugins: list[str] = []
         with open(profile_path, encoding="utf-8") as f:
             in_plugins = False
@@ -2843,6 +3046,8 @@ def run_scan(
     output_format: str = "md",
     global_timeout: int = 90,
     profile: str | None = None,
+    stealth_eval: bool = False,
+    ai_fix: bool = False,
 ) -> None:
     """Executa o scan completo contra o target.
 
@@ -2850,6 +3055,25 @@ def run_scan(
         profile: Nome do scan profile (web, api, cloud, network, full) ou None para todos.
     """
     mission_start = time.time()
+
+    if stealth_eval:
+        console.print(
+            f"  [{S_YELLOW}]🥷 Modo COST Ativado: Headers stealth-eval sendo injetados nas requisições Python.[/]"
+        )
+        import requests
+
+        _orig_request = requests.Session.request
+
+        def _stealth_request(self, method, url, **kwargs):
+            headers = kwargs.get("headers", {})
+            if isinstance(headers, dict):
+                h = dict(headers)
+                h["X-Cascavel-Test"] = "true"
+                h["X-COST-Simulation"] = "active"
+                kwargs["headers"] = h
+            return _orig_request(self, method, url, **kwargs)
+
+        requests.Session.request = _stealth_request  # type: ignore[method-assign,assignment]
 
     # Load scan profile if specified
     _profile_plugins: list[str] | None = None
@@ -2893,18 +3117,26 @@ def run_scan(
     banners: dict[int, str] = {}
 
     if not plugins_only:
-        results = enum_tools(target, report, wordlist, nuclei_templates, timeouts, available)
+        results = enum_tools(
+            target, report, wordlist, nuclei_templates, timeouts, available
+        )
         ferox = run_feroxbuster(target, wordlist, available)
         safe_ferox = _sanitize_for_json(ferox)
         ferox_json: str = json.dumps(safe_ferox, indent=2, ensure_ascii=False)
-        ferox_truncated: str = ferox_json if len(ferox_json) <= 5000 else "".join([ferox_json[i] for i in range(5000)])
+        ferox_truncated: str = (
+            ferox_json
+            if len(ferox_json) <= 5000
+            else "".join([ferox_json[i] for i in range(5000)])
+        )
         report.append(f"\n### feroxbuster\n```json\n{ferox_truncated}\n```")
 
         open_ports = scan_ports(results.get("naabu", ""))
         report.append(f"\n### Portas\n`{open_ports}`\n")
 
         banners = grab_banners(target, open_ports)
-        report.append(f"\n### Banners\n```json\n{json.dumps(banners, indent=2, ensure_ascii=False)}\n```")
+        report.append(
+            f"\n### Banners\n```json\n{json.dumps(banners, indent=2, ensure_ascii=False)}\n```"
+        )
     else:
         console.print(
             Panel(
@@ -2916,7 +3148,30 @@ def run_scan(
         console.print()
 
     # Plugins
-    plugin_results = run_plugins(target, ip, open_ports, banners, report, plugin_filter=_profile_plugins)
+    plugin_results = run_plugins(
+        target, ip, open_ports, banners, report, plugin_filter=_profile_plugins
+    )
+
+    # 2026 CTEM: Threat Intel Enrichment (EPSS/CISA KEV)
+    try:
+        from threat_intel import enrich_results
+
+        plugin_results = enrich_results(plugin_results, console)
+    except ImportError:
+        pass
+    except Exception as e:
+        console.print(f"  [{S_YELLOW}]⚠ Erro no Threat Intel: {e}[/]")
+
+    # 2026 CTEM: AI Remediation
+    if ai_fix:
+        try:
+            from ai_remediation import generate_ai_fixes
+
+            plugin_results = generate_ai_fixes(plugin_results, console)
+        except ImportError:
+            console.print(f"  [{S_YELLOW}]⚠ ai_remediation.py não encontrado.[/]")
+        except Exception as e:
+            console.print(f"  [{S_YELLOW}]⚠ Erro na IA Remediation: {e}[/]")
 
     # Report
     elapsed_total = time.time() - mission_start
@@ -2926,10 +3181,14 @@ def run_scan(
         try:
             from sarif_exporter import export_sarif
 
-            report_path = export_sarif(target, ip, plugin_results, elapsed_total, output_dir=str(REPORTS_PATH))
+            report_path = export_sarif(
+                target, ip, plugin_results, elapsed_total, output_dir=str(REPORTS_PATH)
+            )
             console.print(f"  [bold bright_green]📋 SARIF Report: {report_path}[/]")
         except ImportError:
-            console.print(f"  [{S_YELLOW}]⚠ sarif_exporter não encontrado. Gerando MD.[/]")
+            console.print(
+                f"  [{S_YELLOW}]⚠ sarif_exporter não encontrado. Gerando MD.[/]"
+            )
             report_path = save_report("\n".join(report))
     elif output_format == "pdf":
         try:
@@ -2958,12 +3217,27 @@ def run_scan(
         except ImportError:
             console.print(f"  [{S_YELLOW}]⚠ reportlab não instalado. Gerando MD.[/]")
             report_path = save_report("\n".join(report))
+    elif output_format == "ocsf":
+        try:
+            from ocsf_exporter import export_ocsf
+
+            report_path = export_ocsf(
+                target, ip, plugin_results, elapsed_total, output_dir=str(REPORTS_PATH)
+            )
+            console.print(f"  [bold bright_green]📋 OCSF Report: {report_path}[/]")
+        except ImportError:
+            console.print(
+                f"  [{S_YELLOW}]⚠ ocsf_exporter não encontrado. Gerando MD.[/]"
+            )
+            report_path = save_report("\n".join(report))
     else:
         report_path = save_report("\n".join(report))
 
     # Dashboard
     total_findings = sum(
-        sum(_count_sev(r.get("resultados", "")).values()) for r in plugin_results if _classify(r)[0] == "vuln"
+        sum(_count_sev(r.get("resultados", "")).values())
+        for r in plugin_results
+        if _classify(r)[0] == "vuln"
     )
     print_dashboard(target, ip, plugin_results, elapsed_total, report_path)
 
@@ -2997,29 +3271,66 @@ def _install_global() -> None:
     pyproject_path = os.path.join(BASE_PATH, "pyproject.toml")
     if not os.path.isfile(pyproject_path):
         console.print(f"  [{S_RED}]✗ pyproject.toml não encontrado em {BASE_PATH}[/]")
-        console.print(f"  [{S_DIM}]Execute este comando dentro do diretório Cascavel.[/]")
+        console.print(
+            f"  [{S_DIM}]Execute este comando dentro do diretório Cascavel.[/]"
+        )
         sys.exit(1)
 
     console.print(f"  [{S_CYAN}]▶ Instalando Cascavel via pip (editable mode)...[/]")
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-e", BASE_PATH, "--no-cache-dir"],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode != 0:
-            # Fallback: tenta sem -e (install normal)
-            console.print(f"  [{S_YELLOW}]⚠ Editable mode falhou. Tentando install padrão...[/]")
+        from rich.status import Status
+
+        with Status(
+            f"[{S_CYAN}]Instalando dependências e linkando executável...[/]",
+            console=console,
+            spinner="aesthetic",
+            speed=1.5,
+        ):
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", BASE_PATH, "--no-cache-dir"],
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "-e",
+                    BASE_PATH,
+                    "--no-cache-dir",
+                    "--break-system-packages",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
+        if result.returncode != 0:
+            # Fallback: tenta sem -e (install normal)
+            console.print(
+                f"  [{S_YELLOW}]⚠ Editable mode falhou. Tentando install padrão...[/]"
+            )
+            with Status(
+                f"[{S_CYAN}]Instalação fallback em andamento...[/]",
+                console=console,
+                spinner="material",
+                speed=1.5,
+            ):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        BASE_PATH,
+                        "--no-cache-dir",
+                        "--break-system-packages",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
             if result.returncode != 0:
                 console.print(f"  [{S_RED}]✗ pip install falhou:[/]")
-                err_lines: list[str] = (result.stderr or result.stdout).strip().split("\n")
+                err_lines: list[str] = (
+                    (result.stderr or result.stdout).strip().split("\n")
+                )
                 tail_start: int = max(0, len(err_lines) - 5)
                 for line in [err_lines[i] for i in range(tail_start, len(err_lines))]:
                     console.print(f"    [{S_DIM}]{line}[/]")
@@ -3028,15 +3339,19 @@ def _install_global() -> None:
         console.print(f"  [{S_RED}]✗ Timeout na instalação (>120s).[/]")
         sys.exit(1)
     except FileNotFoundError:
-        console.print(f"  [{S_RED}]✗ pip não encontrado. Instale: python -m ensurepip[/]")
+        console.print(
+            f"  [{S_RED}]✗ pip não encontrado. Instale: python -m ensurepip[/]"
+        )
         sys.exit(1)
 
-    console.print(f"  [{S_GREEN}]✓ Pacote instalado via pip.[/]")
+    console.print(f"  [{S_GREEN}]✓ Pacote instalado via pip com sucesso.[/]")
 
     # Verificar se 'cascavel' já está no PATH
     cascavel_bin = shutil.which("cascavel")
     if cascavel_bin:
-        console.print(f"  [{S_GREEN}]✓ Comando 'cascavel' disponível em: {cascavel_bin}[/]")
+        console.print(
+            f"  [{S_GREEN}]✓ Comando 'cascavel' disponível em: {cascavel_bin}[/]"
+        )
         console.print()
         console.print(f"  [{S_GREEN}]🎉 Pronto! Use de qualquer terminal:[/]")
         console.print(f"  [{S_CYAN}]  cascavel target.com[/]")
@@ -3046,7 +3361,9 @@ def _install_global() -> None:
         return
 
     # Se não está no PATH, detectar pip user-scripts e configurar
-    console.print(f"  [{S_YELLOW}]⚠ 'cascavel' não encontrado no PATH. Configurando...[/]")
+    console.print(
+        f"  [{S_YELLOW}]⚠ 'cascavel' não encontrado no PATH. Configurando...[/]"
+    )
 
     # Detectar diretório de scripts do pip
     pip_scripts_dir = ""
@@ -3077,7 +3394,9 @@ def _install_global() -> None:
     # Detectar qual dir usar
     target_dir = pip_scripts_dir or user_scripts_dir
     if not target_dir:
-        console.print(f"  [{S_RED}]✗ Não foi possível detectar o diretório de scripts do pip.[/]")
+        console.print(
+            f"  [{S_RED}]✗ Não foi possível detectar o diretório de scripts do pip.[/]"
+        )
         console.print(f"  [{S_DIM}]Adicione manualmente ao PATH: pip show cascavel[/]")
         return
 
@@ -3087,7 +3406,9 @@ def _install_global() -> None:
     console.print()
     console.print(f"  [{S_GREEN}]🎉 Instalação global completa![/]")
     console.print(f"  [{S_YELLOW}]⚠ Reinicie o terminal ou execute:[/]")
-    console.print(f"  [{S_CYAN}]  source ~/.bashrc[/]  [dim]ou[/]  [{S_CYAN}]source ~/.zshrc[/]")
+    console.print(
+        f"  [{S_CYAN}]  source ~/.bashrc[/]  [dim]ou[/]  [{S_CYAN}]source ~/.zshrc[/]"
+    )
     console.print()
     console.print(f"  [{S_GREEN}]Depois, use de qualquer lugar:[/]")
     console.print(f"  [{S_CYAN}]  cascavel target.com[/]")
@@ -3110,7 +3431,9 @@ def _configure_path_export(scripts_dir: str) -> None:
                     capture_output=True,
                     timeout=10,
                 )
-                console.print(f"  [{S_GREEN}]✓ PATH atualizado via setx: {scripts_dir}[/]")
+                console.print(
+                    f"  [{S_GREEN}]✓ PATH atualizado via setx: {scripts_dir}[/]"
+                )
             else:
                 console.print(f"  [{S_GREEN}]✓ {scripts_dir} já está no PATH.[/]")
         except Exception as e:
@@ -3154,7 +3477,9 @@ def _configure_path_export(scripts_dir: str) -> None:
                     existing = f.read()
 
             if scripts_dir in existing:
-                console.print(f"  [{S_GREEN}]✓ PATH já configurado em {os.path.basename(profile)}[/]")
+                console.print(
+                    f"  [{S_GREEN}]✓ PATH já configurado em {os.path.basename(profile)}[/]"
+                )
                 continue
 
             # Fish usa sintaxe diferente
@@ -3163,14 +3488,20 @@ def _configure_path_export(scripts_dir: str) -> None:
                 fish_comment = "# Cascavel Security Framework"
                 with open(profile, "a", encoding="utf-8") as f:
                     f.write(f"\n{fish_comment}\n{fish_line}\n")
-                console.print(f"  [{S_GREEN}]✓ PATH adicionado em {os.path.basename(profile)} (fish)[/]")
+                console.print(
+                    f"  [{S_GREEN}]✓ PATH adicionado em {os.path.basename(profile)} (fish)[/]"
+                )
             else:
                 with open(profile, "a", encoding="utf-8") as f:
                     f.write(f"\n{comment_line}\n{export_line}\n")
-                console.print(f"  [{S_GREEN}]✓ PATH adicionado em {os.path.basename(profile)}[/]")
+                console.print(
+                    f"  [{S_GREEN}]✓ PATH adicionado em {os.path.basename(profile)}[/]"
+                )
 
         except (PermissionError, OSError) as e:
-            console.print(f"  [{S_YELLOW}]⚠ Falha ao editar {os.path.basename(profile)}: {e}[/]")
+            console.print(
+                f"  [{S_YELLOW}]⚠ Falha ao editar {os.path.basename(profile)}: {e}[/]"
+            )
             console.print(f"  [{S_DIM}]Adicione manualmente: {export_line}[/]")
 
 
@@ -3204,7 +3535,12 @@ def main() -> None:
     tools_count = sum(1 for v in _cached_available.values() if v)
 
     # Preloader cinematográfico (com target na tela se disponível)
-    if not quiet and not args.no_preloader and not args.list_plugins and not args.check_tools:
+    if (
+        not quiet
+        and not args.no_preloader
+        and not args.list_plugins
+        and not args.check_tools
+    ):
         run_preloader(plugin_count, tools_count, target_hint=raw_target)
 
     if not quiet:
@@ -3229,12 +3565,16 @@ def main() -> None:
         target = validate_target(raw_target, allow_self=allow_self)
         if not target:
             # validate_target retornou vazio — pede de novo
-            console.print(f"  [{S_YELLOW}]⚠ Target inválido fornecido. Informe novamente:[/]")
+            console.print(
+                f"  [{S_YELLOW}]⚠ Target inválido fornecido. Informe novamente:[/]"
+            )
 
             def _target_validator(val: str) -> str:
                 result = validate_target(val, allow_self=allow_self)
                 if not result:
-                    return "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
+                    return (
+                        "Target inválido. Formatos: dominio.com │ 1.2.3.4 │ host:porta"
+                    )
                 return ""
 
             raw_input = inputx("Target (IP/domain): ", validator=_target_validator)
@@ -3262,14 +3602,18 @@ def main() -> None:
         output_format=out_fmt,
         global_timeout=args.timeout,
         profile=getattr(args, "profile", None),
+        stealth_eval=getattr(args, "stealth_eval", False),
+        ai_fix=getattr(args, "ai_fix", False),
     )
 
     # Final
-    console.print(Rule(f"[{S_GREEN}]🐍 CASCAVEL — Missão Concluída[/]", style="bright_green"))
+    console.print(
+        Rule(f"[{S_GREEN}]🐍 CASCAVEL — Missão Concluída[/]", style="bright_green")
+    )
     console.print(
         Align.center(
             Text.from_markup(
-                f"[{S_GREEN}]github.com/glferreira-devsecops/Cascavel[/]\n"
+                f"[{S_GREEN}]github.com/devferreirag/Cascavel[/]\n"
                 f"[{S_DIM}]Making the web safer, one target at a time.[/]\n"
             )
         )

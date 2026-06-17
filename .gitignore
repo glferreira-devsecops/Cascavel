@@ -24,6 +24,7 @@ pip-wheel-metadata/
 
 # ── Virtual Environments ─────────────────────
 venv/
+venv-*/
 .venv/
 env/
 ENV/
@@ -88,7 +89,6 @@ coverage.xml
 *.log
 install.log
 pip-log.txt
-pip-delete-this-directory.txt
 
 # ── Temporary Files ──────────────────────────
 *.tmp
@@ -104,12 +104,11 @@ reports/
 nuclei-templates/
 data/
 
+# ── OCSF & JSON L telemetry ──────────────────
+*.jsonl
+
 # ── Wordlists (downloaded at runtime) ────────
 wordlists/*.txt
-
-# ── Dependencies (legacy) ────────────────────
-.pipenv/
-Pipfile.lock
 
 # ── Jupyter Notebooks ────────────────────────
 .ipynb_checkpoints/
@@ -118,21 +117,11 @@ Pipfile.lock
 *.pid
 docker-compose.override.yml
 
-# ── Terraform / IaC (if used in plugins) ─────
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfvars
-
-# ── Node (if frontend docs) ─────────────────
-node_modules/
-package-lock.json
-yarn.lock
+# ── CI/CD & Scan Outputs ─────────────────────
+bandit_results.json
+semgrep-results.json
+*.sarif
+*.metadata.json
 run_logs.txt
 protection.json
 .pages_deploy/
-bandit_results.json
-*.sarif
-*.metadata.json
-semgrep-results.json
-bandit_results.json

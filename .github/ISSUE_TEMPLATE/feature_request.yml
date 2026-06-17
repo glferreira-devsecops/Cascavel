@@ -3,7 +3,7 @@ description: Sugira uma nova funcionalidade para o Cascavel
 title: "[FEATURE] "
 labels: ["enhancement", "triage"]
 assignees:
-  - glferreira-devsecops
+  - devferreirag
 body:
   - type: markdown
     attributes:

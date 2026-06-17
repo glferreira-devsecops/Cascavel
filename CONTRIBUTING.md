@@ -16,7 +16,7 @@ Sua colaboração é fundamental para o crescimento do **Cascavel — Quantum Se
 1. **Fork** o repositório principal no GitHub.
 2. **Clone** seu fork:
    ```bash
-   git clone https://github.com/glferreira-devsecops/Cascavel.git
+   git clone https://github.com/devferreirag/Cascavel.git
    cd Cascavel
    ```
 3. **Crie um branch** para sua contribuição:
@@ -96,7 +96,7 @@ return {
 ### Linux (Debian/Ubuntu)
 ```bash
 sudo apt update && sudo apt install -y python3 python3-pip python3-venv nmap nikto
-git clone https://github.com/glferreira-devsecops/Cascavel.git
+git clone https://github.com/devferreirag/Cascavel.git
 cd Cascavel && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 pip install -e ".[full]"  # Opcional: todas as dependências
@@ -105,7 +105,7 @@ pip install -e ".[full]"  # Opcional: todas as dependências
 ### macOS (Homebrew)
 ```bash
 brew install python nmap nikto
-git clone https://github.com/glferreira-devsecops/Cascavel.git
+git clone https://github.com/devferreirag/Cascavel.git
 cd Cascavel && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 pip install -e ".[full]"  # Opcional: todas as dependências
@@ -170,7 +170,7 @@ Signed-off-by: Seu Nome <seu@email.com>
 
 ## 🐞 Relatando Bugs
 
-Abra uma [Issue no GitHub](https://github.com/glferreira-devsecops/Cascavel/issues) com:
+Abra uma [Issue no GitHub](https://github.com/devferreirag/Cascavel/issues) com:
 
 - Descrição detalhada do problema
 - Passos para reproduzir
@@ -187,6 +187,6 @@ Abra uma issue ou entre em contato com os mantenedores.
 <div align="center">
 
 **Cascavel** — Mantido por [RET Tecnologia](https://rettecnologia.org) · MIT License
-<br>[GitHub](https://github.com/glferreira-devsecops) · [LinkedIn](https://linkedin.com/in/DevFerreiraG) · [Website](https://rettecnologia.org)
+<br>[GitHub](https://github.com/devferreirag) · [LinkedIn](https://linkedin.com/in/DevFerreiraG) · [Website](https://rettecnologia.org)
 
 </div>

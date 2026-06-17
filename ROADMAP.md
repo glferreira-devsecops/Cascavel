@@ -26,7 +26,7 @@ This document outlines the planned direction for Cascavel. It is a living docume
 - [ ] **Async plugin engine** — `asyncio`-based execution for 3-5x speed improvement
 - [ ] **Man page** — `man cascavel` via `pyproject.toml`
 - [ ] **Internationalization (i18n)** — English plugin output (Portuguese kept as default)
-- [ ] **Official Docker registry** — `ghcr.io/glferreira-devsecops/cascavel` published image
+- [ ] **Official Docker registry** — `ghcr.io/devferreirag/cascavel` published image
 - [ ] **Plugin migration** — Convert top 20 critical plugins to `PluginResult` schema
 - [ ] **CLI --sarif/--profile integration tests** — E2E validation in CI pipeline
 
@@ -48,8 +48,8 @@ This document outlines the planned direction for Cascavel. It is a living docume
 Want to help shape the future of Cascavel?
 
 1. **Vote on issues** — Use 👍 reactions on issues you want prioritized
-2. **Discuss ideas** — Open a [Feature Request](https://github.com/glferreira-devsecops/Cascavel/issues/new?template=feature_request.yml)
-3. **Submit PRs** — Check issues labeled [`good first issue`](https://github.com/glferreira-devsecops/Cascavel/labels/good%20first%20issue) or [`help wanted`](https://github.com/glferreira-devsecops/Cascavel/labels/help%20wanted)
+2. **Discuss ideas** — Open a [Feature Request](https://github.com/devferreirag/Cascavel/issues/new?template=feature_request.yml)
+3. **Submit PRs** — Check issues labeled [`good first issue`](https://github.com/devferreirag/Cascavel/labels/good%20first%20issue) or [`help wanted`](https://github.com/devferreirag/Cascavel/labels/help%20wanted)
 4. **Read the Contributing Guide** — [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---

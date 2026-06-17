@@ -169,7 +169,7 @@ _cleanup() {
     if [ $exit_code -ne 0 ]; then
         echo -e "\n  ${RED}✗ Instalação falhou (exit code: $exit_code)${NC}"
         echo -e "  ${DIM}Log salvo em: ${INSTALL_LOG:-/dev/null}${NC}"
-        echo -e "  ${DIM}Reporte: https://github.com/glferreira-devsecops/Cascavel/issues${NC}"
+        echo -e "  ${DIM}Reporte: https://github.com/devferreirag/Cascavel/issues${NC}"
     fi
 }
 trap _cleanup EXIT INT TERM HUP
@@ -283,8 +283,8 @@ _auto_clone_if_needed() {
     _log "AUTO-CLONE: cascavel.py não encontrado em $(pwd)"
 
     local CLONE_DIR="Cascavel"
-    local REPO_URL="https://github.com/glferreira-devsecops/Cascavel.git"
-    local TARBALL_URL="https://github.com/glferreira-devsecops/Cascavel/archive/refs/heads/main.tar.gz"
+    local REPO_URL="https://github.com/devferreirag/Cascavel.git"
+    local TARBALL_URL="https://github.com/devferreirag/Cascavel/archive/refs/heads/main.tar.gz"
 
     # Se o diretório Cascavel já existe, tentar entrar nele
     if [ -d "$CLONE_DIR" ] && [ -f "$CLONE_DIR/cascavel.py" ]; then
@@ -506,8 +506,15 @@ detect_os() {
             ;;
         Linux*)
             OS="linux"
-            if [ -f /etc/os-release ]; then
+            
+            # Detect Termux (Android) via PREFIX env or uname
+            if [[ -n "$PREFIX" && "$PREFIX" == *"/com.termux/"* ]] || [ "$(uname -o 2>/dev/null)" = "Android" ]; then
+                DISTRO="Termux (Android)"
+                PKG_MANAGER="pkg"
+            elif [ -f /etc/os-release ]; then
+                # shellcheck disable=SC1091
                 . /etc/os-release
+                # shellcheck disable=SC2153
                 DISTRO="${NAME} ${VERSION_ID}"
                 case "$ID" in
                     ubuntu|debian|kali|parrot|pop)
@@ -540,7 +547,15 @@ detect_os() {
         CYGWIN*|MINGW*|MSYS*)
             OS="windows"
             DISTRO="Windows ($($UNAME -s))"
-            PKG_MANAGER="none"
+            
+            # Detect native package managers in Windows (Git Bash/MSYS2)
+            if command -v winget &>/dev/null; then
+                PKG_MANAGER="winget"
+            elif command -v choco &>/dev/null; then
+                PKG_MANAGER="choco"
+            else
+                PKG_MANAGER="none"
+            fi
             ;;
         *)
             OS="unknown"
@@ -645,19 +660,30 @@ setup_venv() {
             case "$PKG_MANAGER" in
                 apt)
                     sudo apt-get install -y -qq python3-venv >>"$INSTALL_LOG" 2>&1
-                    $PYTHON_CMD -m venv venv || error "Falha crítica: não foi possível criar venv mesmo após instalar python3-venv"
+                    $PYTHON_CMD -m venv venv || {
+                        warn "Falha crítica: não foi possível criar venv. Fazendo fallback para instalação --user"
+                        export FALLBACK_USER_INSTALL=1
+                    }
                     ;;
                 dnf|yum)
                     sudo $PKG_MANAGER install -y python3-devel >>"$INSTALL_LOG" 2>&1
-                    $PYTHON_CMD -m venv venv || error "Falha crítica: não foi possível criar venv"
+                    $PYTHON_CMD -m venv venv || {
+                        warn "Falha crítica: não foi possível criar venv. Fazendo fallback para instalação --user"
+                        export FALLBACK_USER_INSTALL=1
+                    }
                     ;;
                 *)
                     $PYTHON_CMD -m ensurepip 2>/dev/null
-                    $PYTHON_CMD -m venv venv || error "Falha crítica: não foi possível criar venv. Instale python3-venv manualmente."
+                    $PYTHON_CMD -m venv venv || {
+                        warn "Falha crítica: não foi possível criar venv. Fazendo fallback para instalação --user"
+                        export FALLBACK_USER_INSTALL=1
+                    }
                     ;;
             esac
         }
-        info "Venv criado."
+        if [ -z "${FALLBACK_USER_INSTALL:-}" ]; then
+            info "Venv criado."
+        fi
     fi
 
     # Activate
@@ -705,11 +731,16 @@ install_python_deps() {
 
     # Pip com flags de segurança: --no-cache-dir evita cache envenenado
     # --retries 3 e --timeout 30 para resiliência de rede
+    local PIP_INSTALL_FLAGS="--no-cache-dir --retries 3 --timeout 30"
+    if [ -n "${FALLBACK_USER_INSTALL:-}" ]; then
+        PIP_INSTALL_FLAGS="$PIP_INSTALL_FLAGS --user --break-system-packages"
+    fi
+
     _spinner_start "Atualizando pip..."
-    pip install --upgrade pip --no-cache-dir --retries 3 --timeout 30 -q 2>/dev/null || warn "Falha ao atualizar pip"
+    pip install --upgrade pip $PIP_INSTALL_FLAGS -q 2>/dev/null || warn "Falha ao atualizar pip"
     _spinner_stop
     _spinner_start "Instalando dependências Python (requirements.txt)..."
-    pip install -r requirements.txt --no-cache-dir --retries 3 --timeout 60 -q 2>/dev/null || {
+    pip install -r requirements.txt $PIP_INSTALL_FLAGS -q 2>/dev/null || {
         _spinner_stop
         warn "Falha na instalação via requirements.txt. Tentando uma-a-uma..."
         local dep_count=0
@@ -721,7 +752,7 @@ install_python_deps() {
             [[ -z "$dep" || "$dep" == \#* ]] && continue
             ((dep_count++)) || true
             _spinner_start "Instalando [$dep_count/$dep_total] $dep..."
-            pip install "$dep" --no-cache-dir --retries 3 --timeout 30 -q 2>/dev/null || warn "Falha: $dep"
+            pip install "$dep" $PIP_INSTALL_FLAGS -q 2>/dev/null || warn "Falha: $dep"
             _spinner_stop
         done < requirements.txt
     }
@@ -815,7 +846,7 @@ _auto_install_go() {
                 $RM -rf /usr/local/go
                 tar -C /usr/local -xzf "$TMP_GO" 2>/dev/null
             elif command -v sudo &>/dev/null; then
-                sudo $RM -rf /usr/local/go
+                sudo "$RM" -rf /usr/local/go
                 sudo tar -C /usr/local -xzf "$TMP_GO" 2>/dev/null
             else
                 # Fallback: instala no $HOME/go-sdk
@@ -861,6 +892,30 @@ _auto_install_go() {
 
     _spinner_stop
     $RM -f "$TMP_GO" 2>/dev/null
+    
+    # Fallback to snap on Linux
+    if [ "$GO_OS" = "linux" ] && command -v snap &>/dev/null; then
+        warn "Download falhou. Tentando fallback via snap..."
+        _spinner_start "Instalando Go via snap..."
+        if command -v sudo &>/dev/null; then
+            sudo snap install go --classic >>"$INSTALL_LOG" 2>&1
+        else
+            snap install go --classic >>"$INSTALL_LOG" 2>&1
+        fi
+        _spinner_stop
+        
+        # Snap bin directory may not be in PATH
+        if [ -d "/snap/bin" ]; then
+            export PATH="/snap/bin:$PATH"
+        fi
+        
+        if command -v go &>/dev/null; then
+            info "Go instalado via snap: $(go version 2>/dev/null)"
+            _log "GO: Auto-installed via snap $(go version 2>/dev/null)"
+            return 0
+        fi
+    fi
+
     warn "Falha ao instalar Go. Ferramentas ProjectDiscovery não serão instaladas."
     dimlog "Instale manualmente: https://go.dev/dl/"
     return 1
@@ -873,14 +928,14 @@ install_external_tools() {
     # Core tools per package manager
     case "$PKG_MANAGER" in
         brew)
-            BREW_TOOLS="nmap nikto hydra john tshark whois"
+            BREW_TOOLS=(nmap nikto hydra john tshark whois whatweb dirsearch wpscan joomscan)
             local brew_count=0
             local brew_total=0
-            for tool in $BREW_TOOLS; do
+            for tool in "${BREW_TOOLS[@]}"; do
                 if ! command -v "$tool" &>/dev/null; then ((brew_total++)) || true; fi
             done
             if [ "$brew_total" -gt 0 ]; then
-                for tool in $BREW_TOOLS; do
+                for tool in "${BREW_TOOLS[@]}"; do
                     if ! command -v "$tool" &>/dev/null; then
                         ((brew_count++)) || true
                         _spinner_start "Instalando [$brew_count/$brew_total] $tool..."
@@ -895,14 +950,14 @@ install_external_tools() {
             pip install sqlmap wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
         apt)
-            APT_TOOLS="nmap nikto sqlmap hydra john sslscan dnsrecon fierce tshark whois traceroute"
-            _spinner_start "Instalando ferramentas APT ($(echo "$APT_TOOLS" | wc -w | tr -d ' ') pacotes)..."
-            sudo apt-get install -y $APT_TOOLS >>"$INSTALL_LOG" 2>&1 || warn "Alguns pacotes APT falharam."
+            APT_TOOLS=(nmap nikto sqlmap hydra john sslscan dnsrecon fierce tshark whois traceroute whatweb dirsearch wpscan joomscan)
+            _spinner_start "Instalando ferramentas APT (${#APT_TOOLS[@]} pacotes)..."
+            sudo apt-get install -y "${APT_TOOLS[@]}" >>"$INSTALL_LOG" 2>&1 || warn "Alguns pacotes APT falharam."
             _spinner_stop
             pip install wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
         dnf|yum)
-            sudo $PKG_MANAGER install -y nmap nikto hydra john nmap-ncat whois traceroute 2>/dev/null || true
+            sudo "$PKG_MANAGER" install -y nmap nikto hydra john nmap-ncat whois traceroute 2>/dev/null || true
             pip install wafw00f sqlmap -q 2>/dev/null || true
             ;;
         pacman)
@@ -991,6 +1046,17 @@ install_external_tools() {
                 fi
             done
             info "Go tools: ${go_installed}/${go_total} instaladas."
+
+            # testssl.sh installation logic
+            if ! command -v testssl.sh &>/dev/null; then
+                 _spinner_start "Instalando testssl.sh..."
+                 git clone --depth 1 https://github.com/drwetter/testssl.sh.git "$GOBIN/testssl" >>"$INSTALL_LOG" 2>&1 || true
+                 if [ -f "$GOBIN/testssl/testssl.sh" ]; then
+                     ln -sf "$GOBIN/testssl/testssl.sh" "$GOBIN/testssl.sh"
+                     chmod +x "$GOBIN/testssl.sh"
+                 fi
+                 _spinner_stop
+            fi
 
             # Nuclei templates auto-update
             if command -v nuclei &>/dev/null; then
@@ -1088,8 +1154,11 @@ verify_installation() {
     info "Plugins disponíveis: ${BOLD}${PLUGIN_COUNT}${NC}"
 
     # Quick syntax check
-    $PYTHON_CMD -c "import py_compile; py_compile.compile('cascavel.py', doraise=True)" 2>/dev/null && \
-        info "cascavel.py — sintaxe OK" || warn "cascavel.py — erro de sintaxe"
+    if $PYTHON_CMD -c "import py_compile; py_compile.compile('cascavel.py', doraise=True)" 2>/dev/null; then
+        info "cascavel.py — sintaxe OK"
+    else
+        warn "cascavel.py — erro de sintaxe"
+    fi
 
     # Log summary
     _log "SUMMARY: ${FOUND}/${TOTAL} tools, ${PLUGIN_COUNT} plugins"
@@ -1099,113 +1168,15 @@ verify_installation() {
 setup_global_command() {
     step "Configurando comando global 'cascavel'..."
 
-    # 1. pip install -e . (editable mode — desenvolvedor vê mudanças imediatas)
-    if [ -f "pyproject.toml" ]; then
-        dimlog "pip install -e . (editable mode)..."
-        pip install -e . --no-cache-dir -q 2>/dev/null || {
-            warn "Editable mode falhou. Tentando install padrão..."
-            pip install . --no-cache-dir -q 2>/dev/null || {
-                warn "pip install falhou. Comando global não configurado."
-                _log "ERROR: pip install -e . and pip install . both failed"
-                return
-            }
+    if [ -f "cascavel.py" ]; then
+        dimlog "Executando cascavel.py --install-global para configurar comando universal..."
+        # O script python cuidará do pip install --break-system-packages e das configurações ~/.bashrc
+        $PYTHON_CMD cascavel.py --install-global || {
+            warn "Instalação global do Python falhou."
         }
-        info "Pacote 'cascavel' registrado via pip."
     else
-        warn "pyproject.toml não encontrado. Pulando instalação global."
-        return
+        warn "cascavel.py não encontrado. Pulando instalação global."
     fi
-
-    # 2. Verificar se 'cascavel' já está no PATH
-    if command -v cascavel &>/dev/null; then
-        CASCAVEL_PATH=$(command -v cascavel)
-        info "Comando 'cascavel' disponível: ${BOLD}${CASCAVEL_PATH}${NC}"
-        _log "GLOBAL: cascavel found at $CASCAVEL_PATH"
-        return
-    fi
-
-    # 3. Se não está no PATH, detectar e configurar
-    warn "'cascavel' não encontrado no PATH. Configurando automaticamente..."
-
-    # Detectar diretório de scripts do pip
-    PIP_SCRIPTS=""
-    if [ -n "${VIRTUAL_ENV:-}" ]; then
-        PIP_SCRIPTS="${VIRTUAL_ENV}/bin"
-    else
-        PIP_SCRIPTS=$($PYTHON_CMD -c "import sysconfig; print(sysconfig.get_path('scripts'))" 2>/dev/null || echo "")
-    fi
-
-    # User scripts (--user install)
-    USER_SCRIPTS=""
-    USER_BASE=$($PYTHON_CMD -m site --user-base 2>/dev/null || echo "")
-    if [ -n "$USER_BASE" ]; then
-        USER_SCRIPTS="${USER_BASE}/bin"
-    fi
-
-    TARGET_DIR="${PIP_SCRIPTS:-$USER_SCRIPTS}"
-
-    if [ -z "$TARGET_DIR" ]; then
-        warn "Não foi possível detectar o diretório de scripts. Configure manualmente."
-        dimlog "Após instalar: pip show cascavel"
-        return
-    fi
-
-    # 4. Configurar PATH permanente em todos os shells
-    HOME_DIR="$HOME"
-    EXPORT_LINE="export PATH=\"${TARGET_DIR}:\$PATH\""
-    COMMENT="# Cascavel Security Framework — global command"
-
-    _add_to_profile() {
-        local profile="$1"
-        local line="$2"
-        local comment="$3"
-        local use_fish="$4"
-
-        if [ ! -f "$profile" ]; then
-            touch "$profile" 2>/dev/null || return
-        fi
-
-        # Anti-duplicação: verifica se já está configurado
-        if grep -q "$TARGET_DIR" "$profile" 2>/dev/null; then
-            info "PATH já configurado em $(basename "$profile")"
-            return
-        fi
-
-        if [ "$use_fish" = "yes" ]; then
-            echo "" >> "$profile"
-            echo "$comment" >> "$profile"
-            echo "set -gx PATH \"${TARGET_DIR}\" \$PATH" >> "$profile"
-        else
-            echo "" >> "$profile"
-            echo "$comment" >> "$profile"
-            echo "$line" >> "$profile"
-        fi
-        info "PATH adicionado em $(basename "$profile")"
-        _log "PATH: Added $TARGET_DIR to $profile"
-    }
-
-    # Bash
-    for bashrc in ".bashrc" ".bash_profile" ".profile"; do
-        if [ -f "${HOME_DIR}/${bashrc}" ]; then
-            _add_to_profile "${HOME_DIR}/${bashrc}" "$EXPORT_LINE" "$COMMENT" "no"
-            break
-        fi
-    done
-
-    # Zsh
-    if [ -f "${HOME_DIR}/.zshrc" ] || command -v zsh &>/dev/null; then
-        _add_to_profile "${HOME_DIR}/.zshrc" "$EXPORT_LINE" "$COMMENT" "no"
-    fi
-
-    # Fish
-    FISH_CONFIG="${HOME_DIR}/.config/fish/config.fish"
-    if [ -f "$FISH_CONFIG" ] || command -v fish &>/dev/null; then
-        $MKDIR -p "$(dirname "$FISH_CONFIG")" 2>/dev/null || true
-        _add_to_profile "$FISH_CONFIG" "" "$COMMENT" "yes"
-    fi
-
-    # Aplicar no shell atual
-    export PATH="${TARGET_DIR}:$PATH"
 
     # Re-verificar
     if command -v cascavel &>/dev/null; then
@@ -1230,7 +1201,11 @@ post_install_health_check() {
 
     # 1. Core files exist
     for f in cascavel.py requirements.txt install.sh pyproject.toml; do
-        [ -f "$f" ] && _health_ok "$f existe" || _health_fail "$f NÃO ENCONTRADO"
+        if [ -f "$f" ]; then
+            _health_ok "$f existe"
+        else
+            _health_fail "$f NÃO ENCONTRADO"
+        fi
     done
 
     # 2. Directories exist with correct permissions
@@ -1372,7 +1347,7 @@ first_run_wizard() {
     echo -e "  ${MAGENTA}✨${NC} ${BOLD}Deseja executar um scan de demonstração agora?${NC}"
     echo -e "    ${DIM}Digite o domínio alvo ou pressione Enter para pular:${NC}"
     echo ""
-    printf "  ${CYAN}❯${NC} "
+    printf "  %b❯%b " "${CYAN}" "${NC}"
     read -r TARGET_INPUT </dev/tty 2>/dev/null || TARGET_INPUT=""
 
     if [ -n "$TARGET_INPUT" ]; then

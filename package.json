@@ -1,0 +1,29 @@
+{
+  "name": "cascavel-ctem",
+  "version": "3.0.0",
+  "description": "Enterprise-Grade Continuous Threat Exposure Management (CTEM) CLI",
+  "main": "npm_wrapper.js",
+  "bin": {
+    "cascavel-ctem": "npm_wrapper.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devferreirag/Cascavel.git"
+  },
+  "keywords": [
+    "ctem",
+    "security",
+    "vulnerability-scanner",
+    "devsecops",
+    "cybersecurity"
+  ],
+  "author": "devferreirag",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devferreirag/Cascavel/issues"
+  },
+  "homepage": "https://github.com/devferreirag/Cascavel#readme"
+}

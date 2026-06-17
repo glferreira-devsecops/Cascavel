@@ -3,7 +3,7 @@ description: Reporte um bug no Cascavel
 title: "[BUG] "
 labels: ["bug", "triage"]
 assignees:
-  - glferreira-devsecops
+  - devferreirag
 body:
   - type: markdown
     attributes:
