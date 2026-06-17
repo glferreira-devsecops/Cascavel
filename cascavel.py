@@ -1650,6 +1650,7 @@ def _exec_plugin(
     # Injetando contexto no run() do plugin
     try:
         import inspect
+
         sig = inspect.signature(mod.run)
         has_context = "context" in sig.parameters
     except Exception:
@@ -1674,11 +1675,7 @@ def _exec_plugin(
     try:
         # Se os baselines ainda nao tiverem sido calculados, cria um context mock
         if not global_context:
-            global_context = {
-                "baseline_latency": 0.5,
-                "baseline_404_len": 0,
-                "discovered_params": []
-            }
+            global_context = {"baseline_latency": 0.5, "baseline_404_len": 0, "discovered_params": []}
 
         if has_context:
             result = mod.run(target, ip, ports, banners, context=global_context)
@@ -1851,28 +1848,26 @@ def _calculate_baselines(target: str) -> dict:
     except Exception:
         baseline_404_len = 0
 
-    return {
-        "baseline_latency": baseline_latency,
-        "baseline_404_len": baseline_404_len
-    }
+    return {"baseline_latency": baseline_latency, "baseline_404_len": baseline_404_len}
+
 
 def _discover_parameters(target: str) -> list[str]:
     """Spidering rápido para descoberta de parâmetros reais."""
     params: set[str] = set()
     try:
         resp = requests.get(f"http://{target}/", timeout=5)
-        soup = BeautifulSoup(resp.text, 'html.parser')
+        soup = BeautifulSoup(resp.text, "html.parser")
 
         # Encontra params em URLs
-        for a in soup.find_all('a', href=True):
-            parsed = urllib.parse.urlparse(a['href'])
+        for a in soup.find_all("a", href=True):
+            parsed = urllib.parse.urlparse(a["href"])
             query = urllib.parse.parse_qs(parsed.query)
             params.update(query.keys())
 
         # Encontra nomes em forms
-        for form in soup.find_all('form'):
-            for input_tag in form.find_all(['input', 'select', 'textarea']):
-                name = input_tag.get('name')
+        for form in soup.find_all("form"):
+            for input_tag in form.find_all(["input", "select", "textarea"]):
+                name = input_tag.get("name")
                 if name:
                     params.add(name)
     except Exception as exc:
@@ -1931,10 +1926,12 @@ def run_plugins(
             "baseline_latency": baselines["baseline_latency"],
             "baseline_404_len": baselines["baseline_404_len"],
             "discovered_params": discovered_params,
-            "oob_server": f"{target}.oob.cascavel.io"
+            "oob_server": f"{target}.oob.cascavel.io",
         }
 
-    console.print(f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes")
+    console.print(
+        f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes"
+    )
     console.print(f"    [green]✓[/] Parâmetros Descobertos: {len(discovered_params)} parâmetros para fuzzing.\n")
 
     # Randomize intel order for variety

@@ -164,7 +164,7 @@ def _test_reflected(target, param, is_waf_reflection):
                     # Validar Multi-estágio: Content-Type deve permitir renderização de HTML
                     ctype = resp.headers.get("Content-Type", "").lower()
                     if "json" in ctype or "xml" in ctype or "text/plain" in ctype:
-                        continue # Eliminação de falso positivo: XSS não renderiza em JSON puro sem HTML
+                        continue  # Eliminação de falso positivo: XSS não renderiza em JSON puro sem HTML
 
                     return {
                         "tipo": "XSS_REFLETIDO",
