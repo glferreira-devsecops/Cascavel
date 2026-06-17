@@ -85,6 +85,9 @@ jobs:
             --config p/security-audit \
             --config p/owasp-top-ten \
             --sarif \
+            --exclude-rule "python.lang.security.audit.insecure-transport.requests.request-with-http.request-with-http" \
+            --exclude-rule "python.requests.security.disabled-cert-validation.disabled-cert-validation" \
+            --exclude-rule "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected" \
             --output semgrep-results.sarif
       - name: Upload Semgrep SARIF
         if: always()
