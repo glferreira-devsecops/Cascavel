@@ -97,9 +97,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run OSV-Scanner
         uses: google/osv-scanner-action/osv-scanner-action@v1.9.2
-        with:
-          scan-args: |-
-            --lockfile=requirements.txt
 
   secrets:
     name: "🔑 TruffleHog Secret Detection"
@@ -131,7 +128,7 @@ jobs:
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@v0.5.6
         with:
-          project: .
+          inputs: .
 
   sbom:
     name: "🧾 Generate SBOM & Pip-Audit"
