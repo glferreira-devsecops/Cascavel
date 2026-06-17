@@ -1,3 +1,7 @@
 rules:
-  unpinned-uses: false
-  superfluous-actions: false
+  unpinned-uses:
+    ignore:
+      - "**"
+  superfluous-actions:
+    ignore:
+      - "**"
