@@ -28,7 +28,7 @@ Os seguintes comportamentos são considerados uma violação deste Código de Co
 
 Se você testemunhar ou for alvo de comportamento que viole este Código de Conduta, por favor, denuncie:
 
-* Abra uma [Issue no GitHub](https://github.com/devferreirag/Cascavel/issues) com o título "Denúncia de Código de Conduta".
+* Abra uma [Issue no GitHub](https://github.com/glferreira-devsecops/Cascavel/issues) com o título "Denúncia de Código de Conduta".
 * Ou entre em contato via [LinkedIn](https://linkedin.com/in/devferreirag).
 
 Todas as denúncias serão tratadas com confidencialidade e seriedade.
@@ -46,6 +46,6 @@ Este Código de Conduta é adaptado do [Contributor Covenant](https://www.contri
 <div align="center">
 
 **Cascavel** — Mantido por [RET Tecnologia](https://rettecnologia.org) · MIT License
-<br>[GitHub](https://github.com/devferreirag) · [LinkedIn](https://linkedin.com/in/devferreirag) · [Website](https://rettecnologia.org)
+<br>[GitHub](https://github.com/glferreira-devsecops) · [LinkedIn](https://linkedin.com/in/devferreirag) · [Website](https://rettecnologia.org)
 
 </div>

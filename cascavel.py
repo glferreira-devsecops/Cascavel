@@ -2,7 +2,7 @@
 """
 ╔═══════════════════════════════════════════════════════════════╗
 ║  CASCAVEL — Quantum Security Framework v3.0.0                ║
-║  Por DevFerreiraG | github.com/devferreirag          ║
+║  Por DevFerreiraG | github.com/glferreira-devsecops          ║
 ║  Framework de automação pentest plugável, multi-plataforma   ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
@@ -596,7 +596,7 @@ SNAKE_ART = r"""[green]
         .~))>>
       .~))>>
     .~))>>
-  .~)>>                        [bold yellow]⚡ github.com/devferreirag[/]
+  .~)>>                        [bold yellow]⚡ github.com/glferreira-devsecops[/]
  .~)>>[/]"""
 
 
@@ -2453,7 +2453,7 @@ def list_plugins_table() -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🔄 SELF-UPDATE (GitHub Releases)
 # ═══════════════════════════════════════════════════════════════════════════════
-_GITHUB_REPO = "devferreirag/Cascavel"
+_GITHUB_REPO = "glferreira-devsecops/Cascavel"
 _GITHUB_API_RELEASES = f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest"
 _GITHUB_RAW_BASE = f"https://raw.githubusercontent.com/{_GITHUB_REPO}"
 
@@ -2603,7 +2603,7 @@ def self_update() -> None:
     import tarfile
     import tempfile
 
-    release_url = f"https://github.com/devferreirag/Cascavel/releases/download/v{latest}/cascavel-release.tar.gz"
+    release_url = f"https://github.com/glferreira-devsecops/Cascavel/releases/download/v{latest}/cascavel-release.tar.gz"
 
     try:
         console.print(f"  [dim]Baixando pacote de atualização v{latest}...[/]")
@@ -3376,7 +3376,7 @@ def main() -> None:
     console.print(
         Align.center(
             Text.from_markup(
-                f"[{S_GREEN}]github.com/devferreirag/Cascavel[/]\n"
+                f"[{S_GREEN}]github.com/glferreira-devsecops/Cascavel[/]\n"
                 f"[{S_DIM}]Making the web safer, one target at a time.[/]\n"
             )
         )

@@ -10,7 +10,7 @@ Cascavel is maintained under a **BDFL (Benevolent Dictator for Life)** governanc
 
 ### 🎯 Project Lead (BDFL)
 
-**Gabriel Ferreira** ([@devferreirag](https://github.com/devferreirag))
+**Gabriel Ferreira** ([@glferreira-devsecops](https://github.com/glferreira-devsecops))
 
 - Final authority on architectural decisions
 - Merge approval for all pull requests

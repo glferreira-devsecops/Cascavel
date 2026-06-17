@@ -27,8 +27,8 @@
   <img src="https://img.shields.io/badge/Relatórios-OCSF%20|%20PDF%20|%20JSON-28A745.svg?style=flat-square" />
   <img src="https://img.shields.io/badge/Segurança-Hardened%202026-critical?style=flat-square" />
   <a href="https://rettecnologia.org"><img src="https://img.shields.io/badge/RET%20Tecnologia-Open%20Source-00D4FF.svg?style=flat-square" /></a>
-  <a href="https://github.com/devferreirag/Cascavel/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/devferreirag/Cascavel/security.yml?style=flat-square&label=CI%20Security&logo=github" /></a>
-  <a href="https://github.com/devferreirag/Cascavel/stargazers"><img src="https://img.shields.io/github/stars/devferreirag/Cascavel?style=flat-square&color=FFD700" /></a>
+  <a href="https://github.com/glferreira-devsecops/Cascavel/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/glferreira-devsecops/Cascavel/security.yml?style=flat-square&label=CI%20Security&logo=github" /></a>
+  <a href="https://github.com/glferreira-devsecops/Cascavel/stargazers"><img src="https://img.shields.io/github/stars/glferreira-devsecops/Cascavel?style=flat-square&color=FFD700" /></a>
 </p>
 
 ---
@@ -93,7 +93,7 @@ O **Cascavel AEV (Adversarial Exposure Validation)** substitui todo esse workflo
 O instalador foi arquitetado sob um rigoroso Threat Model, garantindo total isolamento de dependências e prevenindo RCE de supply chain. **Não requer `git`. Compatível com macOS, Linux, WSL2 e Docker.**
 
 ```bash
-curl -sL https://github.com/devferreirag/Cascavel/releases/latest/download/cascavel-release.tar.gz | tar xz && cd Cascavel && bash install.sh
+curl -sL https://github.com/glferreira-devsecops/Cascavel/releases/latest/download/cascavel-release.tar.gz | tar xz && cd Cascavel && bash install.sh
 ```
 
 ### Proteções do Instalador (Hardening v2.0)
@@ -141,7 +141,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install
-        run: curl -sL https://github.com/devferreirag/Cascavel/releases/latest/download/cascavel-release.tar.gz | tar xz && cd Cascavel && bash install.sh
+        run: curl -sL https://github.com/glferreira-devsecops/Cascavel/releases/latest/download/cascavel-release.tar.gz | tar xz && cd Cascavel && bash install.sh
       - name: Execute CTEM (OCSF + AI Fixes)
         run: cascavel -t staging.internal -q -o ocsf --ai-fix
       - name: Upload Telemetry
@@ -211,6 +211,6 @@ Regras rígidas para assegurar a integridade do Framework:
   <strong>MÉTODO CASCAVEL</strong><br />
   <sub>
     Desenvolvido e engenheirado por <strong>DevFerreiraG</strong><br />
-    <a href="https://github.com/devferreirag">Perfil no GitHub</a>
+    <a href="https://github.com/glferreira-devsecops">Perfil no GitHub</a>
   </sub>
 </p>

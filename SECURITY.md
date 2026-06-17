@@ -15,7 +15,7 @@ If you discover a security vulnerability in the Cascavel framework, we appreciat
 
 ### How to Report
 
-1. **Preferred**: Open a private security advisory on [GitHub](https://github.com/devferreirag/Cascavel/security/advisories).
+1. **Preferred**: Open a private security advisory on [GitHub](https://github.com/glferreira-devsecops/Cascavel/security/advisories).
 2. **Alternative**: Contact the maintainer **DevFerreiraG** via [LinkedIn](https://www.linkedin.com/in/devferreirag) or email at `contato@rettecnologia.org`.
 3. **Please include**:
    - Detailed description of the vulnerability
