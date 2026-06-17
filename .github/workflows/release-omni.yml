@@ -62,9 +62,8 @@ jobs:
       - name: Create GitHub Release
         env:
           REF_NAME: ${{ github.ref_name }}
-        run: gh release create "$REF_NAME" cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle dist/cascavel-linux cascavel-linux.bundle --generate-notes
-        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$REF_NAME" cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle dist/cascavel-linux cascavel-linux.bundle --generate-notes
 
   publish-pypi:
     name: Publish to PyPI
