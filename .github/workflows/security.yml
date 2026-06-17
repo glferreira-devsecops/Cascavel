@@ -107,7 +107,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@v1.9.2
+        uses: google/osv-scanner-action/osv-scanner-action@347b2c6eeb411f12da34444988771485db83af07 # v1.9.2
 
   secrets:
     name: "🔑 TruffleHog Secret Detection"
@@ -120,7 +120,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.81.9
+        uses: trufflesecurity/trufflehog@fe5624c70923355128868cffd647b6e2cfe11443 # v3.81.9
         with:
           path: ./
           extra_args: --debug --only-verified
@@ -140,7 +140,7 @@ jobs:
           bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@v0.5.6
+        uses: zizmorcore/zizmor-action@7ce6d8a25c345eb62ed07706d8b671a5bd8cbda6 # v0.5.6
         with:
           inputs: .
 

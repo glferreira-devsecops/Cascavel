@@ -16,7 +16,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -58,7 +58,7 @@ jobs:
           tar -czvf ../cascavel-release.tar.gz Cascavel/
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.5.0
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
 
       - name: Sign Release Assets
         run: |
@@ -66,17 +66,9 @@ jobs:
           cosign sign-blob --yes cascavel-release.zip --bundle cascavel-release.zip.bundle
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            cascavel-release.zip
-            cascavel-release.tar.gz
-            cascavel-release.tar.gz.bundle
-            cascavel-release.zip.bundle
-          generate_release_notes: true
-          fail_on_unmatched_files: true
+        run: gh release create ${{ github.ref_name }} cascavel-release.zip cascavel-release.tar.gz cascavel-release.tar.gz.bundle cascavel-release.zip.bundle --generate-notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   provenance:
     needs: build-and-release
@@ -84,6 +76,6 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@bdccb222fb20e985834d615e47c162eb09cd3497 # v2.0.0
     with:
       base64-subjects: ""
