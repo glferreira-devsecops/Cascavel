@@ -20,10 +20,18 @@ console = Console()
 # CLOUD METADATA SSRF BLOCKLIST (2026 Expanded)
 # ═══════════════════════════════════════════════════════════════════════════════
 _CLOUD_METADATA_HOSTS = {
-    "169.254.169.254", "fd00:ec2::254", "169.254.169.123",
-    "metadata.google.internal", "metadata.google.com",
+    "169.254.169.254",
+    "fd00:ec2::254",
+    "169.254.169.123",
+    "metadata.google.internal",
+    "metadata.google.com",
     "100.100.100.200",
-    "localhost", "0.0.0.0", "::1", "0177.0.0.1", "ip6-localhost", "ip6-loopback",
+    "localhost",
+    "0.0.0.0",
+    "::1",
+    "0177.0.0.1",
+    "ip6-localhost",
+    "ip6-loopback",
 }
 
 
@@ -247,6 +255,7 @@ def inputx(prompt: str, max_retries: int = 3, validator=None) -> str:
                 else:
                     console.print(f"  [{S_RED}]✗ Máximo de tentativas atingido. Abortando.[/]")
                     import sys
+
                     sys.exit(1)
             if validator:
                 error = validator(value)
@@ -258,16 +267,20 @@ def inputx(prompt: str, max_retries: int = 3, validator=None) -> str:
                     else:
                         console.print(f"  [{S_RED}]✗ {error} — máximo de tentativas.[/]")
                         import sys
+
                         sys.exit(1)
             return value
         except EOFError:
             console.print(f"\n  [{S_RED}]✗ EOF — entrada não disponível.[/]")
             import sys
+
             sys.exit(1)
         except KeyboardInterrupt:
             console.print(f"\n  [{S_RED}]✗ Interrompido.[/]\n")
             import sys
+
             sys.exit(0)
     console.print(f"  [{S_RED}]✗ Sem input válido. Abortando.[/]")
     import sys
+
     sys.exit(1)

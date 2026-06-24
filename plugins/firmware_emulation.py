@@ -12,6 +12,7 @@ from typing import Any
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -33,12 +34,18 @@ EMULATION_PORTS = {
 
 # Known firmware debug paths
 DEBUG_PATHS = [
-    "/cgi-bin/luci",         # OpenWrt
-    "/cgi-bin/admin",        # Generic router
-    "/cgi-bin/debug",        # Debug interface
-    "/debug", "/diag", "/shell", "/cli",
-    "/system/debug", "/admin/debug",
-    "/firmware", "/upgrade", "/flash",
+    "/cgi-bin/luci",  # OpenWrt
+    "/cgi-bin/admin",  # Generic router
+    "/cgi-bin/debug",  # Debug interface
+    "/debug",
+    "/diag",
+    "/shell",
+    "/cli",
+    "/system/debug",
+    "/admin/debug",
+    "/firmware",
+    "/upgrade",
+    "/flash",
     "/api/v1/system/debug",
     "/api/v1/firmware",
 ]
@@ -66,28 +73,34 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
 
                 # Check for QEMU-specific banners
                 if any(kw in banner.lower() for kw in ["qemu", "kvm", "vnc", "monitor"]):
-                    findings.append({
-                        "tipo": "QEMU_INTERFACE_EXPOSTA",
-                        "severidade": "CRITICO",
-                        "descricao": f"Interface QEMU/KVM exposta na porta {port} ({desc})",
-                        "evidencia": f"Banner: {banner[:200]}",
-                        "correcao": "Restringir acesso via firewall. Nunca expor interfaces de emulação em rede pública.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "QEMU_INTERFACE_EXPOSTA",
+                            "severidade": "CRITICO",
+                            "descricao": f"Interface QEMU/KVM exposta na porta {port} ({desc})",
+                            "evidencia": f"Banner: {banner[:200]}",
+                            "correcao": "Restringir acesso via firewall. Nunca expor interfaces de emulação em rede pública.",
+                        }
+                    )
                 elif port in [5900, 5901, 5902]:
-                    findings.append({
-                        "tipo": "VNC_EMULACAO_EXPOSTO",
-                        "severidade": "ALTO",
-                        "descricao": f"VNC (possível emulação) exposto na porta {port}",
-                        "evidencia": f"Banner: {banner[:100]}" if banner else "Conexão aceita",
-                        "correcao": "Autenticar VNC com senha forte e restringir via firewall.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "VNC_EMULACAO_EXPOSTO",
+                            "severidade": "ALTO",
+                            "descricao": f"VNC (possível emulação) exposto na porta {port}",
+                            "evidencia": f"Banner: {banner[:100]}" if banner else "Conexão aceita",
+                            "correcao": "Autenticar VNC com senha forte e restringir via firewall.",
+                        }
+                    )
                 elif port == 9090:
-                    findings.append({
-                        "tipo": "QMP_EXPOSTO",
-                        "severidade": "CRITICO",
-                        "descricao": f"QEMU Monitor Protocol (QMP) exposto na porta {port} — controle total da VM",
-                        "correcao": "Desabilitar QMP remoto ou restringir via socket Unix local.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "QMP_EXPOSTO",
+                            "severidade": "CRITICO",
+                            "descricao": f"QEMU Monitor Protocol (QMP) exposto na porta {port} — controle total da VM",
+                            "correcao": "Desabilitar QMP remoto ou restringir via socket Unix local.",
+                        }
+                    )
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception:
@@ -108,13 +121,15 @@ def _check_qemu_escape(target: str, ip: str, ports: list[int]) -> list[dict[str,
             if resp.status_code == 200:
                 data = resp.json() if "json" in resp.headers.get("content-type", "") else {}
                 version = data.get("QMP", {}).get("version", {}).get("qemu", {}).get("micro", "unknown")
-                findings.append({
-                    "tipo": "QEMU_VERSION_EXPOSTA",
-                    "severidade": "ALTO",
-                    "descricao": f"Versão do QEMU exposta via QMP: {version}",
-                    "evidencia": str(data)[:200],
-                    "correcao": "Verificar CVEs para a versão. Atualizar para última versão estável.",
-                })
+                findings.append(
+                    {
+                        "tipo": "QEMU_VERSION_EXPOSTA",
+                        "severidade": "ALTO",
+                        "descricao": f"Versão do QEMU exposta via QMP: {version}",
+                        "evidencia": str(data)[:200],
+                        "correcao": "Verificar CVEs para a versão. Atualizar para última versão estável.",
+                    }
+                )
         except Exception:
             pass
 
@@ -135,13 +150,15 @@ def _check_qemu_escape(target: str, ip: str, ports: list[int]) -> list[dict[str,
                     vnc_ver = version_match.group(1)
                     # Old VNC versions have known exploits
                     if vnc_ver in ["3.3", "3.7", "3.8"]:
-                        findings.append({
-                            "tipo": "VNC_VERSAO_ANTIGA",
-                            "severidade": "ALTO",
-                            "descricao": f"VNC versão {vnc_ver} — vulnerabilidades conhecidas de escape",
-                            "evidencia": f"Banner: {banner[:100]}",
-                            "correcao": "Atualizar VNC e QEMU. Usar TLS e autenticação forte.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "VNC_VERSAO_ANTIGA",
+                                "severidade": "ALTO",
+                                "descricao": f"VNC versão {vnc_ver} — vulnerabilidades conhecidas de escape",
+                                "evidencia": f"Banner: {banner[:100]}",
+                                "correcao": "Atualizar VNC e QEMU. Usar TLS e autenticação forte.",
+                            }
+                        )
         except Exception:
             pass
     return findings
@@ -163,13 +180,15 @@ def _check_debug_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                 if resp.status_code == 200:
                     body = resp.text.lower()
                     if any(kw in body for kw in ["debug", "diagnostic", "shell", "console", "firmware", "flash"]):
-                        findings.append({
-                            "tipo": "DEBUG_INTERFACE_EXPOSTA",
-                            "severidade": "ALTO",
-                            "descricao": f"Interface de debug em {path} (porta {port})",
-                            "evidencia": f"HTTP {resp.status_code}, body: {resp.text[:150]}",
-                            "correcao": "Desabilitar interfaces de debug em produção. Usar acesso restrito via VPN.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "DEBUG_INTERFACE_EXPOSTA",
+                                "severidade": "ALTO",
+                                "descricao": f"Interface de debug em {path} (porta {port})",
+                                "evidencia": f"HTTP {resp.status_code}, body: {resp.text[:150]}",
+                                "correcao": "Desabilitar interfaces de debug em produção. Usar acesso restrito via VPN.",
+                            }
+                        )
             except Exception:
                 continue
 
@@ -183,13 +202,15 @@ def _check_debug_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                 sock.connect((ip, port))
                 banner = sock.recv(256).decode("utf-8", errors="ignore")
                 sock.close()
-                findings.append({
-                    "tipo": "JTAG_DEBUG_EXPOSTO",
-                    "severidade": "CRITICO",
-                    "descricao": f"Interface de debug {desc} exposta na porta {port}",
-                    "evidencia": f"Banner: {banner[:100]}" if banner else "Conexão aceita",
-                    "correcao": "Desabilitar JTAG/SWD em produção. Usar efuse ou lock bits para proteção.",
-                })
+                findings.append(
+                    {
+                        "tipo": "JTAG_DEBUG_EXPOSTO",
+                        "severidade": "CRITICO",
+                        "descricao": f"Interface de debug {desc} exposta na porta {port}",
+                        "evidencia": f"Banner: {banner[:100]}" if banner else "Conexão aceita",
+                        "correcao": "Desabilitar JTAG/SWD em produção. Usar efuse ou lock bits para proteção.",
+                    }
+                )
             except Exception:
                 pass
     return findings
@@ -213,14 +234,18 @@ def _check_firmware_signing(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                     resp = requests.get(f"{base}{path}", timeout=3, verify=False)
                     if resp.status_code == 200 and "upload" in resp.text.lower():
                         # Check if there's signature validation
-                        has_sign = any(kw in resp.text.lower() for kw in ["signature", "sign", "verify", "checksum", "hash"])
+                        has_sign = any(
+                            kw in resp.text.lower() for kw in ["signature", "sign", "verify", "checksum", "hash"]
+                        )
                         if not has_sign:
-                            findings.append({
-                                "tipo": "FIRMWARE_SEM_ASSINATURA",
-                                "severidade": "ALTO",
-                                "descricao": f"Endpoint de upgrade em {path} sem indicação de validação de assinatura",
-                                "correcao": "Implementar verificação de assinatura digital em atualizações de firmware.",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "FIRMWARE_SEM_ASSINATURA",
+                                    "severidade": "ALTO",
+                                    "descricao": f"Endpoint de upgrade em {path} sem indicação de validação de assinatura",
+                                    "correcao": "Implementar verificação de assinatura digital em atualizações de firmware.",
+                                }
+                            )
                 except Exception:
                     continue
         except Exception:
@@ -228,7 +253,9 @@ def _check_firmware_signing(ip: str, ports: list[int]) -> list[dict[str, Any]]:
     return findings
 
 
-def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None) -> dict[str, Any] | None:
+def run(
+    target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None
+) -> dict[str, Any] | None:
     """Testa segurança de emulação de firmware — interfaces expostas, QEMU escapes, debug e assinatura."""
     try:
         vulns = []
@@ -240,12 +267,14 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context
         if context:
             device_info = context.get("device_info", {})
             if device_info.get("embedded"):
-                vulns.append({
-                    "tipo": "DISPOSITIVO_EMBARCADO",
-                    "severidade": "INFO",
-                    "descricao": "Dispositivo embarcado detectado via contexto — verificar firmware atualizado",
-                    "correcao": "Manter firmware atualizado e desabilitar interfaces não utilizadas.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "DISPOSITIVO_EMBARCADO",
+                        "severidade": "INFO",
+                        "descricao": "Dispositivo embarcado detectado via contexto — verificar firmware atualizado",
+                        "correcao": "Manter firmware atualizado e desabilitar interfaces não utilizadas.",
+                    }
+                )
 
         return {
             "plugin": "firmware_emulation",

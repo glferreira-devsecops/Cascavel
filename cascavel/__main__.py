@@ -145,17 +145,23 @@ def _load_profile(profile_name: str) -> list[str] | None:
             f"[{S_CYAN}]📋 Profile: {data.get('name', profile_name)}[/]\n"
             f"[{S_DIM}]{data.get('description', '')}[/]\n"
             f"[{S_GREEN}]{len(plugin_list)} plugins selecionados[/]",
-            border_style="cyan", box=box.ROUNDED,
+            border_style="cyan",
+            box=box.ROUNDED,
         )
     )
     return plugin_list
 
 
 def run_scan(
-    target: str, plugins_only: bool = False, no_notify: bool = False,
-    output_format: str = "md", global_timeout: int = 90,
-    profile: str | None = None, stealth_eval: bool = False,
-    ai_fix: bool = False, plugin_filter: list[str] | None = None,
+    target: str,
+    plugins_only: bool = False,
+    no_notify: bool = False,
+    output_format: str = "md",
+    global_timeout: int = 90,
+    profile: str | None = None,
+    stealth_eval: bool = False,
+    ai_fix: bool = False,
+    plugin_filter: list[str] | None = None,
 ) -> None:
     """Executa o scan completo contra o target."""
     mission_start = time.time()
@@ -163,6 +169,7 @@ def run_scan(
     if stealth_eval:
         console.print(f"  [{S_YELLOW}]🥷 Modo COST Ativado[/]")
         import requests
+
         _orig_request = requests.Session.request
 
         def _stealth_request(self, method, url, **kwargs):
@@ -194,13 +201,20 @@ def run_scan(
     print_tools_status(available)
 
     timeouts = {
-        "subfinder": min(60, global_timeout), "amass": min(60, global_timeout),
-        "httpx": min(30, global_timeout), "nmap": min(120, global_timeout),
-        "ffuf": min(45, global_timeout), "gobuster": min(45, global_timeout),
-        "naabu": min(30, global_timeout), "nuclei": min(90, global_timeout),
-        "curl": min(10, global_timeout), "katana": min(60, global_timeout),
-        "gau": min(60, global_timeout), "dnsx": min(20, global_timeout),
-        "nikto": min(120, global_timeout), "wafw00f": min(20, global_timeout),
+        "subfinder": min(60, global_timeout),
+        "amass": min(60, global_timeout),
+        "httpx": min(30, global_timeout),
+        "nmap": min(120, global_timeout),
+        "ffuf": min(45, global_timeout),
+        "gobuster": min(45, global_timeout),
+        "naabu": min(30, global_timeout),
+        "nuclei": min(90, global_timeout),
+        "curl": min(10, global_timeout),
+        "katana": min(60, global_timeout),
+        "gau": min(60, global_timeout),
+        "dnsx": min(20, global_timeout),
+        "nikto": min(120, global_timeout),
+        "wafw00f": min(20, global_timeout),
     }
 
     wordlist = get_wordlist()
@@ -229,7 +243,13 @@ def run_scan(
         banners = grab_banners(target, open_ports)
         report.append(f"\n### Banners\n```json\n{json.dumps(banners, indent=2, ensure_ascii=False)}\n```")
     else:
-        console.print(Panel(f"[{S_YELLOW}]⚡ Modo --plugins-only: apenas plugins internos[/]", border_style="yellow", box=box.ROUNDED))
+        console.print(
+            Panel(
+                f"[{S_YELLOW}]⚡ Modo --plugins-only: apenas plugins internos[/]",
+                border_style="yellow",
+                box=box.ROUNDED,
+            )
+        )
         console.print()
 
     plugin_results = run_plugins(target, ip, open_ports, banners, report, plugin_filter=_active_plugins)
@@ -237,6 +257,7 @@ def run_scan(
     # Threat Intel Enrichment
     try:
         from .threat_intel import enrich_results
+
         plugin_results = enrich_results(plugin_results, console)
     except ImportError:
         pass
@@ -247,6 +268,7 @@ def run_scan(
     if ai_fix:
         try:
             from .ai_remediation import generate_ai_fixes
+
             plugin_results = generate_ai_fixes(plugin_results, console)
         except ImportError:
             pass
@@ -265,6 +287,7 @@ def run_scan(
     elif output_format == "sarif":
         try:
             from .sarif_exporter import export_sarif
+
             report_path = export_sarif(target, ip, plugin_results, elapsed_total)
             console.print(f"  [bold bright_green]📋 SARIF Report: {report_path}[/]")
         except ImportError:
@@ -272,19 +295,24 @@ def run_scan(
     elif output_format == "pdf":
         try:
             from .report_generator import generate_pdf_report
+
             pdf_vulns = []
             for r in plugin_results:
                 cls, _, _ = _classify(r)
                 if cls == "vuln":
-                    pdf_vulns.append({
-                        "plugin": r.get("plugin", "unknown"),
-                        "severity": r.get("severidade", "INFO"),
-                        "details": r.get("resultados", ""),
-                        "remediation": r.get("correcao", ""),
-                    })
+                    pdf_vulns.append(
+                        {
+                            "plugin": r.get("plugin", "unknown"),
+                            "severity": r.get("severidade", "INFO"),
+                            "details": r.get("resultados", ""),
+                            "remediation": r.get("correcao", ""),
+                        }
+                    )
             scan_data = {
-                "vulns": pdf_vulns, "tools_count": sum(1 for v in detect_tools().values() if v),
-                "plugins_count": _count_plugins(), "duration": elapsed_total,
+                "vulns": pdf_vulns,
+                "tools_count": sum(1 for v in detect_tools().values() if v),
+                "plugins_count": _count_plugins(),
+                "duration": elapsed_total,
             }
             report_path = generate_pdf_report(target, scan_data)
             console.print(f"  [bold bright_green]📄 PDF Report: {report_path}[/]")
@@ -293,6 +321,7 @@ def run_scan(
     elif output_format == "ocsf":
         try:
             from .ocsf_exporter import export_ocsf
+
             report_path = export_ocsf(target, ip, plugin_results, elapsed_total)
             console.print(f"  [bold bright_green]📋 OCSF Report: {report_path}[/]")
         except ImportError:
@@ -315,6 +344,7 @@ def main() -> None:
 
     if args.install_global:
         from .updater import _install_global
+
         _install_global()
         sys.exit(0)
 
@@ -341,6 +371,7 @@ def main() -> None:
 
     if not quiet and not args.list_plugins and not args.check_tools:
         from .preflight import preflight_check
+
         preflight_check()
 
     if args.check_tools:
@@ -367,6 +398,7 @@ def main() -> None:
             raw_input = inputx("Target (IP/domain): ", validator=_target_validator)
             target = validate_target(raw_input, allow_self=allow_self)
     else:
+
         def _target_validator(val: str) -> str:
             result = validate_target(val, allow_self=allow_self)
             if not result:
@@ -382,9 +414,12 @@ def main() -> None:
 
     out_fmt = "sarif" if args.sarif else ("pdf" if args.pdf else args.output_format)
     run_scan(
-        target, plugins_only=args.plugins_only,
-        no_notify=(args.no_notify or quiet), output_format=out_fmt,
-        global_timeout=args.timeout, profile=getattr(args, "profile", None),
+        target,
+        plugins_only=args.plugins_only,
+        no_notify=(args.no_notify or quiet),
+        output_format=out_fmt,
+        global_timeout=args.timeout,
+        profile=getattr(args, "profile", None),
         stealth_eval=getattr(args, "stealth_eval", False),
         ai_fix=getattr(args, "ai_fix", False),
         plugin_filter=getattr(args, "plugin_filter", None),

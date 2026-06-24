@@ -17,17 +17,13 @@ def _get_wireless_interfaces() -> list[str]:
     interfaces = []
     try:
         if shutil.which("iwconfig"):
-            result = subprocess.run(
-                ["iwconfig"], capture_output=True, text=True, timeout=10
-            )
+            result = subprocess.run(["iwconfig"], capture_output=True, text=True, timeout=10)
             for line in result.stdout.splitlines():
                 if "IEEE 802.11" in line:
                     iface = line.split()[0]
                     interfaces.append(iface)
         elif shutil.which("iw"):
-            result = subprocess.run(
-                ["iw", "dev"], capture_output=True, text=True, timeout=10
-            )
+            result = subprocess.run(["iw", "dev"], capture_output=True, text=True, timeout=10)
             for line in result.splitlines():
                 if "Interface" in line:
                     iface = line.strip().split()[-1]
@@ -45,19 +41,18 @@ def _check_evil_twin(target: str) -> list[dict[str, Any]]:
         if shutil.which("iwlist"):
             interfaces = _get_wireless_interfaces()
             if not interfaces:
-                findings.append({
-                    "tipo": "WIRELESS_SEM_INTERFACE",
-                    "severidade": "INFO",
-                    "descricao": "Nenhuma interface wireless detectada — scan não disponível",
-                    "correcao": "Executar em host com adaptador Wi-Fi para detecção completa.",
-                })
+                findings.append(
+                    {
+                        "tipo": "WIRELESS_SEM_INTERFACE",
+                        "severidade": "INFO",
+                        "descricao": "Nenhuma interface wireless detectada — scan não disponível",
+                        "correcao": "Executar em host com adaptador Wi-Fi para detecção completa.",
+                    }
+                )
                 return findings
 
             for iface in interfaces[:1]:
-                result = subprocess.run(
-                    ["sudo", "iwlist", iface, "scan"],
-                    capture_output=True, text=True, timeout=30
-                )
+                result = subprocess.run(["sudo", "iwlist", iface, "scan"], capture_output=True, text=True, timeout=30)
                 output = result.stdout
                 # Parse SSIDs and BSSIDs
                 ssids: dict[str, list[str]] = {}
@@ -73,20 +68,24 @@ def _check_evil_twin(target: str) -> list[dict[str, Any]]:
 
                 for ssid, bssids in ssids.items():
                     if len(bssids) > 1:
-                        findings.append({
-                            "tipo": "EVIL_TWIN_SUSPEITA",
-                            "severidade": "CRITICO",
-                            "descricao": f"SSSID '{ssid}' com {len(bssids)} BSSIDs — possível Evil Twin",
-                            "evidencia": f"BSSIDs: {', '.join(bssids[:5])}",
-                            "correcao": "Investigar BSSIDs duplicados. Usar WPA3-Enterprise com certificados.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "EVIL_TWIN_SUSPEITA",
+                                "severidade": "CRITICO",
+                                "descricao": f"SSSID '{ssid}' com {len(bssids)} BSSIDs — possível Evil Twin",
+                                "evidencia": f"BSSIDs: {', '.join(bssids[:5])}",
+                                "correcao": "Investigar BSSIDs duplicados. Usar WPA3-Enterprise com certificados.",
+                            }
+                        )
         else:
-            findings.append({
-                "tipo": "IWLCONFIG_INDISPONIVEL",
-                "severidade": "INFO",
-                "descricao": "iwlist não disponível — scan wireless limitado",
-                "correcao": "Instalar wireless-tools para detecção completa.",
-            })
+            findings.append(
+                {
+                    "tipo": "IWLCONFIG_INDISPONIVEL",
+                    "severidade": "INFO",
+                    "descricao": "iwlist não disponível — scan wireless limitado",
+                    "correcao": "Instalar wireless-tools para detecção completa.",
+                }
+            )
     except Exception:
         pass
     return findings
@@ -106,6 +105,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
             try:
                 if path.endswith("/"):
                     import os
+
                     if os.path.isdir(path):
                         for f in os.listdir(path):
                             filepath = os.path.join(path, f)
@@ -119,6 +119,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                                 continue
                 else:
                     import os
+
                     if os.path.exists(path):
                         with open(path) as fh:
                             for line in fh:
@@ -129,13 +130,15 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                 continue
 
         if known_ssids:
-            findings.append({
-                "tipo": "KARMA_AUTOCONNECT",
-                "severidade": "ALTO",
-                "descricao": f"{len(known_ssids)} SSIDs conhecidos com auto-connect — vulnerável a Karma attack",
-                "evidencia": f"SSIDs: {', '.join(known_ssids[:10])}",
-                "correcao": "Desabilitar auto-connect e usar WPA3-Enterprise. Limpar redes salvas não utilizadas.",
-            })
+            findings.append(
+                {
+                    "tipo": "KARMA_AUTOCONNECT",
+                    "severidade": "ALTO",
+                    "descricao": f"{len(known_ssids)} SSIDs conhecidos com auto-connect — vulnerável a Karma attack",
+                    "evidencia": f"SSIDs: {', '.join(known_ssids[:10])}",
+                    "correcao": "Desabilitar auto-connect e usar WPA3-Enterprise. Limpar redes salvas não utilizadas.",
+                }
+            )
     except Exception:
         pass
     return findings
@@ -155,12 +158,14 @@ def _check_wpa_handshake(target: str) -> list[dict[str, Any]]:
 
         # Check for WPA2-only networks (no WPA3) that are handshake-capturable
         # This is a passive check — we don't actively deauth
-        findings.append({
-            "tipo": "WPA_HANDSHAKE_CHECK",
-            "severidade": "MEDIO",
-            "descricao": "Ferramentas de captura de handshake disponíveis — redes WPA2 vulneráveis",
-            "correcao": "Migrar para WPA3-SAE para eliminar ataques de handshake capture.",
-        })
+        findings.append(
+            {
+                "tipo": "WPA_HANDSHAKE_CHECK",
+                "severidade": "MEDIO",
+                "descricao": "Ferramentas de captura de handshake disponíveis — redes WPA2 vulneráveis",
+                "correcao": "Migrar para WPA3-SAE para eliminar ataques de handshake capture.",
+            }
+        )
     except Exception:
         pass
     return findings
@@ -172,27 +177,29 @@ def _check_pmkid_attack() -> list[dict[str, Any]]:
     try:
         # Check if hcxdumptool is available
         if shutil.which("hcxdumptool"):
-            findings.append({
-                "tipo": "PMKID_FERRAMENTA_DISPONIVEL",
-                "severidade": "MEDIO",
-                "descricao": "hcxdumptool disponível — ataques PMKID possíveis contra redes WPA2",
-                "correcao": "Migrar para WPA3 ou usar MAC filtering adicional. Monitorar BSSIDs não autorizados.",
-            })
+            findings.append(
+                {
+                    "tipo": "PMKID_FERRAMENTA_DISPONIVEL",
+                    "severidade": "MEDIO",
+                    "descricao": "hcxdumptool disponível — ataques PMKID possíveis contra redes WPA2",
+                    "correcao": "Migrar para WPA3 ou usar MAC filtering adicional. Monitorar BSSIDs não autorizados.",
+                }
+            )
 
         # Check for WPA2 networks without management frame protection
         interfaces = _get_wireless_interfaces()
         if interfaces and shutil.which("iw"):
             for iface in interfaces[:1]:
-                result = subprocess.run(
-                    ["iw", iface, "info"], capture_output=True, text=True, timeout=10
-                )
+                result = subprocess.run(["iw", iface, "info"], capture_output=True, text=True, timeout=10)
                 if "type" in result.stdout:
-                    findings.append({
-                        "tipo": "MFP_VERIFICAR",
-                        "severidade": "BAIXO",
-                        "descricao": "Verificar se Management Frame Protection (802.11w) está habilitado nos APs",
-                        "correcao": "Habilitar MFP/PMF obrigatório em todos os access points.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "MFP_VERIFICAR",
+                            "severidade": "BAIXO",
+                            "descricao": "Verificar se Management Frame Protection (802.11w) está habilitado nos APs",
+                            "correcao": "Habilitar MFP/PMF obrigatório em todos os access points.",
+                        }
+                    )
                     break
     except Exception:
         pass
@@ -208,36 +215,40 @@ def _check_deauth_protection() -> list[dict[str, Any]]:
         monitor_ifaces = []
         for iface in interfaces:
             try:
-                result = subprocess.run(
-                    ["iw", iface, "info"], capture_output=True, text=True, timeout=5
-                )
+                result = subprocess.run(["iw", iface, "info"], capture_output=True, text=True, timeout=5)
                 if "type monitor" in result.stdout:
                     monitor_ifaces.append(iface)
             except Exception:
                 continue
 
         if monitor_ifaces:
-            findings.append({
-                "tipo": "MONITOR_INTERFACE_ATIVA",
-                "severidade": "ALTO",
-                "descricao": f"Interface(s) em modo monitor detectada(s): {', '.join(monitor_ifaces)} — possível ataque de deauth em curso",
-                "evidencia": f"Interfaces: {', '.join(monitor_ifaces)}",
-                "correcao": "Investigar interfaces em modo monitor. Desativar se não autorizado.",
-            })
+            findings.append(
+                {
+                    "tipo": "MONITOR_INTERFACE_ATIVA",
+                    "severidade": "ALTO",
+                    "descricao": f"Interface(s) em modo monitor detectada(s): {', '.join(monitor_ifaces)} — possível ataque de deauth em curso",
+                    "evidencia": f"Interfaces: {', '.join(monitor_ifaces)}",
+                    "correcao": "Investigar interfaces em modo monitor. Desativar se não autorizado.",
+                }
+            )
 
         # Check for 802.11w (PMF) support — protection against deauth
-        findings.append({
-            "tipo": "DEAUTH_PROTECTION_CHECK",
-            "severidade": "INFO",
-            "descricao": "Verificar se APs suportam Protected Management Frames (802.11w)",
-            "correcao": "Habilitar PMF obrigatório (WPA3 ou WPA2 com 802.11w) para mitigar deauth attacks.",
-        })
+        findings.append(
+            {
+                "tipo": "DEAUTH_PROTECTION_CHECK",
+                "severidade": "INFO",
+                "descricao": "Verificar se APs suportam Protected Management Frames (802.11w)",
+                "correcao": "Habilitar PMF obrigatório (WPA3 ou WPA2 com 802.11w) para mitigar deauth attacks.",
+            }
+        )
     except Exception:
         pass
     return findings
 
 
-def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None) -> dict[str, Any] | None:
+def run(
+    target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None
+) -> dict[str, Any] | None:
     """Detecta vulnerabilidades e ataques wireless (Evil Twin, Karma, PMKID, Deauth)."""
     try:
         vulns = []
@@ -253,13 +264,15 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context
             wifi_networks = context.get("wifi_networks", [])
             open_networks = [n for n in wifi_networks if n.get("security", "").lower() in ("open", "none", "")]
             if open_networks:
-                vulns.append({
-                    "tipo": "REDE_ABERTA_DETECTADA",
-                    "severidade": "CRITICO",
-                    "descricao": f"{len(open_networks)} rede(s) aberta(s) detectada(s) — tráfego interceptável",
-                    "evidencia": f"SSIDs: {', '.join(n.get('ssid', '?') for n in open_networks[:5])}",
-                    "correcao": "Desativar redes abertas ou implementar WPA3-Enterprise com 802.1X.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "REDE_ABERTA_DETECTADA",
+                        "severidade": "CRITICO",
+                        "descricao": f"{len(open_networks)} rede(s) aberta(s) detectada(s) — tráfego interceptável",
+                        "evidencia": f"SSIDs: {', '.join(n.get('ssid', '?') for n in open_networks[:5])}",
+                        "correcao": "Desativar redes abertas ou implementar WPA3-Enterprise com 802.1X.",
+                    }
+                )
 
         return {
             "plugin": "wifi_rogue_ap",

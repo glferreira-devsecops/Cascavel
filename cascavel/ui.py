@@ -231,8 +231,10 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
     console.print()
 
     replacements = {
-        "{platform}": os_name, "{python}": py_ver,
-        "{plugins}": str(plugin_count), "{tools_count}": str(tools_count),
+        "{platform}": os_name,
+        "{python}": py_ver,
+        "{plugins}": str(plugin_count),
+        "{tools_count}": str(tools_count),
     }
 
     for tag, msg in BOOT_SEQUENCE:
@@ -253,10 +255,13 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
         loading_label = f"[bold green]Preparando ataque: [bright_red]{target_hint}[/][/]"
 
     with Progress(
-        SpinnerColumn("dots2"), TextColumn(loading_label),
+        SpinnerColumn("dots2"),
+        TextColumn(loading_label),
         BarColumn(bar_width=40, complete_style="bright_green"),
-        TextColumn("[bold]{task.percentage:>3.0f}%[/]"), TimeElapsedColumn(),
-        console=console, transient=True,
+        TextColumn("[bold]{task.percentage:>3.0f}%[/]"),
+        TimeElapsedColumn(),
+        console=console,
+        transient=True,
     ) as progress:
         task = progress.add_task("boot", total=100)
         for step in range(100):
@@ -269,7 +274,9 @@ def _run_preloader_impl(plugin_count: int, tools_count: int, *, target_hint: str
                 time.sleep(0.012)
 
     if target_hint:
-        console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — [bright_red]{target_hint}[/] LOCKED & LOADED[/]\n")
+        console.print(
+            f"  [bold bright_green]✓ CASCAVEL v{__version__} — [bright_red]{target_hint}[/] LOCKED & LOADED[/]\n"
+        )
     else:
         console.print(f"  [bold bright_green]✓ CASCAVEL v{__version__} — ONLINE[/]\n")
 
@@ -306,16 +313,20 @@ def print_header() -> None:
     info_table.add_column(style=S_CYAN)
     info_table.add_column(style="white")
     info_table.add_row(
-        "🕐 Timestamp", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "💻 Plataforma", f"{sys.platform} | Python {sys.version.split()[0]}",
+        "🕐 Timestamp",
+        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "💻 Plataforma",
+        f"{sys.platform} | Python {sys.version.split()[0]}",
     )
     info_table.add_row("👤 Autor", "DevFerreiraG", "📦 Versão", f"v{__version__}")
 
     console.print(
         Panel(
-            Align.center(info_table), border_style="bright_green",
+            Align.center(info_table),
+            border_style="bright_green",
             title=f"[{S_GREEN}]🐍 CASCAVEL[/]",
-            subtitle="[dim]Advanced Security Framework[/]", box=box.DOUBLE_EDGE,
+            subtitle="[dim]Advanced Security Framework[/]",
+            box=box.DOUBLE_EDGE,
         )
     )
     console.print()
@@ -329,7 +340,9 @@ def print_target_card(target: str, ip: str) -> None:
     grid.add_row("📡 IP", ip)
     grid.add_row("🕐 Início", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     grid.add_row("🐍 Versão", f"v{__version__}")
-    console.print(Panel(Align.center(grid), title=f"[{S_RED}]⚡ TARGET ACQUISITION ⚡[/]", border_style="red", box=box.HEAVY))
+    console.print(
+        Panel(Align.center(grid), title=f"[{S_RED}]⚡ TARGET ACQUISITION ⚡[/]", border_style="red", box=box.HEAVY)
+    )
     console.print()
 
 
@@ -345,13 +358,16 @@ def print_tools_status(tools: dict[str, bool]) -> None:
         Panel(
             Columns(items, column_first=True, expand=True, padding=(0, 1)),
             title=f"[{S_CYAN}]🔧 FERRAMENTAS EXTERNAS ({len(present)}/{len(tools)})[/]",
-            border_style="cyan", box=box.ROUNDED,
+            border_style="cyan",
+            box=box.ROUNDED,
         )
     )
     console.print()
 
 
-def print_dashboard(target: str, ip: str, results: list[dict[str, Any]], elapsed_total: float, report_path: str) -> None:
+def print_dashboard(
+    target: str, ip: str, results: list[dict[str, Any]], elapsed_total: float, report_path: str
+) -> None:
     console.print(Rule(f"[{S_GREEN}]📊 MISSION REPORT[/]", style="bright_green"))
     console.print()
 
@@ -385,8 +401,11 @@ def print_dashboard(target: str, ip: str, results: list[dict[str, Any]], elapsed
     console.print()
 
     sev_table = Table(
-        title=f"[{S_WHITE}]SEVERITY BREAKDOWN[/]", box=box.HEAVY_EDGE,
-        border_style="bright_green", header_style=f"{S_WHITE} on dark_green", show_lines=True,
+        title=f"[{S_WHITE}]SEVERITY BREAKDOWN[/]",
+        box=box.HEAVY_EDGE,
+        border_style="bright_green",
+        header_style=f"{S_WHITE} on dark_green",
+        show_lines=True,
     )
     sev_table.add_column("Severidade", justify="center", width=15)
     sev_table.add_column("Count", justify="center", width=8)
@@ -402,8 +421,10 @@ def print_dashboard(target: str, ip: str, results: list[dict[str, Any]], elapsed
     console.print()
 
     parts = [
-        f"[green]✓ Limpos: {total_ok}[/]", f"[{S_RED}]⚠ Vulns: {total_vuln}[/]",
-        f"[red]✗ Erros: {total_err}[/]", f"[{S_WHITE}]Findings: {total_findings}[/]",
+        f"[green]✓ Limpos: {total_ok}[/]",
+        f"[{S_RED}]⚠ Vulns: {total_vuln}[/]",
+        f"[red]✗ Erros: {total_err}[/]",
+        f"[{S_WHITE}]Findings: {total_findings}[/]",
     ]
     console.print(Panel(Align.center(Text.from_markup("  │  ".join(parts))), border_style="cyan", box=box.ROUNDED))
     console.print()
@@ -501,10 +522,12 @@ def post_scan_menu(report_path: str) -> None:
     elif choice == "2":
         console.print(f"  [{S_CYAN}]▶ Novo scan[/]")
         from .validators import inputx, validate_target
+
         new_target_raw = inputx("Novo target (IP/domain): ")
         new_target = validate_target(new_target_raw)
         if new_target:
             from .__main__ import run_scan
+
             run_scan(new_target, no_notify=False, output_format="md", global_timeout=90)
         else:
             console.print(f"  [{S_RED}]✗ Target inválido.[/]")
@@ -519,6 +542,7 @@ def list_plugins_table() -> None:
     import glob
 
     from .constants import PLUGINS_PATH
+
     plugin_files = sorted(glob.glob(os.path.join(PLUGINS_PATH, "*.py")))
     valid = [
         os.path.splitext(os.path.basename(f))[0]
@@ -528,7 +552,8 @@ def list_plugins_table() -> None:
 
     table = Table(
         title=f"[{S_GREEN}]🔌 PLUGINS DISPONÍVEIS ({len(valid)})[/]",
-        box=box.ROUNDED, border_style="green",
+        box=box.ROUNDED,
+        border_style="green",
         header_style=f"{S_WHITE} on dark_green",
     )
     table.add_column("#", style=S_DIM, width=4, justify="right")
@@ -536,28 +561,83 @@ def list_plugins_table() -> None:
     table.add_column("Categoria", style=S_DIM, min_width=15)
 
     categories = {
-        "sqli": "Injection", "xss": "Injection", "ssrf": "Injection", "xxe": "Injection",
-        "ssti": "Injection", "lfi": "Injection", "rce": "Injection", "nosql": "Injection",
-        "csrf": "Web", "cors": "Web", "crlf": "Web", "clickjacking": "Web",
-        "open_redirect": "Web", "host_header": "Web", "http_smuggling": "Web",
-        "http2": "Web", "web_cache": "Web", "websocket": "Web", "graphql": "Web",
-        "grpc": "Web", "jwt": "Auth", "oauth": "Auth", "saml": "Auth", "oidc": "Auth",
-        "session": "Auth", "password": "Auth", "idor": "Auth",
-        "subdomain": "Recon", "dns": "Recon", "whois": "Recon", "wayback": "Recon",
-        "shodan": "Recon", "email": "Recon", "tech_fingerprint": "Recon",
-        "nmap": "Network", "ssl": "Network", "security_headers": "Network",
-        "waf": "Network", "rate_limit": "Network",
-        "k8s": "Cloud", "docker": "Cloud", "cloud": "Cloud", "s3": "Cloud",
-        "redis": "Infra", "mongodb": "Infra", "elastic": "Infra", "smb": "Infra",
-        "ftp": "Infra", "ssh": "Infra", "smtp": "Infra",
-        "supply_chain": "2026", "secrets_deep": "2026", "container_escape": "2026",
-        "cloud_exploitation": "2026", "ad_detection": "2026", "adversary": "2026",
-        "mobile": "2026", "firmware": "2026", "fuzzing": "2026", "http3": "2026",
-        "wireless": "2026", "mitm": "2026", "printer": "2026", "osint": "2026",
-        "api_fuzzing": "2026", "dns_recon": "2026", "subdomain_takeover": "2026",
-        "privilege": "2026", "persistence": "2026", "cobalt": "2026",
-        "phishing": "2026", "wifi_rogue": "2026", "firmware_emulation": "2026",
-        "bluetooth": "2026", "blockchain": "2026", "ics": "2026", "zero_trust": "2026",
+        "sqli": "Injection",
+        "xss": "Injection",
+        "ssrf": "Injection",
+        "xxe": "Injection",
+        "ssti": "Injection",
+        "lfi": "Injection",
+        "rce": "Injection",
+        "nosql": "Injection",
+        "csrf": "Web",
+        "cors": "Web",
+        "crlf": "Web",
+        "clickjacking": "Web",
+        "open_redirect": "Web",
+        "host_header": "Web",
+        "http_smuggling": "Web",
+        "http2": "Web",
+        "web_cache": "Web",
+        "websocket": "Web",
+        "graphql": "Web",
+        "grpc": "Web",
+        "jwt": "Auth",
+        "oauth": "Auth",
+        "saml": "Auth",
+        "oidc": "Auth",
+        "session": "Auth",
+        "password": "Auth",
+        "idor": "Auth",
+        "subdomain": "Recon",
+        "dns": "Recon",
+        "whois": "Recon",
+        "wayback": "Recon",
+        "shodan": "Recon",
+        "email": "Recon",
+        "tech_fingerprint": "Recon",
+        "nmap": "Network",
+        "ssl": "Network",
+        "security_headers": "Network",
+        "waf": "Network",
+        "rate_limit": "Network",
+        "k8s": "Cloud",
+        "docker": "Cloud",
+        "cloud": "Cloud",
+        "s3": "Cloud",
+        "redis": "Infra",
+        "mongodb": "Infra",
+        "elastic": "Infra",
+        "smb": "Infra",
+        "ftp": "Infra",
+        "ssh": "Infra",
+        "smtp": "Infra",
+        "supply_chain": "2026",
+        "secrets_deep": "2026",
+        "container_escape": "2026",
+        "cloud_exploitation": "2026",
+        "ad_detection": "2026",
+        "adversary": "2026",
+        "mobile": "2026",
+        "firmware": "2026",
+        "fuzzing": "2026",
+        "http3": "2026",
+        "wireless": "2026",
+        "mitm": "2026",
+        "printer": "2026",
+        "osint": "2026",
+        "api_fuzzing": "2026",
+        "dns_recon": "2026",
+        "subdomain_takeover": "2026",
+        "privilege": "2026",
+        "persistence": "2026",
+        "cobalt": "2026",
+        "phishing": "2026",
+        "wifi_rogue": "2026",
+        "firmware_emulation": "2026",
+        "bluetooth": "2026",
+        "blockchain": "2026",
+        "ics": "2026",
+        "zero_trust": "2026",
     }
 
     for idx, name in enumerate(valid, 1):

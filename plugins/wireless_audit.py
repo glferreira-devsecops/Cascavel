@@ -8,16 +8,33 @@ WIRELESS_PORTS = [80, 443, 8080, 8443, 22, 23, 161, 162, 53, 67, 68]
 
 # Common wireless AP management paths
 AP_PATHS = [
-    "/", "/login", "/admin", "/cgi-bin/luci", "/cgi-bin/webif",
-    "/status", "/wireless", "/wlan", "/wifi", "/network/wireless",
-    "/goform/wireless", "/wireless_basic.htm", "/wps_setup.htm",
-    "/advwls_top.htm", "/wireless_status.htm", "/ap_mgmt.htm",
+    "/",
+    "/login",
+    "/admin",
+    "/cgi-bin/luci",
+    "/cgi-bin/webif",
+    "/status",
+    "/wireless",
+    "/wlan",
+    "/wifi",
+    "/network/wireless",
+    "/goform/wireless",
+    "/wireless_basic.htm",
+    "/wps_setup.htm",
+    "/advwls_top.htm",
+    "/wireless_status.htm",
+    "/ap_mgmt.htm",
 ]
 
 # WPS-related paths
 WPS_PATHS = [
-    "/wps", "/wps_setup", "/wireless/wps", "/wps_pin.htm",
-    "/wps_settings", "/wps_configure", "/wps_server.htm",
+    "/wps",
+    "/wps_setup",
+    "/wireless/wps",
+    "/wps_pin.htm",
+    "/wps_settings",
+    "/wps_configure",
+    "/wps_server.htm",
 ]
 
 # Known vulnerable wireless firmware patterns
@@ -30,8 +47,14 @@ VULN_FIRMWARE = [
 
 # Rogue AP indicators
 ROGUE_INDICATORS = [
-    "rogue", "evil twin", "karma", "hostapd", "mana",
-    "fluxion", "airgeddon", "wifiphisher",
+    "rogue",
+    "evil twin",
+    "karma",
+    "hostapd",
+    "mana",
+    "fluxion",
+    "airgeddon",
+    "wifiphisher",
 ]
 
 
@@ -116,35 +139,41 @@ def _check_weak_encryption(target):
 
                 # WEP detection
                 if "wep" in body and any(kw in body for kw in ["enable", "active", "selected", "checked"]):
-                    findings.append({
-                        "tipo": "WEP_ENCRYPTION",
-                        "path": path,
-                        "severidade": "CRITICO",
-                        "descricao": "WEP detectado — quebrável em minutos com aircrack-ng",
-                        "remediacao": "Migrar imediatamente para WPA3 ou WPA2-AES. WEP é completamente inseguro.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "WEP_ENCRYPTION",
+                            "path": path,
+                            "severidade": "CRITICO",
+                            "descricao": "WEP detectado — quebrável em minutos com aircrack-ng",
+                            "remediacao": "Migrar imediatamente para WPA3 ou WPA2-AES. WEP é completamente inseguro.",
+                        }
+                    )
 
                 # WPA1 detection
                 if "wpa1" in body or ("wpa" in body and "wpa2" not in body and "wpa3" not in body):
                     if any(kw in body for kw in ["enable", "active", "selected", "checked"]):
-                        findings.append({
-                            "tipo": "WPA1_ENCRYPTION",
-                            "path": path,
-                            "severidade": "ALTO",
-                            "descricao": "WPA1 (TKIP) detectado — vulnerável a ataques TKIP e fragmentação",
-                            "remediacao": "Migrar para WPA2-AES ou WPA3. WPA1 com TKIP é obsoleto.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "WPA1_ENCRYPTION",
+                                "path": path,
+                                "severidade": "ALTO",
+                                "descricao": "WPA1 (TKIP) detectado — vulnerável a ataques TKIP e fragmentação",
+                                "remediacao": "Migrar para WPA2-AES ou WPA3. WPA1 com TKIP é obsoleto.",
+                            }
+                        )
 
                 # Open network detection
                 if ("open" in body or "none" in body) and "encrypt" in body:
                     if any(kw in body for kw in ["selected", "checked", "active"]):
-                        findings.append({
-                            "tipo": "OPEN_NETWORK",
-                            "path": path,
-                            "severidade": "CRITICO",
-                            "descricao": "Rede wireless aberta (sem criptografia) detectada",
-                            "remediacao": "Implementar WPA3-Personal ou WPA3-Enterprise mínimo.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "OPEN_NETWORK",
+                                "path": path,
+                                "severidade": "CRITICO",
+                                "descricao": "Rede wireless aberta (sem criptografia) detectada",
+                                "remediacao": "Implementar WPA3-Personal ou WPA3-Enterprise mínimo.",
+                            }
+                        )
         except Exception:
             continue
     return findings
@@ -167,22 +196,26 @@ def _check_krack(target):
                     # Look for firmware date indicators
                     for fw_name, fw_version, sev in VULN_FIRMWARE:
                         if fw_version in body or fw_name.lower() in body:
-                            findings.append({
-                                "tipo": "KRACK_POTENTIAL",
-                                "firmware": fw_name,
-                                "versao": fw_version,
-                                "severidade": sev,
-                                "descricao": f"Firmware {fw_name} {fw_version} potencialmente vulnerável ao KRACK (CVE-2017-13077/78/79/80/81/82)",
-                                "remediacao": "Atualizar firmware do AP para versão com patch KRACK. Verificar vendor advisories.",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "KRACK_POTENTIAL",
+                                    "firmware": fw_name,
+                                    "versao": fw_version,
+                                    "severidade": sev,
+                                    "descricao": f"Firmware {fw_name} {fw_version} potencialmente vulnerável ao KRACK (CVE-2017-13077/78/79/80/81/82)",
+                                    "remediacao": "Atualizar firmware do AP para versão com patch KRACK. Verificar vendor advisories.",
+                                }
+                            )
                     # Generic WPA2 without explicit patch
                     if not any(f[0].lower() in body for f in VULN_FIRMWARE):
-                        findings.append({
-                            "tipo": "WPA2_KRACK_CHECK",
-                            "severidade": "MEDIO",
-                            "descricao": "WPA2 detectado — verificar se firmware está patchado contra KRACK",
-                            "remediacao": "Confirmar que firmware está atualizado. Testar com ferramenta KRACK dedicada.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "WPA2_KRACK_CHECK",
+                                "severidade": "MEDIO",
+                                "descricao": "WPA2 detectado — verificar se firmware está patchado contra KRACK",
+                                "remediacao": "Confirmar que firmware está atualizado. Testar com ferramenta KRACK dedicada.",
+                            }
+                        )
         except Exception:
             continue
     return findings
@@ -203,31 +236,37 @@ def _check_rogue_ap(target):
             # Check for rogue AP tool indicators
             for indicator in ROGUE_INDICATORS:
                 if indicator in body or indicator in server:
-                    findings.append({
-                        "tipo": "ROGUE_AP_INDICATOR",
-                        "indicador": indicator,
-                        "severidade": "CRITICO",
-                        "descricao": f"Indicador de rogue AP detectado: '{indicator}' — possível evil twin",
-                        "remediacao": "Investigar imediatamente. Implementar WIDS/WIPS para detecção de APs não autorizados.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "ROGUE_AP_INDICATOR",
+                            "indicador": indicator,
+                            "severidade": "CRITICO",
+                            "descricao": f"Indicador de rogue AP detectado: '{indicator}' — possível evil twin",
+                            "remediacao": "Investigar imediatamente. Implementar WIDS/WIPS para detecção de APs não autorizados.",
+                        }
+                    )
 
             # Check for multiple SSIDs (potential evil twin setup)
             if body.count("ssid") > 3:
-                findings.append({
-                    "tipo": "MULTIPLE_SSIDS",
-                    "severidade": "ALTO",
-                    "descricao": "Múltiplos SSIDs configurados — verificar se são legítimos",
-                    "remediacao": "Auditar SSIDs configurados. Remover não autorizados.",
-                })
+                findings.append(
+                    {
+                        "tipo": "MULTIPLE_SSIDS",
+                        "severidade": "ALTO",
+                        "descricao": "Múltiplos SSIDs configurados — verificar se são legítimos",
+                        "remediacao": "Auditar SSIDs configurados. Remover não autorizados.",
+                    }
+                )
 
             # Check for hostapd configuration exposure
             if "hostapd" in body:
-                findings.append({
-                    "tipo": "HOSTAPD_EXPOSED",
-                    "severidade": "ALTO",
-                    "descricao": "Configuração hostapd exposta — possível AP rogue ou config indevida",
-                    "remediacao": "Restringir acesso à interface de gerenciamento. Verificar legitimidade do AP.",
-                })
+                findings.append(
+                    {
+                        "tipo": "HOSTAPD_EXPOSED",
+                        "severidade": "ALTO",
+                        "descricao": "Configuração hostapd exposta — possível AP rogue ou config indevida",
+                        "remediacao": "Restringir acesso à interface de gerenciamento. Verificar legitimidade do AP.",
+                    }
+                )
     except Exception:
         pass
     return findings
@@ -271,7 +310,8 @@ def run(target, ip, open_ports, banners, context=None):
     # Summary
     total_findings = sum(len(v) for v in resultado.values() if isinstance(v, list))
     critico = sum(
-        1 for v in resultado.values()
+        1
+        for v in resultado.values()
         if isinstance(v, list)
         for f in v
         if isinstance(f, dict) and f.get("severidade") == "CRITICO"

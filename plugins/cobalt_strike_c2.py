@@ -27,9 +27,9 @@ C2_PORTS = {
 
 # Cobalt Strike watermark patterns (known leaked watermarks)
 COBALT_WATERMARKS = [
-    "135959331",   # Well-known leaked watermark
-    "000000000",   # Null watermark (cracked)
-    "100000000",   # Common cracked watermark
+    "135959331",  # Well-known leaked watermark
+    "000000000",  # Null watermark (cracked)
+    "100000000",  # Common cracked watermark
     "1580108089",  # Another known leaked
 ]
 
@@ -50,8 +50,8 @@ C2_USER_AGENTS = [
 # Known C2 domains (suspicious patterns)
 C2_DOMAIN_PATTERNS = [
     r".*\.(top|xyz|tk|ml|ga|cf|buzz|icu)$",  # Suspicious TLDs
-    r"^[a-z0-9]{12,}\..*",                    # Long random subdomains
-    r".*\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3}\..*", # IP-like subdomains
+    r"^[a-z0-9]{12,}\..*",  # Long random subdomains
+    r".*\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3}\..*",  # IP-like subdomains
 ]
 
 
@@ -63,31 +63,37 @@ def _check_port_banners(ip: str, ports: list[int], banners: dict[str, str]) -> l
             banner = banners.get(str(port), "")
             # Cobalt Strike beacon patterns
             if any(kw in banner.lower() for kw in ["cobalt", "beacon", "sleep", "jitter"]):
-                findings.append({
-                    "tipo": "COBALT_STRIKE_BANNER",
-                    "severidade": "CRITICO",
-                    "descricao": f"Banner suspeito de Cobalt Strike na porta {port}",
-                    "evidencia": banner[:200],
-                    "correcao": "Investigar processo associado a esta porta. Verificar memory dump para confirmar beacon.",
-                })
+                findings.append(
+                    {
+                        "tipo": "COBALT_STRIKE_BANNER",
+                        "severidade": "CRITICO",
+                        "descricao": f"Banner suspeito de Cobalt Strike na porta {port}",
+                        "evidencia": banner[:200],
+                        "correcao": "Investigar processo associado a esta porta. Verificar memory dump para confirmar beacon.",
+                    }
+                )
             # Sliver C2 patterns
             if any(kw in banner.lower() for kw in ["sliver", "implant", "session"]):
-                findings.append({
-                    "tipo": "SLIVER_C2_BANNER",
-                    "severidade": "CRITICO",
-                    "descricao": f"Banner suspeito de Sliver C2 na porta {port}",
-                    "evidencia": banner[:200],
-                    "correcao": "Isolar host e analisar tráfego de rede para confirmar C2.",
-                })
+                findings.append(
+                    {
+                        "tipo": "SLIVER_C2_BANNER",
+                        "severidade": "CRITICO",
+                        "descricao": f"Banner suspeito de Sliver C2 na porta {port}",
+                        "evidencia": banner[:200],
+                        "correcao": "Isolar host e analisar tráfego de rede para confirmar C2.",
+                    }
+                )
             # Generic suspicious on known C2 port
             if port in [50050, 31337, 1337] and port in ports:
-                findings.append({
-                    "tipo": "C2_PORT_SUSPEITA",
-                    "severidade": "ALTO",
-                    "descricao": f"Porta {port} ({service}) aberta — frequente uso em ataques C2",
-                    "evidencia": f"Porta aberta, banner: {banner[:100]}" if banner else "Porta aberta sem banner",
-                    "correcao": "Verificar se o serviço na porta é legítimo. Bloquear se não autorizado.",
-                })
+                findings.append(
+                    {
+                        "tipo": "C2_PORT_SUSPEITA",
+                        "severidade": "ALTO",
+                        "descricao": f"Porta {port} ({service}) aberta — frequente uso em ataques C2",
+                        "evidencia": f"Porta aberta, banner: {banner[:100]}" if banner else "Porta aberta sem banner",
+                        "correcao": "Verificar se o serviço na porta é legítimo. Bloquear se não autorizado.",
+                    }
+                )
     return findings
 
 
@@ -104,13 +110,15 @@ def _check_cobalt_watermark(target: str) -> list[dict[str, Any]]:
         for wm in COBALT_WATERMARKS:
             wm_hex = wm.encode().hex()
             if wm_hex in raw:
-                findings.append({
-                    "tipo": "COBALT_WATERMARK",
-                    "severidade": "CRITICO",
-                    "descricao": f"Watermark do Cobalt Strike detectado ({wm})",
-                    "evidencia": f"Hex data: {raw[:100]}",
-                    "correcao": "Watermark cracked/leaked indica versão pirateada. Rastrear infraestrutura do atacante.",
-                })
+                findings.append(
+                    {
+                        "tipo": "COBALT_WATERMARK",
+                        "severidade": "CRITICO",
+                        "descricao": f"Watermark do Cobalt Strike detectado ({wm})",
+                        "evidencia": f"Hex data: {raw[:100]}",
+                        "correcao": "Watermark cracked/leaked indica versão pirateada. Rastrear infraestrutura do atacante.",
+                    }
+                )
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception:
@@ -135,14 +143,16 @@ def _check_beacon_config_patterns(banners: dict[str, str]) -> list[dict[str, Any
             continue
         for pattern, desc in beacon_patterns:
             if re.search(pattern, banner, re.IGNORECASE):
-                findings.append({
-                    "tipo": "BEACON_CONFIG_PATTERN",
-                    "severidade": "CRITICO",
-                    "descricao": f"Padrão de beacon detectado: {desc}",
-                    "porta": port_str,
-                    "evidencia": banner[:200],
-                    "correcao": "Realizar memory dump do processo suspeito e analisar com memory forensics.",
-                })
+                findings.append(
+                    {
+                        "tipo": "BEACON_CONFIG_PATTERN",
+                        "severidade": "CRITICO",
+                        "descricao": f"Padrão de beacon detectado: {desc}",
+                        "porta": port_str,
+                        "evidencia": banner[:200],
+                        "correcao": "Realizar memory dump do processo suspeito e analisar com memory forensics.",
+                    }
+                )
     return findings
 
 
@@ -151,26 +161,28 @@ def _check_dns_beacon(target: str) -> list[dict[str, Any]]:
     findings = []
     try:
         import subprocess
-        result = subprocess.run(
-            ["dig", "+short", target],
-            capture_output=True, text=True, timeout=10
-        )
+
+        result = subprocess.run(["dig", "+short", target], capture_output=True, text=True, timeout=10)
         output = result.stdout.strip()
         # Check for high-entropy DNS responses (common in DNS beacons)
         if output and re.match(r"^[a-zA-Z0-9+/=]{20,}$", output.split("\n")[0]):
-            findings.append({
-                "tipo": "DNS_BEACON_SUSPEITO",
-                "severidade": "ALTO",
-                "descricao": "Resposta DNS com alta entropia — possivel DNS beacon C2",
-                "evidencia": output[:200],
-                "correcao": "Analisar tráfego DNS para identificar padrões de beaconing. Verificar se há encoded C2.",
-            })
+            findings.append(
+                {
+                    "tipo": "DNS_BEACON_SUSPEITO",
+                    "severidade": "ALTO",
+                    "descricao": "Resposta DNS com alta entropia — possivel DNS beacon C2",
+                    "evidencia": output[:200],
+                    "correcao": "Analisar tráfego DNS para identificar padrões de beaconing. Verificar se há encoded C2.",
+                }
+            )
     except Exception:
         pass
     return findings
 
 
-def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None) -> dict[str, Any] | None:
+def run(
+    target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None
+) -> dict[str, Any] | None:
     """Detecta indicadores de frameworks C2 em uso no alvo."""
     try:
         vulns = []
@@ -183,12 +195,14 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context
         if context:
             extra_indicators = context.get("c2_indicators", [])
             if extra_indicators:
-                vulns.append({
-                    "tipo": "CONTEXT_C2_INDICATORS",
-                    "severidade": "ALTO",
-                    "descricao": f"Indicadores C2 adicionais via contexto: {len(extra_indicators)} encontrado(s)",
-                    "correcao": "Correlacionar com threat intelligence feeds.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "CONTEXT_C2_INDICATORS",
+                        "severidade": "ALTO",
+                        "descricao": f"Indicadores C2 adicionais via contexto: {len(extra_indicators)} encontrado(s)",
+                        "correcao": "Correlacionar com threat intelligence feeds.",
+                    }
+                )
 
         return {
             "plugin": "cobalt_strike_c2",

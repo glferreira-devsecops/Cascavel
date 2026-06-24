@@ -70,13 +70,30 @@ STARTUP_DIRS = [
 
 # Persistence-related patterns in configs
 SUSPICIOUS_PATTERNS = [
-    "nc -e", "ncat -e", "bash -i", "/dev/tcp",
-    "python -c", "perl -e", "ruby -e", "lua -e",
-    "wget http", "curl http", "fetch http",
-    "base64 -d", "eval(", "exec(",
-    "chmod +s", "chmod 4755", "setuid",
-    "reverse", "shell", "backdoor", "connect",
-    "payload", "exploit", "tunnel",
+    "nc -e",
+    "ncat -e",
+    "bash -i",
+    "/dev/tcp",
+    "python -c",
+    "perl -e",
+    "ruby -e",
+    "lua -e",
+    "wget http",
+    "curl http",
+    "fetch http",
+    "base64 -d",
+    "eval(",
+    "exec(",
+    "chmod +s",
+    "chmod 4755",
+    "setuid",
+    "reverse",
+    "shell",
+    "backdoor",
+    "connect",
+    "payload",
+    "exploit",
+    "tunnel",
 ]
 
 
@@ -87,8 +104,11 @@ def _check_crontab_entries():
     # System crontabs
     cron_files = ["/etc/crontab", "/etc/anacrontab"]
     cron_dirs = [
-        "/etc/cron.d", "/etc/cron.daily", "/etc/cron.hourly",
-        "/etc/cron.weekly", "/etc/cron.monthly",
+        "/etc/cron.d",
+        "/etc/cron.daily",
+        "/etc/cron.hourly",
+        "/etc/cron.weekly",
+        "/etc/cron.monthly",
     ]
 
     for cron_file in cron_files:
@@ -97,29 +117,33 @@ def _check_crontab_entries():
                 content = f.read().strip()
                 if content:
                     entries = [line for line in content.splitlines() if line.strip() and not line.startswith("#")]
-                    findings.append({
-                        "tipo": "CRONTAB_SYSTEM",
-                        "arquivo": cron_file,
-                        "entradas": len(entries),
-                        "severidade": "INFO",
-                        "descricao": f"Sistema crontab com {len(entries)} entradas em {cron_file}",
-                        "preview": entries[:10] if entries else [],
-                    })
+                    findings.append(
+                        {
+                            "tipo": "CRONTAB_SYSTEM",
+                            "arquivo": cron_file,
+                            "entradas": len(entries),
+                            "severidade": "INFO",
+                            "descricao": f"Sistema crontab com {len(entries)} entradas em {cron_file}",
+                            "preview": entries[:10] if entries else [],
+                        }
+                    )
 
                     # Check for suspicious entries
                     for entry in entries:
                         lower = entry.lower()
                         for pattern in SUSPICIOUS_PATTERNS:
                             if pattern in lower:
-                                findings.append({
-                                    "tipo": "CRONTAB_SUSPICIOUS",
-                                    "arquivo": cron_file,
-                                    "entrada": entry,
-                                    "padrao": pattern,
-                                    "severidade": "CRITICO",
-                                    "descricao": f"Crontab suspeita em {cron_file}: contém '{pattern}'",
-                                    "remediacao": "Investigar entrada. Remover se não for legítima.",
-                                })
+                                findings.append(
+                                    {
+                                        "tipo": "CRONTAB_SUSPICIOUS",
+                                        "arquivo": cron_file,
+                                        "entrada": entry,
+                                        "padrao": pattern,
+                                        "severidade": "CRITICO",
+                                        "descricao": f"Crontab suspeita em {cron_file}: contém '{pattern}'",
+                                        "remediacao": "Investigar entrada. Remover se não for legítima.",
+                                    }
+                                )
                                 break
         except PermissionError:
             continue
@@ -138,32 +162,38 @@ def _check_crontab_entries():
                     try:
                         with open(filepath) as f:
                             content = f.read().strip()
-                            entries = [line for line in content.splitlines() if line.strip() and not line.startswith("#")]
+                            entries = [
+                                line for line in content.splitlines() if line.strip() and not line.startswith("#")
+                            ]
                             if entries:
-                                findings.append({
-                                    "tipo": "CRON_DIR_ENTRY",
-                                    "diretorio": cron_dir,
-                                    "arquivo": filename,
-                                    "entradas": len(entries),
-                                    "severidade": "INFO",
-                                    "descricao": f"Cron entry: {cron_dir}/{filename}",
-                                    "preview": entries[:5],
-                                })
+                                findings.append(
+                                    {
+                                        "tipo": "CRON_DIR_ENTRY",
+                                        "diretorio": cron_dir,
+                                        "arquivo": filename,
+                                        "entradas": len(entries),
+                                        "severidade": "INFO",
+                                        "descricao": f"Cron entry: {cron_dir}/{filename}",
+                                        "preview": entries[:5],
+                                    }
+                                )
 
                                 # Check for suspicious patterns
                                 for entry in entries:
                                     lower = entry.lower()
                                     for pattern in SUSPICIOUS_PATTERNS:
                                         if pattern in lower:
-                                            findings.append({
-                                                "tipo": "CRON_SUSPICIOUS",
-                                                "arquivo": filepath,
-                                                "entrada": entry,
-                                                "padrao": pattern,
-                                                "severidade": "CRITICO",
-                                                "descricao": f"Cron suspeito em {filepath}: contém '{pattern}'",
-                                                "remediacao": f"Investigar e remover {filepath} se malicioso.",
-                                            })
+                                            findings.append(
+                                                {
+                                                    "tipo": "CRON_SUSPICIOUS",
+                                                    "arquivo": filepath,
+                                                    "entrada": entry,
+                                                    "padrao": pattern,
+                                                    "severidade": "CRITICO",
+                                                    "descricao": f"Cron suspeito em {filepath}: contém '{pattern}'",
+                                                    "remediacao": f"Investigar e remover {filepath} se malicioso.",
+                                                }
+                                            )
                                             break
                     except PermissionError:
                         continue
@@ -176,16 +206,20 @@ def _check_crontab_entries():
     try:
         result = subprocess.run(
             ["ls", "/var/spool/cron/crontabs/"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.stdout.strip():
             users = result.stdout.strip().split()
-            findings.append({
-                "tipo": "USER_CRONTABS_FOUND",
-                "usuarios": users,
-                "severidade": "INFO",
-                "descricao": f"User crontabs: {', '.join(users)}",
-            })
+            findings.append(
+                {
+                    "tipo": "USER_CRONTABS_FOUND",
+                    "usuarios": users,
+                    "severidade": "INFO",
+                    "descricao": f"User crontabs: {', '.join(users)}",
+                }
+            )
 
             for user in users:
                 try:
@@ -193,14 +227,16 @@ def _check_crontab_entries():
                         content = f.read().strip()
                         entries = [line for line in content.splitlines() if line.strip() and not line.startswith("#")]
                         if entries:
-                            findings.append({
-                                "tipo": "USER_CRONTAB",
-                                "usuario": user,
-                                "entradas": len(entries),
-                                "severidade": "MEDIO",
-                                "descricao": f"Crontab do usuário {user} com {len(entries)} entradas",
-                                "preview": entries[:5],
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "USER_CRONTAB",
+                                    "usuario": user,
+                                    "entradas": len(entries),
+                                    "severidade": "MEDIO",
+                                    "descricao": f"Crontab do usuário {user} com {len(entries)} entradas",
+                                    "preview": entries[:5],
+                                }
+                            )
                 except Exception:
                     continue
     except Exception:
@@ -270,7 +306,9 @@ def _check_systemd_services():
             try:
                 result = subprocess.run(
                     ["systemctl", "list-unit-files", "--state=enabled", "--type=service", "--no-pager"],
-                    capture_output=True, text=True, timeout=10,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
                 )
                 if result.returncode == 0:
                     enabled = []
@@ -279,13 +317,15 @@ def _check_systemd_services():
                             svc = line.split()[0]
                             enabled.append(svc)
 
-                    findings.append({
-                        "tipo": "ENABLED_SERVICES",
-                        "quantidade": len(enabled),
-                        "servicos": enabled,
-                        "severidade": "INFO",
-                        "descricao": f"{len(enabled)} serviços habilitados no boot",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "ENABLED_SERVICES",
+                            "quantidade": len(enabled),
+                            "servicos": enabled,
+                            "severidade": "INFO",
+                            "descricao": f"{len(enabled)} serviços habilitados no boot",
+                        }
+                    )
             except FileNotFoundError:
                 pass
             except Exception:
@@ -305,6 +345,7 @@ def _check_shell_profiles():
         # Handle glob patterns
         if "*" in profile_path:
             import glob
+
             paths = glob.glob(profile_path)
         else:
             paths = [profile_path]
@@ -328,26 +369,33 @@ def _check_shell_profiles():
                         suspicious_found.append(pattern)
 
                 if suspicious_found:
-                    findings.append({
-                        "tipo": "PROFILE_SUSPICIOUS",
-                        "arquivo": path,
-                        "padroes": suspicious_found,
-                        "severidade": "CRITICO",
-                        "descricao": f"Shell profile contém padrões suspeitos: {', '.join(suspicious_found)}",
-                        "remediacao": f"Revisar {path}. Remover entradas maliciosas.",
-                        "preview": content[:300],
-                    })
+                    findings.append(
+                        {
+                            "tipo": "PROFILE_SUSPICIOUS",
+                            "arquivo": path,
+                            "padroes": suspicious_found,
+                            "severidade": "CRITICO",
+                            "descricao": f"Shell profile contém padrões suspeitos: {', '.join(suspicious_found)}",
+                            "remediacao": f"Revisar {path}. Remover entradas maliciosas.",
+                            "preview": content[:300],
+                        }
+                    )
                 else:
                     # Check for non-standard entries
-                    lines = [line.strip() for line in content.splitlines()
-                             if line.strip() and not line.strip().startswith("#")]
-                    findings.append({
-                        "tipo": "PROFILE_ENTRIES",
-                        "arquivo": path,
-                        "entradas": len(lines),
-                        "severidade": "INFO",
-                        "descricao": f"Shell profile com {len(lines)} entradas: {path}",
-                    })
+                    lines = [
+                        line.strip()
+                        for line in content.splitlines()
+                        if line.strip() and not line.strip().startswith("#")
+                    ]
+                    findings.append(
+                        {
+                            "tipo": "PROFILE_ENTRIES",
+                            "arquivo": path,
+                            "entradas": len(lines),
+                            "severidade": "INFO",
+                            "descricao": f"Shell profile com {len(lines)} entradas: {path}",
+                        }
+                    )
             except PermissionError:
                 continue
             except Exception:
@@ -363,6 +411,7 @@ def _check_ssh_authorized_keys():
     for ssh_path in SSH_PATHS:
         if "*" in ssh_path:
             import glob
+
             paths = glob.glob(ssh_path)
         else:
             paths = [ssh_path]
@@ -377,13 +426,15 @@ def _check_ssh_authorized_keys():
 
                 if "authorized_keys" in path:
                     keys = [line.strip() for line in content.splitlines() if line.strip()]
-                    findings.append({
-                        "tipo": "SSH_AUTHORIZED_KEYS",
-                        "arquivo": path,
-                        "chaves": len(keys),
-                        "severidade": "MEDIO" if len(keys) > 0 else "INFO",
-                        "descricao": f"{len(keys)} chaves SSH em {path}",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SSH_AUTHORIZED_KEYS",
+                            "arquivo": path,
+                            "chaves": len(keys),
+                            "severidade": "MEDIO" if len(keys) > 0 else "INFO",
+                            "descricao": f"{len(keys)} chaves SSH em {path}",
+                        }
+                    )
 
                     # Check for suspicious key options
                     for key in keys:
@@ -398,23 +449,27 @@ def _check_ssh_authorized_keys():
                             options.append("restricted")
                         if not options and not key.startswith("ssh-"):
                             # Might be a suspicious entry
-                            findings.append({
-                                "tipo": "SSH_KEY_SUSPICIOUS",
-                                "arquivo": path,
-                                "entrada": key[:100],
-                                "severidade": "ALTO",
-                                "descricao": "Entrada suspeita em authorized_keys: formato inválido",
-                                "remediacao": "Verificar se a entrada é legítima. Remover se não reconhecida.",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "SSH_KEY_SUSPICIOUS",
+                                    "arquivo": path,
+                                    "entrada": key[:100],
+                                    "severidade": "ALTO",
+                                    "descricao": "Entrada suspeita em authorized_keys: formato inválido",
+                                    "remediacao": "Verificar se a entrada é legítima. Remover se não reconhecida.",
+                                }
+                            )
 
                 elif "id_rsa" in path or "id_dsa" in path or "id_ecdsa" in path or "id_ed25515" in path:
-                    findings.append({
-                        "tipo": "SSH_PRIVATE_KEY",
-                        "arquivo": path,
-                        "severidade": "ALTO",
-                        "descricao": f"Chave privada SSH encontrada: {path}",
-                        "remediacao": "Proteger chave privada com passphrase. Restringir permissões (600).",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SSH_PRIVATE_KEY",
+                            "arquivo": path,
+                            "severidade": "ALTO",
+                            "descricao": f"Chave privada SSH encontrada: {path}",
+                            "remediacao": "Proteger chave privada com passphrase. Restringir permissões (600).",
+                        }
+                    )
 
                 elif path.endswith("sshd_config"):
                     # Check for risky sshd_config settings
@@ -428,14 +483,16 @@ def _check_ssh_authorized_keys():
                     }
                     for setting, severity in risky_settings.items():
                         if setting in content:
-                            findings.append({
-                                "tipo": "SSHD_CONFIG_RISKY",
-                                "arquivo": path,
-                                "configuracao": setting,
-                                "severidade": severity,
-                                "descricao": f"sshd_config: {setting}",
-                                "remediacao": f"Alterar para: {setting.replace('yes', 'no')}",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "SSHD_CONFIG_RISKY",
+                                    "arquivo": path,
+                                    "configuracao": setting,
+                                    "severidade": severity,
+                                    "descricao": f"sshd_config: {setting}",
+                                    "remediacao": f"Alterar para: {setting.replace('yes', 'no')}",
+                                }
+                            )
 
             except PermissionError:
                 continue
@@ -456,31 +513,37 @@ def _check_ld_preload():
                     content = f.read().strip()
                 if content:
                     libraries = [line.strip() for line in content.splitlines() if line.strip()]
-                    findings.append({
-                        "tipo": "LD_PRELOAD_ACTIVE",
-                        "arquivo": ld_path,
-                        "bibliotecas": libraries,
-                        "severidade": "CRITICO",
-                        "descricao": f"LD_PRELOAD ativo em {ld_path} — possible rootkit/library injection",
-                        "remediacao": "Investigar bibliotecas listadas. Verificar integridade com rpm -V ou dpkg.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "LD_PRELOAD_ACTIVE",
+                            "arquivo": ld_path,
+                            "bibliotecas": libraries,
+                            "severidade": "CRITICO",
+                            "descricao": f"LD_PRELOAD ativo em {ld_path} — possible rootkit/library injection",
+                            "remediacao": "Investigar bibliotecas listadas. Verificar integridade com rpm -V ou dpkg.",
+                        }
+                    )
 
                     # Check if libraries exist and are legit
                     for lib in libraries:
                         if os.path.exists(lib):
-                            findings.append({
-                                "tipo": "LD_PRELOAD_LIBRARY",
-                                "biblioteca": lib,
-                                "severidade": "ALTO",
-                                "descricao": f"Biblioteca pré-carregada existe: {lib}",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "LD_PRELOAD_LIBRARY",
+                                    "biblioteca": lib,
+                                    "severidade": "ALTO",
+                                    "descricao": f"Biblioteca pré-carregada existe: {lib}",
+                                }
+                            )
                         else:
-                            findings.append({
-                                "tipo": "LD_PRELOAD_MISSING",
-                                "biblioteca": lib,
-                                "severidade": "MEDIO",
-                                "descricao": f"Biblioteca pré-carregada não encontrada: {lib}",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "LD_PRELOAD_MISSING",
+                                    "biblioteca": lib,
+                                    "severidade": "MEDIO",
+                                    "descricao": f"Biblioteca pré-carregada não encontrada: {lib}",
+                                }
+                            )
             elif os.path.isdir(ld_path):
                 # Check .conf files in directory
                 for filename in os.listdir(ld_path):
@@ -490,13 +553,15 @@ def _check_ld_preload():
                             with open(filepath) as f:
                                 content = f.read().strip()
                             if content:
-                                findings.append({
-                                    "tipo": "LD_SO_CONF",
-                                    "arquivo": filepath,
-                                    "severidade": "MEDIO",
-                                    "descricao": f"ld.so.conf entry: {filename}",
-                                    "conteudo": content[:200],
-                                })
+                                findings.append(
+                                    {
+                                        "tipo": "LD_SO_CONF",
+                                        "arquivo": filepath,
+                                        "severidade": "MEDIO",
+                                        "descricao": f"ld.so.conf entry: {filename}",
+                                        "conteudo": content[:200],
+                                    }
+                                )
                         except Exception:
                             continue
         except PermissionError:
@@ -509,13 +574,15 @@ def _check_ld_preload():
     # Check environment variable
     ld_preload_env = os.environ.get("LD_PRELOAD", "")
     if ld_preload_env:
-        findings.append({
-            "tipo": "LD_PRELOAD_ENV",
-            "valor": ld_preload_env,
-            "severidade": "CRITICO",
-            "descricao": f"LD_PRELOAD definido via variável de ambiente: {ld_preload_env}",
-            "remediacao": "Investigar origem. Remover LD_PRELOAD se não legítimo.",
-        })
+        findings.append(
+            {
+                "tipo": "LD_PRELOAD_ENV",
+                "valor": ld_preload_env,
+                "severidade": "CRITICO",
+                "descricao": f"LD_PRELOAD definido via variável de ambiente: {ld_preload_env}",
+                "remediacao": "Investigar origem. Remover LD_PRELOAD se não legítimo.",
+            }
+        )
 
     return findings
 
@@ -530,34 +597,45 @@ def _check_startup_scripts():
                 # rc.local
                 with open(startup_path) as f:
                     content = f.read().strip()
-                if content and not content.startswith("#!/") or (content.startswith("#!/") and len(content.splitlines()) > 2):
+                if (
+                    content
+                    and not content.startswith("#!/")
+                    or (content.startswith("#!/") and len(content.splitlines()) > 2)
+                ):
                     # Has actual commands
-                    lines = [line.strip() for line in content.splitlines()
-                             if line.strip() and not line.strip().startswith("#")]
+                    lines = [
+                        line.strip()
+                        for line in content.splitlines()
+                        if line.strip() and not line.strip().startswith("#")
+                    ]
                     if lines:
-                        findings.append({
-                            "tipo": "STARTUP_SCRIPT",
-                            "arquivo": startup_path,
-                            "comandos": len(lines),
-                            "severidade": "MEDIO",
-                            "descricao": f"Startup script com {len(lines)} comandos: {startup_path}",
-                            "preview": lines[:5],
-                        })
+                        findings.append(
+                            {
+                                "tipo": "STARTUP_SCRIPT",
+                                "arquivo": startup_path,
+                                "comandos": len(lines),
+                                "severidade": "MEDIO",
+                                "descricao": f"Startup script com {len(lines)} comandos: {startup_path}",
+                                "preview": lines[:5],
+                            }
+                        )
 
                         # Check for suspicious patterns
                         for line in lines:
                             lower = line.lower()
                             for pattern in SUSPICIOUS_PATTERNS:
                                 if pattern in lower:
-                                    findings.append({
-                                        "tipo": "STARTUP_SUSPICIOUS",
-                                        "arquivo": startup_path,
-                                        "comando": line,
-                                        "padrao": pattern,
-                                        "severidade": "CRITICO",
-                                        "descricao": f"Startup script suspeito em {startup_path}: contém '{pattern}'",
-                                        "remediacao": f"Investigar e remover comando de {startup_path}",
-                                    })
+                                    findings.append(
+                                        {
+                                            "tipo": "STARTUP_SUSPICIOUS",
+                                            "arquivo": startup_path,
+                                            "comando": line,
+                                            "padrao": pattern,
+                                            "severidade": "CRITICO",
+                                            "descricao": f"Startup script suspeito em {startup_path}: contém '{pattern}'",
+                                            "remediacao": f"Investigar e remover comando de {startup_path}",
+                                        }
+                                    )
                                     break
 
             elif os.path.isdir(startup_path):
@@ -566,14 +644,16 @@ def _check_startup_scripts():
                     if os.path.isfile(filepath) and os.access(filepath, os.X_OK):
                         try:
                             stat = os.stat(filepath)
-                            findings.append({
-                                "tipo": "STARTUP_EXECUTABLE",
-                                "diretorio": startup_path,
-                                "arquivo": filename,
-                                "modificado": stat.st_mtime,
-                                "severidade": "INFO",
-                                "descricao": f"Executável em diretório de startup: {startup_path}/{filename}",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "STARTUP_EXECUTABLE",
+                                    "diretorio": startup_path,
+                                    "arquivo": filename,
+                                    "modificado": stat.st_mtime,
+                                    "severidade": "INFO",
+                                    "descricao": f"Executável em diretório de startup: {startup_path}/{filename}",
+                                }
+                            )
                         except Exception:
                             continue
 
@@ -596,14 +676,16 @@ def _check_startup_scripts():
                             content = f.read().lower()
                         for pattern in SUSPICIOUS_PATTERNS:
                             if pattern in content:
-                                findings.append({
-                                    "tipo": "INIT_D_SUSPICIOUS",
-                                    "arquivo": filepath,
-                                    "padrao": pattern,
-                                    "severidade": "CRITICO",
-                                    "descricao": f"init.d script suspeito: {filename} — contém '{pattern}'",
-                                    "remediacao": f"Investigar e remover {filepath}",
-                                })
+                                findings.append(
+                                    {
+                                        "tipo": "INIT_D_SUSPICIOUS",
+                                        "arquivo": filepath,
+                                        "padrao": pattern,
+                                        "severidade": "CRITICO",
+                                        "descricao": f"init.d script suspeito: {filename} — contém '{pattern}'",
+                                        "remediacao": f"Investigar e remover {filepath}",
+                                    }
+                                )
                                 break
                     except Exception:
                         continue
@@ -641,13 +723,15 @@ def run(target, ip, open_ports, banners, context=None):
 
     total = sum(len(v) for v in resultado.values() if isinstance(v, list))
     critico = sum(
-        1 for v in resultado.values()
+        1
+        for v in resultado.values()
         if isinstance(v, list)
         for f in v
         if isinstance(f, dict) and f.get("severidade") == "CRITICO"
     )
     alto = sum(
-        1 for v in resultado.values()
+        1
+        for v in resultado.values()
         if isinstance(v, list)
         for f in v
         if isinstance(f, dict) and f.get("severidade") == "ALTO"

@@ -5,16 +5,40 @@ import requests
 
 # REST API discovery paths
 REST_PATHS = [
-    "/api", "/api/v1", "/api/v2", "/api/v3", "/api/v4",
-    "/api/v1/users", "/api/v1/admin", "/api/v1/config",
-    "/api/v1/health", "/api/v1/status", "/api/v1/info",
-    "/api/v2/users", "/api/v2/admin", "/api/v2/config",
-    "/api/internal", "/api/private", "/api/public",
-    "/api/legacy", "/api/beta", "/api/alpha",
-    "/v1", "/v2", "/v3", "/v4",
-    "/rest", "/rest/api", "/rest/v1", "/rest/v2",
-    "/graphql", "/gql", "/graphiql",
-    "/grpc", "/rpc", "/jsonrpc",
+    "/api",
+    "/api/v1",
+    "/api/v2",
+    "/api/v3",
+    "/api/v4",
+    "/api/v1/users",
+    "/api/v1/admin",
+    "/api/v1/config",
+    "/api/v1/health",
+    "/api/v1/status",
+    "/api/v1/info",
+    "/api/v2/users",
+    "/api/v2/admin",
+    "/api/v2/config",
+    "/api/internal",
+    "/api/private",
+    "/api/public",
+    "/api/legacy",
+    "/api/beta",
+    "/api/alpha",
+    "/v1",
+    "/v2",
+    "/v3",
+    "/v4",
+    "/rest",
+    "/rest/api",
+    "/rest/v1",
+    "/rest/v2",
+    "/graphql",
+    "/gql",
+    "/graphiql",
+    "/grpc",
+    "/rpc",
+    "/jsonrpc",
 ]
 
 # GraphQL introspection query
@@ -41,7 +65,7 @@ INTROSPECTION_QUERY = {
 # GraphQL test queries
 GRAPHQL_TESTS = [
     ("{ __typename }", "typename"),
-    ("query { __type(name: \"Query\") { fields { name } } }", "type_fields"),
+    ('query { __type(name: "Query") { fields { name } } }', "type_fields"),
     ("{ users { id email password } }", "sensitive_fields"),
     ("mutation { deleteUser(id: 1) }", "mutation_test"),
     ("{ admin { config } }", "admin_probe"),
@@ -49,9 +73,12 @@ GRAPHQL_TESTS = [
 
 # gRPC service paths
 GRPC_PATHS = [
-    "/grpc", "/grpc.reflection.v1alpha.ServerReflection",
-    "/grpc.health.v1.Health", "/grpc-web",
-    "/api/grpc", "/rpc/grpc",
+    "/grpc",
+    "/grpc.reflection.v1alpha.ServerReflection",
+    "/grpc.health.v1.Health",
+    "/grpc-web",
+    "/api/grpc",
+    "/rpc/grpc",
 ]
 
 # Auth bypass techniques
@@ -166,27 +193,31 @@ def _test_graphql_introspection(target):
                             queries = schema.get("queryType", {}).get("name", "")
                             mutations = schema.get("mutationType", {}).get("name", "")
 
-                            findings.append({
-                                "tipo": "GRAPHQL_INTROSPECTION",
-                                "path": path,
-                                "scheme": scheme,
-                                "queries": queries,
-                                "mutations": mutations,
-                                "total_types": len(types),
-                                "types_amostra": types[:20],
-                                "severidade": "CRITICO",
-                                "descricao": f"GraphQL introspection habilitada — {len(types)} types expostos, mutations disponíveis",
-                                "remediacao": "Desabilitar introspection em produção. Implementar persisted queries.",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "GRAPHQL_INTROSPECTION",
+                                    "path": path,
+                                    "scheme": scheme,
+                                    "queries": queries,
+                                    "mutations": mutations,
+                                    "total_types": len(types),
+                                    "types_amostra": types[:20],
+                                    "severidade": "CRITICO",
+                                    "descricao": f"GraphQL introspection habilitada — {len(types)} types expostos, mutations disponíveis",
+                                    "remediacao": "Desabilitar introspection em produção. Implementar persisted queries.",
+                                }
+                            )
                         elif "data" in data:
-                            findings.append({
-                                "tipo": "GRAPHQL_ACTIVE",
-                                "path": path,
-                                "scheme": scheme,
-                                "severidade": "ALTO",
-                                "descricao": "GraphQL endpoint ativo mas introspection desabilitada",
-                                "remediacao": "Manter introspection desabilitada. Validar queries com whitelist.",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "GRAPHQL_ACTIVE",
+                                    "path": path,
+                                    "scheme": scheme,
+                                    "severidade": "ALTO",
+                                    "descricao": "GraphQL endpoint ativo mas introspection desabilitada",
+                                    "remediacao": "Manter introspection desabilitada. Validar queries com whitelist.",
+                                }
+                            )
                     except json.JSONDecodeError:
                         pass
                     break
@@ -208,14 +239,16 @@ def _test_graphql_introspection(target):
                     if resp.status_code == 200:
                         data = resp.json()
                         if "errors" not in data or (isinstance(data.get("errors"), list) and len(data["errors"]) == 0):
-                            findings.append({
-                                "tipo": "GRAPHQL_QUERY_SUCCESS",
-                                "query_label": label,
-                                "query": query[:100],
-                                "severidade": "ALTO" if "admin" in label or "sensitive" in label else "MEDIO",
-                                "descricao": f"GraphQL query '{label}' retornou dados",
-                                "remediacao": "Implementar query depth limiting. Restringir campos sensíveis.",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "GRAPHQL_QUERY_SUCCESS",
+                                    "query_label": label,
+                                    "query": query[:100],
+                                    "severidade": "ALTO" if "admin" in label or "sensitive" in label else "MEDIO",
+                                    "descricao": f"GraphQL query '{label}' retornou dados",
+                                    "remediacao": "Implementar query depth limiting. Restringir campos sensíveis.",
+                                }
+                            )
                 except Exception:
                     continue
             break
@@ -256,7 +289,8 @@ def _test_grpc_enumeration(target):
                         try:
                             health_resp = requests.get(
                                 f"{scheme}://{clean}{path}",
-                                timeout=5, verify=False,
+                                timeout=5,
+                                verify=False,
                             )
                             if health_resp.status_code == 200:
                                 finding["health_check"] = True
@@ -300,15 +334,17 @@ def _test_auth_bypass(target):
                 verify=False,
             )
             if resp.status_code == 200:
-                findings.append({
-                    "tipo": "AUTH_BYPASS",
-                    "tecnica": technique,
-                    "path": target_path,
-                    "headers": headers,
-                    "severidade": "CRITICO",
-                    "descricao": f"Bypass de autenticação via {technique} em {target_path}",
-                    "remediacao": "Validar tokens server-side. Não confiar em headers customizados para autorização.",
-                })
+                findings.append(
+                    {
+                        "tipo": "AUTH_BYPASS",
+                        "tecnica": technique,
+                        "path": target_path,
+                        "headers": headers,
+                        "severidade": "CRITICO",
+                        "descricao": f"Bypass de autenticação via {technique} em {target_path}",
+                        "remediacao": "Validar tokens server-side. Não confiar em headers customizados para autorização.",
+                    }
+                )
         except Exception:
             continue
 
@@ -332,23 +368,27 @@ def _test_rate_limiting(target):
                     break
 
             if 429 not in responses:
-                findings.append({
-                    "tipo": "NO_RATE_LIMITING",
-                    "path": path,
-                    "requests_sent": len(responses),
-                    "severidade": "ALTO",
-                    "descricao": f"Sem rate limiting em {path} — {len(responses)} requests sem bloqueio",
-                    "remediacao": "Implementar rate limiting (ex: 100 req/min por IP). Usar API gateway.",
-                })
+                findings.append(
+                    {
+                        "tipo": "NO_RATE_LIMITING",
+                        "path": path,
+                        "requests_sent": len(responses),
+                        "severidade": "ALTO",
+                        "descricao": f"Sem rate limiting em {path} — {len(responses)} requests sem bloqueio",
+                        "remediacao": "Implementar rate limiting (ex: 100 req/min por IP). Usar API gateway.",
+                    }
+                )
             else:
                 limit_index = responses.index(429)
-                findings.append({
-                    "tipo": "RATE_LIMIT_ACTIVE",
-                    "path": path,
-                    "requests_ate_bloqueio": limit_index + 1,
-                    "severidade": "INFO",
-                    "descricao": f"Rate limiting ativo em {path} — bloqueio após {limit_index + 1} requests",
-                })
+                findings.append(
+                    {
+                        "tipo": "RATE_LIMIT_ACTIVE",
+                        "path": path,
+                        "requests_ate_bloqueio": limit_index + 1,
+                        "severidade": "INFO",
+                        "descricao": f"Rate limiting ativo em {path} — bloqueio após {limit_index + 1} requests",
+                    }
+                )
             break  # Test one path only
         except Exception:
             continue
@@ -378,19 +418,22 @@ def _test_mass_assignment(target):
                             resp = requests.post(
                                 f"https://{clean}{path}",
                                 json=payload,
-                                timeout=5, verify=False,
+                                timeout=5,
+                                verify=False,
                             )
                         elif method == "PUT":
                             resp = requests.put(
                                 f"https://{clean}{path}",
                                 json=payload,
-                                timeout=5, verify=False,
+                                timeout=5,
+                                verify=False,
                             )
                         else:
                             resp = requests.patch(
                                 f"https://{clean}{path}",
                                 json=payload,
-                                timeout=5, verify=False,
+                                timeout=5,
+                                verify=False,
                             )
 
                         if resp.status_code in [200, 201]:
@@ -399,16 +442,18 @@ def _test_mass_assignment(target):
                                 # Check if our injected field appears in response
                                 for key in payload:
                                     if key in str(data).lower():
-                                        findings.append({
-                                            "tipo": "MASS_ASSIGNMENT",
-                                            "path": path,
-                                            "method": method,
-                                            "payload": payload,
-                                            "campo_aceito": key,
-                                            "severidade": "CRITICO",
-                                            "descricao": f"Mass assignment via {method} — campo '{key}' aceito em {path}",
-                                            "remediacao": "Usar DTOs/serializers com whitelist de campos. Nunca bindar input diretamente em models.",
-                                        })
+                                        findings.append(
+                                            {
+                                                "tipo": "MASS_ASSIGNMENT",
+                                                "path": path,
+                                                "method": method,
+                                                "payload": payload,
+                                                "campo_aceito": key,
+                                                "severidade": "CRITICO",
+                                                "descricao": f"Mass assignment via {method} — campo '{key}' aceito em {path}",
+                                                "remediacao": "Usar DTOs/serializers com whitelist de campos. Nunca bindar input diretamente em models.",
+                                            }
+                                        )
                                         break
                             except Exception:
                                 pass
@@ -449,7 +494,8 @@ def run(target, ip, open_ports, banners, context=None):
 
     total = sum(len(v) for v in resultado.values() if isinstance(v, list))
     critico = sum(
-        1 for v in resultado.values()
+        1
+        for v in resultado.values()
         if isinstance(v, list)
         for f in v
         if isinstance(f, dict) and f.get("severidade") == "CRITICO"

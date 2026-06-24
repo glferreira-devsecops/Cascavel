@@ -45,18 +45,68 @@ console = Console()
 # TOOL DETECTION
 # ═══════════════════════════════════════════════════════════════════════════════
 EXTERNAL_TOOLS = [
-    "subfinder", "amass", "httpx", "nmap", "ffuf", "gobuster", "naabu",
-    "nuclei", "feroxbuster", "curl", "nikto", "sqlmap", "wafw00f",
-    "dnsrecon", "fierce", "hydra", "gau", "waybackurls", "katana",
-    "dnsx", "asnmap", "mapcidr", "tshark", "sslscan", "whatweb",
-    "wpscan", "john", "whois", "traceroute", "dig",
+    "subfinder",
+    "amass",
+    "httpx",
+    "nmap",
+    "ffuf",
+    "gobuster",
+    "naabu",
+    "nuclei",
+    "feroxbuster",
+    "curl",
+    "nikto",
+    "sqlmap",
+    "wafw00f",
+    "dnsrecon",
+    "fierce",
+    "hydra",
+    "gau",
+    "waybackurls",
+    "katana",
+    "dnsx",
+    "asnmap",
+    "mapcidr",
+    "tshark",
+    "sslscan",
+    "whatweb",
+    "wpscan",
+    "john",
+    "whois",
+    "traceroute",
+    "dig",
     # 2026 additions
-    "trivy", "grype", "syft", "crackmapexec", "impacket", "pacu",
-    "binwalk", "mobfs", "spiderfoot", "trufflehog", "gitleaks",
-    "wfuzz", "aircrack-ng", "wifite2", "bettercap", "mitmproxy",
-    "cdk", "peirates", "kube-hunter", "kubeaudit", "schemathesis",
-    "massdns", "shuffledns", "subjack", "linpeas", "winpeas",
-    "sliver", "evilginx2", "gophish", "ghidra", "radare2",
+    "trivy",
+    "grype",
+    "syft",
+    "crackmapexec",
+    "impacket",
+    "pacu",
+    "binwalk",
+    "mobfs",
+    "spiderfoot",
+    "trufflehog",
+    "gitleaks",
+    "wfuzz",
+    "aircrack-ng",
+    "wifite2",
+    "bettercap",
+    "mitmproxy",
+    "cdk",
+    "peirates",
+    "kube-hunter",
+    "kubeaudit",
+    "schemathesis",
+    "massdns",
+    "shuffledns",
+    "subjack",
+    "linpeas",
+    "winpeas",
+    "sliver",
+    "evilginx2",
+    "gophish",
+    "ghidra",
+    "radare2",
 ]
 
 
@@ -68,7 +118,10 @@ def _check_single_tool(tool: str) -> tuple[str, bool, str]:
     version = ""
     try:
         result = subprocess.run(
-            [path, "--version"], capture_output=True, text=True, timeout=3,
+            [path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         out = (result.stdout or "") + (result.stderr or "")
         ver_match = re.search(r"(\d+\.\d+(?:\.\d+)?)", out)
@@ -128,7 +181,10 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
     proc = None
     try:
         proc = subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             start_new_session=True,
         )
         stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
@@ -274,6 +330,7 @@ def get_wordlist(name: str = "common.txt") -> str:
     try:
         console.print(f"  [{S_YELLOW}]⬇ Baixando wordlist {name}...[/]")
         import requests
+
         resp = requests.get(url, timeout=(3.05, 10), stream=True, allow_redirects=False)
         resp.raise_for_status()
         with open(dest, "wb") as f:
@@ -292,7 +349,10 @@ def ensure_nuclei_templates() -> str:
         return ""
     try:
         ver_out = subprocess.run(
-            ["nuclei", "-version"], capture_output=True, text=True, timeout=10,
+            ["nuclei", "-version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         ver_str = (ver_out.stdout + ver_out.stderr).strip()
         if ver_str:
@@ -310,7 +370,8 @@ def ensure_nuclei_templates() -> str:
         try:
             subprocess.run(
                 ["nuclei", "-update-templates", "-ut", NUCLEI_TEMPLATES_PATH],
-                check=True, timeout=120,
+                check=True,
+                timeout=120,
             )
         except Exception:
             return ""
@@ -321,8 +382,11 @@ def ensure_nuclei_templates() -> str:
 # EXTERNAL TOOLS PIPELINE
 # ═══════════════════════════════════════════════════════════════════════════════
 def enum_tools(
-    target: str, report: list[str], wordlist: str,
-    nuclei_templates: str, timeouts: dict[str, int],
+    target: str,
+    report: list[str],
+    wordlist: str,
+    nuclei_templates: str,
+    timeouts: dict[str, int],
     available: dict[str, bool],
 ) -> dict[str, Any]:
     results: dict[str, Any] = {}
@@ -389,6 +453,7 @@ def run_feroxbuster(target: str, wordlist: str, available: dict[str, bool]) -> l
         if line.startswith("{"):
             try:
                 import json
+
                 results.append(json.loads(line))
             except Exception:
                 pass

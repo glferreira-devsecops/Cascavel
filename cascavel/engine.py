@@ -105,9 +105,14 @@ def _count_plugins() -> int:
 # PLUGIN EXECUTION
 # ═══════════════════════════════════════════════════════════════════════════════
 def _exec_plugin(
-    path: str, name: str, target: str, ip: str,
-    ports: list[int], banners: dict[int, str],
-    timeout: int = 120, global_context: dict | None = None,
+    path: str,
+    name: str,
+    target: str,
+    ip: str,
+    ports: list[int],
+    banners: dict[int, str],
+    timeout: int = 120,
+    global_context: dict | None = None,
 ) -> dict[str, Any]:
     """Executa um plugin com timeout guard (SIGALRM, 120s padrão)."""
     import importlib.machinery as _ilm
@@ -124,6 +129,7 @@ def _exec_plugin(
 
     try:
         import inspect
+
         sig = inspect.signature(mod.run)
         has_context = "context" in sig.parameters
     except Exception:
@@ -323,8 +329,12 @@ def _build_intel_panel(intel_idx: int, scan_stats: dict[str, int], elapsed: floa
 # RUN PLUGINS
 # ═══════════════════════════════════════════════════════════════════════════════
 def run_plugins(
-    target: str, ip: str, ports: list[int], banners: dict[int, str],
-    report: list[str], plugin_filter: list[str] | None = None,
+    target: str,
+    ip: str,
+    ports: list[int],
+    banners: dict[int, str],
+    report: list[str],
+    plugin_filter: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Executa plugins com split-screen: scan table + security intel."""
     results: list[dict[str, Any]] = []
@@ -338,7 +348,16 @@ def run_plugins(
         filter_set = set(plugin_filter)
         valid = [(f, n) for f, n in valid if n in filter_set]
     total = len(valid)
-    scan_stats: dict[str, int] = {"ok": 0, "vuln": 0, "err": 0, "CRITICO": 0, "ALTO": 0, "MEDIO": 0, "BAIXO": 0, "INFO": 0}
+    scan_stats: dict[str, int] = {
+        "ok": 0,
+        "vuln": 0,
+        "err": 0,
+        "CRITICO": 0,
+        "ALTO": 0,
+        "MEDIO": 0,
+        "BAIXO": 0,
+        "INFO": 0,
+    }
 
     console.print(Rule(f"[bold magenta]🔌 PLUGIN ENGINE — {total} PLUGINS[/]", style="magenta"))
     console.print()
@@ -353,7 +372,9 @@ def run_plugins(
             "oob_server": f"{target}.oob.cascavel.io",
         }
 
-    console.print(f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes")
+    console.print(
+        f"    [green]✓[/] Baselines: Latency={global_context['baseline_latency']:.2f}s | 404_Len={global_context['baseline_404_len']} bytes"
+    )
     console.print(f"    [green]✓[/] Parâmetros Descobertos: {len(discovered_params)} parâmetros para fuzzing.\n")
 
     intel_order = list(range(len(SECURITY_INTEL)))
@@ -368,8 +389,10 @@ def run_plugins(
 
         t = Table(
             title=f"[{S_GREEN}]🐍 CASCAVEL — {current_idx}/{total} [{bar_str}][/]",
-            box=box.ROUNDED, border_style="green",
-            header_style=f"{S_WHITE} on dark_green", expand=True,
+            box=box.ROUNDED,
+            border_style="green",
+            header_style=f"{S_WHITE} on dark_green",
+            expand=True,
         )
         t.add_column("#", style=S_DIM, width=4, justify="right")
         t.add_column("Plugin", style=S_CYAN, min_width=20)
@@ -389,7 +412,14 @@ def run_plugins(
             t.add_row(*row)
 
         if current_idx < total:
-            t.add_row(str(current_idx), f"[bold yellow]▶ {current_name}[/]", "[yellow]⋯[/]", "[yellow]Executando...[/]", "", "")
+            t.add_row(
+                str(current_idx),
+                f"[bold yellow]▶ {current_name}[/]",
+                "[yellow]⋯[/]",
+                "[yellow]Executando...[/]",
+                "",
+                "",
+            )
         return t
 
     def _build_layout(rows, current_idx, current_name, intel_i):
@@ -403,7 +433,9 @@ def run_plugins(
     table_rows: list = []
 
     try:
-        with Live(_build_layout(table_rows, 1, valid[0][1] if valid else "", 0), console=console, refresh_per_second=4) as live:
+        with Live(
+            _build_layout(table_rows, 1, valid[0][1] if valid else "", 0), console=console, refresh_per_second=4
+        ) as live:
             for idx, (file_path, name) in enumerate(valid, 1):
                 t0 = time.time()
                 try:
@@ -441,7 +473,9 @@ def run_plugins(
                     sev_str = "[green]—[/]"
                     scan_stats["ok"] = scan_stats.get("ok", 0) + 1
 
-                table_rows.append((str(idx), name, f"[{style}]{icon}[/]", desc, sev_str or "[green]—[/]", f"{elapsed:.1f}s"))
+                table_rows.append(
+                    (str(idx), name, f"[{style}]{icon}[/]", desc, sev_str or "[green]—[/]", f"{elapsed:.1f}s")
+                )
 
                 if idx % 2 == 0:
                     intel_idx = intel_idx + 1

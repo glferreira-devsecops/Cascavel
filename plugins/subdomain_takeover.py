@@ -6,16 +6,83 @@ import requests
 
 # Subdomain wordlist for takeover scanning
 SUBDOMAIN_WORDLIST = [
-    "dev", "test", "staging", "beta", "app", "api", "mail", "cdn", "status",
-    "docs", "shop", "blog", "admin", "portal", "auth", "sso", "vpn", "git",
-    "ci", "jenkins", "grafana", "kibana", "demo", "sandbox", "preview",
-    "legacy", "old", "backup", "internal", "intranet", "extranet", "webmail",
-    "ftp", "smtp", "pop", "imap", "mx", "ns", "dns", "proxy", "gateway",
-    "lb", "load", "static", "assets", "media", "img", "images", "files",
-    "upload", "download", "cdn2", "edge", "node", "worker", "job", "queue",
-    "chat", "support", "help", "wiki", "kb", "forum", "community", "social",
-    "analytics", "stats", "metrics", "monitor", "log", "logs", "trace",
-    "events", "webhook", "notify", "alert", "alarm",
+    "dev",
+    "test",
+    "staging",
+    "beta",
+    "app",
+    "api",
+    "mail",
+    "cdn",
+    "status",
+    "docs",
+    "shop",
+    "blog",
+    "admin",
+    "portal",
+    "auth",
+    "sso",
+    "vpn",
+    "git",
+    "ci",
+    "jenkins",
+    "grafana",
+    "kibana",
+    "demo",
+    "sandbox",
+    "preview",
+    "legacy",
+    "old",
+    "backup",
+    "internal",
+    "intranet",
+    "extranet",
+    "webmail",
+    "ftp",
+    "smtp",
+    "pop",
+    "imap",
+    "mx",
+    "ns",
+    "dns",
+    "proxy",
+    "gateway",
+    "lb",
+    "load",
+    "static",
+    "assets",
+    "media",
+    "img",
+    "images",
+    "files",
+    "upload",
+    "download",
+    "cdn2",
+    "edge",
+    "node",
+    "worker",
+    "job",
+    "queue",
+    "chat",
+    "support",
+    "help",
+    "wiki",
+    "kb",
+    "forum",
+    "community",
+    "social",
+    "analytics",
+    "stats",
+    "metrics",
+    "monitor",
+    "log",
+    "logs",
+    "trace",
+    "events",
+    "webhook",
+    "notify",
+    "alert",
+    "alarm",
 ]
 
 # Cloud service takeover fingerprints
@@ -110,7 +177,9 @@ def _check_cname_dangling(subdomain):
     try:
         result = subprocess.run(
             ["dig", "+short", "CNAME", subdomain],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         cname = result.stdout.strip().rstrip(".")
         if cname:
@@ -137,33 +206,39 @@ def _check_cloud_takeover(subdomain, cname=None):
         for service, fingerprints in CLOUD_FINGERPRINTS.items():
             for fp_text, severity in fingerprints:
                 if fp_text.lower() in body or fp_text.lower() in headers:
-                    findings.append({
-                        "tipo": "CLOUD_TAKEOVER",
-                        "subdominio": subdomain,
-                        "servico": service,
-                        "indicador": fp_text[:80],
-                        "status_http": resp.status_code,
-                        "cname": cname or "N/A",
-                        "severidade": severity,
-                        "descricao": f"Takeover possível via {service} em {subdomain}",
-                        "remediacao": f"Reclamar recurso no {service} ou remover CNAME. Implementar monitoramento contínuo.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "CLOUD_TAKEOVER",
+                            "subdominio": subdomain,
+                            "servico": service,
+                            "indicador": fp_text[:80],
+                            "status_http": resp.status_code,
+                            "cname": cname or "N/A",
+                            "severidade": severity,
+                            "descricao": f"Takeover possível via {service} em {subdomain}",
+                            "remediacao": f"Reclamar recurso no {service} ou remover CNAME. Implementar monitoramento contínuo.",
+                        }
+                    )
                     return findings  # First match is enough
     except requests.ConnectionError:
-        findings.append({
-            "tipo": "CONNECTION_FAILED",
-            "subdominio": subdomain,
-            "cname": cname or "N/A",
-            "severidade": "MEDIO",
-            "descricao": f"Subdomínio {subdomain} não resolve — verificar CNAME manualmente",
-        })
+        findings.append(
+            {
+                "tipo": "CONNECTION_FAILED",
+                "subdominio": subdomain,
+                "cname": cname or "N/A",
+                "severidade": "MEDIO",
+                "descricao": f"Subdomínio {subdomain} não resolve — verificar CNAME manualmente",
+            }
+        )
     except Exception as e:
-        findings.append({
-            "tipo": "CHECK_ERROR",
-            "subdominio": subdomain,
-            "severidade": "INFO",
-            "descricao": f"Erro ao verificar {subdomain}: {str(e)}",
-        })
+        findings.append(
+            {
+                "tipo": "CHECK_ERROR",
+                "subdominio": subdomain,
+                "severidade": "INFO",
+                "descricao": f"Erro ao verificar {subdomain}: {str(e)}",
+            }
+        )
     return findings
 
 
@@ -173,7 +248,9 @@ def _check_expired_domains(subdomain):
     try:
         result = subprocess.run(
             ["dig", "+short", subdomain, "A"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         ips = [ip.strip() for ip in result.stdout.splitlines() if ip.strip()]
 
@@ -182,13 +259,15 @@ def _check_expired_domains(subdomain):
             try:
                 socket.gethostbyname(subdomain)
             except socket.gaierror:
-                findings.append({
-                    "tipo": "DOMAIN_NOT_REGISTERED",
-                    "subdominio": subdomain,
-                    "severidade": "CRITICO",
-                    "descricao": f"Domínio {subdomain} não registrado — takeover trivial",
-                    "remediacao": "Registrar o domínio ou remover referências. Monitorar expiração de domínios.",
-                })
+                findings.append(
+                    {
+                        "tipo": "DOMAIN_NOT_REGISTERED",
+                        "subdominio": subdomain,
+                        "severidade": "CRITICO",
+                        "descricao": f"Domínio {subdomain} não registrado — takeover trivial",
+                        "remediacao": "Registrar o domínio ou remover referências. Monitorar expiração de domínios.",
+                    }
+                )
     except FileNotFoundError:
         pass
     except Exception:
@@ -203,38 +282,46 @@ def _check_dns_misconfiguration(subdomain):
         # Check for conflicting records
         a_result = subprocess.run(
             ["dig", "+short", subdomain, "A"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         cname_result = subprocess.run(
             ["dig", "+short", subdomain, "CNAME"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
 
         a_records = [r.strip() for r in a_result.stdout.splitlines() if r.strip()]
         cname = cname_result.stdout.strip()
 
         if cname and a_records:
-            findings.append({
-                "tipo": "CONFLICTING_DNS",
-                "subdominio": subdomain,
-                "a_records": a_records,
-                "cname": cname,
-                "severidade": "ALTO",
-                "descricao": f"CNAME + A records conflitantes em {subdomain} — configuração DNS incorreta",
-                "remediacao": "Remover A records quando CNAME existe, ou vice-versa.",
-            })
+            findings.append(
+                {
+                    "tipo": "CONFLICTING_DNS",
+                    "subdominio": subdomain,
+                    "a_records": a_records,
+                    "cname": cname,
+                    "severidade": "ALTO",
+                    "descricao": f"CNAME + A records conflitantes em {subdomain} — configuração DNS incorreta",
+                    "remediacao": "Remover A records quando CNAME existe, ou vice-versa.",
+                }
+            )
 
         # Check for wildcard CNAME pointing to external service
         if cname and not cname.endswith(subdomain):
             external = cname.rstrip(".")
-            findings.append({
-                "tipo": "EXTERNAL_CNAME",
-                "subdominio": subdomain,
-                "cname": external,
-                "severidade": "MEDIO",
-                "descricao": f"CNAME aponta para serviço externo: {external} — takeover se serviço for descontinuado",
-                "remediacao": "Monitorar status do serviço externo. Implementar alertas para CNAME dangling.",
-            })
+            findings.append(
+                {
+                    "tipo": "EXTERNAL_CNAME",
+                    "subdominio": subdomain,
+                    "cname": external,
+                    "severidade": "MEDIO",
+                    "descricao": f"CNAME aponta para serviço externo: {external} — takeover se serviço for descontinuado",
+                    "remediacao": "Monitorar status do serviço externo. Implementar alertas para CNAME dangling.",
+                }
+            )
 
     except FileNotFoundError:
         pass
@@ -260,15 +347,17 @@ def _check_github_pages_takeover(subdomain, cname=None):
 
         for indicator in gh_indicators:
             if indicator in body:
-                findings.append({
-                    "tipo": "GITHUB_PAGES_TAKEOVER",
-                    "subdominio": subdomain,
-                    "cname": cname or "N/A",
-                    "indicador": indicator,
-                    "severidade": "CRITICO",
-                    "descricao": f"GitHub Pages takeover possível em {subdomain} — CNAME aponta para repo não existente",
-                    "remediacao": "Criar repositório GitHub com CNAME file correspondente, ou remover registro DNS.",
-                })
+                findings.append(
+                    {
+                        "tipo": "GITHUB_PAGES_TAKEOVER",
+                        "subdominio": subdomain,
+                        "cname": cname or "N/A",
+                        "indicador": indicator,
+                        "severidade": "CRITICO",
+                        "descricao": f"GitHub Pages takeover possível em {subdomain} — CNAME aponta para repo não existente",
+                        "remediacao": "Criar repositório GitHub com CNAME file correspondente, ou remover registro DNS.",
+                    }
+                )
                 break
     except Exception:
         pass
@@ -306,13 +395,15 @@ def run(target, ip, open_ports, banners, context=None):
         # CNAME dangling check
         cname, is_dangling = _check_cname_dangling(subdomain)
         if is_dangling:
-            resultado["dangling_cname"].append({
-                "subdominio": subdomain,
-                "cname": cname,
-                "severidade": "CRITICO",
-                "descricao": f"CNAME {cname} não resolve — subdomain takeover confirmado!",
-                "remediacao": "Remover CNAME ou reclamar recurso no serviço de destino.",
-            })
+            resultado["dangling_cname"].append(
+                {
+                    "subdominio": subdomain,
+                    "cname": cname,
+                    "severidade": "CRITICO",
+                    "descricao": f"CNAME {cname} não resolve — subdomain takeover confirmado!",
+                    "remediacao": "Remover CNAME ou reclamar recurso no serviço de destino.",
+                }
+            )
             # If dangling, check for specific takeover
             resultado["cloud_takeover"].extend(_check_cloud_takeover(subdomain, cname))
             resultado["github_pages"].extend(_check_github_pages_takeover(subdomain, cname))
@@ -329,7 +420,8 @@ def run(target, ip, open_ports, banners, context=None):
 
     total = sum(len(v) for v in resultado.values() if isinstance(v, list))
     critico = sum(
-        1 for v in resultado.values()
+        1
+        for v in resultado.values()
         if isinstance(v, list)
         for f in v
         if isinstance(f, dict) and f.get("severidade") == "CRITICO"

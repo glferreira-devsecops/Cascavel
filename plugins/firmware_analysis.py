@@ -180,9 +180,7 @@ INSECURE_UPDATE_INDICATORS: list[str] = [
 ]
 
 
-def _check_firmware_endpoints(
-    target: str, base_url: str, session: requests.Session
-) -> list[dict[str, Any]]:
+def _check_firmware_endpoints(target: str, base_url: str, session: requests.Session) -> list[dict[str, Any]]:
     """Probe for exposed firmware download and update endpoints."""
     findings: list[dict[str, Any]] = []
 
@@ -195,45 +193,56 @@ def _check_firmware_endpoints(
                 content_type = resp.headers.get("Content-Type", "")
 
                 # Check if it's a binary firmware download
-                is_binary = any(ct in content_type.lower() for ct in (
-                    "application/octet-stream", "application/zip", "application/gzip",
-                    "application/x-tar", "application/x-compressed", "binary",
-                ))
+                is_binary = any(
+                    ct in content_type.lower()
+                    for ct in (
+                        "application/octet-stream",
+                        "application/zip",
+                        "application/gzip",
+                        "application/x-tar",
+                        "application/x-compressed",
+                        "binary",
+                    )
+                )
 
                 severity = "ALTO" if is_binary else "MEDIO"
                 if is_binary:
                     severity = "CRITICO"
 
-                findings.append({
-                    "tipo": "FIRMWARE_ENDPOINT",
-                    "severidade": severity,
-                    "titulo": f"Firmware endpoint exposed: {path}",
-                    "descricao": (
-                        f"Firmware endpoint {path} returned HTTP {resp.status_code}. "
-                        f"Content-Type: {content_type}. "
-                        f"{'Binary firmware download available.' if is_binary else 'Informational endpoint.'}"
-                    ),
-                    "endpoint": url,
-                    "content_type": content_type,
-                    "content_length": len(resp.content),
-                    "is_binary": is_binary,
-                    "remediacao": (
-                        "Remove firmware download endpoints from public access. "
-                        "Require authentication for firmware downloads. "
-                        "Serve firmware over HTTPS with signature verification."
-                    ),
-                })
+                findings.append(
+                    {
+                        "tipo": "FIRMWARE_ENDPOINT",
+                        "severidade": severity,
+                        "titulo": f"Firmware endpoint exposed: {path}",
+                        "descricao": (
+                            f"Firmware endpoint {path} returned HTTP {resp.status_code}. "
+                            f"Content-Type: {content_type}. "
+                            f"{'Binary firmware download available.' if is_binary else 'Informational endpoint.'}"
+                        ),
+                        "endpoint": url,
+                        "content_type": content_type,
+                        "content_length": len(resp.content),
+                        "is_binary": is_binary,
+                        "remediacao": (
+                            "Remove firmware download endpoints from public access. "
+                            "Require authentication for firmware downloads. "
+                            "Serve firmware over HTTPS with signature verification."
+                        ),
+                    }
+                )
 
             elif resp.status_code in (401, 403):
-                findings.append({
-                    "tipo": "FIRMWARE_ENDPOINT_PROTECTED",
-                    "severidade": "INFO",
-                    "titulo": f"Firmware endpoint exists (protected): {path}",
-                    "descricao": f"Firmware endpoint {path} returned HTTP {resp.status_code} — exists but requires auth.",
-                    "endpoint": url,
-                    "status_code": resp.status_code,
-                    "remediacao": "Ensure firmware endpoints use strong authentication and are not accessible via default credentials.",
-                })
+                findings.append(
+                    {
+                        "tipo": "FIRMWARE_ENDPOINT_PROTECTED",
+                        "severidade": "INFO",
+                        "titulo": f"Firmware endpoint exists (protected): {path}",
+                        "descricao": f"Firmware endpoint {path} returned HTTP {resp.status_code} — exists but requires auth.",
+                        "endpoint": url,
+                        "status_code": resp.status_code,
+                        "remediacao": "Ensure firmware endpoints use strong authentication and are not accessible via default credentials.",
+                    }
+                )
 
         except requests.RequestException:
             continue
@@ -241,9 +250,7 @@ def _check_firmware_endpoints(
     return findings
 
 
-def _check_version_disclosure(
-    target: str, base_url: str, session: requests.Session
-) -> list[dict[str, Any]]:
+def _check_version_disclosure(target: str, base_url: str, session: requests.Session) -> list[dict[str, Any]]:
     """Detect firmware version disclosure in responses."""
     findings: list[dict[str, Any]] = []
     check_urls = [
@@ -270,21 +277,23 @@ def _check_version_disclosure(
             for pattern in VERSION_PATTERNS:
                 matches = re.findall(pattern, combined)
                 if matches:
-                    findings.append({
-                        "tipo": "VERSION_DISCLOSURE",
-                        "severidade": "MEDIO",
-                        "titulo": f"Firmware version disclosed at {url}",
-                        "descricao": (
-                            f"Version information detected: {matches[:3]}. "
-                            "Firmware version disclosure enables targeted attacks against known CVEs."
-                        ),
-                        "endpoint": url,
-                        "versions_found": matches[:5],
-                        "remediacao": (
-                            "Remove version information from public endpoints. "
-                            "Use obfuscated version identifiers internally."
-                        ),
-                    })
+                    findings.append(
+                        {
+                            "tipo": "VERSION_DISCLOSURE",
+                            "severidade": "MEDIO",
+                            "titulo": f"Firmware version disclosed at {url}",
+                            "descricao": (
+                                f"Version information detected: {matches[:3]}. "
+                                "Firmware version disclosure enables targeted attacks against known CVEs."
+                            ),
+                            "endpoint": url,
+                            "versions_found": matches[:5],
+                            "remediacao": (
+                                "Remove version information from public endpoints. "
+                                "Use obfuscated version identifiers internally."
+                            ),
+                        }
+                    )
                     break  # One finding per URL
 
         except requests.RequestException:
@@ -293,9 +302,7 @@ def _check_version_disclosure(
     return findings
 
 
-def _check_update_mechanism(
-    target: str, base_url: str, session: requests.Session
-) -> list[dict[str, Any]]:
+def _check_update_mechanism(target: str, base_url: str, session: requests.Session) -> list[dict[str, Any]]:
     """Test firmware update mechanism for security issues."""
     findings: list[dict[str, Any]] = []
 
@@ -311,21 +318,23 @@ def _check_update_mechanism(
                 body_lower = resp.text[:2000].lower()
 
                 if any(kw in body_lower for kw in ("update", "upload", "firmware", "upgrade", "version")):
-                    findings.append({
-                        "tipo": "UPDATE_NO_AUTH",
-                        "severidade": "CRITICO",
-                        "titulo": f"Firmware update endpoint accessible without auth: {path}",
-                        "descricao": (
-                            f"Firmware update endpoint {path} accepted a POST request (HTTP {resp.status_code}) "
-                            "without authentication. An attacker may push malicious firmware."
-                        ),
-                        "endpoint": url,
-                        "remediacao": (
-                            "Require strong authentication for firmware updates. "
-                            "Implement firmware signing and verification. "
-                            "Add CSRF protection to update endpoints."
-                        ),
-                    })
+                    findings.append(
+                        {
+                            "tipo": "UPDATE_NO_AUTH",
+                            "severidade": "CRITICO",
+                            "titulo": f"Firmware update endpoint accessible without auth: {path}",
+                            "descricao": (
+                                f"Firmware update endpoint {path} accepted a POST request (HTTP {resp.status_code}) "
+                                "without authentication. An attacker may push malicious firmware."
+                            ),
+                            "endpoint": url,
+                            "remediacao": (
+                                "Require strong authentication for firmware updates. "
+                                "Implement firmware signing and verification. "
+                                "Add CSRF protection to update endpoints."
+                            ),
+                        }
+                    )
 
             # Check response headers for insecure update indicators
             resp_get = session.get(url, timeout=6, allow_redirects=False)
@@ -333,22 +342,24 @@ def _check_update_mechanism(
 
             for indicator in INSECURE_UPDATE_INDICATORS:
                 if indicator in combined:
-                    findings.append({
-                        "tipo": "INSECURE_UPDATE",
-                        "severidade": "ALTO",
-                        "titulo": f"Insecure update indicator: {indicator}",
-                        "descricao": (
-                            f"Firmware update response contains '{indicator}'. "
-                            "Firmware updates should use HTTPS with signature verification."
-                        ),
-                        "endpoint": url,
-                        "indicator": indicator,
-                        "remediacao": (
-                            "Enforce HTTPS for all firmware downloads. "
-                            "Implement cryptographic signature verification for firmware images. "
-                            "Add rollback protection."
-                        ),
-                    })
+                    findings.append(
+                        {
+                            "tipo": "INSECURE_UPDATE",
+                            "severidade": "ALTO",
+                            "titulo": f"Insecure update indicator: {indicator}",
+                            "descricao": (
+                                f"Firmware update response contains '{indicator}'. "
+                                "Firmware updates should use HTTPS with signature verification."
+                            ),
+                            "endpoint": url,
+                            "indicator": indicator,
+                            "remediacao": (
+                                "Enforce HTTPS for all firmware downloads. "
+                                "Implement cryptographic signature verification for firmware images. "
+                                "Add rollback protection."
+                            ),
+                        }
+                    )
 
         except requests.RequestException:
             continue
@@ -356,17 +367,23 @@ def _check_update_mechanism(
     return findings
 
 
-def _check_hardcoded_credentials(
-    target: str, base_url: str, session: requests.Session
-) -> list[dict[str, Any]]:
+def _check_hardcoded_credentials(target: str, base_url: str, session: requests.Session) -> list[dict[str, Any]]:
     """Check firmware endpoints for hardcoded credentials."""
     findings: list[dict[str, Any]] = []
 
     check_paths = [
-        "/firmware", "/firmware/info", "/firmware/config",
-        "/config", "/config/firmware", "/device/config",
-        "/admin/config", "/system/config", "/backup",
-        "/backup/config", "/export", "/export/config",
+        "/firmware",
+        "/firmware/info",
+        "/firmware/config",
+        "/config",
+        "/config/firmware",
+        "/device/config",
+        "/admin/config",
+        "/system/config",
+        "/backup",
+        "/backup/config",
+        "/export",
+        "/export/config",
     ]
 
     for path in check_paths:
@@ -384,22 +401,24 @@ def _check_hardcoded_credentials(
                     # Redact actual values
                     redacted = [re.sub(r"[:=]\s*[\"']?(\S+)", ": [REDACTED]", m) for m in matches[:3]]
 
-                    findings.append({
-                        "tipo": "HARDCODED_CREDENTIAL",
-                        "severidade": "CRITICO",
-                        "titulo": f"Hardcoded credentials in {path}",
-                        "descricao": (
-                            f"Firmware endpoint {path} contains credential patterns: {redacted}. "
-                            "Hardcoded credentials in firmware are a critical security risk."
-                        ),
-                        "endpoint": url,
-                        "patterns_matched": redacted,
-                        "remediacao": (
-                            "Remove all hardcoded credentials from firmware. "
-                            "Use secure credential storage (TPM, secure enclave). "
-                            "Force password change on first use."
-                        ),
-                    })
+                    findings.append(
+                        {
+                            "tipo": "HARDCODED_CREDENTIAL",
+                            "severidade": "CRITICO",
+                            "titulo": f"Hardcoded credentials in {path}",
+                            "descricao": (
+                                f"Firmware endpoint {path} contains credential patterns: {redacted}. "
+                                "Hardcoded credentials in firmware are a critical security risk."
+                            ),
+                            "endpoint": url,
+                            "patterns_matched": redacted,
+                            "remediacao": (
+                                "Remove all hardcoded credentials from firmware. "
+                                "Use secure credential storage (TPM, secure enclave). "
+                                "Force password change on first use."
+                            ),
+                        }
+                    )
 
         except requests.RequestException:
             continue
@@ -408,7 +427,11 @@ def _check_hardcoded_credentials(
 
 
 def _check_debug_interfaces(
-    target: str, base_url: str, session: requests.Session, ports: list[int] | None = None, banners: dict[str, str] | None = None
+    target: str,
+    base_url: str,
+    session: requests.Session,
+    ports: list[int] | None = None,
+    banners: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Detect exposed debug interfaces (JTAG, UART, serial, etc.)."""
     if ports is None:
@@ -436,21 +459,22 @@ def _check_debug_interfaces(
                 elif any(kw in body_lower for kw in ("diagnostic", "diag", "test")):
                     severity = "MEDIO"
 
-                findings.append({
-                    "tipo": "DEBUG_INTERFACE",
-                    "severidade": severity,
-                    "titulo": f"Debug interface exposed: {path}",
-                    "descricao": (
-                        f"Debug/hardware interface at {path} returned HTTP 200. "
-                        f"Preview: {resp.text[:200]}..."
-                    ),
-                    "endpoint": url,
-                    "remediacao": (
-                        "Disable all debug interfaces in production firmware. "
-                        "Require physical access (JTAG fuse, secure boot). "
-                        "Remove diagnostic endpoints from release builds."
-                    ),
-                })
+                findings.append(
+                    {
+                        "tipo": "DEBUG_INTERFACE",
+                        "severidade": severity,
+                        "titulo": f"Debug interface exposed: {path}",
+                        "descricao": (
+                            f"Debug/hardware interface at {path} returned HTTP 200. Preview: {resp.text[:200]}..."
+                        ),
+                        "endpoint": url,
+                        "remediacao": (
+                            "Disable all debug interfaces in production firmware. "
+                            "Require physical access (JTAG fuse, secure boot). "
+                            "Remove diagnostic endpoints from release builds."
+                        ),
+                    }
+                )
 
         except requests.RequestException:
             continue
@@ -467,16 +491,18 @@ def _check_debug_interfaces(
 
     for port, (name, severity, desc) in debug_port_indicators.items():
         if port in ports:
-            findings.append({
-                "tipo": "DEBUG_PORT",
-                "severidade": severity,
-                "titulo": f"Debug port open: {port} ({name})",
-                "descricao": desc,
-                "port": port,
-                "service": name,
-                "banner": banners.get(str(port), "N/A"),
-                "remediacao": f"Disable {name} service. Use SSH (port 22) with key-based auth for remote access.",
-            })
+            findings.append(
+                {
+                    "tipo": "DEBUG_PORT",
+                    "severidade": severity,
+                    "titulo": f"Debug port open: {port} ({name})",
+                    "descricao": desc,
+                    "port": port,
+                    "service": name,
+                    "banner": banners.get(str(port), "N/A"),
+                    "remediacao": f"Disable {name} service. Use SSH (port 22) with key-based auth for remote access.",
+                }
+            )
 
     return findings
 
@@ -496,10 +522,12 @@ def run(
     base_url = f"{scheme}://{target}" if primary_port in (80, 443) else f"{scheme}://{target}:{primary_port}"
 
     session = requests.Session()
-    session.headers.update({
-        "Accept": "text/html, application/json, */*",
-        "User-Agent": "Mozilla/5.0 (Linux; rv:109.0) Gecko/20100101 Firefox/115.0",
-    })
+    session.headers.update(
+        {
+            "Accept": "text/html, application/json, */*",
+            "User-Agent": "Mozilla/5.0 (Linux; rv:109.0) Gecko/20100101 Firefox/115.0",
+        }
+    )
 
     try:
         # 1. Firmware endpoint discovery
@@ -524,24 +552,27 @@ def run(
         crit = severities.count("CRITICO")
         alto = severities.count("ALTO")
 
-        resultados.insert(0, {
-            "tipo": "RESUMO",
-            "severidade": "CRITICO" if crit > 0 else ("ALTO" if alto > 0 else "MEDIO"),
-            "titulo": f"Firmware Analysis — {len(resultados) - 1} findings",
-            "descricao": (
-                f"Firmware security analysis of {base_url} found "
-                f"{crit} critical, {alto} high, "
-                f"{severities.count('MEDIO')} medium, "
-                f"{severities.count('BAIXO')} low, "
-                f"{severities.count('INFO')} info findings."
-            ),
-            "total_resultados": len(resultados) - 1,
-            "remediacao": (
-                "Implement secure boot chain, firmware signing with X.509 certificates, "
-                "disable all debug interfaces in production, remove hardcoded credentials, "
-                "enforce HTTPS with certificate pinning for OTA updates."
-            ),
-        })
+        resultados.insert(
+            0,
+            {
+                "tipo": "RESUMO",
+                "severidade": "CRITICO" if crit > 0 else ("ALTO" if alto > 0 else "MEDIO"),
+                "titulo": f"Firmware Analysis — {len(resultados) - 1} findings",
+                "descricao": (
+                    f"Firmware security analysis of {base_url} found "
+                    f"{crit} critical, {alto} high, "
+                    f"{severities.count('MEDIO')} medium, "
+                    f"{severities.count('BAIXO')} low, "
+                    f"{severities.count('INFO')} info findings."
+                ),
+                "total_resultados": len(resultados) - 1,
+                "remediacao": (
+                    "Implement secure boot chain, firmware signing with X.509 certificates, "
+                    "disable all debug interfaces in production, remove hardcoded credentials, "
+                    "enforce HTTPS with certificate pinning for OTA updates."
+                ),
+            },
+        )
 
         return {"plugin": "firmware_analysis", "resultados": resultados}
 
@@ -549,11 +580,13 @@ def run(
         logger.error(f"Firmware analysis failed for {target}: {e}")
         return {
             "plugin": "firmware_analysis",
-            "resultados": [{
-                "tipo": "ERRO",
-                "severidade": "INFO",
-                "titulo": "Analysis error",
-                "descricao": f"Firmware analysis failed: {e}",
-                "remediacao": "N/A",
-            }],
+            "resultados": [
+                {
+                    "tipo": "ERRO",
+                    "severidade": "INFO",
+                    "titulo": "Analysis error",
+                    "descricao": f"Firmware analysis failed: {e}",
+                    "remediacao": "N/A",
+                }
+            ],
         }

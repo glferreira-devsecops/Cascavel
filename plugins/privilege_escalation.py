@@ -4,31 +4,81 @@ import subprocess
 
 # SUID/SGID binaries commonly exploitable
 SUID_EXPLOITABLE = [
-    "/usr/bin/find", "/usr/bin/vim", "/usr/bin/vi", "/usr/bin/nmap",
-    "/usr/bin/less", "/usr/bin/more", "/usr/bin/man", "/usr/bin/pico",
-    "/usr/bin/nano", "/usr/bin/wget", "/usr/bin/curl", "/usr/bin/bash",
-    "/usr/bin/sh", "/usr/bin/dash", "/usr/bin/zsh", "/usr/bin/env",
-    "/usr/bin/awk", "/usr/bin/gawk", "/usr/bin/perl", "/usr/bin/python",
-    "/usr/bin/python3", "/usr/bin/ruby", "/usr/bin/lua", "/usr/bin/tclsh",
-    "/usr/bin/rsync", "/usr/bin/strace", "/usr/bin/ltrace", "/usr/bin/gdb",
-    "/usr/bin/ftp", "/usr/bin/socat", "/usr/bin/nc", "/usr/bin/ncat",
-    "/usr/bin/tee", "/usr/bin/xargs", "/usr/bin/ar", "/usr/bin/base64",
-    "/usr/bin/busybox", "/usr/bin/cp", "/usr/bin/dd", "/usr/bin/mv",
-    "/usr/bin/docker", "/usr/bin/kubectl", "/usr/bin/apt-get", "/usr/bin/yum",
-    "/usr/bin/pip", "/usr/bin/gem", "/usr/bin/systemctl",
-    "/usr/sbin/exim4", "/usr/sbin/sendmail",
+    "/usr/bin/find",
+    "/usr/bin/vim",
+    "/usr/bin/vi",
+    "/usr/bin/nmap",
+    "/usr/bin/less",
+    "/usr/bin/more",
+    "/usr/bin/man",
+    "/usr/bin/pico",
+    "/usr/bin/nano",
+    "/usr/bin/wget",
+    "/usr/bin/curl",
+    "/usr/bin/bash",
+    "/usr/bin/sh",
+    "/usr/bin/dash",
+    "/usr/bin/zsh",
+    "/usr/bin/env",
+    "/usr/bin/awk",
+    "/usr/bin/gawk",
+    "/usr/bin/perl",
+    "/usr/bin/python",
+    "/usr/bin/python3",
+    "/usr/bin/ruby",
+    "/usr/bin/lua",
+    "/usr/bin/tclsh",
+    "/usr/bin/rsync",
+    "/usr/bin/strace",
+    "/usr/bin/ltrace",
+    "/usr/bin/gdb",
+    "/usr/bin/ftp",
+    "/usr/bin/socat",
+    "/usr/bin/nc",
+    "/usr/bin/ncat",
+    "/usr/bin/tee",
+    "/usr/bin/xargs",
+    "/usr/bin/ar",
+    "/usr/bin/base64",
+    "/usr/bin/busybox",
+    "/usr/bin/cp",
+    "/usr/bin/dd",
+    "/usr/bin/mv",
+    "/usr/bin/docker",
+    "/usr/bin/kubectl",
+    "/usr/bin/apt-get",
+    "/usr/bin/yum",
+    "/usr/bin/pip",
+    "/usr/bin/gem",
+    "/usr/bin/systemctl",
+    "/usr/sbin/exim4",
+    "/usr/sbin/sendmail",
 ]
 
 # Sensitive files that should not be world-writable
 SENSITIVE_FILES = [
-    "/etc/passwd", "/etc/shadow", "/etc/group", "/etc/gshadow",
-    "/etc/sudoers", "/etc/crontab", "/etc/ssh/sshd_config",
-    "/etc/hosts", "/etc/resolv.conf", "/etc/ld.so.preload",
-    "/etc/environment", "/etc/profile", "/etc/bash.bashrc",
-    "/root/.bashrc", "/root/.bash_profile", "/root/.profile",
-    "/root/.ssh/authorized_keys", "/root/.ssh/id_rsa",
-    "/etc/systemd/system/", "/etc/init.d/",
-    "/usr/local/bin/", "/usr/local/sbin/",
+    "/etc/passwd",
+    "/etc/shadow",
+    "/etc/group",
+    "/etc/gshadow",
+    "/etc/sudoers",
+    "/etc/crontab",
+    "/etc/ssh/sshd_config",
+    "/etc/hosts",
+    "/etc/resolv.conf",
+    "/etc/ld.so.preload",
+    "/etc/environment",
+    "/etc/profile",
+    "/etc/bash.bashrc",
+    "/root/.bashrc",
+    "/root/.bash_profile",
+    "/root/.profile",
+    "/root/.ssh/authorized_keys",
+    "/root/.ssh/id_rsa",
+    "/etc/systemd/system/",
+    "/etc/init.d/",
+    "/usr/local/bin/",
+    "/usr/local/sbin/",
 ]
 
 # Known kernel vulnerability patterns
@@ -43,7 +93,8 @@ KERNEL_VULNS = [
 
 # Container escape indicators
 CONTAINER_INDICATORS = [
-    "/.dockerenv", "/run/.containerenv",
+    "/.dockerenv",
+    "/run/.containerenv",
     "/proc/1/cgroup",
 ]
 
@@ -67,7 +118,9 @@ def _check_suid_sgid():
         # Find SUID binaries
         result = subprocess.run(
             ["find", "/", "-perm", "-4000", "-type", "f", "-ls"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         suid_files = []
         for line in result.stdout.splitlines():
@@ -78,59 +131,73 @@ def _check_suid_sgid():
 
                 # Check if known exploitable
                 if filepath in SUID_EXPLOITABLE:
-                    findings.append({
-                        "tipo": "SUID_EXPLOITABLE",
-                        "arquivo": filepath,
-                        "severidade": "CRITICO",
-                        "descricao": f"SUID binário explorável: {filepath} — privilege escalation trivial",
-                        "remediacao": f"Remover SUID bit: chmod u-s {filepath}. Alternativas: usar capabilities.",
-                        "exploit_ref": f"GTFOBins: https://gtfobins.github.io/gtfobins/{filepath.split('/')[-1]}/",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SUID_EXPLOITABLE",
+                            "arquivo": filepath,
+                            "severidade": "CRITICO",
+                            "descricao": f"SUID binário explorável: {filepath} — privilege escalation trivial",
+                            "remediacao": f"Remover SUID bit: chmod u-s {filepath}. Alternativas: usar capabilities.",
+                            "exploit_ref": f"GTFOBins: https://gtfobins.github.io/gtfobins/{filepath.split('/')[-1]}/",
+                        }
+                    )
                 else:
-                    findings.append({
-                        "tipo": "SUID_BINARY",
-                        "arquivo": filepath,
-                        "severidade": "INFO",
-                        "descricao": f"SUID binário encontrado: {filepath}",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SUID_BINARY",
+                            "arquivo": filepath,
+                            "severidade": "INFO",
+                            "descricao": f"SUID binário encontrado: {filepath}",
+                        }
+                    )
 
         # Find SGID binaries
         result = subprocess.run(
             ["find", "/", "-perm", "-2000", "-type", "f", "-ls"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         for line in result.stdout.splitlines():
             parts = line.split()
             if parts:
                 filepath = parts[-1]
                 if filepath in SUID_EXPLOITABLE:
-                    findings.append({
-                        "tipo": "SGID_EXPLOITABLE",
-                        "arquivo": filepath,
-                        "severidade": "CRITICO",
-                        "descricao": f"SGID binário explorável: {filepath}",
-                        "remediacao": f"Remover SGID bit: chmod g-s {filepath}.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SGID_EXPLOITABLE",
+                            "arquivo": filepath,
+                            "severidade": "CRITICO",
+                            "descricao": f"SGID binário explorável: {filepath}",
+                            "remediacao": f"Remover SGID bit: chmod g-s {filepath}.",
+                        }
+                    )
                 else:
-                    findings.append({
-                        "tipo": "SGID_BINARY",
-                        "arquivo": filepath,
-                        "severidade": "INFO",
-                        "descricao": f"SGID binário encontrado: {filepath}",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SGID_BINARY",
+                            "arquivo": filepath,
+                            "severidade": "INFO",
+                            "descricao": f"SGID binário encontrado: {filepath}",
+                        }
+                    )
 
     except subprocess.TimeoutExpired:
-        findings.append({
-            "tipo": "SUID_CHECK_TIMEOUT",
-            "severidade": "INFO",
-            "descricao": "SUID scan timeout — sistema pode ter muitos arquivos",
-        })
+        findings.append(
+            {
+                "tipo": "SUID_CHECK_TIMEOUT",
+                "severidade": "INFO",
+                "descricao": "SUID scan timeout — sistema pode ter muitos arquivos",
+            }
+        )
     except Exception as e:
-        findings.append({
-            "tipo": "SUID_CHECK_ERROR",
-            "severidade": "INFO",
-            "descricao": f"Erro ao verificar SUID/SGID: {str(e)}",
-        })
+        findings.append(
+            {
+                "tipo": "SUID_CHECK_ERROR",
+                "severidade": "INFO",
+                "descricao": f"Erro ao verificar SUID/SGID: {str(e)}",
+            }
+        )
     return findings
 
 
@@ -141,34 +208,42 @@ def _check_sudo_misconfig():
         # Check sudo -l (if we have sudo access)
         result = subprocess.run(
             ["sudo", "-n", "-l"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         output = result.stdout + result.stderr
 
         if "not allowed to execute" not in output and "sorry" not in output.lower():
             for pattern in SUDO_VULN_PATTERNS:
                 if pattern in output:
-                    findings.append({
-                        "tipo": "SUDO_MISCONFIG",
-                        "pattern": pattern,
-                        "severidade": "CRITICO",
-                        "descricao": f"Sudo misconfiguração: {pattern} — privilege escalation possível",
-                        "remediacao": f"Remover '{pattern}' do sudoers. Usar visudo para edições seguras.",
-                        "sudo_output": output[:500],
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SUDO_MISCONFIG",
+                            "pattern": pattern,
+                            "severidade": "CRITICO",
+                            "descricao": f"Sudo misconfiguração: {pattern} — privilege escalation possível",
+                            "remediacao": f"Remover '{pattern}' do sudoers. Usar visudo para edições seguras.",
+                            "sudo_output": output[:500],
+                        }
+                    )
 
     except FileNotFoundError:
-        findings.append({
-            "tipo": "SUDO_NOT_AVAILABLE",
-            "severidade": "INFO",
-            "descricao": "sudo não disponível no sistema",
-        })
+        findings.append(
+            {
+                "tipo": "SUDO_NOT_AVAILABLE",
+                "severidade": "INFO",
+                "descricao": "sudo não disponível no sistema",
+            }
+        )
     except Exception as e:
-        findings.append({
-            "tipo": "SUDO_CHECK_ERROR",
-            "severidade": "INFO",
-            "descricao": f"Erro ao verificar sudo: {str(e)}",
-        })
+        findings.append(
+            {
+                "tipo": "SUDO_CHECK_ERROR",
+                "severidade": "INFO",
+                "descricao": f"Erro ao verificar sudo: {str(e)}",
+            }
+        )
 
     # Check /etc/sudoers directly (if readable)
     try:
@@ -176,13 +251,15 @@ def _check_sudo_misconfig():
             content = f.read()
             for pattern in SUDO_VULN_PATTERNS:
                 if pattern in content:
-                    findings.append({
-                        "tipo": "SUDOERS_MISCONFIG",
-                        "pattern": pattern,
-                        "severidade": "CRITICO",
-                        "descricao": f"Sudoers contém: {pattern}",
-                        "remediacao": "Editar /etc/sudoers com visudo. Remover configurações perigosas.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "SUDOERS_MISCONFIG",
+                            "pattern": pattern,
+                            "severidade": "CRITICO",
+                            "descricao": f"Sudoers contém: {pattern}",
+                            "remediacao": "Editar /etc/sudoers com visudo. Remover configurações perigosas.",
+                        }
+                    )
     except PermissionError:
         pass
     except FileNotFoundError:
@@ -201,14 +278,16 @@ def _check_sudo_misconfig():
                         content = f.read()
                         for pattern in SUDO_VULN_PATTERNS:
                             if pattern in content:
-                                findings.append({
-                                    "tipo": "SUDOERS_D_MISCONFIG",
-                                    "arquivo": filepath,
-                                    "pattern": pattern,
-                                    "severidade": "CRITICO",
-                                    "descricao": f"{filepath} contém: {pattern}",
-                                    "remediacao": f"Revisar e corrigir {filepath}.",
-                                })
+                                findings.append(
+                                    {
+                                        "tipo": "SUDOERS_D_MISCONFIG",
+                                        "arquivo": filepath,
+                                        "pattern": pattern,
+                                        "severidade": "CRITICO",
+                                        "descricao": f"{filepath} contém: {pattern}",
+                                        "remediacao": f"Revisar e corrigir {filepath}.",
+                                    }
+                                )
                 except PermissionError:
                     continue
     except Exception:
@@ -227,31 +306,37 @@ def _check_writable_sensitive_files():
                     # Check if world-writable
                     stat = os.stat(filepath)
                     if stat.st_mode & 0o002:
-                        findings.append({
-                            "tipo": "WORLD_WRITABLE_FILE",
-                            "arquivo": filepath,
-                            "severidade": "CRITICO",
-                            "descricao": f"Arquivo sensível world-writable: {filepath}",
-                            "remediacao": f"Corrigir permissões: chmod o-w {filepath}",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "WORLD_WRITABLE_FILE",
+                                "arquivo": filepath,
+                                "severidade": "CRITICO",
+                                "descricao": f"Arquivo sensível world-writable: {filepath}",
+                                "remediacao": f"Corrigir permissões: chmod o-w {filepath}",
+                            }
+                        )
                     elif stat.st_mode & 0o020:
-                        findings.append({
-                            "tipo": "GROUP_WRITABLE_FILE",
-                            "arquivo": filepath,
-                            "severidade": "ALTO",
-                            "descricao": f"Arquivo sensível group-writable: {filepath}",
-                            "remediacao": f"Corrigir permissões: chmod g-w {filepath}",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "GROUP_WRITABLE_FILE",
+                                "arquivo": filepath,
+                                "severidade": "ALTO",
+                                "descricao": f"Arquivo sensível group-writable: {filepath}",
+                                "remediacao": f"Corrigir permissões: chmod g-w {filepath}",
+                            }
+                        )
                 elif os.path.isdir(filepath):
                     stat = os.stat(filepath)
                     if stat.st_mode & 0o002:
-                        findings.append({
-                            "tipo": "WORLD_WRITABLE_DIR",
-                            "diretorio": filepath,
-                            "severidade": "CRITICO",
-                            "descricao": f"Diretório sensível world-writable: {filepath}",
-                            "remediacao": f"Corrigir permissões: chmod o-w {filepath}",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "WORLD_WRITABLE_DIR",
+                                "diretorio": filepath,
+                                "severidade": "CRITICO",
+                                "descricao": f"Diretório sensível world-writable: {filepath}",
+                                "remediacao": f"Corrigir permissões: chmod o-w {filepath}",
+                            }
+                        )
         except PermissionError:
             continue
         except Exception:
@@ -264,13 +349,15 @@ def _check_writable_sensitive_files():
             if os.path.isdir(pdir):
                 stat = os.stat(pdir)
                 if stat.st_mode & 0o002:
-                    findings.append({
-                        "tipo": "WRITABLE_PATH_DIR",
-                        "diretorio": pdir,
-                        "severidade": "CRITICO",
-                        "descricao": f"Diretório no PATH é world-writable: {pdir} — binary hijacking trivial",
-                        "remediacao": f"Corrigir permissões: chmod o-w {pdir}",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "WRITABLE_PATH_DIR",
+                            "diretorio": pdir,
+                            "severidade": "CRITICO",
+                            "descricao": f"Diretório no PATH é world-writable: {pdir} — binary hijacking trivial",
+                            "remediacao": f"Corrigir permissões: chmod o-w {pdir}",
+                        }
+                    )
     except Exception:
         pass
 
@@ -283,29 +370,35 @@ def _check_kernel_vulnerabilities():
     try:
         result = subprocess.run(
             ["uname", "-r"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         kernel_version = result.stdout.strip()
         if kernel_version:
-            findings.append({
-                "tipo": "KERNEL_VERSION",
-                "versao": kernel_version,
-                "severidade": "INFO",
-                "descricao": f"Kernel: {kernel_version}",
-            })
+            findings.append(
+                {
+                    "tipo": "KERNEL_VERSION",
+                    "versao": kernel_version,
+                    "severidade": "INFO",
+                    "descricao": f"Kernel: {kernel_version}",
+                }
+            )
 
             # Check against known vulnerable versions
             major_minor = ".".join(kernel_version.split(".")[:2])
             for vuln_version, vuln_name, severity in KERNEL_VULNS:
                 if major_minor == vuln_version:
-                    findings.append({
-                        "tipo": "KERNEL_VULNERABLE",
-                        "versao": kernel_version,
-                        "vulnerabilidade": vuln_name,
-                        "severidade": severity,
-                        "descricao": f"Kernel {kernel_version} potencialmente vulnerável a {vuln_name}",
-                        "remediacao": "Atualizar kernel para versão mais recente. Verificar patches de segurança.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "KERNEL_VULNERABLE",
+                            "versao": kernel_version,
+                            "vulnerabilidade": vuln_name,
+                            "severidade": severity,
+                            "descricao": f"Kernel {kernel_version} potencialmente vulnerável a {vuln_name}",
+                            "remediacao": "Atualizar kernel para versão mais recente. Verificar patches de segurança.",
+                        }
+                    )
 
             # Check for kernel hardening
             sysctl_params = {
@@ -319,28 +412,34 @@ def _check_kernel_vulnerabilities():
                 try:
                     result = subprocess.run(
                         ["sysctl", "-n", param],
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     value = result.stdout.strip()
                     if value != expected:
-                        findings.append({
-                            "tipo": "KERNEL_HARDENING_MISSING",
-                            "parametro": param,
-                            "valor_atual": value,
-                            "valor_esperado": expected,
-                            "severidade": "MEDIO",
-                            "descricao": f"Kernel hardening ausente: {name} ({param}={value}, esperado={expected})",
-                            "remediacao": f"Configurar sysctl {param}={expected} em /etc/sysctl.d/",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "KERNEL_HARDENING_MISSING",
+                                "parametro": param,
+                                "valor_atual": value,
+                                "valor_esperado": expected,
+                                "severidade": "MEDIO",
+                                "descricao": f"Kernel hardening ausente: {name} ({param}={value}, esperado={expected})",
+                                "remediacao": f"Configurar sysctl {param}={expected} em /etc/sysctl.d/",
+                            }
+                        )
                 except Exception:
                     continue
 
     except Exception as e:
-        findings.append({
-            "tipo": "KERNEL_CHECK_ERROR",
-            "severidade": "INFO",
-            "descricao": f"Erro ao verificar kernel: {str(e)}",
-        })
+        findings.append(
+            {
+                "tipo": "KERNEL_CHECK_ERROR",
+                "severidade": "INFO",
+                "descricao": f"Erro ao verificar kernel: {str(e)}",
+            }
+        )
     return findings
 
 
@@ -353,12 +452,14 @@ def _check_container_escape():
     for indicator in CONTAINER_INDICATORS:
         if os.path.exists(indicator):
             is_container = True
-            findings.append({
-                "tipo": "CONTAINER_DETECTED",
-                "indicador": indicator,
-                "severidade": "INFO",
-                "descricao": f"Executando dentro de container ({indicator} existe)",
-            })
+            findings.append(
+                {
+                    "tipo": "CONTAINER_DETECTED",
+                    "indicador": indicator,
+                    "severidade": "INFO",
+                    "descricao": f"Executando dentro de container ({indicator} existe)",
+                }
+            )
             break
 
     if not is_container:
@@ -368,12 +469,14 @@ def _check_container_escape():
                 content = f.read()
                 if "docker" in content or "kubepods" in content or "containerd" in content:
                     is_container = True
-                    findings.append({
-                        "tipo": "CONTAINER_DETECTED",
-                        "indicador": "/proc/1/cgroup",
-                        "severidade": "INFO",
-                        "descricao": "Executando dentro de container (cgroup indica Docker/K8s)",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "CONTAINER_DETECTED",
+                            "indicador": "/proc/1/cgroup",
+                            "severidade": "INFO",
+                            "descricao": "Executando dentro de container (cgroup indica Docker/K8s)",
+                        }
+                    )
         except Exception:
             pass
 
@@ -382,59 +485,74 @@ def _check_container_escape():
         try:
             result = subprocess.run(
                 ["cat", "/proc/1/status"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if "CapEff:\t0000003fffffffff" in result.stdout or "CapEff:\tffffffffffffffff" in result.stdout:
-                findings.append({
-                    "tipo": "PRIVILEGED_CONTAINER",
-                    "severidade": "CRITICO",
-                    "descricao": "Container rodando em modo privilegiado — escape trivial",
-                    "remeciacao": "Remover --privileged. Usar capabilities específicas. Implementar seccomp/AppArmor.",
-                })
+                findings.append(
+                    {
+                        "tipo": "PRIVILEGED_CONTAINER",
+                        "severidade": "CRITICO",
+                        "descricao": "Container rodando em modo privilegiado — escape trivial",
+                        "remeciacao": "Remover --privileged. Usar capabilities específicas. Implementar seccomp/AppArmor.",
+                    }
+                )
         except Exception:
             pass
 
         # Check for mounted Docker socket
         if os.path.exists("/var/run/docker.sock"):
-            findings.append({
-                "tipo": "DOCKER_SOCKET_MOUNTED",
-                "severidade": "CRITICO",
-                "descricao": "Docker socket montado no container — escape via docker API",
-                "remediacao": "Nunca montar /var/run/docker.sock em containers. Usar Docker-in-Docker com cautela.",
-            })
+            findings.append(
+                {
+                    "tipo": "DOCKER_SOCKET_MOUNTED",
+                    "severidade": "CRITICO",
+                    "descricao": "Docker socket montado no container — escape via docker API",
+                    "remediacao": "Nunca montar /var/run/docker.sock em containers. Usar Docker-in-Docker com cautela.",
+                }
+            )
 
         # Check for sensitive mounts
         sensitive_mounts = [
-            "/proc/sysrq-trigger", "/sys/kernel", "/dev/sd",
-            "/etc/crontab", "/var/spool/cron",
+            "/proc/sysrq-trigger",
+            "/sys/kernel",
+            "/dev/sd",
+            "/etc/crontab",
+            "/var/spool/cron",
         ]
         for mount in sensitive_mounts:
             if os.path.exists(mount):
-                findings.append({
-                    "tipo": "SENSITIVE_MOUNT",
-                    "path": mount,
-                    "severidade": "ALTO",
-                    "descricao": f"Path sensível acessível: {mount} — possível escape vector",
-                    "remediacao": f"Remover mount de {mount} ou usar read-only.",
-                })
+                findings.append(
+                    {
+                        "tipo": "SENSITIVE_MOUNT",
+                        "path": mount,
+                        "severidade": "ALTO",
+                        "descricao": f"Path sensível acessível: {mount} — possível escape vector",
+                        "remediacao": f"Remover mount de {mount} ou usar read-only.",
+                    }
+                )
 
         # Check available capabilities
         try:
             result = subprocess.run(
                 ["cat", "/proc/self/status"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             for line in result.stdout.splitlines():
                 if line.startswith("CapEff:"):
                     caps = line.split(":")[1].strip()
                     if caps != "0000000000000000":
-                        findings.append({
-                            "tipo": "CONTAINER_CAPABILITIES",
-                            "capabilities": caps,
-                            "severidade": "ALTO",
-                            "descricao": f"Container com capabilities: {caps} — verificar se são necessárias",
-                            "remediacao": "Usar --cap-drop ALL e adicionar apenas capabilities necessárias.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "CONTAINER_CAPABILITIES",
+                                "capabilities": caps,
+                                "severidade": "ALTO",
+                                "descricao": f"Container com capabilities: {caps} — verificar se são necessárias",
+                                "remediacao": "Usar --cap-drop ALL e adicionar apenas capabilities necessárias.",
+                            }
+                        )
         except Exception:
             pass
 
@@ -464,13 +582,15 @@ def _check_cron_exploitation():
             with open(cron_file) as f:
                 content = f.read()
                 if content.strip():
-                    findings.append({
-                        "tipo": "CRONTAB_ENTRIES",
-                        "arquivo": cron_file,
-                        "severidade": "INFO",
-                        "descricao": f"Crontab com entradas: {cron_file}",
-                        "preview": content[:300],
-                    })
+                    findings.append(
+                        {
+                            "tipo": "CRONTAB_ENTRIES",
+                            "arquivo": cron_file,
+                            "severidade": "INFO",
+                            "descricao": f"Crontab com entradas: {cron_file}",
+                            "preview": content[:300],
+                        }
+                    )
 
                     # Check for writable scripts referenced in crontab
                     for line in content.splitlines():
@@ -482,14 +602,16 @@ def _check_cron_exploitation():
                                     try:
                                         stat = os.stat(cmd)
                                         if stat.st_mode & 0o002:
-                                            findings.append({
-                                                "tipo": "CRON_WRITABLE_SCRIPT",
-                                                "arquivo": cmd,
-                                                "crontab": cron_file,
-                                                "severidade": "CRITICO",
-                                                "descricao": f"Script referenciado no cron é world-writable: {cmd}",
-                                                "remediacao": f"Corrigir permissões: chmod 755 {cmd}",
-                                            })
+                                            findings.append(
+                                                {
+                                                    "tipo": "CRON_WRITABLE_SCRIPT",
+                                                    "arquivo": cmd,
+                                                    "crontab": cron_file,
+                                                    "severidade": "CRITICO",
+                                                    "descricao": f"Script referenciado no cron é world-writable: {cmd}",
+                                                    "remediacao": f"Corrigir permissões: chmod 755 {cmd}",
+                                                }
+                                            )
                                     except Exception:
                                         pass
         except PermissionError:
@@ -508,13 +630,15 @@ def _check_cron_exploitation():
                     try:
                         stat = os.stat(filepath)
                         if stat.st_mode & 0o002:
-                            findings.append({
-                                "tipo": "CRON_WRITABLE_ENTRY",
-                                "arquivo": filepath,
-                                "severidade": "CRITICO",
-                                "descricao": f"Entrada cron world-writable: {filepath}",
-                                "remediacao": f"Corrigir permissões: chmod 644 {filepath}",
-                            })
+                            findings.append(
+                                {
+                                    "tipo": "CRON_WRITABLE_ENTRY",
+                                    "arquivo": filepath,
+                                    "severidade": "CRITICO",
+                                    "descricao": f"Entrada cron world-writable: {filepath}",
+                                    "remediacao": f"Corrigir permissões: chmod 644 {filepath}",
+                                }
+                            )
                     except Exception:
                         continue
         except PermissionError:
@@ -526,15 +650,19 @@ def _check_cron_exploitation():
     try:
         result = subprocess.run(
             ["ls", "/var/spool/cron/crontabs/"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.stdout.strip():
-            findings.append({
-                "tipo": "USER_CRONTABS",
-                "usuarios": result.stdout.strip().split(),
-                "severidade": "INFO",
-                "descricao": f"User crontabs encontrados: {result.stdout.strip()}",
-            })
+            findings.append(
+                {
+                    "tipo": "USER_CRONTABS",
+                    "usuarios": result.stdout.strip().split(),
+                    "severidade": "INFO",
+                    "descricao": f"User crontabs encontrados: {result.stdout.strip()}",
+                }
+            )
     except Exception:
         pass
 
@@ -570,7 +698,8 @@ def run(target, ip, open_ports, banners, context=None):
 
     total = sum(len(v) for v in resultado.values() if isinstance(v, list))
     critico = sum(
-        1 for v in resultado.values()
+        1
+        for v in resultado.values()
         if isinstance(v, list)
         for f in v
         if isinstance(f, dict) and f.get("severidade") == "CRITICO"

@@ -13,6 +13,7 @@ from typing import Any
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -24,10 +25,20 @@ def _check_microsegmentation(target: str, ip: str, ports: list[int]) -> list[dic
 
     # Check for services that should be behind segmentation
     critical_ports = {
-        22: "SSH", 23: "Telnet", 3389: "RDP", 5900: "VNC",
-        3306: "MySQL", 5432: "PostgreSQL", 6379: "Redis", 27017: "MongoDB",
-        9200: "Elasticsearch", 2379: "etcd", 6443: "K8s API",
-        8500: "Consul", 8501: "Consul (alt)", 443: "HTTPS",
+        22: "SSH",
+        23: "Telnet",
+        3389: "RDP",
+        5900: "VNC",
+        3306: "MySQL",
+        5432: "PostgreSQL",
+        6379: "Redis",
+        27017: "MongoDB",
+        9200: "Elasticsearch",
+        2379: "etcd",
+        6443: "K8s API",
+        8500: "Consul",
+        8501: "Consul (alt)",
+        443: "HTTPS",
     }
 
     exposed_services = []
@@ -36,29 +47,34 @@ def _check_microsegmentation(target: str, ip: str, ports: list[int]) -> list[dic
             exposed_services.append(f"{port}/{service}")
 
     if len(exposed_services) >= 3:
-        findings.append({
-            "tipo": "MICROSSEGMENTACAO_FRACA",
-            "severidade": "ALTO",
-            "descricao": f"Múltiplos serviços críticos expostos ({len(exposed_services)}) — microssegmentação insuficiente",
-            "evidencia": f"Serviços: {', '.join(exposed_services[:10])}",
-            "correcao": "Implementar microssegmentação com firewall policies por workload. Usar service mesh (Istio/Linkerd).",
-        })
+        findings.append(
+            {
+                "tipo": "MICROSSEGMENTACAO_FRACA",
+                "severidade": "ALTO",
+                "descricao": f"Múltiplos serviços críticos expostos ({len(exposed_services)}) — microssegmentação insuficiente",
+                "evidencia": f"Serviços: {', '.join(exposed_services[:10])}",
+                "correcao": "Implementar microssegmentação com firewall policies por workload. Usar service mesh (Istio/Linkerd).",
+            }
+        )
 
     # Check network boundaries via traceroute
     if shutil.which("traceroute"):
         try:
             result = subprocess.run(
-                ["traceroute", "-m", "10", "-w", "2", ip],
-                capture_output=True, text=True, timeout=30
+                ["traceroute", "-m", "10", "-w", "2", ip], capture_output=True, text=True, timeout=30
             )
-            hops = len([line for line in result.stdout.splitlines() if line.strip() and not line.startswith("traceroute")])
+            hops = len(
+                [line for line in result.stdout.splitlines() if line.strip() and not line.startswith("traceroute")]
+            )
             if hops <= 1:
-                findings.append({
-                    "tipo": "SEM_SEGMENTACAO_REDE",
-                    "severidade": "MEDIO",
-                    "descricao": f"Apenas {hops} hop(s) até o alvo — rede flat sem segmentação",
-                    "correcao": "Implementar VLANs, firewalls internos e network policies para segmentação.",
-                })
+                findings.append(
+                    {
+                        "tipo": "SEM_SEGMENTACAO_REDE",
+                        "severidade": "MEDIO",
+                        "descricao": f"Apenas {hops} hop(s) até o alvo — rede flat sem segmentação",
+                        "correcao": "Implementar VLANs, firewalls internos e network policies para segmentação.",
+                    }
+                )
         except Exception:
             pass
 
@@ -66,12 +82,14 @@ def _check_microsegmentation(target: str, ip: str, ports: list[int]) -> list[dic
     db_ports = {3306: "MySQL", 5432: "PostgreSQL", 6379: "Redis", 27017: "MongoDB"}
     exposed_dbs = [f"{p}/{s}" for p, s in db_ports.items() if p in ports]
     if exposed_dbs:
-        findings.append({
-            "tipo": "DB_DIRETAMENTE_ACESSIVEL",
-            "severidade": "CRITICO",
-            "descricao": f"Banco de dados acessível diretamente: {', '.join(exposed_dbs)} — violação de Zero Trust",
-            "correcao": "Bancos devem ser acessíveis APENAS via API/service layer. Bloquear acesso direto com firewall.",
-        })
+        findings.append(
+            {
+                "tipo": "DB_DIRETAMENTE_ACESSIVEL",
+                "severidade": "CRITICO",
+                "descricao": f"Banco de dados acessível diretamente: {', '.join(exposed_dbs)} — violação de Zero Trust",
+                "correcao": "Bancos devem ser acessíveis APENAS via API/service layer. Bloquear acesso direto com firewall.",
+            }
+        )
 
     return findings
 
@@ -98,18 +116,17 @@ def _check_identity_access(target: str, ip: str, ports: list[int]) -> list[dict[
         try:
             if path:
                 scheme = "https" if port in [6443, 443] else "http"
-                resp = requests.get(
-                    f"{scheme}://{ip}:{port}{path}",
-                    timeout=5, verify=False
-                )
+                resp = requests.get(f"{scheme}://{ip}:{port}{path}", timeout=5, verify=False)
                 if resp.status_code == 200:
-                    findings.append({
-                        "tipo": "IDENTIDADE_SEM_AUTH",
-                        "severidade": "CRITICO",
-                        "descricao": f"{service} acessível sem autenticação na porta {port} — Zero Trust violado",
-                        "evidencia": f"HTTP {resp.status_code}: {resp.text[:150]}",
-                        "correcao": f"Exigir autenticação (mTLS/JWT/OAuth) para {service}. Implementar Identity-Aware Proxy.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "IDENTIDADE_SEM_AUTH",
+                            "severidade": "CRITICO",
+                            "descricao": f"{service} acessível sem autenticação na porta {port} — Zero Trust violado",
+                            "evidencia": f"HTTP {resp.status_code}: {resp.text[:150]}",
+                            "correcao": f"Exigir autenticação (mTLS/JWT/OAuth) para {service}. Implementar Identity-Aware Proxy.",
+                        }
+                    )
             else:
                 # TCP-level check for Redis/MongoDB
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -119,12 +136,14 @@ def _check_identity_access(target: str, ip: str, ports: list[int]) -> list[dict[
                     sock.send(b"PING\r\n")
                     resp = sock.recv(64)
                     if b"+PONG" in resp:
-                        findings.append({
-                            "tipo": "REDIS_SEM_AUTH",
-                            "severidade": "CRITICO",
-                            "descricao": "Redis acessível sem autenticação — Zero Trust violado",
-                            "correcao": "Configurar requirepass no Redis. Bloquear acesso direto.",
-                        })
+                        findings.append(
+                            {
+                                "tipo": "REDIS_SEM_AUTH",
+                                "severidade": "CRITICO",
+                                "descricao": "Redis acessível sem autenticação — Zero Trust violado",
+                                "correcao": "Configurar requirepass no Redis. Bloquear acesso direto.",
+                            }
+                        )
                 sock.close()
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
@@ -158,10 +177,7 @@ def _check_least_privilege(target: str, ip: str, ports: list[int]) -> list[dict[
             continue
         try:
             scheme = "https" if port in [443, 8443] else "http"
-            resp = requests.get(
-                f"{scheme}://{ip}:{port}{path}",
-                timeout=3, verify=False, allow_redirects=False
-            )
+            resp = requests.get(f"{scheme}://{ip}:{port}{path}", timeout=3, verify=False, allow_redirects=False)
             if resp.status_code in [200, 301, 302]:
                 # Check if it redirects to login
                 has_login = False
@@ -170,12 +186,14 @@ def _check_least_privilege(target: str, ip: str, ports: list[int]) -> list[dict[
                     if "login" in location.lower() or "auth" in location.lower():
                         has_login = True
                 if not has_login and resp.status_code == 200:
-                    findings.append({
-                        "tipo": "ADMIN_SEM_RESTRICAO",
-                        "severidade": "ALTO",
-                        "descricao": f"Interface admin '{desc}' acessível em {port}{path} — least privilege não aplicado",
-                        "correcao": "Restringir acesso admin a rede interna/VPN. Implementar role-based access control.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "ADMIN_SEM_RESTRICAO",
+                            "severidade": "ALTO",
+                            "descricao": f"Interface admin '{desc}' acessível em {port}{path} — least privilege não aplicado",
+                            "correcao": "Restringir acesso admin a rede interna/VPN. Implementar role-based access control.",
+                        }
+                    )
         except Exception:
             continue
 
@@ -184,16 +202,19 @@ def _check_least_privilege(target: str, ip: str, ports: list[int]) -> list[dict[
         resp = requests.options(
             f"http://{ip}:{ports[0]}" if ports else f"http://{ip}",
             headers={"Origin": "https://evil.com"},
-            timeout=3, verify=False
+            timeout=3,
+            verify=False,
         )
         acao = resp.headers.get("Access-Control-Allow-Origin", "")
         if acao == "*" or "evil.com" in acao:
-            findings.append({
-                "tipo": "CORS_PERMISSIVO",
-                "severidade": "ALTO",
-                "descricao": "CORS Access-Control-Allow-Origin: * — qualquer origem pode acessar recursos",
-                "correcao": "Restringir CORS a domínios confiáveis específicos.",
-            })
+            findings.append(
+                {
+                    "tipo": "CORS_PERMISSIVO",
+                    "severidade": "ALTO",
+                    "descricao": "CORS Access-Control-Allow-Origin: * — qualquer origem pode acessar recursos",
+                    "correcao": "Restringir CORS a domínios confiáveis específicos.",
+                }
+            )
     except Exception:
         pass
 
@@ -223,38 +244,43 @@ def _check_lateral_movement(target: str, ip: str, ports: list[int]) -> list[dict
             exposed_pivot.append({"porta": port, "servico": service, "risco": risk})
 
     if len(exposed_pivot) >= 2:
-        findings.append({
-            "tipo": "LATERAL_MOVEMENT_VETORES",
-            "severidade": "ALTO",
-            "descricao": f"{len(exposed_pivot)} serviços que facilitam movimento lateral detectados",
-            "evidencia": str(exposed_pivot[:5]),
-            "correcao": "Implementar network policies que bloqueiam tráfego lateral. Usar bastion hosts.",
-        })
+        findings.append(
+            {
+                "tipo": "LATERAL_MOVEMENT_VETORES",
+                "severidade": "ALTO",
+                "descricao": f"{len(exposed_pivot)} serviços que facilitam movimento lateral detectados",
+                "evidencia": str(exposed_pivot[:5]),
+                "correcao": "Implementar network policies que bloqueiam tráfego lateral. Usar bastion hosts.",
+            }
+        )
 
     # Check for proxy services (tunneling risk)
     proxy_ports = [p for p in [1080, 3128, 8080, 8118, 9050] if p in ports]
     if proxy_ports:
-        findings.append({
-            "tipo": "PROXY_EXPOSTO",
-            "severidade": "ALTO",
-            "descricao": f"Serviços proxy expostos ({', '.join(str(p) for p in proxy_ports)}) — risco de tunneling",
-            "correcao": "Remover ou restringir proxy services. Monitorar tráfego de saída.",
-        })
+        findings.append(
+            {
+                "tipo": "PROXY_EXPOSTO",
+                "severidade": "ALTO",
+                "descricao": f"Serviços proxy expostos ({', '.join(str(p) for p in proxy_ports)}) — risco de tunneling",
+                "correcao": "Remover ou restringir proxy services. Monitorar tráfego de saída.",
+            }
+        )
 
     # Check for shared credentials via SSH key exposure
     if 22 in ports and shutil.which("ssh-keyscan"):
         try:
             result = subprocess.run(
-                ["ssh-keyscan", "-t", "rsa,ecdsa,ed25519", ip],
-                capture_output=True, text=True, timeout=10
+                ["ssh-keyscan", "-t", "rsa,ecdsa,ed25519", ip], capture_output=True, text=True, timeout=10
             )
             if result.stdout.strip():
-                findings.append({
-                    "tipo": "SSH_KEYS_EXPOSTOS",
-                    "severidade": "MEDIO",
-                    "descricao": "Chaves SSH do host acessíveis — verificar se são compartilhadas entre hosts",
-                    "correcao": "Usar chaves SSH únicas por host. Implementar rotulação e MFA para SSH.",
-                })
+                findings.append(
+                    {
+                        "tipo": "SSH_KEYS_EXPOSTOS",
+                        "severidade": "MEDIO",
+                        "descricao": "Chaves SSH do host acessíveis — verificar se são compartilhadas entre hosts",
+                        "correcao": "Usar chaves SSH únicas por host. Implementar rotulação e MFA para SSH.",
+                    }
+                )
         except Exception:
             pass
 
@@ -269,16 +295,26 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
 
     # Check for TLS everywhere (encryption in transit)
     non_tls_ports = [p for p in ports if p not in [443, 8443, 993, 995, 465, 5671, 8883, 636, 2636]]
-    non_tls_services = {21: "FTP", 23: "Telnet", 80: "HTTP", 3306: "MySQL", 5432: "PostgreSQL", 6379: "Redis", 1433: "MSSQL"}
+    non_tls_services = {
+        21: "FTP",
+        23: "Telnet",
+        80: "HTTP",
+        3306: "MySQL",
+        5432: "PostgreSQL",
+        6379: "Redis",
+        1433: "MSSQL",
+    }
     exposed_non_tls = [f"{p}/{non_tls_services.get(p, 'Unknown')}" for p in non_tls_ports if p in non_tls_services]
 
     if exposed_non_tls:
-        findings.append({
-            "tipo": "SEM_TLS",
-            "severidade": "ALTO",
-            "descricao": f"Serviços sem TLS detectados: {', '.join(exposed_non_tls)} — tráfego interceptável",
-            "correcao": "Migrar todos os serviços para TLS. Implementar mTLS para serviço-a-serviço.",
-        })
+        findings.append(
+            {
+                "tipo": "SEM_TLS",
+                "severidade": "ALTO",
+                "descricao": f"Serviços sem TLS detectados: {', '.join(exposed_non_tls)} — tráfego interceptável",
+                "correcao": "Migrar todos os serviços para TLS. Implementar mTLS para serviço-a-serviço.",
+            }
+        )
 
     # Check for certificate-based authentication
     cert_check_ports = [p for p in [443, 8443, 636, 2636] if p in ports]
@@ -288,20 +324,32 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
             sock.settimeout(5)
             sock.connect((ip, port))
             # Send TLS ClientHello
-            tls_hello = bytes([
-                0x16, 0x03, 0x01, 0x00, 0x05,  # TLS record header
-                0x01, 0x00, 0x00, 0x01, 0x03     # ClientHello
-            ])
+            tls_hello = bytes(
+                [
+                    0x16,
+                    0x03,
+                    0x01,
+                    0x00,
+                    0x05,  # TLS record header
+                    0x01,
+                    0x00,
+                    0x00,
+                    0x01,
+                    0x03,  # ClientHello
+                ]
+            )
             sock.send(tls_hello)
             resp = sock.recv(256)
             sock.close()
             if resp and resp[0] == 0x16:  # TLS handshake
-                findings.append({
-                    "tipo": "TLS_ATIVO",
-                    "severidade": "INFO",
-                    "descricao": f"TLS ativo na porta {port} — verificar se exige mTLS",
-                    "correcao": "Implementar mTLS (client certificates) para verificação contínua de identidade.",
-                })
+                findings.append(
+                    {
+                        "tipo": "TLS_ATIVO",
+                        "severidade": "INFO",
+                        "descricao": f"TLS ativo na porta {port} — verificar se exige mTLS",
+                        "correcao": "Implementar mTLS (client certificates) para verificação contínua de identidade.",
+                    }
+                )
         except Exception:
             pass
 
@@ -314,12 +362,14 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
             try:
                 resp = requests.get(f"{scheme}://{ip}:{port}{path}", timeout=3, verify=False)
                 if resp.status_code == 200:
-                    findings.append({
-                        "tipo": "HEALTH_ENDPOINT",
-                        "severidade": "BAIXO",
-                        "descricao": f"Health check em {path}:{port} — verificar se integra com service mesh",
-                        "correcao": "Integrar health checks com service mesh para verificação contínua de confiança.",
-                    })
+                    findings.append(
+                        {
+                            "tipo": "HEALTH_ENDPOINT",
+                            "severidade": "BAIXO",
+                            "descricao": f"Health check em {path}:{port} — verificar se integra com service mesh",
+                            "correcao": "Integrar health checks com service mesh para verificação contínua de confiança.",
+                        }
+                    )
                     break
             except Exception:
                 continue
@@ -327,7 +377,9 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
     return findings
 
 
-def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None) -> dict[str, Any] | None:
+def run(
+    target: str, ip: str, ports: list[int], banners: dict[str, str], context: dict | None = None
+) -> dict[str, Any] | None:
     """Valida arquitetura Zero Trust — microssegmentação, identidade, least privilege, movimento lateral, verificação contínua."""
     try:
         vulns = []
@@ -340,12 +392,14 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str], context
         if context:
             mesh = context.get("service_mesh", None)
             if not mesh:
-                vulns.append({
-                    "tipo": "SEM_SERVICE_MESH",
-                    "severidade": "MEDIO",
-                    "descricao": "Nenhum service mesh detectado via contexto — Zero Trust incompleto",
-                    "correcao": "Implementar service mesh (Istio, Linkerd) para mTLS e observabilidade.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "SEM_SERVICE_MESH",
+                        "severidade": "MEDIO",
+                        "descricao": "Nenhum service mesh detectado via contexto — Zero Trust incompleto",
+                        "correcao": "Implementar service mesh (Istio, Linkerd) para mTLS e observabilidade.",
+                    }
+                )
 
         return {
             "plugin": "zero_trust_validate",

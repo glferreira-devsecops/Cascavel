@@ -74,11 +74,13 @@ def preflight_check() -> bool:
 
     # 7. Plugins
     from .engine import _count_plugins
+
     plugin_count = _count_plugins()
     checks.append(("Plugins ≥ 1", plugin_count > 0, f"{plugin_count} plugins", "Verifique plugins/"))
 
     # 8. Tools
     from .tools import detect_tools
+
     tools_avail = detect_tools()
     tools_count = sum(1 for v in tools_avail.values() if v)
     checks.append(("Tools externas ≥ 1", tools_count > 0, f"{tools_count}/{len(tools_avail)}", "Instale: nmap, curl"))
@@ -89,8 +91,10 @@ def preflight_check() -> bool:
 
     # Display
     table = Table(
-        title=f"[{S_GREEN}]🔍 PRE-FLIGHT CHECK[/]", box=box.ROUNDED,
-        border_style="green", header_style=f"{S_WHITE} on dark_green",
+        title=f"[{S_GREEN}]🔍 PRE-FLIGHT CHECK[/]",
+        box=box.ROUNDED,
+        border_style="green",
+        header_style=f"{S_WHITE} on dark_green",
     )
     table.add_column("Check", style=S_CYAN, min_width=18)
     table.add_column("Status", justify="center", width=6)

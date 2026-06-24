@@ -8,7 +8,11 @@ import requests
 DEEP_PATTERNS = [
     # AWS
     (r"AKIA[0-9A-Z]{16}", "AWS Access Key ID", "CRITICO"),
-    (r"(?:aws_secret_access_key|AWS_SECRET_ACCESS_KEY)\s*[:=]\s*['\"]?([A-Za-z0-9/+=]{40})", "AWS Secret Key", "CRITICO"),
+    (
+        r"(?:aws_secret_access_key|AWS_SECRET_ACCESS_KEY)\s*[:=]\s*['\"]?([A-Za-z0-9/+=]{40})",
+        "AWS Secret Key",
+        "CRITICO",
+    ),
     (r"(?:aws_session_token|AWS_SESSION_TOKEN)\s*[:=]\s*['\"]?([A-Za-z0-9/+=]{100,})", "AWS Session Token", "CRITICO"),
     (r"ASIA[0-9A-Z]{16}", "AWS Temporary Access Key", "CRITICO"),
     # GCP
@@ -18,7 +22,11 @@ DEEP_PATTERNS = [
     (r"ya29\.[0-9A-Za-z\-_]+", "GCP OAuth Access Token", "CRITICO"),
     # Azure
     (r"AccountKey=[A-Za-z0-9+/=]{88}", "Azure Storage Account Key", "CRITICO"),
-    (r"(?:AZURE_CLIENT_SECRET|AZURE_TENANT_ID|AZURE_CLIENT_ID)\s*[:=]\s*['\"]?([^\s\"']+)", "Azure Credential", "CRITICO"),
+    (
+        r"(?:AZURE_CLIENT_SECRET|AZURE_TENANT_ID|AZURE_CLIENT_ID)\s*[:=]\s*['\"]?([^\s\"']+)",
+        "Azure Credential",
+        "CRITICO",
+    ),
     (r"(?:MSI_SECRET|IDENTITY_ENDPOINT|IDENTITY_HEADER)\s*[:=]\s*['\"]?([^\s\"']+)", "Azure MSI Secret", "CRITICO"),
     # Stripe
     (r"sk_live_[0-9a-zA-Z]{24,}", "Stripe Live Secret Key", "CRITICO"),
@@ -51,11 +59,19 @@ DEEP_PATTERNS = [
     (r"sk-ant-[A-Za-z0-9_-]{80,}", "Anthropic API Key", "CRITICO"),
     # Supabase / Database
     (r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "JWT/Supabase Key", "ALTO"),
-    (r"(?:mysql|postgres|postgresql|mongodb|mongodb\+srv|redis|amqp)://[^\s\"'<>]+", "Database Connection String", "CRITICO"),
+    (
+        r"(?:mysql|postgres|postgresql|mongodb|mongodb\+srv|redis|amqp)://[^\s\"'<>]+",
+        "Database Connection String",
+        "CRITICO",
+    ),
     # Private Keys
     (r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----", "Private Key (PEM)", "CRITICO"),
     # Generic Secrets
-    (r"(?:password|passwd|pwd|secret|token|api_key|apikey|access_key|auth_token|private_key|client_secret)\s*[:=]\s*['\"]([^'\"]{8,})['\"]", "Generic Secret", "ALTO"),
+    (
+        r"(?:password|passwd|pwd|secret|token|api_key|apikey|access_key|auth_token|private_key|client_secret)\s*[:=]\s*['\"]([^'\"]{8,})['\"]",
+        "Generic Secret",
+        "ALTO",
+    ),
     (r"Basic\s+[A-Za-z0-9+/=]{20,}", "HTTP Basic Auth Header", "ALTO"),
     (r"Bearer\s+[A-Za-z0-9\-._~+/]+=*", "Bearer Token", "ALTO"),
     # Heroku
@@ -65,41 +81,103 @@ DEEP_PATTERNS = [
 # ──────────── SENSITIVE FILE PATHS ────────────
 DEEP_PATHS = [
     # Environment files
-    "/.env", "/.env.production", "/.env.local", "/.env.staging", "/.env.development",
-    "/.env.backup", "/.env.old", "/.env.save", "/.env.swp", "/.env.dist",
-    "/.env.docker", "/.env.test", "/.env.ci",
+    "/.env",
+    "/.env.production",
+    "/.env.local",
+    "/.env.staging",
+    "/.env.development",
+    "/.env.backup",
+    "/.env.old",
+    "/.env.save",
+    "/.env.swp",
+    "/.env.dist",
+    "/.env.docker",
+    "/.env.test",
+    "/.env.ci",
     # Git
-    "/.git/config", "/.git/HEAD", "/.gitignore",
+    "/.git/config",
+    "/.git/HEAD",
+    "/.gitignore",
     # AWS / Cloud
-    "/.aws/credentials", "/.aws/config",
-    "/.gcloud/credentials", "/.gcloud/application_default_credentials.json",
-    "/.azure/accessTokens.json", "/.azure/azureProfile.json",
+    "/.aws/credentials",
+    "/.aws/config",
+    "/.gcloud/credentials",
+    "/.gcloud/application_default_credentials.json",
+    "/.azure/accessTokens.json",
+    "/.azure/azureProfile.json",
     # Config files
-    "/config.json", "/config.yaml", "/config.yml", "/config.xml",
-    "/config.php", "/wp-config.php", "/settings.py", "/local_settings.py",
-    "/application.properties", "/application.yml", "/application.yaml",
-    "/database.yml", "/database.json", "/db.json",
-    "/secrets.json", "/secrets.yaml", "/secrets.yml",
+    "/config.json",
+    "/config.yaml",
+    "/config.yml",
+    "/config.xml",
+    "/config.php",
+    "/wp-config.php",
+    "/settings.py",
+    "/local_settings.py",
+    "/application.properties",
+    "/application.yml",
+    "/application.yaml",
+    "/database.yml",
+    "/database.json",
+    "/db.json",
+    "/secrets.json",
+    "/secrets.yaml",
+    "/secrets.yml",
     # Docker / K8s
-    "/.docker/config.json", "/docker-compose.yml", "/docker-compose.yaml",
-    "/docker-compose.prod.yml", "/docker-compose.override.yml",
-    "/kubeconfig", "/.kube/config",
+    "/.docker/config.json",
+    "/docker-compose.yml",
+    "/docker-compose.yaml",
+    "/docker-compose.prod.yml",
+    "/docker-compose.override.yml",
+    "/kubeconfig",
+    "/.kube/config",
     # CI/CD
-    "/.travis.yml", "/.gitlab-ci.yml", "/.circleci/config.yml",
-    "/Jenkinsfile", "/.github/workflows/", "/bitbucket-pipelines.yml",
-    "/azure-pipelines.yml", "/.buildkite/pipeline.yml",
+    "/.travis.yml",
+    "/.gitlab-ci.yml",
+    "/.circleci/config.yml",
+    "/Jenkinsfile",
+    "/.github/workflows/",
+    "/bitbucket-pipelines.yml",
+    "/azure-pipelines.yml",
+    "/.buildkite/pipeline.yml",
     # Build / Dependency
-    "/.npmrc", "/.yarnrc", "/.pypirc", "/.netrc", "/.gemrc",
-    "/composer.json", "/bower.json", "/.bowerrc",
-    "/firebase.json", "/.firebaserc",
+    "/.npmrc",
+    "/.yarnrc",
+    "/.pypirc",
+    "/.netrc",
+    "/.gemrc",
+    "/composer.json",
+    "/bower.json",
+    "/.bowerrc",
+    "/firebase.json",
+    "/.firebaserc",
     # Other
-    "/.htpasswd", "/.htaccess", "/server-status", "/server-info",
-    "/phpinfo.php", "/info.php", "/debug", "/trace", "/actuator/env",
-    "/actuator/health", "/health", "/metrics", "/prometheus",
-    "/swagger.json", "/openapi.json", "/api-docs", "/graphql",
+    "/.htpasswd",
+    "/.htaccess",
+    "/server-status",
+    "/server-info",
+    "/phpinfo.php",
+    "/info.php",
+    "/debug",
+    "/trace",
+    "/actuator/env",
+    "/actuator/health",
+    "/health",
+    "/metrics",
+    "/prometheus",
+    "/swagger.json",
+    "/openapi.json",
+    "/api-docs",
+    "/graphql",
     # Backup files
-    "/backup.sql", "/backup.tar.gz", "/dump.sql", "/db.sql",
-    "/database.sql", "/site.tar.gz", "/www.zip", "/public.zip",
+    "/backup.sql",
+    "/backup.tar.gz",
+    "/dump.sql",
+    "/db.sql",
+    "/database.sql",
+    "/site.tar.gz",
+    "/www.zip",
+    "/public.zip",
 ]
 
 # ──────────── JS-EMBEDDED SECRET PATTERNS ────────────
@@ -177,41 +255,47 @@ def _scan_deep_paths(target):
             elif any(s in path for s in ["swagger", "openapi", "api-docs", "health", "metrics", "actuator"]):
                 sev = "MEDIO"
 
-            vulns.append({
-                "tipo": "DEEP_PATH_EXPOSED",
-                "path": path,
-                "severidade": sev,
-                "tamanho": len(resp.text),
-                "descricao": f"Path sensível exposto: {path}",
-                "remediao": "Remover ou restringir acesso público a este path.",
-            })
+            vulns.append(
+                {
+                    "tipo": "DEEP_PATH_EXPOSED",
+                    "path": path,
+                    "severidade": sev,
+                    "tamanho": len(resp.text),
+                    "descricao": f"Path sensível exposto: {path}",
+                    "remediao": "Remover ou restringir acesso público a este path.",
+                }
+            )
 
             # Regex scan against content
             for pattern, label, pattern_sev in DEEP_PATTERNS:
                 matches = re.findall(pattern, resp.text, re.DOTALL)
                 if matches:
-                    vulns.append({
-                        "tipo": "DEEP_SECRET_FOUND",
-                        "path": path,
-                        "secret_type": label,
-                        "quantidade": len(matches),
-                        "amostra": str(matches[0])[:40] + "...",
-                        "severidade": pattern_sev,
-                        "descricao": f"{label} encontrado em {path}!",
-                        "remediao": "Remover secret hardcoded, usar secret manager (Vault/AWS SM/GCP SM).",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "DEEP_SECRET_FOUND",
+                            "path": path,
+                            "secret_type": label,
+                            "quantidade": len(matches),
+                            "amostra": str(matches[0])[:40] + "...",
+                            "severidade": pattern_sev,
+                            "descricao": f"{label} encontrado em {path}!",
+                            "remediao": "Remover secret hardcoded, usar secret manager (Vault/AWS SM/GCP SM).",
+                        }
+                    )
 
             # Special: .git/config exposure
             if path == "/.git/config" and "url" in resp.text:
                 remote_match = re.search(r"url\s*=\s*(.+)", resp.text)
                 if remote_match:
-                    vulns.append({
-                        "tipo": "GIT_REMOTE_EXPOSED",
-                        "remote_url": remote_match.group(1).strip(),
-                        "severidade": "CRITICO",
-                        "descricao": "Git remote URL exposto — repositório clonável!",
-                        "remediao": "Bloquear acesso público ao diretório .git no webserver.",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "GIT_REMOTE_EXPOSED",
+                            "remote_url": remote_match.group(1).strip(),
+                            "severidade": "CRITICO",
+                            "descricao": "Git remote URL exposto — repositório clonável!",
+                            "remediao": "Bloquear acesso público ao diretório .git no webserver.",
+                        }
+                    )
 
         except Exception:
             continue
@@ -222,10 +306,18 @@ def _scan_js_credentials(target):
     """Extrai credenciais hardcoded de arquivos JavaScript."""
     vulns = []
     js_paths = [
-        "/js/app.js", "/js/main.js", "/js/bundle.js", "/js/vendor.js",
-        "/static/js/main.js", "/static/js/app.js", "/assets/js/app.js",
-        "/dist/js/app.js", "/build/static/js/main.js",
-        "/js/config.js", "/js/env.js", "/js/settings.js",
+        "/js/app.js",
+        "/js/main.js",
+        "/js/bundle.js",
+        "/js/vendor.js",
+        "/static/js/main.js",
+        "/static/js/app.js",
+        "/assets/js/app.js",
+        "/dist/js/app.js",
+        "/build/static/js/main.js",
+        "/js/config.js",
+        "/js/env.js",
+        "/js/settings.js",
     ]
 
     # Also try to discover JS files from common entry points
@@ -260,15 +352,17 @@ def _scan_js_credentials(target):
                 if matches:
                     for match in matches[:3]:
                         if len(match) > 5 and not match.startswith("${"):
-                            vulns.append({
-                                "tipo": "JS_EMBEDDED_SECRET",
-                                "file": js_path,
-                                "secret_type": label,
-                                "amostra": str(match)[:40] + "...",
-                                "severidade": "ALTO",
-                                "descricao": f"{label} hardcoded em {js_path}!",
-                                "remediao": "Mover secrets para variáveis de ambiente server-side.",
-                            })
+                            vulns.append(
+                                {
+                                    "tipo": "JS_EMBEDDED_SECRET",
+                                    "file": js_path,
+                                    "secret_type": label,
+                                    "amostra": str(match)[:40] + "...",
+                                    "severidade": "ALTO",
+                                    "descricao": f"{label} hardcoded em {js_path}!",
+                                    "remediao": "Mover secrets para variáveis de ambiente server-side.",
+                                }
+                            )
 
         except Exception:
             continue
@@ -291,25 +385,29 @@ def _scan_cloud_credentials(target):
             # AWS credential patterns
             aws_keys = re.findall(r"AKIA[0-9A-Z]{16}", content)
             if aws_keys:
-                vulns.append({
-                    "tipo": "AWS_KEY_EXPOSED",
-                    "path": path,
-                    "keys_encontradas": len(aws_keys),
-                    "amostra": aws_keys[0][:8] + "...",
-                    "severidade": "CRITICO",
-                    "descricao": "AWS Access Key exposta em response!",
-                    "remediao": "Rotacionar key imediatamente. Usar IAM roles ou secret manager.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "AWS_KEY_EXPOSED",
+                        "path": path,
+                        "keys_encontradas": len(aws_keys),
+                        "amostra": aws_keys[0][:8] + "...",
+                        "severidade": "CRITICO",
+                        "descricao": "AWS Access Key exposta em response!",
+                        "remediao": "Rotacionar key imediatamente. Usar IAM roles ou secret manager.",
+                    }
+                )
 
             # GCP service account JSON
             if '"type": "service_account"' in content and '"private_key"' in content:
-                vulns.append({
-                    "tipo": "GCP_SA_EXPOSED",
-                    "path": path,
-                    "severidade": "CRITICO",
-                    "descricao": "GCP Service Account JSON completo exposto!",
-                    "remediao": "Rotacionar SA key. Usar Workload Identity em vez de keys.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "GCP_SA_EXPOSED",
+                        "path": path,
+                        "severidade": "CRITICO",
+                        "descricao": "GCP Service Account JSON completo exposto!",
+                        "remediao": "Rotacionar SA key. Usar Workload Identity em vez de keys.",
+                    }
+                )
 
             # Azure credentials
             azure_patterns = [
@@ -318,14 +416,16 @@ def _scan_cloud_credentials(target):
             ]
             for pattern, label in azure_patterns:
                 if re.search(pattern, content):
-                    vulns.append({
-                        "tipo": "AZURE_CREDENTIAL_EXPOSED",
-                        "path": path,
-                        "credential_type": label,
-                        "severidade": "CRITICO",
-                        "descricao": f"{label} exposta em {path}!",
-                        "remediao": "Rotacionar credencial. Usar Managed Identity.",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "AZURE_CREDENTIAL_EXPOSED",
+                            "path": path,
+                            "credential_type": label,
+                            "severidade": "CRITICO",
+                            "descricao": f"{label} exposta em {path}!",
+                            "remediao": "Rotacionar credencial. Usar Managed Identity.",
+                        }
+                    )
 
         except Exception:
             continue
@@ -341,34 +441,44 @@ def _scan_response_headers(target):
 
         # Check for auth tokens in headers
         sensitive_headers = [
-            "x-api-key", "x-auth-token", "x-access-token", "authorization",
-            "x-secret", "x-token", "x-csrf-token", "cookie",
+            "x-api-key",
+            "x-auth-token",
+            "x-access-token",
+            "authorization",
+            "x-secret",
+            "x-token",
+            "x-csrf-token",
+            "cookie",
         ]
         for header in sensitive_headers:
             value = headers.get(header, "")
             if value and len(value) > 10:
-                vulns.append({
-                    "tipo": "HEADER_SECRET_EXPOSED",
-                    "header": header,
-                    "amostra": value[:30] + "...",
-                    "severidade": "ALTO" if header != "authorization" else "CRITICO",
-                    "descricao": f"Header '{header}' contém possível secret!",
-                    "remediao": "Remover headers sensíveis de responses.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "HEADER_SECRET_EXPOSED",
+                        "header": header,
+                        "amostra": value[:30] + "...",
+                        "severidade": "ALTO" if header != "authorization" else "CRITICO",
+                        "descricao": f"Header '{header}' contém possível secret!",
+                        "remediao": "Remover headers sensíveis de responses.",
+                    }
+                )
 
         # Check for debug info in headers
         debug_headers = ["x-debug", "x-powered-by", "server", "x-aspnet-version", "x-runtime"]
         for header in debug_headers:
             value = headers.get(header, "")
             if value:
-                vulns.append({
-                    "tipo": "DEBUG_HEADER_EXPOSED",
-                    "header": header,
-                    "valor": value[:100],
-                    "severidade": "BAIXO",
-                    "descricao": f"Header de debug '{header}' exposto.",
-                    "remediao": "Remover headers informativos em produção.",
-                })
+                vulns.append(
+                    {
+                        "tipo": "DEBUG_HEADER_EXPOSED",
+                        "header": header,
+                        "valor": value[:100],
+                        "severidade": "BAIXO",
+                        "descricao": f"Header de debug '{header}' exposto.",
+                        "remediao": "Remover headers informativos em produção.",
+                    }
+                )
 
     except Exception:
         pass
@@ -395,16 +505,18 @@ def _entropy_scan_pages(target, context):
             for candidate in candidates[:10]:
                 entropy = _calculate_entropy(candidate)
                 if entropy > 4.5 and len(candidate) >= 30:
-                    vulns.append({
-                        "tipo": "HIGH_ENTROPY_SECRET",
-                        "path": path,
-                        "entropia": entropy,
-                        "tamanho": len(candidate),
-                        "amostra": candidate[:25] + "...",
-                        "severidade": "ALTO" if entropy > 5.0 else "MEDIO",
-                        "descricao": f"String de alta entropia ({entropy}) em {path} — possível secret!",
-                        "remediao": "Verificar se é um secret e movê-lo para secret manager.",
-                    })
+                    vulns.append(
+                        {
+                            "tipo": "HIGH_ENTROPY_SECRET",
+                            "path": path,
+                            "entropia": entropy,
+                            "tamanho": len(candidate),
+                            "amostra": candidate[:25] + "...",
+                            "severidade": "ALTO" if entropy > 5.0 else "MEDIO",
+                            "descricao": f"String de alta entropia ({entropy}) em {path} — possível secret!",
+                            "remediao": "Verificar se é um secret e movê-lo para secret manager.",
+                        }
+                    )
 
         except Exception:
             continue
