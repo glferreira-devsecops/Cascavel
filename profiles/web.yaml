@@ -1,90 +1,40 @@
-# ═══════════════════════════════════════════════════════════════
-# Cascavel v3.0.0 — Web Application Scan Profile
-# Focus: OWASP Top 10, injection, auth, client-side
-# ═══════════════════════════════════════════════════════════════
-
-name: "Web Application"
-description: "Full web application security assessment targeting OWASP Top 10 2021 vectors"
-category: "web"
-
+name: web
+description: Web application security scan — XSS, SQLi, CSRF, headers, cookies
 plugins:
-  # A01:2021 — Broken Access Control
-  - idor_scanner
-  - cors_checker
-  - open_redirect
-  - path_traversal
-  - admin_finder
-
-  # A02:2021 — Cryptographic Failures
-  - ssl_check
-  - secrets_scraper
-
-  # A03:2021 — Injection
   - xss_scanner
   - sqli_scanner
-  - nosql_scanner
-  - ssti_scanner
-  - crlf_scanner
-  - graphql_injection
-  - xxe_scanner
-  - lfi_scanner
-  - rce_scanner
-  - blind_rce
-
-  # A04:2021 — Insecure Design
-  - race_condition
-  - mass_assignment
-
-  # A05:2021 — Security Misconfiguration
-  - clickjacking_check
-  - http_methods
-  - info_disclosure
-  - csp_bypass
-  - host_header_injection
-  - security_headers
-
-  # A06:2021 — Vulnerable Components
-  - tech_fingerprint
-  - js_analyzer
-  - cve_2021_44228_scanner
-
-  # A07:2021 — Auth Failures
-  - jwt_analyzer
-  - oauth_scanner
-  - session_fixation
-  - password_policy
   - csrf_detector
-  - saml_scanner
-
-  # A08:2021 — Software Integrity
-  - prototype_pollution
-  - deserialization_scan
-
-  # A09:2021 — Logging & Monitoring
-  - rate_limit_check
-  - waf_detec
-
-  # A10:2021 — SSRF
-  - ssrf_scanner
-
-  # Web Scanning
-  - dir_bruteforce
-  - katana_crawler
-  - nikto_scanner
-  - nuclei_scanner
-  - wps_scanmini
-  - profiler_bundpent
-
-  # Advanced Web & Exploitation
-  - fast_webshell
-  - memshell_injector
-  - wasm_reverser
-  - auto_exploit
-
-  # Supplementary
-  - websocket_scanner
-  - web_cache_poison
+  - cors_checker
+  - security_headers
+  - clickjacking_check
+  - open_redirect
+  - host_header_injection
+  - crlf_scanner
   - http_smuggling
   - http2_smuggle
-  - param_miner
+  - web_cache_poison
+  - ssti_scanner
+  - lfi_scanner
+  - path_traversal
+  - rce_scanner
+  - ssrf_scanner
+  - xxe_scanner
+  - idor_scanner
+  - session_fixation
+  - mass_assignment
+  - prototype_pollution
+  - rate_limit_check
+  - password_policy
+  - info_disclosure
+  - secrets_scraper
+  - js_analyzer
+  - tech_fingerprint
+  - waf_detec
   - waf_bypass
+  - csp_bypass
+  - dir_bruteforce
+  - admin_finder
+  - param_miner
+  - api_enum
+  - api_versioning
+  - fuzzing_engine

@@ -1,53 +1,27 @@
-# ═══════════════════════════════════════════════════════════════
-# Cascavel v3.0.0 — API Security Scan Profile
-# Focus: REST/GraphQL, auth bypass, data exposure
-# ═══════════════════════════════════════════════════════════════
-
-name: "API Security"
-description: "API-focused security assessment for REST, GraphQL, and gRPC endpoints"
-category: "api"
-
+name: api
+description: API security scan — REST, GraphQL, gRPC, authentication
 plugins:
-  # Discovery & Enumeration
   - api_enum
   - api_versioning
+  - api_fuzzing
   - graphql_probe
-  - grpc_scanner
-  - web3_rpc_exposure
-
-  # Injection
-  - sqli_scanner
-  - nosql_scanner
   - graphql_injection
-  - graphql_ast_bomb
   - graphql_nuclear
-  - xxe_scanner
-  - ssti_scanner
-  - blind_rce
-  - serverless_event_injection
-
-  # Auth & Access Control
+  - graphql_ast_bomb
+  - grpc_scanner
   - jwt_analyzer
   - oauth_scanner
-  - idor_scanner
-  - cors_checker
-  - session_fixation
-
-  # Business Logic
-  - race_condition
+  - saml_scanner
+  - oidc_poisoning
   - mass_assignment
+  - idor_scanner
   - rate_limit_check
-
-  # Transport Security
-  - ssl_check
   - ssrf_scanner
-  - http_smuggling
-  - http2_smuggle
-
-  # Data Exposure
-  - info_disclosure
+  - sqli_scanner
+  - nosql_scanner
+  - cors_checker
+  - host_header_injection
+  - http_methods
   - secrets_scraper
-  - param_miner
-
-  # Deserialization
-  - deserialization_scan
+  - tech_fingerprint
+  - fuzzing_engine

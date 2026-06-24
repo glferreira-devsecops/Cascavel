@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cascavel"
 version = "3.0.1"
-description = "Advanced Security Framework by RET Tecnologia — Pentest automation with 85+ plugins, Red Team 2026 intelligence"
+description = "Advanced Security Framework by RET Tecnologia — CTEM engine with 135+ plugins, Red Team 2026 intelligence"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -41,8 +41,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -93,10 +91,10 @@ Changelog = "https://github.com/glferreira-devsecops/Cascavel/blob/main/CHANGELO
 "RET Tecnologia" = "https://rettecnologia.org"
 
 [project.scripts]
-cascavel = "cascavel:main"
+cascavel = "cascavel.__main__:main"
 
 [tool.setuptools]
-py-modules = ["cascavel", "sarif_exporter"]
+packages = ["cascavel"]
 
 [tool.ruff]
 target-version = "py310"
