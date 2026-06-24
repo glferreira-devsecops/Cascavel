@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import cascavel
+from cascavel.engine import _exec_plugin
+from cascavel.tools import run_cmd
 
 
 def test_engine_handles_plugin_crash():
@@ -23,7 +24,7 @@ def test_engine_handles_plugin_crash():
         mock_spec.return_value.loader = mock_loader
 
         try:
-            res = cascavel._exec_plugin(
+            res = _exec_plugin(
                 path="/fake/path.py",
                 name="fake_plugin",
                 target="example.com",
@@ -41,7 +42,7 @@ def test_engine_handles_tool_timeout():
     """Testa o comportamento da engine ao receber um timeout em ferramentas externas"""
     with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="fake", timeout=1)):
         try:
-            res = cascavel.run_cmd("fake_tool --target example.com", timeout=1)
+            res = run_cmd("fake_tool --target example.com", timeout=1)
             assert "TIMEOUT" in res or res == ""
         except Exception as e:
             pytest.fail(f"Engine não tratou timeout da tool: {e}")
