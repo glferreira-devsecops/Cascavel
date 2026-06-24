@@ -1,6 +1,5 @@
 # plugins/mitm_framework.py — Cascavel 2026 Intelligence
 import socket
-import ssl
 
 import requests
 

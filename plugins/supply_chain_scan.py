@@ -1,7 +1,7 @@
 # plugins/supply_chain_scan.py — Cascavel 2026 Intelligence
 import re
-import requests
 
+import requests
 
 # ──────────── KNOWN MALICIOUS PACKAGES (2024-2026) ────────────
 MALICIOUS_NPM = [

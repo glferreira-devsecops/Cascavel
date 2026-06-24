@@ -93,10 +93,10 @@ def _check_crontab_entries():
 
     for cron_file in cron_files:
         try:
-            with open(cron_file, "r") as f:
+            with open(cron_file) as f:
                 content = f.read().strip()
                 if content:
-                    entries = [l for l in content.splitlines() if l.strip() and not l.startswith("#")]
+                    entries = [line for line in content.splitlines() if line.strip() and not line.startswith("#")]
                     findings.append({
                         "tipo": "CRONTAB_SYSTEM",
                         "arquivo": cron_file,
@@ -136,9 +136,9 @@ def _check_crontab_entries():
                         continue
                     filepath = os.path.join(cron_dir, filename)
                     try:
-                        with open(filepath, "r") as f:
+                        with open(filepath) as f:
                             content = f.read().strip()
-                            entries = [l for l in content.splitlines() if l.strip() and not l.startswith("#")]
+                            entries = [line for line in content.splitlines() if line.strip() and not line.startswith("#")]
                             if entries:
                                 findings.append({
                                     "tipo": "CRON_DIR_ENTRY",
@@ -189,9 +189,9 @@ def _check_crontab_entries():
 
             for user in users:
                 try:
-                    with open(f"/var/spool/cron/crontabs/{user}", "r") as f:
+                    with open(f"/var/spool/cron/crontabs/{user}") as f:
                         content = f.read().strip()
-                        entries = [l for l in content.splitlines() if l.strip() and not l.startswith("#")]
+                        entries = [line for line in content.splitlines() if line.strip() and not line.startswith("#")]
                         if entries:
                             findings.append({
                                 "tipo": "USER_CRONTAB",
@@ -223,7 +223,7 @@ def _check_systemd_services():
                     continue
                 filepath = os.path.join(systemd_dir, filename)
                 try:
-                    with open(filepath, "r") as f:
+                    with open(filepath) as f:
                         content = f.read()
 
                     finding = {
@@ -314,7 +314,7 @@ def _check_shell_profiles():
                 if not os.path.isfile(path):
                     continue
 
-                with open(path, "r") as f:
+                with open(path) as f:
                     content = f.read()
 
                 if not content.strip():
@@ -339,8 +339,8 @@ def _check_shell_profiles():
                     })
                 else:
                     # Check for non-standard entries
-                    lines = [l.strip() for l in content.splitlines()
-                             if l.strip() and not l.strip().startswith("#")]
+                    lines = [line.strip() for line in content.splitlines()
+                             if line.strip() and not line.strip().startswith("#")]
                     findings.append({
                         "tipo": "PROFILE_ENTRIES",
                         "arquivo": path,
@@ -372,11 +372,11 @@ def _check_ssh_authorized_keys():
                 if not os.path.isfile(path):
                     continue
 
-                with open(path, "r") as f:
+                with open(path) as f:
                     content = f.read()
 
                 if "authorized_keys" in path:
-                    keys = [l.strip() for l in content.splitlines() if l.strip()]
+                    keys = [line.strip() for line in content.splitlines() if line.strip()]
                     findings.append({
                         "tipo": "SSH_AUTHORIZED_KEYS",
                         "arquivo": path,
@@ -403,7 +403,7 @@ def _check_ssh_authorized_keys():
                                 "arquivo": path,
                                 "entrada": key[:100],
                                 "severidade": "ALTO",
-                                "descricao": f"Entrada suspeita em authorized_keys: formato inválido",
+                                "descricao": "Entrada suspeita em authorized_keys: formato inválido",
                                 "remediacao": "Verificar se a entrada é legítima. Remover se não reconhecida.",
                             })
 
@@ -452,10 +452,10 @@ def _check_ld_preload():
     for ld_path in LD_PRELOAD_PATHS:
         try:
             if os.path.isfile(ld_path):
-                with open(ld_path, "r") as f:
+                with open(ld_path) as f:
                     content = f.read().strip()
                 if content:
-                    libraries = [l.strip() for l in content.splitlines() if l.strip()]
+                    libraries = [line.strip() for line in content.splitlines() if line.strip()]
                     findings.append({
                         "tipo": "LD_PRELOAD_ACTIVE",
                         "arquivo": ld_path,
@@ -487,7 +487,7 @@ def _check_ld_preload():
                     if filename.endswith(".conf"):
                         filepath = os.path.join(ld_path, filename)
                         try:
-                            with open(filepath, "r") as f:
+                            with open(filepath) as f:
                                 content = f.read().strip()
                             if content:
                                 findings.append({
@@ -528,12 +528,12 @@ def _check_startup_scripts():
         try:
             if os.path.isfile(startup_path):
                 # rc.local
-                with open(startup_path, "r") as f:
+                with open(startup_path) as f:
                     content = f.read().strip()
                 if content and not content.startswith("#!/") or (content.startswith("#!/") and len(content.splitlines()) > 2):
                     # Has actual commands
-                    lines = [l.strip() for l in content.splitlines()
-                             if l.strip() and not l.strip().startswith("#")]
+                    lines = [line.strip() for line in content.splitlines()
+                             if line.strip() and not line.strip().startswith("#")]
                     if lines:
                         findings.append({
                             "tipo": "STARTUP_SCRIPT",
@@ -592,7 +592,7 @@ def _check_startup_scripts():
                 filepath = os.path.join(init_d, filename)
                 if os.path.isfile(filepath) and os.access(filepath, os.X_OK):
                     try:
-                        with open(filepath, "r") as f:
+                        with open(filepath) as f:
                             content = f.read().lower()
                         for pattern in SUSPICIOUS_PATTERNS:
                             if pattern in content:

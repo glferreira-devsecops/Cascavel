@@ -19,7 +19,7 @@ from rich.rule import Rule
 from rich.text import Text
 
 from .constants import S_CYAN, S_DIM, S_GREEN, S_RED, S_YELLOW, __version__
-from .engine import _classify, _count_plugins, run_plugins
+from .engine import _classify, _count_plugins, _count_sev, run_plugins
 from .reporters import _sanitize_for_json, save_json_report, save_report
 from .security import setup_signals
 from .tools import (
@@ -34,8 +34,6 @@ from .tools import (
 )
 from .ui import (
     list_plugins_table,
-    open_folder,
-    post_scan_menu,
     print_dashboard,
     print_header,
     print_target_card,
@@ -53,6 +51,7 @@ setup_signals()
 
 # Suppress SSL warnings
 import urllib3
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -109,9 +108,9 @@ def build_parser() -> argparse.ArgumentParser:
         except ValueError:
             raise argparse.ArgumentTypeError(f"'{value}' não é um inteiro válido") from None
         if ivalue <= 0:
-            raise argparse.ArgumentTypeError(f"Timeout deve ser > 0")
+            raise argparse.ArgumentTypeError("Timeout deve ser > 0")
         if ivalue > 600:
-            raise argparse.ArgumentTypeError(f"Timeout máximo: 600s")
+            raise argparse.ArgumentTypeError("Timeout máximo: 600s")
         return ivalue
 
     parser.add_argument("--timeout", type=_positive_int, default=90, help="Timeout global (1-600s)")
@@ -121,8 +120,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _load_profile(profile_name: str) -> list[str] | None:
     """Load a scan profile from profiles/ directory."""
-    from .constants import PROFILES_PATH
     import yaml
+
+    from .constants import PROFILES_PATH
 
     profile_path = PROFILES_PATH / f"{profile_name}.yaml"
     if not profile_path.is_file():

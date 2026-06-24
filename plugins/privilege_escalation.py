@@ -172,7 +172,7 @@ def _check_sudo_misconfig():
 
     # Check /etc/sudoers directly (if readable)
     try:
-        with open("/etc/sudoers", "r") as f:
+        with open("/etc/sudoers") as f:
             content = f.read()
             for pattern in SUDO_VULN_PATTERNS:
                 if pattern in content:
@@ -197,7 +197,7 @@ def _check_sudo_misconfig():
             for filename in os.listdir(sudoers_d):
                 filepath = os.path.join(sudoers_d, filename)
                 try:
-                    with open(filepath, "r") as f:
+                    with open(filepath) as f:
                         content = f.read()
                         for pattern in SUDO_VULN_PATTERNS:
                             if pattern in content:
@@ -364,7 +364,7 @@ def _check_container_escape():
     if not is_container:
         # Also check cgroup
         try:
-            with open("/proc/1/cgroup", "r") as f:
+            with open("/proc/1/cgroup") as f:
                 content = f.read()
                 if "docker" in content or "kubepods" in content or "containerd" in content:
                     is_container = True
@@ -461,7 +461,7 @@ def _check_cron_exploitation():
     # Check system crontab
     for cron_file in cron_files:
         try:
-            with open(cron_file, "r") as f:
+            with open(cron_file) as f:
                 content = f.read()
                 if content.strip():
                     findings.append({

@@ -1,5 +1,4 @@
 # plugins/osint_deep.py — Cascavel 2026 Intelligence
-import json
 
 import requests
 
@@ -74,7 +73,6 @@ def _check_social_profiles(target):
     """Check for exposed social media profiles and OSINT sources."""
     findings = []
     clean = target.replace("http://", "").replace("https://", "").split("/")[0]
-    base_domain = clean.split(":")[0]
 
     # Check security.txt
     try:
@@ -159,7 +157,6 @@ def _check_leaked_credentials(target):
     """Check for leaked credentials indicators."""
     findings = []
     clean = target.replace("http://", "").replace("https://", "").split("/")[0]
-    base_domain = clean.split(":")[0]
 
     # Check for exposed .env files
     env_paths = [
@@ -220,7 +217,6 @@ def _check_code_repositories(target):
         try:
             resp = requests.get(f"https://{clean}{path}", timeout=5, verify=False)
             if resp.status_code == 200 and len(resp.text) > 10:
-                body = resp.text.lower()
 
                 severity = "ALTO"
                 if any(kw in path for kw in [".env", ".git/config", ".svn", ".hg"]):
@@ -238,6 +234,7 @@ def _check_code_repositories(target):
                 }
 
                 # Check for secrets in the content
+                body = resp.text.lower()
                 if any(kw in body for kw in ["password", "secret", "key", "token", "credential"]):
                     finding["severidade"] = "CRITICO"
                     finding["descricao"] += " — POSSÍVEL VAZAMENTO DE CREDENCIAIS"
@@ -282,14 +279,6 @@ def _check_domain_squatting(target):
             })
 
         # Check for homograph attacks (IDN)
-        homograph_chars = {
-            "a": ["à", "á", "â", "ã", "ä", "å"],
-            "e": ["è", "é", "ê", "ë"],
-            "i": ["ì", "í", "î", "ï"],
-            "o": ["ò", "ó", "ô", "õ", "ö"],
-            "u": ["ù", "ú", "û", "ü"],
-            "c": ["ç"],
-        }
         # Just flag the possibility
         findings.append({
             "tipo": "HOMOGRAPH_CHECK",
@@ -310,7 +299,6 @@ def _check_exposed_docs(target):
         try:
             resp = requests.get(f"https://{clean}{path}", timeout=5, verify=False)
             if resp.status_code == 200 and len(resp.text) > 50:
-                body = resp.text.lower()
 
                 severity = "MEDIO"
                 if any(kw in path for kw in ["debug", "pprof", "trace", "internal"]):

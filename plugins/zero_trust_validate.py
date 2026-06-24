@@ -6,9 +6,9 @@
 [+] Author: CASCAVEL Framework
 """
 
+import shutil
 import socket
 import subprocess
-import shutil
 from typing import Any
 
 try:
@@ -51,7 +51,7 @@ def _check_microsegmentation(target: str, ip: str, ports: list[int]) -> list[dic
                 ["traceroute", "-m", "10", "-w", "2", ip],
                 capture_output=True, text=True, timeout=30
             )
-            hops = len([l for l in result.stdout.splitlines() if l.strip() and not l.startswith("traceroute")])
+            hops = len([line for line in result.stdout.splitlines() if line.strip() and not line.startswith("traceroute")])
             if hops <= 1:
                 findings.append({
                     "tipo": "SEM_SEGMENTACAO_REDE",
@@ -126,7 +126,7 @@ def _check_identity_access(target: str, ip: str, ports: list[int]) -> list[dict[
                             "correcao": "Configurar requirepass no Redis. Bloquear acesso direto.",
                         })
                 sock.close()
-        except (ConnectionRefusedError, socket.timeout, OSError):
+        except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception:
             pass

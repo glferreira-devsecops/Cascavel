@@ -88,7 +88,7 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
                         "descricao": f"QEMU Monitor Protocol (QMP) exposto na porta {port} — controle total da VM",
                         "correcao": "Desabilitar QMP remoto ou restringir via socket Unix local.",
                     })
-        except (ConnectionRefusedError, socket.timeout, OSError):
+        except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception:
             pass

@@ -7,7 +7,6 @@
 
 import glob
 import importlib.util
-import json
 import os
 import random
 import signal
@@ -38,9 +37,7 @@ from .constants import (
     S_GREEN,
     S_RED,
     S_WHITE,
-    S_YELLOW,
     SEV_MAP,
-    __version__,
 )
 from .security import _sanitize_output
 

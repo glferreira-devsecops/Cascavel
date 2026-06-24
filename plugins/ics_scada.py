@@ -6,7 +6,6 @@
 [+] Author: CASCAVEL Framework
 """
 
-import re
 import socket
 import struct
 from typing import Any
@@ -85,7 +84,7 @@ def _check_modbus(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                     "evidencia": f"Response hex: {response.hex()[:80]}",
                     "correcao": "Segmentar rede OT/IT. Implementar firewall industrial entre zonas.",
                 })
-    except (ConnectionRefusedError, socket.timeout, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception:
         pass
@@ -129,7 +128,7 @@ def _check_dnp3(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                     "descricao": "DNP3 respondeu na porta 20000 — protocolo industrial exposto",
                     "correcao": "Restringir acesso DNP3 via firewall industrial.",
                 })
-    except (ConnectionRefusedError, socket.timeout, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception:
         pass
@@ -177,7 +176,7 @@ def _check_bacnet(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                     "descricao": "Dispositivo BACnet enumerável — informações de device expostas",
                     "correcao": "Desabilitar Who-Is responses em dispositivos não necessários.",
                 })
-    except (socket.timeout, OSError):
+    except (TimeoutError, OSError):
         pass
     except Exception:
         pass
@@ -250,7 +249,7 @@ def _check_siemens_s7(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         })
                 except Exception:
                     pass
-    except (ConnectionRefusedError, socket.timeout, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception:
         pass
@@ -322,7 +321,7 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                     "descricao": f"OPC UA Binary TCP ativo na porta {port}",
                     "correcao": "Restringir acesso OPC UA via rede OT isolada.",
                 })
-        except (ConnectionRefusedError, socket.timeout, OSError):
+        except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception:
             pass

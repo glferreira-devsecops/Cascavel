@@ -1,8 +1,9 @@
 # plugins/container_escape.py — Cascavel 2026 Intelligence
 import os
 import re
-import requests
+import subprocess
 
+import requests
 
 # ──────────── CONTAINER DETECTION INDICATORS ────────────
 CONTAINER_INDICATORS = {
@@ -113,7 +114,7 @@ def _detect_container():
 
     # Check cgroup for container indicators
     try:
-        with open("/proc/1/cgroup", "r") as f:
+        with open("/proc/1/cgroup") as f:
             cgroup_content = f.read()
             if "docker" in cgroup_content or "kubepods" in cgroup_content:
                 evidence.append("cgroup indica container Docker/K8s")
@@ -126,7 +127,7 @@ def _detect_container():
 
     # Check /proc/1/environ for container env vars
     try:
-        with open("/proc/1/environ", "r") as f:
+        with open("/proc/1/environ") as f:
             environ = f.read()
             container_env_vars = [
                 "container=", "KUBERNETES_SERVICE_HOST",
@@ -139,7 +140,7 @@ def _detect_container():
         pass
 
     # Check hostname pattern (containers often have random hex hostnames)
-    hostname = os.popen("hostname 2>/dev/null").read().strip()
+    hostname = subprocess.run(["hostname"], capture_output=True, text=True, timeout=5).stdout.strip()
     if hostname and len(hostname) == 12 and all(c in "0123456789abcdef" for c in hostname):
         evidence.append(f"Hostname '{hostname}' parece container ID")
 
@@ -166,7 +167,7 @@ def _check_privileged():
 
     # Check for all capabilities
     try:
-        with open("/proc/1/status", "r") as f:
+        with open("/proc/1/status") as f:
             status = f.read()
             cap_match = re.search(r"CapEff:\s*(\w+)", status)
             if cap_match:
@@ -187,7 +188,7 @@ def _check_privileged():
     # Check /proc/sysrq-trigger (writable = privileged)
     try:
         if os.path.exists("/proc/sysrq-trigger"):
-            with open("/proc/sysrq-trigger", "r") as f:
+            with open("/proc/sysrq-trigger") as f:
                 f.read(1)
             vulns.append({
                 "tipo": "SYSRQ_ACCESSIBLE",
@@ -263,7 +264,7 @@ def _check_cve_2024_21626():
 
     # Check runc version
     try:
-        runc_version = os.popen("runc --version 2>/dev/null").read().strip()
+        runc_version = subprocess.run(["runc", "--version"], capture_output=True, text=True, timeout=5).stdout.strip()
         if runc_version:
             version_match = re.search(r"version\s+(\d+\.\d+\.\d+)", runc_version)
             if version_match:
@@ -378,13 +379,13 @@ def _check_cgroup_escape():
                         "tipo": "CGROUP_RELEASE_AGENT_WRITABLE",
                         "path": cgroup_path,
                         "severidade": "CRITICO",
-                        "descricao": f"Cgroup release_agent gravável — escape via cgroup possível!",
+                        "descricao": "Cgroup release_agent gravável — escape via cgroup possível!",
                         "remediao": "Montar cgroup como read-only ou remover --privileged.",
                     })
 
                     # Read current value
                     try:
-                        with open(cgroup_path, "r") as f:
+                        with open(cgroup_path) as f:
                             current = f.read().strip()
                         if current:
                             vulns[-1]["valor_atual"] = current
@@ -425,7 +426,7 @@ def _check_cgroup_escape():
             "tipo": "HOST_SYSCTL_WRITABLE",
             "paths": writable_sysctl,
             "severidade": "CRITICO",
-            "descricao": f"Sysctl do host gravável — escape via core_pattern/modprobe!",
+            "descricao": "Sysctl do host gravável — escape via core_pattern/modprobe!",
             "remediao": "Montar /proc/sys como read-only.",
         })
 
@@ -438,7 +439,7 @@ def _check_security_context():
 
     # AppArmor
     try:
-        with open("/proc/self/attr/current", "r") as f:
+        with open("/proc/self/attr/current") as f:
             apparmor = f.read().strip()
             if apparmor and apparmor != "unconfined":
                 vulns.append({
@@ -460,7 +461,7 @@ def _check_security_context():
 
     # Seccomp
     try:
-        with open("/proc/self/status", "r") as f:
+        with open("/proc/self/status") as f:
             for line in f:
                 if line.startswith("Seccomp:"):
                     seccomp_mode = line.split(":")[1].strip()
@@ -484,7 +485,7 @@ def _check_security_context():
 
     # SELinux
     try:
-        selinux_status = os.popen("getenforce 2>/dev/null").read().strip()
+        selinux_status = subprocess.run(["getenforce"], capture_output=True, text=True, timeout=5).stdout.strip()
         if selinux_status == "Disabled":
             vulns.append({
                 "tipo": "SELINUX_DISABLED",
@@ -509,7 +510,7 @@ def _check_capabilities():
     ]
 
     try:
-        with open("/proc/1/status", "r") as f:
+        with open("/proc/1/status") as f:
             for line in f:
                 if line.startswith("CapEff:"):
                     cap_hex = line.split(":")[1].strip()

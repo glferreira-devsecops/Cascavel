@@ -4,7 +4,6 @@ versioning issues, certificate pinning bypass, and debug endpoints.
 """
 
 import logging
-import re
 from typing import Any
 
 import requests

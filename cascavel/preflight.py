@@ -12,7 +12,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from .constants import PLUGINS_PATH, REPORTS_PATH, S_CYAN, S_DIM, S_GREEN, S_WHITE
+from .constants import PLUGINS_PATH, REPORTS_PATH, S_CYAN, S_DIM, S_GREEN, S_WHITE, S_YELLOW
 
 console = Console()
 

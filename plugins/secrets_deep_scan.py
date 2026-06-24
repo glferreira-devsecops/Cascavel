@@ -1,8 +1,8 @@
 # plugins/secrets_deep_scan.py — Cascavel 2026 Intelligence
 import math
 import re
-import requests
 
+import requests
 
 # ──────────── DEEP SECRET PATTERNS (80+) ────────────
 DEEP_PATTERNS = [

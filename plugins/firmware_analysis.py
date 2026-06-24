@@ -193,7 +193,6 @@ def _check_firmware_endpoints(
 
             if resp.status_code == 200:
                 content_type = resp.headers.get("Content-Type", "")
-                body_preview = resp.text[:1000]
 
                 # Check if it's a binary firmware download
                 is_binary = any(ct in content_type.lower() for ct in (
@@ -409,9 +408,13 @@ def _check_hardcoded_credentials(
 
 
 def _check_debug_interfaces(
-    target: str, base_url: str, session: requests.Session
+    target: str, base_url: str, session: requests.Session, ports: list[int] | None = None, banners: dict[str, str] | None = None
 ) -> list[dict[str, Any]]:
     """Detect exposed debug interfaces (JTAG, UART, serial, etc.)."""
+    if ports is None:
+        ports = []
+    if banners is None:
+        banners = {}
     findings: list[dict[str, Any]] = []
 
     for path in DEBUG_INTERFACE_PATHS:
@@ -512,7 +515,7 @@ def run(
         resultados.extend(_check_hardcoded_credentials(target, base_url, session))
 
         # 5. Debug interfaces
-        resultados.extend(_check_debug_interfaces(target, base_url, session))
+        resultados.extend(_check_debug_interfaces(target, base_url, session, ports, banners))
 
         if not resultados:
             return None

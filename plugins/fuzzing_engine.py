@@ -4,10 +4,8 @@ SQL injection, and XSS fuzzing with context-aware targeting.
 """
 
 import html
-import json
 import logging
 import re
-import urllib.parse
 from typing import Any
 
 import requests
@@ -344,7 +342,6 @@ def _fuzz_headers(url: str, session: requests.Session) -> list[dict[str, Any]]:
     try:
         baseline = session.get(url, timeout=8)
         baseline_status = baseline.status_code
-        baseline_len = len(baseline.content)
     except requests.RequestException:
         return findings
 
@@ -450,7 +447,7 @@ def _fuzz_json_body(url: str, session: requests.Session) -> list[dict[str, Any]]
                         "severidade": "ALTO",
                         "titulo": f"Potential prototype pollution ({jp['type']})",
                         "descricao": (
-                            f"JSON payload with __proto__/constructor accepted (HTTP 200). "
+                            "JSON payload with __proto__/constructor accepted (HTTP 200). "
                             "Prototype pollution can lead to RCE or privilege escalation."
                         ),
                         "payload": jp["payload"],

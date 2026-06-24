@@ -111,7 +111,7 @@ def _check_cobalt_watermark(target: str) -> list[dict[str, Any]]:
                     "evidencia": f"Hex data: {raw[:100]}",
                     "correcao": "Watermark cracked/leaked indica versão pirateada. Rastrear infraestrutura do atacante.",
                 })
-    except (ConnectionRefusedError, socket.timeout, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception:
         pass

@@ -337,7 +337,7 @@ def _check_quic_config(
                                         "version": f"0x{resp_version:08x}",
                                         "remediacao": "Ensure QUIC implementation is up to date. Monitor for QUIC-specific CVEs.",
                                     })
-            except socket.timeout:
+            except TimeoutError:
                 # No response — QUIC may not be available, or firewall blocks UDP
                 findings.append({
                     "tipo": "QUIC_NO_RESPONSE",

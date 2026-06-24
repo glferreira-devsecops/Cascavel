@@ -7,8 +7,8 @@
 """
 
 import re
-import subprocess
 import shlex
+import subprocess
 from typing import Any
 
 

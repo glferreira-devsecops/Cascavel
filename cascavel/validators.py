@@ -9,7 +9,6 @@ import ipaddress
 import re
 import socket
 import unicodedata
-from typing import Any
 
 from rich.console import Console
 

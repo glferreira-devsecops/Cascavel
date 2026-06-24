@@ -6,7 +6,6 @@ import subprocess
 
 import requests
 
-
 # ──────────── AD ENUMERATION TOOLS ────────────
 TOOLS = {
     "smbclient": "smbclient",
@@ -305,7 +304,7 @@ def _enum_ldap(target, tools):
                 proto = "LDAPS" if port in [636, 3269] else "LDAP"
                 gc = " (Global Catalog)" if port in [3268, 3269] else ""
                 vulns.append({
-                    "tipo": f"LDAP_PORT_OPEN",
+                    "tipo": "LDAP_PORT_OPEN",
                     "porta": port,
                     "protocolo": proto,
                     "global_catalog": port in [3268, 3269],

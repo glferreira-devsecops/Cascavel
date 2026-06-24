@@ -7,8 +7,8 @@
 """
 
 import re
-import subprocess
 import shutil
+import subprocess
 from typing import Any
 
 
@@ -110,7 +110,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                         for f in os.listdir(path):
                             filepath = os.path.join(path, f)
                             try:
-                                with open(filepath, "r") as fh:
+                                with open(filepath) as fh:
                                     content = fh.read()
                                     ssid_match = re.search(r"ssid=(.+)", content)
                                     if ssid_match:
@@ -120,7 +120,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                 else:
                     import os
                     if os.path.exists(path):
-                        with open(path, "r") as fh:
+                        with open(path) as fh:
                             for line in fh:
                                 ssid_match = re.search(r'ssid="(.+)"', line)
                                 if ssid_match:

@@ -42,7 +42,7 @@ except ImportError:
     DesktopNotify = None
 
 from .constants import S_CYAN, S_DIM, S_GREEN, S_RED, S_WHITE, S_YELLOW, SEV_MAP, __version__
-from .engine import _classify, _count_sev, _count_plugins
+from .engine import _classify, _count_plugins, _count_sev
 
 console = Console()
 
@@ -517,6 +517,7 @@ def post_scan_menu(report_path: str) -> None:
 def list_plugins_table() -> None:
     """Lista todos os plugins disponíveis em tabela."""
     import glob
+
     from .constants import PLUGINS_PATH
     plugin_files = sorted(glob.glob(os.path.join(PLUGINS_PATH, "*.py")))
     valid = [

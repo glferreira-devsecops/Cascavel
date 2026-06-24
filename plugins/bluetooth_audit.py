@@ -7,8 +7,8 @@
 """
 
 import re
-import subprocess
 import shutil
+import subprocess
 from typing import Any
 
 
@@ -166,7 +166,7 @@ def _check_ble_misconfig(target: str) -> list[dict[str, Any]]:
                     findings.append({
                         "tipo": "BLE_GATT_GRAVAVEL",
                         "severidade": "ALTO",
-                        "descricao": f"Características BLE GATT graváveis detectadas — possível manipulação",
+                        "descricao": "Características BLE GATT graváveis detectadas — possível manipulação",
                         "evidencia": result.stdout[:200],
                         "correcao": "Implementar autenticação BLE para características graváveis.",
                     })

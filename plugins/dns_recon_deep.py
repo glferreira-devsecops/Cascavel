@@ -2,8 +2,6 @@
 import socket
 import subprocess
 
-import requests
-
 # Subdomain wordlist (top entries)
 SUBDOMAIN_WORDLIST = [
     "www", "mail", "ftp", "localhost", "webmail", "smtp", "pop", "ns1", "ns2",

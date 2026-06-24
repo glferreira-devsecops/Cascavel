@@ -1,6 +1,5 @@
 # plugins/api_fuzzing.py — Cascavel 2026 Intelligence
 import json
-import time
 
 import requests
 
@@ -326,7 +325,7 @@ def _test_rate_limiting(target):
     for path in test_paths:
         try:
             responses = []
-            for i in range(20):  # Send 20 rapid requests
+            for _i in range(20):  # Send 20 rapid requests
                 resp = requests.get(f"https://{clean}{path}", timeout=3, verify=False)
                 responses.append(resp.status_code)
                 if resp.status_code == 429:
@@ -343,7 +342,6 @@ def _test_rate_limiting(target):
                 })
             else:
                 limit_index = responses.index(429)
-                retry_after = None
                 findings.append({
                     "tipo": "RATE_LIMIT_ACTIVE",
                     "path": path,

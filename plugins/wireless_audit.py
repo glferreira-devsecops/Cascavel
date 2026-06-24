@@ -1,7 +1,5 @@
 # plugins/wireless_audit.py — Cascavel 2026 Intelligence
 import socket
-import subprocess
-import shutil
 
 import requests
 
