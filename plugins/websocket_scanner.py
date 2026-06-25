@@ -174,7 +174,7 @@ def _test_ws_smuggling(target, path, port=80):
                 }
         else:
             sock.close()
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 

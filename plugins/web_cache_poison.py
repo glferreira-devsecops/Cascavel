@@ -164,7 +164,7 @@ def _test_fat_get(target, page):
                 "severidade": "ALTO",
                 "descricao": "GET com body é processado — Fat GET cache poisoning possível!",
             }
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 
@@ -187,7 +187,7 @@ def _test_parameter_cloaking(target, page):
                 "severidade": "ALTO",
                 "descricao": "Cache ignorou parâmetro após semicolon — parameter cloaking!",
             }
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 
@@ -239,7 +239,7 @@ def _analyze_cache_headers(target, page):
                     "descricao": f"CDN cache detected: X-Cache={x_cache}, CF-Cache={cf_cache}",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 

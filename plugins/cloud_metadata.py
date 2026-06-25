@@ -140,7 +140,7 @@ def _extract_aws_creds(text, resultado):
                     "descricao": "AWS IAM credentials via IMDSv1 — full account compromise!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -175,7 +175,7 @@ def _scan_aws_v2(resultado):
                     "descricao": "IMDSv2 enforced — v1 desabilitado (excelente config)",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -253,7 +253,7 @@ def _scan_oracle(resultado):
         if resp.status_code == 200 and len(resp.text) > 10:
             resultado["providers_detectados"].append({"provider": "ORACLE"})
             resultado["metadados"]["oracle_instance"] = resp.text[:200]
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -263,7 +263,7 @@ def _scan_do(resultado):
         if resp.status_code == 200 and "droplet_id" in resp.text:
             resultado["providers_detectados"].append({"provider": "DIGITALOCEAN"})
             resultado["metadados"]["do"] = resp.text[:200]
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 

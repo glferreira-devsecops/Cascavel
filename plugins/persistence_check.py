@@ -239,7 +239,7 @@ def _check_crontab_entries():
                             )
                 except Exception:
                     continue
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
     return findings
@@ -293,7 +293,7 @@ def _check_systemd_services():
                     try:
                         stat = os.stat(filepath)
                         finding["modificado"] = stat.st_mtime
-                    except Exception:  # noqa: S110
+                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
                         pass
 
                     findings.append(finding)
@@ -328,7 +328,7 @@ def _check_systemd_services():
                     )
             except FileNotFoundError:
                 pass
-            except Exception:  # noqa: S110
+            except Exception:  # lgtm[py/empty-except]  # noqa: S110
                 pass
 
         except Exception:
@@ -689,7 +689,7 @@ def _check_startup_scripts():
                                 break
                     except Exception:
                         continue
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
     return findings

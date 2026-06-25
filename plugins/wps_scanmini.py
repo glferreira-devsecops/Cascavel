@@ -33,7 +33,7 @@ def run(target, ip, open_ports, banners, context=None):
                     try:
                         users = [u.get("slug", "") for u in r.json()[:5]]
                         info["usuarios"] = users
-                    except Exception:  # noqa: S110
+                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
                         pass
                 encontrados.append(info)
         except Exception:

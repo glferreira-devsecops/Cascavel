@@ -140,7 +140,7 @@ def _verify_waf_blind_reflection(target, param, method="GET"):
 
         if junk in resp.text:
             return True
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return False
 
@@ -231,7 +231,7 @@ def _detect_dom_xss(target):
                                     "descricao": f"Potencial DOM XSS: {source} → {sink}",
                                 }
                             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     # Deduplicar por source+sink
     seen = set()

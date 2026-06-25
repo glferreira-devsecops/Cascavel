@@ -23,7 +23,7 @@ def run(target, ip, open_ports, banners, context=None):
             s.connect((target, port))
             banner = s.recv(1024).decode(errors="ignore")
             ftp_ports_found.append({"port": port, "banner": banner.strip()})
-        except Exception:  # noqa: S110
+        except Exception:  # lgtm[py/empty-except]  # noqa: S110
             pass
         finally:
             s.close()

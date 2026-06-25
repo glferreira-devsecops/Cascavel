@@ -118,7 +118,7 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                     continue
                 finally:
                     sock.close()
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
     return None

@@ -91,7 +91,7 @@ def _find_gql_endpoint(target):
                     json_resp = resp.json()
                     if "data" in json_resp or "errors" in json_resp:
                         return ep
-                except Exception:  # noqa: S110
+                except Exception:  # lgtm[py/empty-except]  # noqa: S110
                     pass
         except Exception:
             continue
@@ -124,7 +124,7 @@ def _test_injections(target, endpoint):
                                 "amostra": resp.text[:200],
                             }
                         )
-                except Exception:  # noqa: S110
+                except Exception:  # lgtm[py/empty-except]  # noqa: S110
                     pass
 
             # Check for SQL error reflection if not already caught
@@ -178,7 +178,7 @@ def _test_mutations(target, endpoint):
                                 "amostra": resp.text[:200],
                             }
                         )
-                except Exception:  # noqa: S110
+                except Exception:  # lgtm[py/empty-except]  # noqa: S110
                     pass
         except Exception:
             continue
@@ -203,9 +203,9 @@ def _test_batched_attack(target, endpoint):
                         "severidade": "CRITICO",
                         "descricao": "50 login mutations aceitas em batch — brute force via GraphQL!",
                     }
-            except Exception:  # noqa: S110
+            except Exception:  # lgtm[py/empty-except]  # noqa: S110
                 pass
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 

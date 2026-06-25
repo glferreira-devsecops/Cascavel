@@ -332,7 +332,7 @@ def _scan_js_credentials(target):
                     path = ref.split(target, 1)[-1] if target in ref else ""
                     if path:
                         js_paths.append(path)
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
     seen = set()
@@ -480,7 +480,7 @@ def _scan_response_headers(target):
                     }
                 )
 
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 

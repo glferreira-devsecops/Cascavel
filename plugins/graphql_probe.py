@@ -82,7 +82,7 @@ def _test_introspection(url, ep, resultado):
                     "amostra": user_types[:20],
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -99,7 +99,7 @@ def _test_batch(url, ep, resultado):
                     "descricao": "30 batch queries aceitas sem rate limit — DoS possível!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -123,7 +123,7 @@ def _test_alias(url, ep, resultado):
                         "descricao": "100 aliases aceitos — DoS via alias overloading!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -148,7 +148,7 @@ def _test_debug(url, ep, resultado):
                         "descricao": "Tracing/debug ativo — info disclosure!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -165,7 +165,7 @@ def _test_field_suggestion(url, ep, resultado):
                     "amostra": resp.text[:200],
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -182,7 +182,7 @@ def _test_depth(url, ep, resultado):
                     "descricao": "Query depth 20+ aceita — DoS potencial!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -198,7 +198,7 @@ def _test_get_introspection(url, ep, resultado):
                     "descricao": "Introspection via GET — bypass de proteção POST-only!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -227,7 +227,7 @@ def _test_persisted_query_bypass(url, ep, resultado):
                     "descricao": "Automatic Persisted Queries habilitado — hash enumeration possível!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -252,7 +252,7 @@ def _test_cswsh(target, ep, resultado):
                     "descricao": "WebSocket upgrade aceita com evil origin — CSWSH!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -271,5 +271,5 @@ def _test_cost_analysis(url, ep, resultado):
                         "descricao": "Query complexa aceita sem cost/complexity analysis — DoS!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass

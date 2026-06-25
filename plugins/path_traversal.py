@@ -122,7 +122,7 @@ def _test_traversal(target, param, payload, indicator, method, baseline_len):
                 "descricao": f"Path traversal via {method} — file read confirmado!",
                 "amostra": resp.text[:200],
             }
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 

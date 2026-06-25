@@ -28,7 +28,7 @@ def _get_wireless_interfaces() -> list[str]:
                 if "Interface" in line:
                     iface = line.strip().split()[-1]
                     interfaces.append(iface)
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return interfaces
 
@@ -86,7 +86,7 @@ def _check_evil_twin(target: str) -> list[dict[str, Any]]:
                     "correcao": "Instalar wireless-tools para detecção completa.",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return findings
 
@@ -139,7 +139,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                     "correcao": "Desabilitar auto-connect e usar WPA3-Enterprise. Limpar redes salvas não utilizadas.",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return findings
 
@@ -166,7 +166,7 @@ def _check_wpa_handshake(target: str) -> list[dict[str, Any]]:
                 "correcao": "Migrar para WPA3-SAE para eliminar ataques de handshake capture.",
             }
         )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return findings
 
@@ -201,7 +201,7 @@ def _check_pmkid_attack() -> list[dict[str, Any]]:
                         }
                     )
                     break
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return findings
 
@@ -241,7 +241,7 @@ def _check_deauth_protection() -> list[dict[str, Any]]:
                 "correcao": "Habilitar PMF obrigatório (WPA3 ou WPA2 com 802.11w) para mitigar deauth attacks.",
             }
         )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return findings
 

@@ -124,7 +124,7 @@ def _detect_java_indicators(url, timeout):
         ):
             indicators.append({"type": "body_indicator", "value": "Java patterns in response body"})
 
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return indicators
 

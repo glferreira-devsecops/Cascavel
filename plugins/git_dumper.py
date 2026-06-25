@@ -114,7 +114,7 @@ def _scan_config_secrets(target):
                         "descricao": "Remote URLs expostos — repo source disclosed!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 
@@ -136,7 +136,7 @@ def _check_git_log(target):
                     "descricao": f"Git log exposto — {len(emails)} emails, {commit_count} commits!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 
@@ -175,7 +175,7 @@ def _check_git_objects(target):
                     "pack_hash": pack_hash.group(1),
                     "descricao": "Git pack file acessível — clone completo do repo possível!",
                 }
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 

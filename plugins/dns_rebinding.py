@@ -146,7 +146,7 @@ def _check_multiple_a(target, resultado):
                         "descricao": "Registro A contém IP interno — information leak!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
 
@@ -281,5 +281,5 @@ def _check_zero_ip_rebinding(target, resultado):
                     "descricao": f"Domínio resolve para {ip} — possível DNS rebinding!",
                 }
             )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass

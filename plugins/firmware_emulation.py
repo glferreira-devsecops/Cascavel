@@ -67,7 +67,7 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
                 try:
                     sock.send(b"\r\n")
                     banner = sock.recv(512).decode("utf-8", errors="ignore")
-                except Exception:  # noqa: S110
+                except Exception:  # lgtm[py/empty-except]  # noqa: S110
                     pass
                 sock.close()
 
@@ -103,7 +103,7 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
                     )
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
-        except Exception:  # noqa: S110
+        except Exception:  # lgtm[py/empty-except]  # noqa: S110
             pass
     return findings
 
@@ -130,7 +130,7 @@ def _check_qemu_escape(target: str, ip: str, ports: list[int]) -> list[dict[str,
                         "correcao": "Verificar CVEs para a versão. Atualizar para última versão estável.",
                     }
                 )
-        except Exception:  # noqa: S110
+        except Exception:  # lgtm[py/empty-except]  # noqa: S110
             pass
 
     # Check for known QEMU escape CVEs via VNC
@@ -159,7 +159,7 @@ def _check_qemu_escape(target: str, ip: str, ports: list[int]) -> list[dict[str,
                                 "correcao": "Atualizar VNC e QEMU. Usar TLS e autenticação forte.",
                             }
                         )
-        except Exception:  # noqa: S110
+        except Exception:  # lgtm[py/empty-except]  # noqa: S110
             pass
     return findings
 
@@ -211,7 +211,7 @@ def _check_debug_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar JTAG/SWD em produção. Usar efuse ou lock bits para proteção.",
                     }
                 )
-            except Exception:  # noqa: S110
+            except Exception:  # lgtm[py/empty-except]  # noqa: S110
                 pass
     return findings
 
@@ -248,7 +248,7 @@ def _check_firmware_signing(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                             )
                 except Exception:
                     continue
-        except Exception:  # noqa: S110
+        except Exception:  # lgtm[py/empty-except]  # noqa: S110
             pass
     return findings
 

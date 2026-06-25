@@ -109,7 +109,7 @@ def _check_sandbox_bypass(target, page):
                         "descricao": "Formulário sem proteção contra clickjacking — form hijacking!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 
@@ -128,7 +128,7 @@ def _check_double_framing(target, page):
                 "severidade": "MEDIO",
                 "descricao": "X-Frame-Options: SAMEORIGIN sem CSP — double framing bypass possível!",
             }
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 
@@ -156,7 +156,7 @@ def _check_drag_drop(target, page):
                     f"{'File upload' if has_upload else 'Textarea'} sem frame protection — drag-and-drop hijacking!"
                 ),
             }
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return None
 

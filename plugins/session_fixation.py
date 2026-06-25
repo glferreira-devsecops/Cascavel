@@ -242,7 +242,7 @@ def _check_session_logout(target):
                     }
                 )
                 break
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 

@@ -154,7 +154,7 @@ def _check_github_actions_artifacts(target):
                         "descricao": f"{len(yml_files)} workflows GH Actions listáveis!",
                     }
                 )
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
     return vulns
 

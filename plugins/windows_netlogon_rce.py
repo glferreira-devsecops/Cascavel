@@ -32,7 +32,7 @@ def run(target, ip, open_ports, banners, context=None):
                 }
             )
         s.close()
-    except Exception:  # noqa: S110
+    except Exception:  # lgtm[py/empty-except]  # noqa: S110
         pass
 
     if not resultados:

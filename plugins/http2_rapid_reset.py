@@ -136,7 +136,7 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
         try:
             if "ssock" in locals():
                 ssock.close()
-        except Exception:  # noqa: S110
+        except Exception:  # lgtm[py/empty-except]  # noqa: S110
             pass
 
 
