@@ -1,8 +1,10 @@
+import logging
 import time
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "name",
     "template",
@@ -144,7 +146,7 @@ def _get_baseline_latency(target):
         start = time.time()
         requests.get(f"http://{target}/?cascavel_ssti_test=1", timeout=5)
         return time.time() - start
-    except Exception:
+    except Exception as _exc:
         return 0.5
 
 
@@ -154,7 +156,7 @@ def _get_404_baseline(target):
     try:
         resp = requests.get(url, timeout=6)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -167,7 +169,7 @@ def _verify_waf_blind_reflection(target, param, payload_str):
         if test_val in resp.text:
             return True
         return False
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -233,7 +235,7 @@ def run(target, ip, open_ports, banners, context=None):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         detected_params.add(param)
                         break
-            except Exception:
+            except Exception as _exc:
                 continue
 
         # Phase 2: Exploitation (apenas se detecção foi positiva no param)
@@ -248,7 +250,7 @@ def run(target, ip, open_ports, banners, context=None):
                         if not _verify_waf_blind_reflection(target, param, payload):
                             vulns.append(_build_vuln(engine, param, payload))
                             break
-                except Exception:
+                except Exception as _exc:
                     continue
 
         # Phase 3: Config Leak (sempre testar)
@@ -262,7 +264,7 @@ def run(target, ip, open_ports, banners, context=None):
                     if not _verify_waf_blind_reflection(target, param, payload):
                         vulns.append(_build_vuln(engine, param, payload, "ALTO"))
                         break
-            except Exception:
+            except Exception as _exc:
                 continue
 
         # Phase 4: WAF Bypass (se detection falhou mas parece filtrável)
@@ -274,7 +276,7 @@ def run(target, ip, open_ports, banners, context=None):
                     if indicator and indicator in resp.text:
                         vulns.append(_build_vuln(f"WAF_BYPASS_{engine}", param, payload))
                         break
-                except Exception:
+                except Exception as _exc:
                     continue
 
         # Phase 5: Time-Based Detection (Se blind e suspeito)
@@ -292,7 +294,7 @@ def run(target, ip, open_ports, banners, context=None):
                 except requests.exceptions.Timeout:
                     vulns.append(_build_vuln(f"{engine}_TIMEOUT", param, payload, "ALTO"))
                     break
-                except Exception:
+                except Exception as _exc:
                     continue
 
     return {

@@ -1,7 +1,9 @@
 # plugins/persistence_check.py — Cascavel 2026 Intelligence
+import logging
 import os
 import subprocess
 
+logger = logging.getLogger(__name__)
 # Systemd service directories
 SYSTEMD_DIRS = [
     "/etc/systemd/system",
@@ -149,7 +151,7 @@ def _check_crontab_entries():
             continue
         except FileNotFoundError:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     for cron_dir in cron_dirs:
@@ -197,9 +199,9 @@ def _check_crontab_entries():
                                             break
                     except PermissionError:
                         continue
-                    except Exception:
+                    except Exception as _exc:
                         continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     # User crontabs
@@ -237,10 +239,10 @@ def _check_crontab_entries():
                                     "preview": entries[:5],
                                 }
                             )
-                except Exception:
+                except Exception as _exc:
                     continue
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -294,12 +296,12 @@ def _check_systemd_services():
                         stat = os.stat(filepath)
                         finding["modificado"] = stat.st_mtime
                     except Exception as _exc:
-                        pass
+                        logger.debug("Non-critical error: %s", _exc)
 
                     findings.append(finding)
                 except PermissionError:
                     continue
-                except Exception:
+                except Exception as _exc:
                     continue
 
             # Check for enabled services
@@ -329,9 +331,9 @@ def _check_systemd_services():
             except FileNotFoundError:
                 pass
             except Exception as _exc:
-                pass
+                logger.debug("Non-critical error: %s", _exc)
 
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -398,7 +400,7 @@ def _check_shell_profiles():
                     )
             except PermissionError:
                 continue
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings
@@ -496,7 +498,7 @@ def _check_ssh_authorized_keys():
 
             except PermissionError:
                 continue
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings
@@ -562,13 +564,13 @@ def _check_ld_preload():
                                         "conteudo": content[:200],
                                     }
                                 )
-                        except Exception:
+                        except Exception as _exc:
                             continue
         except PermissionError:
             continue
         except FileNotFoundError:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check environment variable
@@ -654,14 +656,14 @@ def _check_startup_scripts():
                                     "descricao": f"Executável em diretório de startup: {startup_path}/{filename}",
                                 }
                             )
-                        except Exception:
+                        except Exception as _exc:
                             continue
 
         except PermissionError:
             continue
         except FileNotFoundError:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for init.d services
@@ -687,10 +689,10 @@ def _check_startup_scripts():
                                     }
                                 )
                                 break
-                    except Exception:
+                    except Exception as _exc:
                         continue
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 

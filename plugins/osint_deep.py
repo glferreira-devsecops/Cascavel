@@ -1,7 +1,10 @@
 # plugins/osint_deep.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 # Social media / profile endpoints to check
 SOCIAL_PATHS = [
     "/.well-known/openid-configuration",
@@ -141,7 +144,7 @@ def _check_social_profiles(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check robots.txt for sensitive paths
     try:
@@ -178,7 +181,7 @@ def _check_social_profiles(target):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for social links in page source
     try:
@@ -209,7 +212,7 @@ def _check_social_profiles(target):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for exposed profiles via API
     for path in SOCIAL_PATHS:
@@ -226,7 +229,7 @@ def _check_social_profiles(target):
                         "preview": resp.text[:200],
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -280,7 +283,7 @@ def _check_leaked_credentials(target):
                             "remediacao": "Remover imediatamente. Rotacionar todas as credenciais. Bloquear acesso via webserver.",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for exposed backup files
@@ -311,7 +314,7 @@ def _check_leaked_credentials(target):
                         "remediacao": "Remover imediatamente. Verificar se backup foi acessado por terceiros.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -349,7 +352,7 @@ def _check_code_repositories(target):
                     finding["preview"] = resp.text[:200]
 
                 findings.append(finding)
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -375,7 +378,7 @@ def _check_domain_squatting(target):
                 squat_domains.append(domain)
             except socket.gaierror:
                 continue
-            except Exception:
+            except Exception as _exc:
                 continue
 
         if squat_domains:
@@ -431,7 +434,7 @@ def _check_exposed_docs(target):
                         "remediacao": "Restringir acesso a documentação. Usar autenticação ou IP whitelist.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -472,7 +475,7 @@ def _check_github_dorks(target):
                             ],
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings

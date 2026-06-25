@@ -1,9 +1,11 @@
 # plugins/secrets_deep_scan.py — Cascavel 2026 Intelligence
+import logging
 import math
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 # ──────────── DEEP SECRET PATTERNS (80+) ────────────
 DEEP_PATTERNS = [
     # AWS
@@ -297,7 +299,7 @@ def _scan_deep_paths(target):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -333,7 +335,7 @@ def _scan_js_credentials(target):
                     if path:
                         js_paths.append(path)
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     seen = set()
     for js_path in js_paths:
@@ -364,7 +366,7 @@ def _scan_js_credentials(target):
                                 }
                             )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -427,7 +429,7 @@ def _scan_cloud_credentials(target):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -481,7 +483,7 @@ def _scan_response_headers(target):
                 )
 
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -518,7 +520,7 @@ def _entropy_scan_pages(target, context):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

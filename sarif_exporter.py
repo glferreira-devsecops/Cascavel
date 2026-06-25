@@ -5,8 +5,11 @@ Generates SARIF 2.1.0 compliant JSON logs for integration with GitHub Code Scann
 
 import datetime
 import json
+import logging
 import os
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 _SARIF_LEVEL = {
     "CRITICAL": "error",

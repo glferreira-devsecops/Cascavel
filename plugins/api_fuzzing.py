@@ -1,8 +1,10 @@
 # plugins/api_fuzzing.py — Cascavel 2026 Intelligence
 import json
+import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 # REST API discovery paths
 REST_PATHS = [
     "/api",
@@ -138,7 +140,7 @@ def _discover_rest_endpoints(target):
                                 finding["quantidade_items"] = len(data)
                             elif isinstance(data, dict):
                                 finding["chaves"] = list(data.keys())[:10]
-                        except Exception:
+                        except Exception as _exc:
                             finding["tipo_resposta"] = "TEXT"
 
                         if any(kw in body for kw in ["admin", "config", "internal", "debug"]):
@@ -161,7 +163,7 @@ def _discover_rest_endpoints(target):
 
                     findings.append(finding)
                     break  # Found on one scheme, skip the other
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings
@@ -221,7 +223,7 @@ def _test_graphql_introspection(target):
                     except json.JSONDecodeError:
                         pass
                     break
-            except Exception:
+            except Exception as _exc:
                 continue
 
     # Test other GraphQL queries
@@ -249,7 +251,7 @@ def _test_graphql_introspection(target):
                                     "remediacao": "Implementar query depth limiting. Restringir campos sensíveis.",
                                 }
                             )
-                except Exception:
+                except Exception as _exc:
                     continue
             break
 
@@ -296,10 +298,10 @@ def _test_grpc_enumeration(target):
                                 finding["health_check"] = True
                                 finding["severidade"] = "MEDIO"
                         except Exception as _exc:
-                            pass
+                            logger.debug("Non-critical error: %s", _exc)
 
                     findings.append(finding)
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings
@@ -317,7 +319,7 @@ def _test_auth_bypass(target):
             resp = requests.get(f"https://{clean}{path}", timeout=5, verify=False)
             if resp.status_code == 401:
                 protected_paths.append(path)
-        except Exception:
+        except Exception as _exc:
             continue
 
     if not protected_paths:
@@ -345,7 +347,7 @@ def _test_auth_bypass(target):
                         "remediacao": "Validar tokens server-side. Não confiar em headers customizados para autorização.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -390,7 +392,7 @@ def _test_rate_limiting(target):
                     }
                 )
             break  # Test one path only
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -456,10 +458,10 @@ def _test_mass_assignment(target):
                                         )
                                         break
                             except Exception as _exc:
-                                pass
-                    except Exception:
+                                logger.debug("Non-critical error: %s", _exc)
+                    except Exception as _exc:
                         continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings

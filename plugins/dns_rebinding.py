@@ -1,9 +1,12 @@
 # plugins/dns_rebinding.py — Cascavel 2026 Intelligence
+import logging
 import random
 import shlex
 import socket
 import string
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -69,7 +72,7 @@ def _run_dig(args):
         cmd = ["dig"] + args
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         return result.stdout.strip()
-    except Exception:
+    except Exception as _exc:
         return ""
 
 
@@ -147,7 +150,7 @@ def _check_multiple_a(target, resultado):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _check_dnssec(target, resultado):
@@ -282,4 +285,4 @@ def _check_zero_ip_rebinding(target, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)

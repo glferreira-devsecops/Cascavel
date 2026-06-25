@@ -1,5 +1,9 @@
 # plugins/wps_scanmini.py
+import logging
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -34,9 +38,9 @@ def run(target, ip, open_ports, banners, context=None):
                         users = [u.get("slug", "") for u in r.json()[:5]]
                         info["usuarios"] = users
                     except Exception as _exc:
-                        pass
+                        logger.debug("Non-critical error: %s", _exc)
                 encontrados.append(info)
-        except Exception:
+        except Exception as _exc:
             continue
 
     return {

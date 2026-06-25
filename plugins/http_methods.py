@@ -1,5 +1,9 @@
 # plugins/http_methods.py
+import logging
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -34,7 +38,7 @@ def run(target, ip, open_ports, banners, context=None):
             if allow:
                 metodos_aceitos = [m.strip().upper() for m in allow.split(",")]
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
         if not metodos_aceitos:
             for metodo in metodos:
@@ -42,7 +46,7 @@ def run(target, ip, open_ports, banners, context=None):
                     resp = requests.request(metodo, url, timeout=4)
                     if resp.status_code not in [405, 501, 400]:
                         metodos_aceitos.append(metodo)
-                except Exception:
+                except Exception as _exc:
                     continue
 
         if metodos_aceitos:

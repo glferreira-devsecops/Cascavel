@@ -1,7 +1,10 @@
 # plugins/prototype_pollution.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 PAGES = [
     "/",
     "/api/",
@@ -79,7 +82,7 @@ def _test_post_proto(target, page, payload, method):
                 "descricao": desc,
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -96,7 +99,7 @@ def _test_get_proto(target, page, payload, method):
                 "descricao": f"Prototype pollution via GET — {method}",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -117,7 +120,7 @@ def _test_text_plain(target, page):
                 "descricao": "Prototype pollution via text/plain Content-Type bypass!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -137,7 +140,7 @@ def _test_lodash_merge(target, page):
                 "descricao": "Lodash _.merge prototype pollution confirmada!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

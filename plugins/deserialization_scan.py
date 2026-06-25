@@ -1,9 +1,11 @@
 # plugins/deserialization_scan.py — Cascavel 2026 Intelligence
 import base64
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 ENDPOINTS = [
     "/",
     "/api/",
@@ -117,7 +119,7 @@ def _get_junk_data_response(url, content_type):
             headers={"Content-Type": content_type},
         )
         return resp.status_code, resp.text.lower()
-    except Exception:
+    except Exception as _exc:
         return 0, ""
 
 
@@ -152,7 +154,7 @@ def _test_payload(url, payload, junk_status=0, junk_text=""):
                     "descricao": "Server error 500 com deserialization payload — possível vulnerabilidade!",
                 }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -186,7 +188,7 @@ def _test_viewstate(url):
 
             return vuln
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -228,7 +230,7 @@ def _test_json_deserialization(url, junk_status=0, junk_text=""):
                             }
                         )
                         break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

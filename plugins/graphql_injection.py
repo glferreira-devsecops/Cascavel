@@ -1,7 +1,10 @@
 # plugins/graphql_injection.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 CT_JSON = "application/json"
 GQL_ENDPOINTS = [
     "/graphql",
@@ -92,8 +95,8 @@ def _find_gql_endpoint(target):
                     if "data" in json_resp or "errors" in json_resp:
                         return ep
                 except Exception as _exc:
-                    pass
-        except Exception:
+                    logger.debug("Non-critical error: %s", _exc)
+        except Exception as _exc:
             continue
     return None
 
@@ -125,7 +128,7 @@ def _test_injections(target, endpoint):
                             }
                         )
                 except Exception as _exc:
-                    pass
+                    logger.debug("Non-critical error: %s", _exc)
 
             # Check for SQL error reflection if not already caught
             if any(
@@ -148,7 +151,7 @@ def _test_injections(target, endpoint):
                         "descricao": f"DB error reflected via {name} — SQL injection possível!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -179,8 +182,8 @@ def _test_mutations(target, endpoint):
                             }
                         )
                 except Exception as _exc:
-                    pass
-        except Exception:
+                    logger.debug("Non-critical error: %s", _exc)
+        except Exception as _exc:
             continue
     return vulns
 
@@ -204,9 +207,9 @@ def _test_batched_attack(target, endpoint):
                         "descricao": "50 login mutations aceitas em batch — brute force via GraphQL!",
                     }
             except Exception as _exc:
-                pass
+                logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

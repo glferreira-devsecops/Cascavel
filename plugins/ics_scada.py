@@ -6,10 +6,12 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import socket
 import struct
 from typing import Any
 
+logger = logging.getLogger(__name__)
 try:
     import requests
 
@@ -94,7 +96,7 @@ def _check_modbus(ip: str, ports: list[int]) -> list[dict[str, Any]]:
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -142,7 +144,7 @@ def _check_dnp3(ip: str, ports: list[int]) -> list[dict[str, Any]]:
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -201,7 +203,7 @@ def _check_bacnet(ip: str, ports: list[int]) -> list[dict[str, Any]]:
     except (TimeoutError, OSError):
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -315,11 +317,11 @@ def _check_siemens_s7(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                             }
                         )
                 except Exception as _exc:
-                    pass
+                    logger.debug("Non-critical error: %s", _exc)
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -372,7 +374,7 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         }
                     )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
         # Check raw socket for Binary TCP protocol
         try:
@@ -407,7 +409,7 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

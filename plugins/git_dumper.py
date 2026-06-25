@@ -1,8 +1,10 @@
 # plugins/git_dumper.py — Cascavel 2026 Intelligence
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 GIT_PATHS = [
     "/.git/config",
     "/.git/HEAD",
@@ -83,7 +85,7 @@ def _probe_git_files(target):
                             vuln["descricao"] += f" Secret: {label}!"
                             break
                     vulns.append(vuln)
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -115,7 +117,7 @@ def _scan_config_secrets(target):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -137,7 +139,7 @@ def _check_git_log(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -157,7 +159,7 @@ def _check_other_vcs(target):
                         "amostra": resp.text[:150],
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -176,7 +178,7 @@ def _check_git_objects(target):
                     "descricao": "Git pack file acessível — clone completo do repo possível!",
                 }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

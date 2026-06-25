@@ -1,8 +1,10 @@
 # plugins/mongodb_unauth.py — Cascavel 2026 Intelligence
+import logging
 import socket
 
 import requests
 
+logger = logging.getLogger(__name__)
 MONGO_PORTS = [27017, 27018, 27019, 27020]
 
 ISMASTER_QUERY = (
@@ -31,7 +33,7 @@ def _probe_mongodb(target, port):
         if len(response) > 4:
             return response.decode(errors="ignore")
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return ""
 
 
@@ -52,7 +54,7 @@ def _check_mongo_http(target, port):
                     }
                 )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -73,7 +75,7 @@ def _check_mongo_express(target):
                         "descricao": f"Mongo Express (web admin) sem auth em :{port}!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -121,7 +123,7 @@ def _check_mongos(target):
                 "descricao": "Mongos router exposto — acesso a sharded cluster inteiro!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

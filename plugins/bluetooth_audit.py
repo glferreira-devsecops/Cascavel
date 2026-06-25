@@ -6,10 +6,13 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import re
 import shutil
 import subprocess
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _check_bluetooth_adapter() -> dict[str, Any] | None:
@@ -20,14 +23,14 @@ def _check_bluetooth_adapter() -> dict[str, Any] | None:
             if "hci" in result.stdout.lower():
                 return {"available": True, "tool": "hciconfig", "output": result.stdout[:500]}
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     if shutil.which("bluetoothctl"):
         try:
             result = subprocess.run(["bluetoothctl", "show"], capture_output=True, text=True, timeout=10)
             if "controller" in result.stdout.lower():
                 return {"available": True, "tool": "bluetoothctl", "output": result.stdout[:500]}
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -69,7 +72,7 @@ def _check_bluetooth_services(target: str) -> list[dict[str, Any]]:
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -120,7 +123,7 @@ def _check_blueborne(target: str) -> list[dict[str, Any]]:
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -147,7 +150,7 @@ def _check_ble_misconfig(target: str) -> list[dict[str, Any]]:
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for BLE GATT services exposed
     if shutil.which("gatttool"):
@@ -169,7 +172,7 @@ def _check_ble_misconfig(target: str) -> list[dict[str, Any]]:
                         }
                     )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -202,7 +205,7 @@ def _check_replay_attack() -> list[dict[str, Any]]:
                     }
                 )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -244,7 +247,7 @@ def _check_knob_vulnerability(target: str) -> list[dict[str, Any]]:
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

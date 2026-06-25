@@ -1,7 +1,9 @@
 # plugins/email_spoof_check.py
+import logging
 import shlex
 import subprocess
 
+logger = logging.getLogger(__name__)
 DMARC_POLICIES = {"none": "CRITICO", "quarantine": "MEDIO", "reject": "BAIXO"}
 
 
@@ -17,7 +19,7 @@ def _query_dns_txt(domain, prefix=""):
             timeout=10,
         )
         return result.stdout.strip()
-    except Exception:
+    except Exception as _exc:
         return ""
 
 

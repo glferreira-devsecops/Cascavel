@@ -1,9 +1,11 @@
 # plugins/csrf_detector.py — Cascavel 2026 Intelligence
+import logging
 import math
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 PAGES = [
     "/",
     "/login",
@@ -202,7 +204,7 @@ def _check_json_csrf(target, page):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Test sendBeacon-style (application/x-www-form-urlencoded with JSON body)
     try:
@@ -222,7 +224,7 @@ def _check_json_csrf(target, page):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -240,7 +242,7 @@ def _check_cors_csrf(target):
                 "descricao": "CORS reflete origin evil.com com credentials — CSRF cross-origin total!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -276,7 +278,7 @@ def _check_referer_validation(target):
                         "descricao": "Endpoint não valida Referer — CSRF via Referer bypass!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -306,7 +308,7 @@ def run(target, ip, open_ports, banners, context=None):
             # 2. Cookie analysis
             vulns.extend(_analyze_cookies(resp, page))
 
-        except Exception:
+        except Exception as _exc:
             continue
 
         # 3. JSON CSRF

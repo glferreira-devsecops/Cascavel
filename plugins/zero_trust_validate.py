@@ -6,11 +6,13 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import shutil
 import socket
 import subprocess
 from typing import Any
 
+logger = logging.getLogger(__name__)
 try:
     import requests
 
@@ -76,7 +78,7 @@ def _check_microsegmentation(target: str, ip: str, ports: list[int]) -> list[dic
                     }
                 )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
     # Check for direct database access (should go through API layer)
     db_ports = {3306: "MySQL", 5432: "PostgreSQL", 6379: "Redis", 27017: "MongoDB"}
@@ -148,7 +150,7 @@ def _check_identity_access(target: str, ip: str, ports: list[int]) -> list[dict[
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -194,7 +196,7 @@ def _check_least_privilege(target: str, ip: str, ports: list[int]) -> list[dict[
                             "correcao": "Restringir acesso admin a rede interna/VPN. Implementar role-based access control.",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for overly permissive CORS
@@ -216,7 +218,7 @@ def _check_least_privilege(target: str, ip: str, ports: list[int]) -> list[dict[
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -282,7 +284,7 @@ def _check_lateral_movement(target: str, ip: str, ports: list[int]) -> list[dict
                     }
                 )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -351,7 +353,7 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
                     }
                 )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
     # Check for health check endpoints (continuous verification)
     health_paths = ["/health", "/healthz", "/ready", "/readyz", "/livez", "/api/health"]
@@ -371,7 +373,7 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
                         }
                     )
                     break
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings

@@ -7,8 +7,11 @@ Detects if sensitive logic (crypto keys, validations) is exposed
 in client-side WebAssembly modules via raw binary analysis.
 """
 
+import logging
 import socket
 import ssl
+
+logger = logging.getLogger(__name__)
 
 
 def verify_math_execution() -> bool:
@@ -98,11 +101,11 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                             "endpoint": f"{'https' if use_ssl else 'http'}://{target}:{target_port}{endpoint}",
                             "evidence": "Wasm module exposes sensitive validation/crypto functions which can be extracted or patched client-side.",
                         }
-            except Exception:
+            except Exception as _exc:
                 continue
             finally:
                 sock.close()
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return None

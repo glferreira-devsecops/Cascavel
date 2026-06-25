@@ -1,7 +1,10 @@
 # plugins/password_policy.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 REGISTRATION_PATHS = [
     "/register",
     "/signup",
@@ -81,7 +84,7 @@ def _test_password(target, path, password, label):
                 "descricao": "422 sem menção a password — validação parcial",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -102,7 +105,7 @@ def _check_rate_limit_registration(target, path):
             "severidade": "MEDIO",
             "descricao": "Sem rate limit no registro — enumeration/abuse possível!",
         }
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -127,7 +130,7 @@ def _check_rate_limit_login(target, path):
                 "descricao": "Sem rate limit no login — brute-force/credential stuffing possível!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -165,7 +168,7 @@ def _check_rate_limit_bypass(target, path):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -196,7 +199,7 @@ def _check_credential_stuffing(target, path):
                         "descricao": f"Login com credenciais breached ({email}) — conta comprometida!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -232,7 +235,7 @@ def _check_username_enumeration(target, path):
                 "descricao": "Timing difference para email válido vs. inválido — timing enumeration!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -284,7 +287,7 @@ def _check_password_reset(target):
                         "descricao": "Password reset aceita Host header injection — token theft!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

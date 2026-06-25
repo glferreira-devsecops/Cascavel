@@ -1,9 +1,11 @@
 # plugins/subdomain_takeover.py — Cascavel 2026 Intelligence
+import logging
 import socket
 import subprocess
 
 import requests
 
+logger = logging.getLogger(__name__)
 # Subdomain wordlist for takeover scanning
 SUBDOMAIN_WORDLIST = [
     "dev",
@@ -191,7 +193,7 @@ def _check_cname_dangling(subdomain):
     except FileNotFoundError:
         return None, False
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None, False
 
 
@@ -271,7 +273,7 @@ def _check_expired_domains(subdomain):
     except FileNotFoundError:
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -326,7 +328,7 @@ def _check_dns_misconfiguration(subdomain):
     except FileNotFoundError:
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -360,7 +362,7 @@ def _check_github_pages_takeover(subdomain, cname=None):
                 )
                 break
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

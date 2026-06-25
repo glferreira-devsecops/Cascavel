@@ -1,7 +1,10 @@
 # plugins/host_header_injection.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 PAGES = [
     "/",
     "/login",
@@ -24,7 +27,7 @@ def _verify_waf_blind_reflection(target, page, header_name):
         if test_str in resp.text:
             return True
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -61,7 +64,7 @@ def _test_host_reflection(target, page):
                         }
                     )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # X-Forwarded-Host
     try:
@@ -79,7 +82,7 @@ def _test_host_reflection(target, page):
                         }
                     )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -123,7 +126,7 @@ def _test_host_routing_bypass(target, page):
             except Exception as _exc:
                 continue
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -143,7 +146,7 @@ def _test_host_crlf(target, page):
                 "descricao": "CRLF injection via Host header — header injection!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -165,7 +168,7 @@ def _test_absolute_url(target, page):
                 "descricao": "Host header alterou Location redirect — open redirect via host!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -186,7 +189,7 @@ def _test_duplicate_host(target, page):
                 "descricao": "Duplicate Host header — servidor usa XFH sobre Host!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

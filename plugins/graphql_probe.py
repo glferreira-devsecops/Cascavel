@@ -1,7 +1,10 @@
 # plugins/graphql_probe.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 CT_JSON = "application/json"
 INTROSPECTION_QUERY = {"query": "{ __schema { types { name fields { name type { name } } } } }"}
 
@@ -48,7 +51,7 @@ def run(target, ip, open_ports, banners, context=None):
                 continue
             if resp.status_code != 200 and "graphql" not in resp.text.lower():
                 continue
-        except Exception:
+        except Exception as _exc:
             continue
 
         resultado["endpoints_encontrados"].append(ep)
@@ -83,7 +86,7 @@ def _test_introspection(url, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_batch(url, ep, resultado):
@@ -100,7 +103,7 @@ def _test_batch(url, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_alias(url, ep, resultado):
@@ -124,7 +127,7 @@ def _test_alias(url, ep, resultado):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_debug(url, ep, resultado):
@@ -149,7 +152,7 @@ def _test_debug(url, ep, resultado):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_field_suggestion(url, ep, resultado):
@@ -166,7 +169,7 @@ def _test_field_suggestion(url, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_depth(url, ep, resultado):
@@ -183,7 +186,7 @@ def _test_depth(url, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_get_introspection(url, ep, resultado):
@@ -199,7 +202,7 @@ def _test_get_introspection(url, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_persisted_query_bypass(url, ep, resultado):
@@ -228,7 +231,7 @@ def _test_persisted_query_bypass(url, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_cswsh(target, ep, resultado):
@@ -253,7 +256,7 @@ def _test_cswsh(target, ep, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_cost_analysis(url, ep, resultado):
@@ -272,4 +275,4 @@ def _test_cost_analysis(url, ep, resultado):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)

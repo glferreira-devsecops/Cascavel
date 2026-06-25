@@ -1,8 +1,10 @@
 # plugins/saml_scanner.py — Cascavel 2026 Intelligence
 import base64
+import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 SAML_ENDPOINTS = [
     "/saml/SSO",
     "/saml2/SSO",
@@ -95,7 +97,7 @@ def _check_saml_endpoints(target):
                     vuln["descricao"] = "SAML metadata expõe certificado X.509!"
                     vuln["tipo"] = "SAML_CERT_DISCLOSED"
                 vulns.append(vuln)
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -166,7 +168,7 @@ def _test_saml_attacks(target):
                             }
                         )
 
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 

@@ -1,10 +1,12 @@
 # plugins/container_escape.py — Cascavel 2026 Intelligence
+import logging
 import os
 import re
 import subprocess
 
 import requests
 
+logger = logging.getLogger(__name__)
 # ──────────── CONTAINER DETECTION INDICATORS ────────────
 CONTAINER_INDICATORS = {
     "/.dockerenv": "Docker container flag file",
@@ -170,7 +172,7 @@ def _check_privileged():
                         "remediao": "Remover --privileged e usar capabilities granulares.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for all capabilities
@@ -252,9 +254,9 @@ def _check_docker_sock():
                                 }
                             )
                     except Exception as _exc:
-                        pass
+                        logger.debug("Non-critical error: %s", _exc)
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -278,7 +280,7 @@ def _check_cve_2024_21626():
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check runc version
     try:
@@ -304,7 +306,7 @@ def _check_cve_2024_21626():
                         }
                     )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for /proc/self/fd directory access
     try:
@@ -330,7 +332,7 @@ def _check_cve_2024_21626():
                 except (OSError, PermissionError):
                     continue
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -381,7 +383,7 @@ def _check_namespace_access():
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -420,9 +422,9 @@ def _check_cgroup_escape():
                         if current:
                             vulns[-1]["valor_atual"] = current
                     except Exception as _exc:
-                        pass
+                        logger.debug("Non-critical error: %s", _exc)
 
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check /proc/sysrq-trigger
@@ -437,7 +439,7 @@ def _check_cgroup_escape():
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check /proc/sys writability
     writable_sysctl = []
@@ -450,7 +452,7 @@ def _check_cgroup_escape():
         try:
             if os.access(path, os.W_OK):
                 writable_sysctl.append(path)
-        except Exception:
+        except Exception as _exc:
             continue
 
     if writable_sysctl:
@@ -538,7 +540,7 @@ def _check_security_context():
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -656,7 +658,7 @@ def _check_remote_container_escape(target):
                         "remediao": "Restringir acesso à API do container runtime.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for kubelet anonymous auth
@@ -672,6 +674,6 @@ def _check_remote_container_escape(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns

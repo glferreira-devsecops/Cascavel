@@ -1,9 +1,11 @@
 # plugins/xxe_scanner.py — Cascavel 2026 Intelligence
 import base64
+import logging
 import time
 
 import requests
 
+logger = logging.getLogger(__name__)
 ENDPOINTS = [
     "/",
     "/api/",
@@ -135,7 +137,7 @@ def _get_baseline_latency(target):
         start = time.time()
         requests.get(f"http://{target}/cascavel_invalid_xxe_test", timeout=5)
         return time.time() - start
-    except Exception:
+    except Exception as _exc:
         return 0.5
 
 
@@ -152,7 +154,7 @@ def _get_404_baseline(target, endpoint):
             headers={"Content-Type": "application/xml"},
         )
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -166,7 +168,7 @@ def _verify_waf_blind_reflection(target, endpoint, payload_xml):
         if test_val in resp.text:
             return True
         return False
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -212,7 +214,7 @@ def _test_classic_xxe(target, endpoint):
                                     "descricao": "XML parser detectado — superfície de ataque XXE!",
                                 }
                             )
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -244,7 +246,7 @@ def _test_blind_xxe(target, endpoint, baseline_latency):
                     break
             except requests.exceptions.Timeout:
                 pass
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -283,7 +285,7 @@ def _test_svg_upload(target):
                         "descricao": "SVG XXE payload aceito pelo upload — verificar renderização!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -314,7 +316,7 @@ def _test_xlsx_xxe(target):
                         "descricao": "XXE via XLSX upload (sharedStrings.xml)!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -337,7 +339,7 @@ def _test_xinclude(target, endpoint):
                 "descricao": "XInclude injection — file read confirmado!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -369,7 +371,7 @@ def _test_encoding_bypass(target, endpoint):
                             "descricao": f"XXE via {payload['nome']} encoding bypass!",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

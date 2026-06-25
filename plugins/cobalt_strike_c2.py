@@ -6,10 +6,12 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import re
 import socket
 from typing import Any
 
+logger = logging.getLogger(__name__)
 # Known C2 default ports
 C2_PORTS = {
     50050: "Cobalt Strike TeamServer",
@@ -122,7 +124,7 @@ def _check_cobalt_watermark(target: str) -> list[dict[str, Any]]:
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -176,7 +178,7 @@ def _check_dns_beacon(target: str) -> list[dict[str, Any]]:
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

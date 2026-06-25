@@ -1,8 +1,10 @@
 # plugins/cloud_metadata.py — Cascavel 2026 Intelligence
+import logging
 import time
 
 import requests
 
+logger = logging.getLogger(__name__)
 AWS_PATHS = [
     ("/latest/meta-data/instance-id", "INSTANCE_ID"),
     ("/latest/meta-data/local-ipv4", "LOCAL_IP"),
@@ -120,7 +122,7 @@ def _scan_aws(resultado):
                     )
                 if not _has_provider(resultado, "AWS"):
                     resultado["providers_detectados"].append({"provider": "AWS", "imds_version": "v1"})
-        except Exception:
+        except Exception as _exc:
             continue
 
 
@@ -141,7 +143,7 @@ def _extract_aws_creds(text, resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _scan_aws_v2(resultado):
@@ -176,7 +178,7 @@ def _scan_aws_v2(resultado):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _scan_gcp(resultado):
@@ -215,7 +217,7 @@ def _scan_gcp(resultado):
                     )
                 if not _has_provider(resultado, "GCP"):
                     resultado["providers_detectados"].append({"provider": "GCP"})
-        except Exception:
+        except Exception as _exc:
             continue
 
 
@@ -239,7 +241,7 @@ def _scan_azure(resultado):
                     )
                 if not _has_provider(resultado, "AZURE"):
                     resultado["providers_detectados"].append({"provider": "AZURE"})
-        except Exception:
+        except Exception as _exc:
             continue
 
 
@@ -254,7 +256,7 @@ def _scan_oracle(resultado):
             resultado["providers_detectados"].append({"provider": "ORACLE"})
             resultado["metadados"]["oracle_instance"] = resp.text[:200]
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _scan_do(resultado):
@@ -264,7 +266,7 @@ def _scan_do(resultado):
             resultado["providers_detectados"].append({"provider": "DIGITALOCEAN"})
             resultado["metadados"]["do"] = resp.text[:200]
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _scan_alibaba(resultado):
@@ -283,5 +285,5 @@ def _scan_alibaba(resultado):
                             "descricao": "Alibaba Cloud RAM roles — credential extraction!",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue

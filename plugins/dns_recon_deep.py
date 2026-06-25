@@ -1,7 +1,9 @@
 # plugins/dns_recon_deep.py — Cascavel 2026 Intelligence
+import logging
 import socket
 import subprocess
 
+logger = logging.getLogger(__name__)
 # Subdomain wordlist (top entries)
 SUBDOMAIN_WORDLIST = [
     "www",
@@ -413,7 +415,7 @@ def _test_cache_poisoning(target):
             }
         )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check TTL values
     try:
@@ -442,7 +444,7 @@ def _test_cache_poisoning(target):
                     except (ValueError, IndexError):
                         pass
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -558,7 +560,7 @@ def _test_dns_tunneling(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for NULL records (tunneling tool indicator)
     try:
@@ -578,7 +580,7 @@ def _test_dns_tunneling(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # General assessment
     findings.append(
@@ -719,7 +721,7 @@ def _enumerate_subdomains(target):
             found_subs.append({"subdomain": fqdn, "ip": ip})
         except socket.gaierror:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     if found_subs:

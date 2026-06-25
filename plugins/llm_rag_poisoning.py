@@ -6,7 +6,11 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, ports, banners, context=None):
@@ -47,6 +51,6 @@ def run(target, ip, ports, banners, context=None):
                 }
                 break
         except Exception as _exc:
-            pass  # Silent failure to avoid noise in scanner
+            logger.debug("Non-critical error: %s", _exc)  # Silent failure to avoid noise in scanner
 
     return finding

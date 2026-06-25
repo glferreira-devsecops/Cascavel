@@ -1,4 +1,5 @@
 # plugins/ad_detection.py — Cascavel 2026 Intelligence
+import logging
 import re
 import shlex
 import shutil
@@ -6,6 +7,7 @@ import subprocess
 
 import requests
 
+logger = logging.getLogger(__name__)
 # ──────────── AD ENUMERATION TOOLS ────────────
 TOOLS = {
     "smbclient": "smbclient",
@@ -373,7 +375,7 @@ def _enum_ldap(target, tools):
                         "descricao": f"{proto}{gc} acessível em :{port}",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return vulns
@@ -451,7 +453,7 @@ def _enum_kerberos(target, tools):
                         "descricao": f"{service} acessível em :{port}",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return vulns
@@ -524,7 +526,7 @@ def _check_ad_misconfigs(target, tools):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for NTLM
     try:
@@ -539,7 +541,7 @@ def _check_ad_misconfigs(target, tools):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -627,7 +629,7 @@ def _check_poisoning_opportunities(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # NBT-NS (UDP 137)
     try:
@@ -648,7 +650,7 @@ def _check_poisoning_opportunities(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # mDNS (UDP 5353)
     try:
@@ -669,7 +671,7 @@ def _check_poisoning_opportunities(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     # WPAD check
     try:
@@ -684,7 +686,7 @@ def _check_poisoning_opportunities(target):
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -721,7 +723,7 @@ def _network_ad_checks(target):
             sock.close()
             if result == 0:
                 open_ports.append({"porta": port, "servico": service})
-        except Exception:
+        except Exception as _exc:
             continue
 
     if open_ports:

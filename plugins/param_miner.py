@@ -1,6 +1,9 @@
 # plugins/param_miner.py
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 DEBUG_PARAMS = {"debug", "trace", "verbose", "dev", "internal"}
 SENSITIVE_PARAMS = {"admin", "role", "secret", "token", "key", "api_key"}
 INJECTION_PARAMS = {"file", "path", "include", "template"}
@@ -77,7 +80,7 @@ def run(target, ip, open_ports, banners, context=None):
             baseline = requests.get(baseline_url, timeout=5)
             baseline_len = len(baseline.text)
             baseline_status = baseline.status_code
-        except Exception:
+        except Exception as _exc:
             continue
 
         for param in hidden_params:
@@ -96,7 +99,7 @@ def run(target, ip, open_ports, banners, context=None):
                     }
                     entry["severidade"], entry["tipo"] = _classify_param(param)
                     resultado["params_descobertos"].append(entry)
-            except Exception:
+            except Exception as _exc:
                 continue
 
     total = len(resultado["params_descobertos"])

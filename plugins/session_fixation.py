@@ -1,8 +1,10 @@
 # plugins/session_fixation.py — Cascavel 2026 Intelligence
+import logging
 import math
 
 import requests
 
+logger = logging.getLogger(__name__)
 LOGIN_PATHS = [
     "/login",
     "/signin",
@@ -50,7 +52,7 @@ def _get_session_cookie(target, path):
         cookies = resp.cookies.get_dict()
         set_cookie = resp.headers.get("Set-Cookie", "")
         return cookies, set_cookie, resp.status_code
-    except Exception:
+    except Exception as _exc:
         return {}, "", 0
 
 
@@ -68,7 +70,7 @@ def _check_session_rotation(target, path, pre_cookies):
         )
         post_cookies = session.cookies.get_dict()
         return post_cookies, resp.status_code
-    except Exception:
+    except Exception as _exc:
         return {}, 0
 
 
@@ -190,7 +192,7 @@ def _check_session_predictability(target, path):
             for name, value in resp.cookies.items():
                 if any(sn in name.lower() for sn in SESSION_COOKIE_NAMES):
                     tokens.append(value)
-        except Exception:
+        except Exception as _exc:
             continue
 
     if len(tokens) >= 2:
@@ -243,7 +245,7 @@ def _check_session_logout(target):
                 )
                 break
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 

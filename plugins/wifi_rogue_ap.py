@@ -6,10 +6,13 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import re
 import shutil
 import subprocess
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _get_wireless_interfaces() -> list[str]:
@@ -29,7 +32,7 @@ def _get_wireless_interfaces() -> list[str]:
                     iface = line.strip().split()[-1]
                     interfaces.append(iface)
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return interfaces
 
 
@@ -87,7 +90,7 @@ def _check_evil_twin(target: str) -> list[dict[str, Any]]:
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -115,7 +118,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                                     ssid_match = re.search(r"ssid=(.+)", content)
                                     if ssid_match:
                                         known_ssids.append(ssid_match.group(1).strip())
-                            except Exception:
+                            except Exception as _exc:
                                 continue
                 else:
                     import os
@@ -126,7 +129,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                                 ssid_match = re.search(r'ssid="(.+)"', line)
                                 if ssid_match:
                                     known_ssids.append(ssid_match.group(1))
-            except Exception:
+            except Exception as _exc:
                 continue
 
         if known_ssids:
@@ -140,7 +143,7 @@ def _check_karma_vulnerability() -> list[dict[str, Any]]:
                 }
             )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -167,7 +170,7 @@ def _check_wpa_handshake(target: str) -> list[dict[str, Any]]:
             }
         )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -202,7 +205,7 @@ def _check_pmkid_attack() -> list[dict[str, Any]]:
                     )
                     break
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -218,7 +221,7 @@ def _check_deauth_protection() -> list[dict[str, Any]]:
                 result = subprocess.run(["iw", iface, "info"], capture_output=True, text=True, timeout=5)
                 if "type monitor" in result.stdout:
                     monitor_ifaces.append(iface)
-            except Exception:
+            except Exception as _exc:
                 continue
 
         if monitor_ifaces:
@@ -242,7 +245,7 @@ def _check_deauth_protection() -> list[dict[str, Any]]:
             }
         )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

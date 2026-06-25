@@ -6,10 +6,12 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import re
 import socket
 from typing import Any
 
+logger = logging.getLogger(__name__)
 try:
     import requests
 
@@ -68,7 +70,7 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
                     sock.send(b"\r\n")
                     banner = sock.recv(512).decode("utf-8", errors="ignore")
                 except Exception as _exc:
-                    pass
+                    logger.debug("Non-critical error: %s", _exc)
                 sock.close()
 
                 # Check for QEMU-specific banners
@@ -104,7 +106,7 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -131,7 +133,7 @@ def _check_qemu_escape(target: str, ip: str, ports: list[int]) -> list[dict[str,
                     }
                 )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
 
     # Check for known QEMU escape CVEs via VNC
     vnc_ports = [p for p in [5900, 5901, 5902] if p in ports]
@@ -160,7 +162,7 @@ def _check_qemu_escape(target: str, ip: str, ports: list[int]) -> list[dict[str,
                             }
                         )
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -189,7 +191,7 @@ def _check_debug_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                                 "correcao": "Desabilitar interfaces de debug em produção. Usar acesso restrito via VPN.",
                             }
                         )
-            except Exception:
+            except Exception as _exc:
                 continue
 
     # Check for JTAG/SWD debug ports (common in embedded)
@@ -212,7 +214,7 @@ def _check_debug_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                     }
                 )
             except Exception as _exc:
-                pass
+                logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -246,10 +248,10 @@ def _check_firmware_signing(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                                     "correcao": "Implementar verificação de assinatura digital em atualizações de firmware.",
                                 }
                             )
-                except Exception:
+                except Exception as _exc:
                     continue
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

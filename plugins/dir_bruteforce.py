@@ -1,9 +1,12 @@
 # plugins/dir_bruteforce.py
 import json
+import logging
 import os
 import shlex
 import shutil
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -55,7 +58,7 @@ def run(target, ip, open_ports, banners, context=None):
                 if "url" in obj:
                     resultado.append({"url": obj.get("url"), "status": obj.get("status")})
             except Exception as _exc:
-                pass
+                logger.debug("Non-critical error: %s", _exc)
     except subprocess.TimeoutExpired:
         return {
             "plugin": "dir_bruteforce",

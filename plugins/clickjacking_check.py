@@ -1,8 +1,10 @@
 # plugins/clickjacking_check.py — Cascavel 2026 Intelligence
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 PAGES = [
     "/",
     "/login",
@@ -84,7 +86,7 @@ def _check_frame_protection(target, page):
                 )
 
         return vulns
-    except Exception:
+    except Exception as _exc:
         return vulns
 
 
@@ -110,7 +112,7 @@ def _check_sandbox_bypass(target, page):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -129,7 +131,7 @@ def _check_double_framing(target, page):
                 "descricao": "X-Frame-Options: SAMEORIGIN sem CSP — double framing bypass possível!",
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -157,7 +159,7 @@ def _check_drag_drop(target, page):
                 ),
             }
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

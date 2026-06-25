@@ -10,8 +10,11 @@ ZERO FALSO POSITIVO: Não envia nenhum payload malicioso. Testa apenas se
 o servidor aceita o MÉTODO PUT/PATCH e quais extensões ele permite.
 """
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 UPLOAD_PATHS = [
     "/upload",
     "/uploads",
@@ -56,7 +59,7 @@ def _check_options(url, timeout):
             "put_allowed": "PUT" in allow.upper(),
             "webdav": bool(dav),
         }
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -85,7 +88,7 @@ def _check_put_method(url, timeout):
         }
     except requests.Timeout:
         return {"erro": "timeout"}
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -104,7 +107,7 @@ def _check_extension_acceptance(base_url, timeout):
             )
             if r.status_code in (200, 201, 204):
                 accepted_exts.append(ext)
-        except Exception:
+        except Exception as _exc:
             continue
     return accepted_exts
 

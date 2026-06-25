@@ -1,8 +1,10 @@
 # plugins/websocket_scanner.py — Cascavel 2026 Intelligence
 import base64
+import logging
 import os
 import socket
 
+logger = logging.getLogger(__name__)
 WS_PATHS = [
     "/ws",
     "/websocket",
@@ -53,7 +55,7 @@ def _attempt_ws_handshake(target, path, origin="http://evil.com", port=80):
         response = sock.recv(4096).decode(errors="ignore")
         sock.close()
         return response, key
-    except Exception:
+    except Exception as _exc:
         return "", key
 
 
@@ -175,7 +177,7 @@ def _test_ws_smuggling(target, path, port=80):
         else:
             sock.close()
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -200,7 +202,7 @@ def _test_socketio_info(target):
                         "amostra": resp.text[:100],
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

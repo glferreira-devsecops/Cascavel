@@ -1,8 +1,10 @@
 # plugins/wireless_audit.py — Cascavel 2026 Intelligence
+import logging
 import socket
 
 import requests
 
+logger = logging.getLogger(__name__)
 # Wireless management interface ports
 WIRELESS_PORTS = [80, 443, 8080, 8443, 22, 23, 161, 162, 53, 67, 68]
 
@@ -88,10 +90,10 @@ def _check_management_interfaces(target, ports):
                     if server:
                         finding["server"] = server
                 except Exception as _exc:
-                    pass
+                    logger.debug("Non-critical error: %s", _exc)
                 findings.append(finding)
             sock.close()
-        except Exception:
+        except Exception as _exc:
             continue
     return findings
 
@@ -119,7 +121,7 @@ def _check_wps_vulnerabilities(target):
                         finding["severidade"] = "CRITICO"
                         finding["descricao"] = "WPS PIN ativo — brute force trivial em ~4-10 horas"
                     findings.append(finding)
-        except Exception:
+        except Exception as _exc:
             continue
     return findings
 
@@ -174,7 +176,7 @@ def _check_weak_encryption(target):
                                 "remediacao": "Implementar WPA3-Personal ou WPA3-Enterprise mínimo.",
                             }
                         )
-        except Exception:
+        except Exception as _exc:
             continue
     return findings
 
@@ -216,7 +218,7 @@ def _check_krack(target):
                                 "remediacao": "Confirmar que firmware está atualizado. Testar com ferramenta KRACK dedicada.",
                             }
                         )
-        except Exception:
+        except Exception as _exc:
             continue
     return findings
 
@@ -268,7 +270,7 @@ def _check_rogue_ap(target):
                     }
                 )
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

@@ -9,6 +9,7 @@ creation/expiry date extraction, registrant org/country mapping.
 """
 
 import datetime
+import logging
 import re
 import shlex
 import shutil
@@ -16,6 +17,7 @@ import subprocess
 
 import requests
 
+logger = logging.getLogger(__name__)
 RDAP_BOOTSTRAP = "https://rdap.org/domain/"
 IP_RDAP_BOOTSTRAP = "https://rdap.org/ip/"
 
@@ -214,7 +216,7 @@ def _analyze_domain_age(creation_date_str):
             except ValueError:
                 continue
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -274,7 +276,7 @@ def _check_expiry(expiry_str):
             except ValueError:
                 continue
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

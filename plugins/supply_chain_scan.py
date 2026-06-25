@@ -1,8 +1,10 @@
 # plugins/supply_chain_scan.py — Cascavel 2026 Intelligence
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 # ──────────── KNOWN MALICIOUS PACKAGES (2024-2026) ────────────
 MALICIOUS_NPM = [
     "crossenv",
@@ -155,7 +157,7 @@ def _check_npm_supply_chain(target):
             if path.endswith("package.json"):
                 vulns.extend(_analyze_npm_deps(resp.text))
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -167,7 +169,7 @@ def _analyze_npm_deps(content):
 
     try:
         pkg = json.loads(content)
-    except Exception:
+    except Exception as _exc:
         return vulns
 
     all_deps = {}
@@ -241,7 +243,7 @@ def _check_pypi_supply_chain(target):
 
             vulns.extend(_analyze_pypi_deps(resp.text))
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -318,7 +320,7 @@ def _check_cargo_supply_chain(target):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -401,7 +403,7 @@ def _check_dependency_confusion(target):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -435,7 +437,7 @@ def _check_exposed_lockfiles(target):
                         "remediao": "Adicionar lockfiles ao .gitignore público ou restringir acesso via webserver.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -486,6 +488,6 @@ def _check_package_integrity(target):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns

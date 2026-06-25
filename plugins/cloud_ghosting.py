@@ -8,12 +8,14 @@ to bypass IMDSv2 metadata protections.
 """
 
 import json
+import logging
 import re
 import socket
 import ssl
 
 import urllib3
 
+logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -106,11 +108,11 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                                 "endpoint": f"{'https' if use_ssl else 'http'}://{target}:{target_port}{endpoint}",
                                 "evidence": f"Successfully evaded metadata protection and retrieved cloud instance data via SSRF payload: {payload['url']}",
                             }
-                except Exception:
+                except Exception as _exc:
                     continue
                 finally:
                     sock.close()
     except Exception as _exc:
-        pass
+        logger.debug("Non-critical error: %s", _exc)
 
     return None
