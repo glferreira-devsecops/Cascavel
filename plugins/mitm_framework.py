@@ -103,8 +103,8 @@ def _check_ssl_stripping(target):
                         "remediacao": "Corrigir redirect para apontar sempre para HTTPS.",
                     }
                 )
-    except requests.ConnectionError:
-        logger.debug("Non-critical error suppressed")
+    except requests.ConnectionError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
 

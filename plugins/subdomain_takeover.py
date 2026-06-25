@@ -270,8 +270,8 @@ def _check_expired_domains(subdomain):
                         "remediacao": "Registrar o domínio ou remover referências. Monitorar expiração de domínios.",
                     }
                 )
-    except FileNotFoundError:
-        logger.debug("Non-critical error suppressed")
+    except FileNotFoundError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
@@ -325,8 +325,8 @@ def _check_dns_misconfiguration(subdomain):
                 }
             )
 
-    except FileNotFoundError:
-        logger.debug("Non-critical error suppressed")
+    except FileNotFoundError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings

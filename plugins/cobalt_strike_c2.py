@@ -121,8 +121,8 @@ def _check_cobalt_watermark(target: str) -> list[dict[str, Any]]:
                         "correcao": "Watermark cracked/leaked indica versão pirateada. Rastrear infraestrutura do atacante.",
                     }
                 )
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        logger.debug("Non-critical error suppressed")
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings

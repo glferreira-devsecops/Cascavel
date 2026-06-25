@@ -441,8 +441,8 @@ def _test_cache_poisoning(target):
                                     "remediacao": "Aumentar TTL para 300+ segundos. DNSSEC protege mesmo com TTL baixo.",
                                 }
                             )
-                    except (ValueError, IndexError):
-                        logger.debug("Non-critical error suppressed")
+                    except (ValueError, IndexError) as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
 

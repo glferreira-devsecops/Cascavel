@@ -93,8 +93,8 @@ def _check_modbus(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Segmentar rede OT/IT. Implementar firewall industrial entre zonas.",
                     }
                 )
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        logger.debug("Non-critical error suppressed")
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
@@ -141,8 +141,8 @@ def _check_dnp3(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Restringir acesso DNP3 via firewall industrial.",
                     }
                 )
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        logger.debug("Non-critical error suppressed")
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
@@ -200,8 +200,8 @@ def _check_bacnet(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar Who-Is responses em dispositivos não necessários.",
                     }
                 )
-    except (TimeoutError, OSError):
-        logger.debug("Non-critical error suppressed")
+    except (TimeoutError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
@@ -318,8 +318,8 @@ def _check_siemens_s7(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         )
                 except Exception as _exc:
                     logger.debug("Non-critical error: %s", _exc)
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        logger.debug("Non-critical error suppressed")
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
@@ -406,8 +406,8 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Restringir acesso OPC UA via rede OT isolada.",
                     }
                 )
-        except (TimeoutError, ConnectionRefusedError, OSError):
-            logger.debug("Non-critical error suppressed")
+        except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+            logger.debug("Non-critical error: %s", _exc)
         except Exception as _exc:
             logger.debug("Non-critical error: %s", _exc)
     return findings
