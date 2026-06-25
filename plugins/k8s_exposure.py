@@ -1,7 +1,10 @@
 # plugins/k8s_exposure.py — Cascavel 2026 Intelligence
+import logging
+
 import requests
 import urllib3
 
+logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -67,15 +70,15 @@ def _probe_k8s_api(target, port):
                     try:
                         ver = resp.json()
                         vuln["k8s_version"] = ver.get("gitVersion", "")
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
                 # Count resources
                 if path in ("/api/v1/pods", "/api/v1/secrets", "/api/v1/namespaces"):
                     try:
                         items = resp.json().get("items", [])
                         vuln["resource_count"] = len(items)
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
                 vulns.append(vuln)
             elif resp.status_code == 403:
                 vulns.append(
@@ -87,7 +90,7 @@ def _probe_k8s_api(target, port):
                         "descricao": f"K8s API {path} existe mas retorna 403 — auth bypass possível!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -119,7 +122,7 @@ def _check_kubelet(target):
                             "descricao": f"Kubelet {path} exposto em :{port} — RCE em pods possível!",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -140,7 +143,7 @@ def _check_dashboard(target):
                             "descricao": "Kubernetes Dashboard sem auth — cluster takeover!",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -160,8 +163,8 @@ def _check_etcd(target):
                         "descricao": "etcd exposto sem auth — todos os secrets K8s acessíveis!",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
         # v3 API
         try:
             resp = requests.post(
@@ -178,8 +181,8 @@ def _check_etcd(target):
                         "descricao": "etcd v3 API exposta — key-value dump possível!",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 

@@ -1,7 +1,10 @@
 # plugins/graphql_injection.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 CT_JSON = "application/json"
 GQL_ENDPOINTS = [
     "/graphql",
@@ -91,9 +94,9 @@ def _find_gql_endpoint(target):
                     json_resp = resp.json()
                     if "data" in json_resp or "errors" in json_resp:
                         return ep
-                except Exception:
-                    pass
-        except Exception:
+                except Exception as _exc:
+                    logger.debug("Non-critical error: %s", _exc)
+        except Exception as _exc:
             continue
     return None
 
@@ -124,8 +127,8 @@ def _test_injections(target, endpoint):
                                 "amostra": resp.text[:200],
                             }
                         )
-                except Exception:
-                    pass
+                except Exception as _exc:
+                    logger.debug("Non-critical error: %s", _exc)
 
             # Check for SQL error reflection if not already caught
             if any(
@@ -148,7 +151,7 @@ def _test_injections(target, endpoint):
                         "descricao": f"DB error reflected via {name} — SQL injection possível!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -178,9 +181,9 @@ def _test_mutations(target, endpoint):
                                 "amostra": resp.text[:200],
                             }
                         )
-                except Exception:
-                    pass
-        except Exception:
+                except Exception as _exc:
+                    logger.debug("Non-critical error: %s", _exc)
+        except Exception as _exc:
             continue
     return vulns
 
@@ -203,10 +206,10 @@ def _test_batched_attack(target, endpoint):
                         "severidade": "CRITICO",
                         "descricao": "50 login mutations aceitas em batch — brute force via GraphQL!",
                     }
-            except Exception:
-                pass
-    except Exception:
-        pass
+            except Exception as _exc:
+                logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

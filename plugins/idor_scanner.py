@@ -1,8 +1,10 @@
 # plugins/idor_scanner.py — Cascavel 2026 Intelligence
+import logging
 import uuid
 
 import requests
 
+logger = logging.getLogger(__name__)
 ENDPOINTS_NUMERIC = [
     "/api/users/{id}",
     "/api/v1/users/{id}",
@@ -92,7 +94,7 @@ def _get_404_baseline_len(target):
     try:
         resp = requests.get(f"http://{target}/api/non_existent_endpoint_12345", timeout=5)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -110,7 +112,7 @@ def _probe_endpoint(target, ep_template, id_list):
                 "length": len(resp.text),
                 "has_data": has_data,
             }
-        except Exception:
+        except Exception as _exc:
             continue
     return responses
 
@@ -212,7 +214,7 @@ def _check_privilege_escalation(target):
                         "descricao": f"Admin endpoint '{ep}' acessível sem autenticação!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -234,7 +236,7 @@ def _check_method_override(target):
                             "descricao": f"{method} aceito sem auth — data modification!",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -262,7 +264,7 @@ def _check_graphql_idor(target):
                         }
                     )
                     return vulns  # One is enough
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -287,7 +289,7 @@ def _check_parameter_pollution(target):
                         "descricao": "HTTP Parameter Pollution retorna dados extras — IDOR!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

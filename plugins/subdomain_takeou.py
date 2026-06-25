@@ -1,8 +1,10 @@
 # plugins/subdomain_takeou.py — Cascavel 2026 Intelligence
+import logging
 import socket
 
 import requests
 
+logger = logging.getLogger(__name__)
 # ──────────── SUBDOMAINS TO TEST ────────────
 COMMON_SUBS = [
     "dev",
@@ -119,8 +121,8 @@ def _check_cname_dangling(subdomain):
                 return cname, False  # CNAME exists and resolves
             except socket.gaierror:
                 return cname, True  # CNAME dangling!
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None, False
 
 

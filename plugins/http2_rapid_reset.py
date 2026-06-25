@@ -136,8 +136,8 @@ def check_rapid_reset(target: str, ip: str, port: int) -> tuple[bool, str]:
         try:
             if "ssock" in locals():
                 ssock.close()
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
 
 def run(target: str, ip: str, ports: list, banners: dict) -> dict[str, Any] | None:

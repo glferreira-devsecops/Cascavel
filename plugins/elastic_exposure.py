@@ -1,7 +1,10 @@
 # plugins/elastic_exposure.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 ELASTIC_PORTS = [9200, 9300, 9201, 9202]
 
 ELASTIC_PATHS = {
@@ -67,8 +70,8 @@ def _probe_elastic(target, port):
                         data = resp.json()
                         vuln["version"] = data.get("version", {}).get("number", "")
                         vuln["cluster_name"] = data.get("cluster_name", "")
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
 
                 # Analyze indices for PII
                 if "indices" in path or "search" in path:
@@ -85,11 +88,11 @@ def _probe_elastic(target, port):
                         snapshots = resp.json()
                         if snapshots:
                             vuln["descricao"] = "Snapshots de backup acessíveis — exfiltração de dados!"
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
 
                 vulns.append(vuln)
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -118,7 +121,7 @@ def _check_kibana(target):
                         "descricao": f"{'Kibana Dev Tools' if 'dev_tools' in path else 'Kibana'} sem auth!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -137,8 +140,8 @@ def _check_opensearch(target):
                     "descricao": "OpenSearch detectado (fork AWS do Elasticsearch)",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 

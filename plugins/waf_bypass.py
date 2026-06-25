@@ -1,6 +1,9 @@
 # plugins/waf_bypass.py
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 BYPASS_TECHNIQUES = {
     "CASE_MIX": {"payload": "<ScRiPt>alert(1)</sCrIpT>", "indicator": "<ScRiPt>"},
     "DOUBLE_ENCODE": {
@@ -73,8 +76,8 @@ def _test_bypass(target, name, config):
                 "severidade": "INFO",
                 "descricao": f"WAF bloqueou técnica {name} (HTTP 403)",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

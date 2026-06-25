@@ -1,8 +1,10 @@
 # plugins/js_analyzer.py
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 SECRET_PATTERNS = {
     "AWS_ACCESS_KEY": r"AKIA[0-9A-Z]{16}",
     "AWS_SECRET": r'(?:aws_secret|secret_key)["\s:=]+[A-Za-z0-9/+=]{40}',
@@ -115,7 +117,7 @@ def run(target, ip, open_ports, banners, context=None):
 
     try:
         js_files = _collect_js_urls(target)
-    except Exception:
+    except Exception as _exc:
         return {
             "plugin": "js_analyzer",
             "resultados": "Erro ao buscar página principal",
@@ -130,7 +132,7 @@ def run(target, ip, open_ports, banners, context=None):
             resultado["segredos"].extend(_scan_secrets(content, filename))
             resultado["endpoints"].extend(_scan_endpoints(content, filename))
             resultado["vulns"].extend(_check_supply_chain(content, js_url, filename))
-        except Exception:
+        except Exception as _exc:
             continue
 
     resultado["endpoints"] = resultado["endpoints"][:20]

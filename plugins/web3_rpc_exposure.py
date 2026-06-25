@@ -6,7 +6,11 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, ports, banners, context=None):
@@ -44,7 +48,7 @@ def run(target, ip, ports, banners, context=None):
                     ),
                 }
                 break
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     return finding

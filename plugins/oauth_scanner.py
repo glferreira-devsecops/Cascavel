@@ -1,8 +1,10 @@
 # plugins/oauth_scanner.py — Cascavel 2026 Intelligence
+import logging
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 OAUTH_ENDPOINTS = [
     "/oauth/authorize",
     "/.well-known/openid-configuration",
@@ -81,8 +83,8 @@ def _check_openid_config(target):
                                     "descricao": "Scopes perigosos disponíveis!",
                                 }
                             )
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
                 # Check for PKCE support
                 if "code_challenge_methods_supported" not in resp.text:
                     vulns.append(
@@ -92,8 +94,8 @@ def _check_openid_config(target):
                             "descricao": "PKCE não suportado — vulnerável a authorization code interception!",
                         }
                     )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -128,7 +130,7 @@ def _check_redirect_bypass(target):
                             "descricao": "Implicit flow detectado — token no fragment URL!",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -163,7 +165,7 @@ def _check_token_leak(target):
                         }
                     )
                     break
-            except Exception:
+            except Exception as _exc:
                 continue
 
         # Password grant type (insecure)
@@ -186,8 +188,8 @@ def _check_token_leak(target):
                         "descricao": "Password grant type aceito — credenciais expostas ao client!",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -213,7 +215,7 @@ def _check_pkce_downgrade(target):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -232,7 +234,7 @@ def _check_device_flow(target):
                         "descricao": "Device code flow habilitado — phishing social engineering vector!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -249,7 +251,7 @@ def _check_state_parameter(target):
                     "severidade": "ALTO",
                     "descricao": "State parameter não requerido — CSRF no fluxo OAuth!",
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 

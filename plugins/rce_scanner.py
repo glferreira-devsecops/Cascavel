@@ -1,9 +1,11 @@
 # plugins/rce_scanner.py — Cascavel 2026 Intelligence
+import logging
 import time
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "cmd",
     "exec",
@@ -117,7 +119,7 @@ def _get_baseline_latency(target):
             start = time.time()
             requests.get(f"http://{target}/", timeout=8)
             latencies.append(time.time() - start)
-        except Exception:
+        except Exception as _exc:
             continue
     if latencies:
         return sum(latencies) / len(latencies)
@@ -132,8 +134,8 @@ def _verify_waf_blind_reflection(target, param):
         resp = requests.get(url, timeout=5)
         if junk in resp.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -148,8 +150,8 @@ def _verify_header_blind_reflection(target):
         )
         if junk in resp.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -178,7 +180,7 @@ def _test_output_rce(target, param, reflects_blindly):
                         "amostra": resp.text[:300],
                         "bypass_header": list(headers.keys())[0] if headers else None,
                     }
-            except Exception:
+            except Exception as _exc:
                 continue
     return None
 
@@ -212,7 +214,7 @@ def _test_time_rce(target, param, baseline_latency):
                     "severidade": "ALTO",
                     "timeout": True,
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -241,7 +243,7 @@ def _test_post_rce(target, param, reflects_blindly):
                         "severidade": "CRITICO",
                         "content_type": content_type,
                     }
-            except Exception:
+            except Exception as _exc:
                 continue
     return None
 
@@ -267,7 +269,7 @@ def _test_header_injection(target, header_reflects_blindly):
                     "severidade": "CRITICO",
                     "descricao": f"RCE via header {header}!",
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -282,7 +284,7 @@ def _inject_oob(target, param):
                 timeout=5,
             )
             injected.append({"metodo": method, "payload": payload[:50]})
-        except Exception:
+        except Exception as _exc:
             continue
     if injected:
         return {

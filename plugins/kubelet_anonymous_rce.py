@@ -6,9 +6,12 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
+
 import requests
 import urllib3
 
+logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -54,7 +57,7 @@ def run(target, ip, ports, banners, context=None):
                             "payload": "echo CASCADE_RCE_CONFIRMED",
                             "evidence": rce_resp.text.strip(),
                         }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return finding

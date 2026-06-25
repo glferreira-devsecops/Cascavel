@@ -1,6 +1,8 @@
 # plugins/redis_unauth.py — Cascavel 2026 Intelligence
+import logging
 import socket
 
+logger = logging.getLogger(__name__)
 REDIS_PORTS = [6379, 6380, 6381, 6382, 26379]
 
 REDIS_COMMANDS = [
@@ -27,7 +29,7 @@ def _send_redis_cmd(target, port, command):
         response = sock.recv(8192).decode(errors="ignore")
         sock.close()
         return response
-    except Exception:
+    except Exception as _exc:
         return ""
 
 

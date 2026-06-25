@@ -1,8 +1,10 @@
 # plugins/cloud_enum.py — Cascavel 2026 Intelligence
+import logging
 import socket
 
 import requests
 
+logger = logging.getLogger(__name__)
 CLOUD_PATTERNS = {
     "AWS": [
         ".amazonaws.com",
@@ -84,8 +86,8 @@ def _detect_by_headers(target):
         # Netlify
         if headers.get("x-nf-request-id"):
             providers.append({"provider": "Netlify", "metodo": "http_headers"})
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return providers
 
 
@@ -102,16 +104,16 @@ def _detect_by_dns(target, ip):
                     if pattern.strip(".") in rdns:
                         providers.append({"provider": name, "metodo": "reverse_dns", "rdns": rdns})
                         break
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
         # IP range heuristic
         for prefix in AWS_IP_RANGES:
             if host_ip.startswith(prefix):
                 providers.append({"provider": "AWS_POSSIBLE", "metodo": "ip_range", "ip": host_ip})
                 break
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return providers
 
 

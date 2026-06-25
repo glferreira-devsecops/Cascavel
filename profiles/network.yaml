@@ -1,55 +1,29 @@
-# ═══════════════════════════════════════════════════════════════
-# Cascavel v3.0.0 — Network Security Scan Profile
-# Focus: Ports, services, protocols, lateral movement
-# ═══════════════════════════════════════════════════════════════
-
-name: "Network Security"
-description: "Network-level security assessment targeting services, protocols, and infrastructure"
-category: "network"
-
+name: network
+description: Network security scan — ports, services, protocols
 plugins:
-  # Network Mapping
-  - network_mapper
   - nmap_advanc
-  - traceroute_mapper
-
-  # DNS
-  - dns_deep
-  - dns_rebinding
-  - domain_transf
-
-  # Service Brute Force & Auth
-  - ssh_brute
-  - ftp_brute
-  - coerced_auth_web
-  - oidc_poisoning
-
-  # Service Exposure
-  - elastic_exposure
-  - mongodb_unauth
-  - redis_unauth
-  - docker_exposure
-  - k8s_exposure
-  - smb_ad
-
-  # Email Security
-  - email_harvester
-  - email_spoof_check
-  - smpt_enum
-  - smtp_smuggling
-
-  # TLS/SSL & Protocol Levels
+  - network_mapper
   - ssl_check
   - heartbleed_scanner
-  - http2_rapid_reset
-  - sspp_rce
-
-  # Recon
-  - whois_recon
-  - shodan_recon
-  - subdomain_hunter
-  - subdomain_takeou
-
-  # WAF
+  - security_headers
   - waf_detec
-  - waf_bypass
+  - http_methods
+  - smb_ad
+  - ftp_brute
+  - ssh_brute
+  - smpt_enum
+  - smtp_smuggling
+  - redis_unauth
+  - mongodb_unauth
+  - elastic_exposure
+  - dns_deep
+  - dns_rebinding
+  - dns_recon_deep
+  - domain_transf
+  - whois_recon
+  - traceroute_mapper
+  - mitm_framework
+  - wireless_audit
+  - ad_detection
+  - privilege_escalation
+  - persistence_check

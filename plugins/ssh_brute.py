@@ -1,5 +1,7 @@
 # plugins/ssh_brute.py
+import logging
 
+logger = logging.getLogger(__name__)
 try:
     import paramiko
 except ImportError:
@@ -50,7 +52,7 @@ def run(target, ip, open_ports, banners, context=None):
                     paramiko.ssh_exception.SSHException,
                 ):
                     continue
-                except Exception:
+                except Exception as _exc:
                     continue
 
     return {

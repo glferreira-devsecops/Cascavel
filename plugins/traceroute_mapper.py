@@ -8,12 +8,14 @@ detection, path anomaly analysis (asymmetric routing), private IP detection,
 hop count security scoring, CDN/proxy detection via hop patterns.
 """
 
+import logging
 import re
 import shlex
 import shutil
 import socket
 import subprocess
 
+logger = logging.getLogger(__name__)
 PRIVATE_RANGES = [
     (0x0A000000, 0x0AFFFFFF),  # 10.0.0.0/8
     (0xAC100000, 0xAC1FFFFF),  # 172.16.0.0/12
@@ -29,7 +31,7 @@ def _is_private_ip(ip_str):
             return False
         ip_int = (int(parts[0]) << 24) | (int(parts[1]) << 16) | (int(parts[2]) << 8) | int(parts[3])
         return any(start <= ip_int <= end for start, end in PRIVATE_RANGES)
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -52,7 +54,7 @@ def _run_traceroute(target):
             errors="ignore",
         )
         return proc.stdout
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -221,7 +223,7 @@ def _reverse_dns(ip):
     try:
         hostname = socket.gethostbyaddr(ip)
         return hostname[0]
-    except Exception:
+    except Exception as _exc:
         return None
 
 

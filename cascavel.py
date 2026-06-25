@@ -15,6 +15,7 @@ import glob
 import importlib.util
 import ipaddress
 import json
+import logging
 import os
 import platform
 import random
@@ -28,6 +29,8 @@ import sys
 import time
 import unicodedata
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from typing import Any, NoReturn
 
 import urllib3
@@ -1304,7 +1307,7 @@ def detect_tools_with_versions() -> dict[str, tuple[bool, str]]:
                 except (concurrent.futures.TimeoutError, Exception):
                     tool_name = futures[future]
                     results[tool_name] = (False, "")
-    except Exception:
+    except Exception as _exc:
         # Fallback serial se ThreadPoolExecutor falhar
         for tool in tools:
             results[tool] = (shutil.which(tool) is not None, "")
@@ -1362,8 +1365,8 @@ def ensure_nuclei_templates() -> str:
                         f"  [{S_YELLOW}]\u26a0 Nuclei {ver_match.group(1)} detect\u00e1vel \u2014 "
                         f"CVE-2024-43405 (template RCE). Atualize para \u2265 3.3.2![/]"
                     )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     if not os.path.isdir(NUCLEI_TEMPLATES_PATH) or not os.listdir(NUCLEI_TEMPLATES_PATH):
         try:
             subprocess.run(
@@ -1371,7 +1374,7 @@ def ensure_nuclei_templates() -> str:
                 check=True,
                 timeout=120,
             )
-        except Exception:
+        except Exception as _exc:
             return ""
     return str(NUCLEI_TEMPLATES_PATH)
 
@@ -1445,12 +1448,12 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
             except (ProcessLookupError, PermissionError, OSError):
                 try:
                     proc.kill()
-                except Exception:
-                    pass
+                except Exception as _exc:
+                    logger.debug("Non-critical error: %s", _exc)
             try:
                 proc.wait(timeout=3)
-            except Exception:
-                pass
+            except Exception as _exc:
+                logger.debug("Non-critical error: %s", _exc)
         return f"[!] TIMEOUT ({timeout}s)"
     except FileNotFoundError:
         return "[!] Comando não encontrado"
@@ -1602,7 +1605,7 @@ def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, s
             banners[port] = raw_banner if len(raw_banner) <= 512 else "".join([raw_banner[i] for i in range(512)])
         except (TimeoutError, ConnectionRefusedError, OSError):
             banners[port] = "N/A"
-        except Exception:
+        except Exception as _exc:
             banners[port] = "N/A"
         finally:
             if s:
@@ -1612,8 +1615,8 @@ def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, s
                     pass
                 try:
                     s.close()
-                except Exception:
-                    pass
+                except Exception as _exc:
+                    logger.debug("Non-critical error: %s", _exc)
     return banners
 
 
@@ -1653,7 +1656,7 @@ def _exec_plugin(
 
         sig = inspect.signature(mod.run)
         has_context = "context" in sig.parameters
-    except Exception:
+    except Exception as _exc:
         has_context = False
 
     if not hasattr(mod, "run"):
@@ -1837,7 +1840,7 @@ def _calculate_baselines(target: str) -> dict:
             start = time.time()
             requests.get(f"http://{target}/", timeout=8)
             latencies.append(time.time() - start)
-        except Exception:
+        except Exception as _exc:
             continue
     baseline_latency = sum(latencies) / len(latencies) if latencies else 0.5
 
@@ -1845,7 +1848,7 @@ def _calculate_baselines(target: str) -> dict:
     try:
         resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
         baseline_404_len = len(resp.text)
-    except Exception:
+    except Exception as _exc:
         baseline_404_len = 0
 
     return {"baseline_latency": baseline_latency, "baseline_404_len": baseline_404_len}
@@ -2224,8 +2227,8 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
             n.message = message
             n.send()
             return
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     # Fallback: osascript (macOS) / notify-send (Linux)
     if sys.platform == "darwin":
@@ -2235,13 +2238,13 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
             safe_title = title.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
             subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     elif shutil.which("notify-send"):
         try:
             subprocess.run(["notify-send", "--", title, message], timeout=5)
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
 
 def open_folder(path: str) -> None:
@@ -2257,7 +2260,7 @@ def open_folder(path: str) -> None:
             subprocess.Popen(["explorer", folder], stdout=devnull, stderr=devnull)
         else:
             console.print(f"  [{S_DIM}]Plataforma não suportada para abrir pasta.[/]")
-    except Exception:
+    except Exception as _exc:
         console.print(f"  [{S_DIM}]Não foi possível abrir a pasta.[/]")
 
 
@@ -2532,7 +2535,7 @@ def list_plugins_table() -> None:
                 if hasattr(mod, "run") and mod.run.__doc__:
                     doc = mod.run.__doc__.strip().split("\n")[0]
             table.add_row(str(idx), name, doc or "[dim]—[/]", "[green]●[/]")
-        except Exception:
+        except Exception as _exc:
             table.add_row(str(idx), name, "[red]Erro[/]", "[red]✗[/]")
 
     console.print(table)
@@ -2544,7 +2547,6 @@ def list_plugins_table() -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 _GITHUB_REPO = "glferreira-devsecops/Cascavel"
 _GITHUB_API_RELEASES = f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest"
-_GITHUB_RAW_BASE = f"https://raw.githubusercontent.com/{_GITHUB_REPO}"
 
 
 def _parse_semver(v: str) -> tuple[int, ...]:
@@ -3271,8 +3273,8 @@ def _install_global() -> None:
         import sysconfig
 
         pip_scripts_dir = sysconfig.get_path("scripts")
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # User scripts dir (--user install)
     user_scripts_dir = ""
@@ -3288,8 +3290,8 @@ def _install_global() -> None:
                 user_scripts_dir = os.path.join(user_scripts_dir, "Scripts")
             else:
                 user_scripts_dir = os.path.join(user_scripts_dir, "bin")
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Detectar qual dir usar
     target_dir = pip_scripts_dir or user_scripts_dir
@@ -3507,12 +3509,12 @@ if __name__ == "__main__":
         # Flush e fechar stderr para suprimir mensagem Python padrão
         try:
             sys.stdout.close()
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
         try:
             sys.stderr.close()
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
         os._exit(141)  # 128 + SIGPIPE(13) = exit code padrão Unix
     except Exception as e:
         console.print(f"\n  [{S_RED}]💀 ERRO FATAL: {e}[/]\n")

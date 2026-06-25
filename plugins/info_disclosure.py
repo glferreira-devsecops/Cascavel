@@ -1,7 +1,10 @@
 # plugins/info_disclosure.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 # ──────────── SENSITIVE PATHS (2026 Expanded) ────────────
 SENSITIVE_PATHS = [
     # Environment files
@@ -144,8 +147,8 @@ def _check_response_headers(target):
                 }
             )
 
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -189,7 +192,7 @@ def _check_error_pages(target):
                         "descricao": "Symfony debug token em header!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -232,7 +235,7 @@ def run(target, ip, open_ports, banners, context=None):
                             "tamanho": len(resp.text),
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
 
     vulns.extend(_check_response_headers(target))

@@ -1,9 +1,11 @@
 # plugins/secrets_scraper.py — Cascavel 2026 Intelligence
+import logging
 import math
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 PATHS = [
     "/.env",
     "/.env.production",
@@ -193,7 +195,7 @@ def run(target, ip, open_ports, banners, context=None):
                 ef["caminho"] = path
                 secrets.append(ef)
 
-        except Exception:
+        except Exception as _exc:
             continue
 
     return {

@@ -10,10 +10,12 @@ NOTA: Este scanner envia payloads JNDI para detecção. Para confirmação
 real, configure um callback OOB (ex: Burp Collaborator, interactsh).
 """
 
+import logging
 import uuid
 
 import requests
 
+logger = logging.getLogger(__name__)
 # Headers comuns onde Log4j processa input
 INJECTION_HEADERS = [
     "User-Agent",
@@ -74,7 +76,7 @@ def _test_headers(url, callback_base, timeout):
                         "nota": "Timeout pode indicar processamento JNDI",
                     }
                 )
-            except Exception:
+            except Exception as _exc:
                 continue
     return results
 
@@ -88,7 +90,7 @@ def _test_path_injection(base_url, callback_base, timeout):
         url = f"{base_url}/{payload}"
         r = requests.get(url, timeout=timeout, allow_redirects=False)
         return {"token": token, "status": r.status_code, "vector": "path"}
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -124,8 +126,8 @@ def _detect_java_indicators(url, timeout):
         ):
             indicators.append({"type": "body_indicator", "value": "Java patterns in response body"})
 
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return indicators
 
 

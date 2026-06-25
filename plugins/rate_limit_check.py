@@ -1,7 +1,10 @@
 # plugins/rate_limit_check.py
+import logging
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -58,7 +61,7 @@ def run(target, ip, open_ports, banners, context=None):
                         "severidade": "INFO",
                     }
                     break
-            except Exception:
+            except Exception as _exc:
                 break
 
         if not blocked and len(statuses) >= 25:

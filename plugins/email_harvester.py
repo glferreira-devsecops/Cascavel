@@ -1,10 +1,12 @@
 # plugins/email_harvester.py — Cascavel 2026 Intelligence
+import logging
 import re
 import shlex
 import subprocess
 
 import requests
 
+logger = logging.getLogger(__name__)
 PAGES = [
     "/",
     "/contact",
@@ -72,7 +74,7 @@ def _scrape_emails(target, pages):
                 for e in found:
                     if not e.lower().endswith(IMG_EXTS):
                         emails.add(e.lower())
-        except Exception:
+        except Exception as _exc:
             continue
 
     return emails
@@ -91,8 +93,8 @@ def _extract_mailto(target):
             )
             for e in mailto:
                 emails.add(e.lower())
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return emails
 
 
@@ -107,7 +109,7 @@ def _get_mx_records(target):
             timeout=10,
         )
         return [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    except Exception:
+    except Exception as _exc:
         return []
 
 
@@ -131,8 +133,8 @@ def _check_email_security(target):
                     security["spf_policy"] = "HARDFAIL (proteção forte)"
                 elif "+all" in line:
                     security["spf_policy"] = "ALLOW ALL (SEM PROTEÇÃO!)"
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     try:
         dmarc = subprocess.run(
@@ -150,8 +152,8 @@ def _check_email_security(target):
                     security["dmarc_policy"] = "QUARANTINE (emails suspeitos para spam)"
                 elif "p=reject" in line:
                     security["dmarc_policy"] = "REJECT (proteção máxima)"
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return security
 

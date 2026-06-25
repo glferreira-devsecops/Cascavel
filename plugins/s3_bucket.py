@@ -1,7 +1,10 @@
 # plugins/s3_bucket.py — Cascavel 2026 Intelligence
+import logging
 import re
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -110,7 +113,7 @@ def run(target, ip, open_ports, banners, context=None):
                     }
                 )
 
-        except Exception:
+        except Exception as _exc:
             continue
 
     # ──── Google Cloud Storage ────
@@ -128,7 +131,7 @@ def run(target, ip, open_ports, banners, context=None):
                         "descricao": "GCS bucket com listing público!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # ──── Azure Blob ────
@@ -146,7 +149,7 @@ def run(target, ip, open_ports, banners, context=None):
                         "descricao": "Azure Blob container com listing público!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # ──── DigitalOcean Spaces ────
@@ -166,7 +169,7 @@ def run(target, ip, open_ports, banners, context=None):
                             "descricao": "DigitalOcean Space com listing público!",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return {

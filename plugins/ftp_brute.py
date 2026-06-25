@@ -1,6 +1,9 @@
 # plugins/ftp_brute.py
 import ftplib
+import logging
 import socket
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -23,8 +26,8 @@ def run(target, ip, open_ports, banners, context=None):
             s.connect((target, port))
             banner = s.recv(1024).decode(errors="ignore")
             ftp_ports_found.append({"port": port, "banner": banner.strip()})
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
         finally:
             s.close()
 
@@ -41,7 +44,7 @@ def run(target, ip, open_ports, banners, context=None):
                     ftp.login(user, passwd)
                     creds_found.append({"port": port, "user": user, "pass": passwd})
                     ftp.quit()
-                except Exception:
+                except Exception as _exc:
                     continue
 
     return {

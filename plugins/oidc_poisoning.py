@@ -8,11 +8,13 @@ in jwks_uri, logo_uri, sector_identifier_uri.
 """
 
 import json
+import logging
 import socket
 import ssl
 
 import urllib3
 
+logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -114,11 +116,11 @@ def run(target: str, ip: str, ports: list[int], banners: dict[str, str]) -> dict
                                 "endpoint": f"{'https' if use_ssl else 'http'}://{target}:{target_port}{endpoint}",
                                 "evidence": f"OIDC provider accepted dynamic registration and echoed SSRF vectors: {ssrf_url}",
                             }
-                except Exception:
+                except Exception as _exc:
                     continue
                 finally:
                     sock.close()
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return None

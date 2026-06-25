@@ -1,9 +1,11 @@
 # plugins/xss_scanner.py — Cascavel 2026 Intelligence
+import logging
 import re
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "q",
     "search",
@@ -140,8 +142,8 @@ def _verify_waf_blind_reflection(target, param, method="GET"):
 
         if junk in resp.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -176,7 +178,7 @@ def _test_reflected(target, param, is_waf_reflection):
                         "severidade": ("CRITICO" if "RCE" in method or "ESCAPE" in method else "ALTO"),
                         "bypass_header": list(headers.keys())[0] if headers else None,
                     }
-            except Exception:
+            except Exception as _exc:
                 continue
     return None
 
@@ -197,7 +199,7 @@ def _test_reflected_post(target, param, is_waf_reflection):
                     "payload": payload[:80],
                     "severidade": "ALTO",
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -231,8 +233,8 @@ def _detect_dom_xss(target):
                                     "descricao": f"Potencial DOM XSS: {source} → {sink}",
                                 }
                             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     # Deduplicar por source+sink
     seen = set()
     unique = []
@@ -269,7 +271,7 @@ def _detect_blind_xss_sinks(target, context=None):
                 requests.post(f"http://{target}/", data={param: payload}, timeout=5)
                 injected.append({"parametro": param, "payload": payload[:60]})
                 break
-            except Exception:
+            except Exception as _exc:
                 continue
     if injected:
         return {

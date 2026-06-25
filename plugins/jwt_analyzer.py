@@ -1,12 +1,14 @@
 # plugins/jwt_analyzer.py — Cascavel 2026 Intelligence
 import base64
 import json
+import logging
 import math
 import re
 import time
 
 import requests
 
+logger = logging.getLogger(__name__)
 SENSITIVE_FIELDS = {
     "password",
     "secret",
@@ -126,7 +128,7 @@ def _harvest_tokens(target):
                 # Check headers
                 for val in resp.headers.values():
                     tokens.update(JWT_PATTERN.findall(val))
-            except Exception:
+            except Exception as _exc:
                 # O harvest não joga erro pra vulns direto pq não recebe vulns como param
                 # Então injeta um token especial com o erro que será tratado depois
                 # ou a gente loga no loop principal...
@@ -137,8 +139,8 @@ def _harvest_tokens(target):
         resp = requests.get(f"http://{target}/", timeout=5)
         for val in list(resp.headers.values()) + [str(resp.cookies)]:
             tokens.update(JWT_PATTERN.findall(val))
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return list(tokens)[:10]
 
@@ -155,7 +157,7 @@ def _decode_jwt(token):
         header = json.loads(base64.urlsafe_b64decode(header_b64))
         payload = json.loads(base64.urlsafe_b64decode(payload_b64))
         return header, payload
-    except Exception:
+    except Exception as _exc:
         return None, None
 
 
@@ -378,7 +380,7 @@ def _is_fp_by_baseline(target, ep, vuln_resp_text):
         if resp.status_code == 200 and len(resp.text) == len(vuln_resp_text):
             return True
         return False
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -414,7 +416,7 @@ def _test_none_alg(target, token, resultado):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
 
 
@@ -447,7 +449,7 @@ def _test_expired_acceptance(target, token, resultado):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
 
 
@@ -472,5 +474,5 @@ def _test_token_endpoint_vulns(target, resultado):
                         "descricao": "JWKS endpoint exposto — usar para RS→HS key confusion!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue

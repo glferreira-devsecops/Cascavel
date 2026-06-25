@@ -1,5 +1,8 @@
 # plugins/windows_netlogon_rce.py
+import logging
 import socket
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -32,8 +35,8 @@ def run(target, ip, open_ports, banners, context=None):
                 }
             )
         s.close()
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     if not resultados:
         return {
