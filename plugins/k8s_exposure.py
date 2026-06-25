@@ -67,14 +67,14 @@ def _probe_k8s_api(target, port):
                     try:
                         ver = resp.json()
                         vuln["k8s_version"] = ver.get("gitVersion", "")
-                    except Exception:
+                    except Exception:  # noqa: S110
                         pass
                 # Count resources
                 if path in ("/api/v1/pods", "/api/v1/secrets", "/api/v1/namespaces"):
                     try:
                         items = resp.json().get("items", [])
                         vuln["resource_count"] = len(items)
-                    except Exception:
+                    except Exception:  # noqa: S110
                         pass
                 vulns.append(vuln)
             elif resp.status_code == 403:
@@ -160,7 +160,7 @@ def _check_etcd(target):
                         "descricao": "etcd exposto sem auth — todos os secrets K8s acessíveis!",
                     }
                 )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         # v3 API
         try:
@@ -178,7 +178,7 @@ def _check_etcd(target):
                         "descricao": "etcd v3 API exposta — key-value dump possível!",
                     }
                 )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return vulns
 

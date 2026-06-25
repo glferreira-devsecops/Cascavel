@@ -112,7 +112,7 @@ def _check_rpc_exposure(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         )
                 except Exception:
                     continue
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return findings
 
@@ -167,7 +167,7 @@ def _check_smart_contracts(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar debug namespace em produção: --http.api=eth,net,web3",
                     }
                 )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return findings
 
@@ -212,7 +212,7 @@ def _check_wallet_misconfig(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Verificar se nó de mineração deveria estar acessível publicamente.",
                     }
                 )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return findings
 
@@ -261,7 +261,7 @@ def _check_defi_vulns(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                             "correcao": "Desabilitar txpool RPC em produção ou restringir acesso.",
                         }
                     )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return findings
 
@@ -303,7 +303,7 @@ def _check_mev_vectors(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar métodos de mineração em nós não-miners. Usar Flashbots para proteção MEV.",
                     }
                 )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return findings
 

@@ -47,7 +47,7 @@ def _check_grpc_web(target, port):
                     "descricao": f"gRPC-Web habilitado em :{port} — service enumeration possível!",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return vulns
 

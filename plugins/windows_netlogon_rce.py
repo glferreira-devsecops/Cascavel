@@ -32,7 +32,7 @@ def run(target, ip, open_ports, banners, context=None):
                 }
             )
         s.close()
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     if not resultados:

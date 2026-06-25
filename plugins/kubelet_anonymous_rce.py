@@ -54,7 +54,7 @@ def run(target, ip, ports, banners, context=None):
                             "payload": "echo CASCADE_RCE_CONFIRMED",
                             "evidence": rce_resp.text.strip(),
                         }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return finding

@@ -201,7 +201,7 @@ def _check_json_csrf(target, page):
                     "descricao": "Endpoint aceita JSON via Content-Type text/plain — JSON CSRF!",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # Test sendBeacon-style (application/x-www-form-urlencoded with JSON body)
@@ -221,7 +221,7 @@ def _check_json_csrf(target, page):
                     "descricao": "Endpoint aceita JSON via form-urlencoded — sendBeacon CSRF!",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return vulns
@@ -239,7 +239,7 @@ def _check_cors_csrf(target):
                 "severidade": "CRITICO",
                 "descricao": "CORS reflete origin evil.com com credentials — CSRF cross-origin total!",
             }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 

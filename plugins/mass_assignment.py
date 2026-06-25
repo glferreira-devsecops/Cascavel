@@ -104,7 +104,7 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                         "metodo": "PATCH",
                         "descricao": f"{desc} via PATCH!",
                     }
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         # PUT
@@ -122,10 +122,10 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                         "metodo": "PUT",
                         "descricao": f"{desc} via PUT!",
                     }
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 

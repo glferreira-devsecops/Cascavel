@@ -73,7 +73,7 @@ def _test_bypass(target, name, config):
                 "severidade": "INFO",
                 "descricao": f"WAF bloqueou técnica {name} (HTTP 403)",
             }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 

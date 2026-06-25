@@ -182,7 +182,7 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
     try:
         proc = subprocess.Popen(
             cmd,
-            shell=True,
+            shell=True,  # nosemgrep: python.lang.security.audit.subprocess-shell-true
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=True,

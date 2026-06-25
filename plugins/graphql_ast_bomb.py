@@ -67,7 +67,7 @@ def run(target, ip, ports, banners, context=None):
                 "payload": bomb_payload["query"],
             }
             break
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     return finding

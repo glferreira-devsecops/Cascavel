@@ -54,7 +54,7 @@ def run(target, ip, ports, banners, context=None):
                 "payload": "X-Amz-Invocation-Type: Event",
             }
 
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return finding

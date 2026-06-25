@@ -54,7 +54,7 @@ def run(target, ip, open_ports, banners, context=None):
                 obj = json.loads(line)
                 if "url" in obj:
                     resultado.append({"url": obj.get("url"), "status": obj.get("status")})
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
     except subprocess.TimeoutExpired:
         return {

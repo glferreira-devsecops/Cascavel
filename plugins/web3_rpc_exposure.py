@@ -44,7 +44,7 @@ def run(target, ip, ports, banners, context=None):
                     ),
                 }
                 break
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     return finding

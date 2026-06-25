@@ -242,7 +242,7 @@ def _check_session_logout(target):
                     }
                 )
                 break
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return vulns
 

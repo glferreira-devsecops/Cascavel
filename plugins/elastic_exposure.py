@@ -67,7 +67,7 @@ def _probe_elastic(target, port):
                         data = resp.json()
                         vuln["version"] = data.get("version", {}).get("number", "")
                         vuln["cluster_name"] = data.get("cluster_name", "")
-                    except Exception:
+                    except Exception:  # noqa: S110
                         pass
 
                 # Analyze indices for PII
@@ -85,7 +85,7 @@ def _probe_elastic(target, port):
                         snapshots = resp.json()
                         if snapshots:
                             vuln["descricao"] = "Snapshots de backup acessíveis — exfiltração de dados!"
-                    except Exception:
+                    except Exception:  # noqa: S110
                         pass
 
                 vulns.append(vuln)
@@ -137,7 +137,7 @@ def _check_opensearch(target):
                     "descricao": "OpenSearch detectado (fork AWS do Elasticsearch)",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return vulns
 

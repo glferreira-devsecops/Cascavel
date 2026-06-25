@@ -84,7 +84,7 @@ def _detect_by_headers(target):
         # Netlify
         if headers.get("x-nf-request-id"):
             providers.append({"provider": "Netlify", "metodo": "http_headers"})
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return providers
 
@@ -102,7 +102,7 @@ def _detect_by_dns(target, ip):
                     if pattern.strip(".") in rdns:
                         providers.append({"provider": name, "metodo": "reverse_dns", "rdns": rdns})
                         break
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # IP range heuristic
@@ -110,7 +110,7 @@ def _detect_by_dns(target, ip):
             if host_ip.startswith(prefix):
                 providers.append({"provider": "AWS_POSSIBLE", "metodo": "ip_range", "ip": host_ip})
                 break
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return providers
 

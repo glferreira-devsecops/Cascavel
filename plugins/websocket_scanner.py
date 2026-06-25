@@ -174,7 +174,7 @@ def _test_ws_smuggling(target, path, port=80):
                 }
         else:
             sock.close()
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 

@@ -119,7 +119,7 @@ def _check_cname_dangling(subdomain):
                 return cname, False  # CNAME exists and resolves
             except socket.gaierror:
                 return cname, True  # CNAME dangling!
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None, False
 

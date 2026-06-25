@@ -137,7 +137,7 @@ def _harvest_tokens(target):
         resp = requests.get(f"http://{target}/", timeout=5)
         for val in list(resp.headers.values()) + [str(resp.cookies)]:
             tokens.update(JWT_PATTERN.findall(val))
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return list(tokens)[:10]

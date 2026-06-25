@@ -80,7 +80,7 @@ def _test_password(target, path, password, label):
                 "severidade": "MEDIO",
                 "descricao": "422 sem menção a password — validação parcial",
             }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 
@@ -126,7 +126,7 @@ def _check_rate_limit_login(target, path):
                 "severidade": "ALTO",
                 "descricao": "Sem rate limit no login — brute-force/credential stuffing possível!",
             }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 
@@ -231,7 +231,7 @@ def _check_username_enumeration(target, path):
                 "severidade": "MEDIO",
                 "descricao": "Timing difference para email válido vs. inválido — timing enumeration!",
             }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 

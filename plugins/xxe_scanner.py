@@ -336,7 +336,7 @@ def _test_xinclude(target, endpoint):
                 "severidade": "CRITICO",
                 "descricao": "XInclude injection — file read confirmado!",
             }
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 

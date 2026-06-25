@@ -144,7 +144,7 @@ def _check_response_headers(target):
                 }
             )
 
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return vulns
 

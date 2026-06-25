@@ -93,7 +93,7 @@ def _check_modbus(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                 )
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return findings
 
@@ -141,7 +141,7 @@ def _check_dnp3(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                 )
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return findings
 
@@ -200,7 +200,7 @@ def _check_bacnet(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                 )
     except (TimeoutError, OSError):
         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return findings
 
@@ -314,11 +314,11 @@ def _check_siemens_s7(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                                 "correcao": "Implementar S7 TLS (porta 102 com CP). Isolar rede OT.",
                             }
                         )
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return findings
 
@@ -371,7 +371,7 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                             "correcao": "Configurar SecurityMode=SignAndEncrypt. Nunca usar None em produção.",
                         }
                     )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # Check raw socket for Binary TCP protocol
@@ -406,7 +406,7 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                 )
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return findings
 

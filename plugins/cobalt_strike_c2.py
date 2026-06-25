@@ -121,7 +121,7 @@ def _check_cobalt_watermark(target: str) -> list[dict[str, Any]]:
                 )
     except (TimeoutError, ConnectionRefusedError, OSError):
         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return findings
 
@@ -175,7 +175,7 @@ def _check_dns_beacon(target: str) -> list[dict[str, Any]]:
                     "correcao": "Analisar tráfego DNS para identificar padrões de beaconing. Verificar se há encoded C2.",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return findings
 

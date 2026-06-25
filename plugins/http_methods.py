@@ -33,7 +33,7 @@ def run(target, ip, open_ports, banners, context=None):
             allow = resp.headers.get("Allow", "")
             if allow:
                 metodos_aceitos = [m.strip().upper() for m in allow.split(",")]
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         if not metodos_aceitos:

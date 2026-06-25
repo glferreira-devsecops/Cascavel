@@ -412,7 +412,7 @@ def _test_cache_poisoning(target):
                 "remediacao": "Usar BIND 9.5+ ou equivalente com source port randomization habilitado.",
             }
         )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # Check TTL values
@@ -441,7 +441,7 @@ def _test_cache_poisoning(target):
                             )
                     except (ValueError, IndexError):
                         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return findings
@@ -557,7 +557,7 @@ def _test_dns_tunneling(target):
                     "descricao": f"{len(txt_records)} TXT records encontrados — verificar para tunneling",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # Check for NULL records (tunneling tool indicator)
@@ -577,7 +577,7 @@ def _test_dns_tunneling(target):
                     "remediacao": "Remover NULL records. Blocar queries NULL no resolver.",
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # General assessment
