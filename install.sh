@@ -947,14 +947,14 @@ install_external_tools() {
                 info "Todas as ferramentas brew já instaladas (idempotent skip)."
             fi
             # sqlmap + wafw00f via pip
-            pip install sqlmap wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
+            pip install "sqlmap>=1.8" "wafw00f>=0.11" --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
         apt)
             APT_TOOLS=(nmap nikto sqlmap hydra john sslscan dnsrecon fierce tshark whois traceroute whatweb dirsearch wpscan joomscan)
             _spinner_start "Instalando ferramentas APT (${#APT_TOOLS[@]} pacotes)..."
             sudo apt-get install -y "${APT_TOOLS[@]}" >>"$INSTALL_LOG" 2>&1 || warn "Alguns pacotes APT falharam."
             _spinner_stop
-            pip install wafw00f --no-cache-dir --retries 3 -q 2>/dev/null || true
+            pip install "wafw00f>=0.11" --no-cache-dir --retries 3 -q 2>/dev/null || true
             ;;
         dnf|yum)
             sudo "$PKG_MANAGER" install -y nmap nikto hydra john nmap-ncat whois traceroute 2>/dev/null || true
