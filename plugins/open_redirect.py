@@ -102,9 +102,8 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
             else:
                 try:
                     parsed = urllib.parse.urlparse(location)
-                    if parsed.netloc and (parsed.netloc == "evil.com" or parsed.netloc.endswith(".evil.com")):
-                        is_evil = True
-                    elif not parsed.scheme and (parsed.path.startswith("//evil.com") or parsed.path == "evil.com"):
+                    host = parsed.netloc or parsed.path.split("/")[0]
+                    if host and (host == "evil.com" or host.endswith(".evil.com")):
                         is_evil = True
                 except Exception as _exc:
                     logger.debug("URL parse error: %s", _exc)
