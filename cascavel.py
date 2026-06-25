@@ -2545,6 +2545,7 @@ def list_plugins_table() -> None:
 _GITHUB_REPO = "glferreira-devsecops/Cascavel"
 _GITHUB_API_RELEASES = f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest"
 
+
 def _parse_semver(v: str) -> tuple[int, ...]:
     """Parse version string like '3.0.0' into comparable tuple."""
     return tuple(int(x) for x in v.lstrip("v").split("."))

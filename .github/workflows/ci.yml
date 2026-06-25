@@ -35,10 +35,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run ruff check
-        run: ruff check cascavel.py sarif_exporter.py report_generator.py plugins/ tests/ --output-format=github
+        run: ruff check cascavel.py cascavel/ sarif_exporter.py report_generator.py plugins/ tests/ --output-format=github
 
       - name: Run ruff format check
-        run: ruff format --check cascavel.py sarif_exporter.py report_generator.py plugins/ tests/
+        run: ruff format --check cascavel.py cascavel/ sarif_exporter.py report_generator.py plugins/ tests/
 
   compile:
     name: 🐍 Compile Check
@@ -67,6 +67,7 @@ jobs:
           python -m py_compile cascavel.py
           python -m py_compile sarif_exporter.py
           python -m py_compile report_generator.py
+          find cascavel/ -name "*.py" -exec python -m py_compile {} \;
           find plugins/ -name "*.py" -exec python -m py_compile {} \;
           find tests/ -name "*.py" -exec python -m py_compile {} \;
           echo "✅ All Python files compiled on ${{ matrix.python-version }}"
@@ -136,7 +137,7 @@ jobs:
 
       - name: Run bandit
         run: |
-          bandit -r cascavel.py sarif_exporter.py report_generator.py plugins/ \
+          bandit -r cascavel.py cascavel/ sarif_exporter.py report_generator.py plugins/ \
             -c pyproject.toml \
             --severity-level medium \
             --confidence-level medium \
