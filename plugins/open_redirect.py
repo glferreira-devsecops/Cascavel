@@ -99,15 +99,15 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
             is_evil = False
             if location.startswith("javascript:"):
                 is_evil = True
-            elif "evil.com" in location:
+            else:
                 try:
                     parsed = urllib.parse.urlparse(location)
                     if parsed.netloc and (parsed.netloc == "evil.com" or parsed.netloc.endswith(".evil.com")):
                         is_evil = True
-                    elif not parsed.scheme and location.startswith("//evil.com"):
+                    elif not parsed.scheme and (parsed.path.startswith("//evil.com") or parsed.path == "evil.com"):
                         is_evil = True
                 except Exception as _exc:
-                    is_evil = "evil.com" in location
+                    logger.debug("URL parse error: %s", _exc)
 
             if is_evil:
                 sev = "CRITICO" if "javascript:" in location else "ALTO"
