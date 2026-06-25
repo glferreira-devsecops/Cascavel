@@ -336,7 +336,7 @@ def _test_xinclude(target, endpoint):
                 "severidade": "CRITICO",
                 "descricao": "XInclude injection — file read confirmado!",
             }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

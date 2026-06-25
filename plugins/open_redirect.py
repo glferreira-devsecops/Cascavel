@@ -78,7 +78,7 @@ def _verify_waf_blind_reflection(target, param):
         resp = requests.get(url, timeout=5, allow_redirects=False)
         if junk in resp.text:
             return True
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return False
 
@@ -137,7 +137,7 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
                     "parametro": param,
                     "severidade": "MEDIO",
                 }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 
@@ -194,7 +194,7 @@ def _test_header_redirect(target):
                         "descricao": "Open redirect via Referer header!",
                     }
                 )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return vulns
 

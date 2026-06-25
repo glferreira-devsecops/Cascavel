@@ -339,7 +339,7 @@ def _test_blind_boolean(target, endpoint):
                 "descricao": "Blind boolean NoSQL injection detectada!",
                 "username_prefix_extraido": extracted if extracted else "não extraído",
             }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

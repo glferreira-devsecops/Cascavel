@@ -190,7 +190,7 @@ def _check_cname_dangling(subdomain):
                 return cname, True  # Dangling!
     except FileNotFoundError:
         return None, False
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None, False
 
@@ -270,7 +270,7 @@ def _check_expired_domains(subdomain):
                 )
     except FileNotFoundError:
         pass
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return findings
 
@@ -325,7 +325,7 @@ def _check_dns_misconfiguration(subdomain):
 
     except FileNotFoundError:
         pass
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return findings
 
@@ -359,7 +359,7 @@ def _check_github_pages_takeover(subdomain, cname=None):
                     }
                 )
                 break
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return findings
 

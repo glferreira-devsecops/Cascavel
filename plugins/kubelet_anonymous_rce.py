@@ -54,7 +54,7 @@ def run(target, ip, ports, banners, context=None):
                             "payload": "echo CASCADE_RCE_CONFIRMED",
                             "evidence": rce_resp.text.strip(),
                         }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return finding

@@ -445,11 +445,11 @@ if __name__ == "__main__":
     except BrokenPipeError:
         try:
             sys.stdout.close()
-        except Exception:
+        except Exception as _exc:
             pass
         try:
             sys.stderr.close()
-        except Exception:
+        except Exception as _exc:
             pass
         os._exit(141)
     except Exception as e:

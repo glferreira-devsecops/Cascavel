@@ -523,7 +523,7 @@ def _check_ad_misconfigs(target, tools):
                     "remediao": "Restringir ADFS access. Implementar MFA.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check for NTLM
@@ -538,7 +538,7 @@ def _check_ad_misconfigs(target, tools):
                     "remediao": "Migrar para Kerberos. Habilitar EPA e channel binding.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns
@@ -626,7 +626,7 @@ def _check_poisoning_opportunities(target):
                     "remediao": "Desabilitar LLMNR via GPO: Turn Off Multicast Name Resolution.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # NBT-NS (UDP 137)
@@ -647,7 +647,7 @@ def _check_poisoning_opportunities(target):
                     "remediao": "Desabilitar NBT-NS nas interfaces de rede.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # mDNS (UDP 5353)
@@ -668,7 +668,7 @@ def _check_poisoning_opportunities(target):
                     "remediao": "Desabilitar mDNS se não necessário.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # WPAD check
@@ -683,7 +683,7 @@ def _check_poisoning_opportunities(target):
                     "remediao": "Remover registro WPAD do DNS. Bloquear wpad.dat no webserver.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns

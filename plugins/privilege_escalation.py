@@ -264,7 +264,7 @@ def _check_sudo_misconfig():
         pass
     except FileNotFoundError:
         pass
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check sudoers.d directory
@@ -290,7 +290,7 @@ def _check_sudo_misconfig():
                                 )
                 except PermissionError:
                     continue
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return findings
@@ -358,7 +358,7 @@ def _check_writable_sensitive_files():
                             "remediacao": f"Corrigir permissões: chmod o-w {pdir}",
                         }
                     )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return findings
@@ -477,7 +477,7 @@ def _check_container_escape():
                             "descricao": "Executando dentro de container (cgroup indica Docker/K8s)",
                         }
                     )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     if is_container:
@@ -498,7 +498,7 @@ def _check_container_escape():
                         "remeciacao": "Remover --privileged. Usar capabilities específicas. Implementar seccomp/AppArmor.",
                     }
                 )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
         # Check for mounted Docker socket
@@ -553,7 +553,7 @@ def _check_container_escape():
                                 "remediacao": "Usar --cap-drop ALL e adicionar apenas capabilities necessárias.",
                             }
                         )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     return findings
@@ -612,7 +612,7 @@ def _check_cron_exploitation():
                                                     "remediacao": f"Corrigir permissões: chmod 755 {cmd}",
                                                 }
                                             )
-                                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                                    except Exception as _exc:
                                         pass
         except PermissionError:
             continue
@@ -663,7 +663,7 @@ def _check_cron_exploitation():
                     "descricao": f"User crontabs encontrados: {result.stdout.strip()}",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return findings

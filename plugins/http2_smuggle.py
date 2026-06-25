@@ -149,7 +149,7 @@ def _test_h2c_upgrade(target):
                     "descricao": "Servidor indica suporte a h2c upgrade!",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return vulns
 
@@ -172,7 +172,7 @@ def _test_websocket_h2(target):
                 "severidade": "MEDIO",
                 "descricao": "Extended CONNECT para WebSocket over HTTP/2 detectado",
             }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

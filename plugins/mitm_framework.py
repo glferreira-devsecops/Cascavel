@@ -28,7 +28,7 @@ def _check_arp_spoof_opportunities(target, ip):
             results = socket.getaddrinfo(target, None)
             for r in results:
                 resolved_ips.add(r[4][0])
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
         if len(resolved_ips) > 1:
@@ -103,7 +103,7 @@ def _check_ssl_stripping(target):
                 )
     except requests.ConnectionError:
         pass
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check for mixed content
@@ -122,7 +122,7 @@ def _check_ssl_stripping(target):
                         "remediacao": "Migrar todos os recursos para HTTPS. Usar protocol-relative URLs ou CSP upgrade-insecure-requests.",
                     }
                 )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return findings
@@ -336,7 +336,7 @@ def _check_http_downgrade(target):
                     }
                 )
 
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Test for HTTP/2 downgrade
@@ -352,7 +352,7 @@ def _check_http_downgrade(target):
                     "remediacao": "Configurar servidor para rejeitar downgrades HTTP/2 -> HTTP/1.1 quando não suportado.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return findings

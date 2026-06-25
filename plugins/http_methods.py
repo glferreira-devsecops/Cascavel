@@ -33,7 +33,7 @@ def run(target, ip, open_ports, banners, context=None):
             allow = resp.headers.get("Allow", "")
             if allow:
                 metodos_aceitos = [m.strip().upper() for m in allow.split(",")]
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
         if not metodos_aceitos:

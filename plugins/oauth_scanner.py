@@ -81,7 +81,7 @@ def _check_openid_config(target):
                                     "descricao": "Scopes perigosos disponíveis!",
                                 }
                             )
-                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                    except Exception as _exc:
                         pass
                 # Check for PKCE support
                 if "code_challenge_methods_supported" not in resp.text:
@@ -92,7 +92,7 @@ def _check_openid_config(target):
                             "descricao": "PKCE não suportado — vulnerável a authorization code interception!",
                         }
                     )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
     return vulns
 
@@ -186,7 +186,7 @@ def _check_token_leak(target):
                         "descricao": "Password grant type aceito — credenciais expostas ao client!",
                     }
                 )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     return vulns

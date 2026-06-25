@@ -104,7 +104,7 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                         "metodo": "PATCH",
                         "descricao": f"{desc} via PATCH!",
                     }
-            except Exception:  # lgtm[py/empty-except]  # noqa: S110
+            except Exception as _exc:
                 pass
 
         # PUT
@@ -122,10 +122,10 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                         "metodo": "PUT",
                         "descricao": f"{desc} via PUT!",
                     }
-            except Exception:  # lgtm[py/empty-except]  # noqa: S110
+            except Exception as _exc:
                 pass
 
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

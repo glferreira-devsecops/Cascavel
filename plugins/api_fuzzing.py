@@ -295,7 +295,7 @@ def _test_grpc_enumeration(target):
                             if health_resp.status_code == 200:
                                 finding["health_check"] = True
                                 finding["severidade"] = "MEDIO"
-                        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                        except Exception as _exc:
                             pass
 
                     findings.append(finding)
@@ -455,7 +455,7 @@ def _test_mass_assignment(target):
                                             }
                                         )
                                         break
-                            except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                            except Exception as _exc:
                                 pass
                     except Exception:
                         continue

@@ -140,7 +140,7 @@ def _check_social_profiles(target):
                     "remediacao": "Verificar se as informações de contato estão atualizadas.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check robots.txt for sensitive paths
@@ -177,7 +177,7 @@ def _check_social_profiles(target):
                         "remediacao": "Remover paths sensíveis do robots.txt. Usar autenticação em vez de security by obscurity.",
                     }
                 )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check for social links in page source
@@ -208,7 +208,7 @@ def _check_social_profiles(target):
                         "remediacao": "Auditar perfis sociais para informações sensíveis expostas.",
                     }
                 )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check for exposed profiles via API

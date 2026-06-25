@@ -460,7 +460,7 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
             n.message = message
             n.send()
             return
-        except Exception:
+        except Exception as _exc:
             pass
 
     if sys.platform == "darwin":
@@ -469,12 +469,12 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
             safe_title = title.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
             subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
-        except Exception:
+        except Exception as _exc:
             pass
     elif shutil.which("notify-send"):
         try:
             subprocess.run(["notify-send", "--", title, message], timeout=5)
-        except Exception:
+        except Exception as _exc:
             pass
 
 

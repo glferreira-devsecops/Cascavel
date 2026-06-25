@@ -64,7 +64,7 @@ def _check_docker_api(target, port):
                                     ]:
                                         vuln["dangerous_mount"] = m["Source"]
                                         vuln["descricao"] += f" Mount perigoso: {m['Source']}"
-                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                    except Exception as _exc:
                         pass
 
                 # Analyze secrets
@@ -74,7 +74,7 @@ def _check_docker_api(target, port):
                         if isinstance(secrets, list) and len(secrets) > 0:
                             vuln["secrets_count"] = len(secrets)
                             vuln["descricao"] = f"{len(secrets)} Docker secrets expostos!"
-                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                    except Exception as _exc:
                         pass
 
                 vulns.append(vuln)
@@ -111,7 +111,7 @@ def _check_registry(target):
                             )
                             if tags_resp.status_code == 200:
                                 vuln["tags_amostra"] = tags_resp.json().get("tags", [])[:10]
-                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                    except Exception as _exc:
                         pass
                     vulns.append(vuln)
             except Exception:

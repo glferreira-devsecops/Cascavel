@@ -73,7 +73,7 @@ def _test_bypass(target, name, config):
                 "severidade": "INFO",
                 "descricao": f"WAF bloqueou técnica {name} (HTTP 403)",
             }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

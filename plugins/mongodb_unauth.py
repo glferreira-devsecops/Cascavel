@@ -30,7 +30,7 @@ def _probe_mongodb(target, port):
         sock.close()
         if len(response) > 4:
             return response.decode(errors="ignore")
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return ""
 
@@ -51,7 +51,7 @@ def _check_mongo_http(target, port):
                         "descricao": f"MongoDB HTTP interface exposta em :{hp}!",
                     }
                 )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
     return vulns
 
@@ -120,7 +120,7 @@ def _check_mongos(target):
                 "severidade": "CRITICO",
                 "descricao": "Mongos router exposto — acesso a sharded cluster inteiro!",
             }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

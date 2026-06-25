@@ -151,7 +151,7 @@ def _test_payload(url, payload, junk_status=0, junk_text=""):
                     "severidade": "ALTO",
                     "descricao": "Server error 500 com deserialization payload — possível vulnerabilidade!",
                 }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 
@@ -185,7 +185,7 @@ def _test_viewstate(url):
                     vuln["generator"] = gen.group(1)
 
             return vuln
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

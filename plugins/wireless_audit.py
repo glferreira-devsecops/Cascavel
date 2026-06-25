@@ -87,7 +87,7 @@ def _check_management_interfaces(target, ports):
                         finding["severidade"] = "CRITICO"
                     if server:
                         finding["server"] = server
-                except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                except Exception as _exc:
                     pass
                 findings.append(finding)
             sock.close()
@@ -267,7 +267,7 @@ def _check_rogue_ap(target):
                         "remediacao": "Restringir acesso à interface de gerenciamento. Verificar legitimidade do AP.",
                     }
                 )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return findings
 

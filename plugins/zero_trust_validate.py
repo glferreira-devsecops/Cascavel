@@ -75,7 +75,7 @@ def _check_microsegmentation(target: str, ip: str, ports: list[int]) -> list[dic
                         "correcao": "Implementar VLANs, firewalls internos e network policies para segmentação.",
                     }
                 )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     # Check for direct database access (should go through API layer)
@@ -147,7 +147,7 @@ def _check_identity_access(target: str, ip: str, ports: list[int]) -> list[dict[
                 sock.close()
         except (TimeoutError, ConnectionRefusedError, OSError):
             pass
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     return findings
@@ -215,7 +215,7 @@ def _check_least_privilege(target: str, ip: str, ports: list[int]) -> list[dict[
                     "correcao": "Restringir CORS a domínios confiáveis específicos.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return findings
@@ -281,7 +281,7 @@ def _check_lateral_movement(target: str, ip: str, ports: list[int]) -> list[dict
                         "correcao": "Usar chaves SSH únicas por host. Implementar rotulação e MFA para SSH.",
                     }
                 )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     return findings
@@ -350,7 +350,7 @@ def _check_continuous_verification(target: str, ip: str, ports: list[int]) -> li
                         "correcao": "Implementar mTLS (client certificates) para verificação contínua de identidade.",
                     }
                 )
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
 
     # Check for health check endpoints (continuous verification)

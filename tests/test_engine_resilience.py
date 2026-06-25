@@ -40,7 +40,11 @@ def test_engine_handles_plugin_crash():
 
 def test_engine_handles_tool_timeout():
     """Testa o comportamento da engine ao receber um timeout em ferramentas externas"""
-    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="fake", timeout=1)):
+    mock_proc = MagicMock()
+    mock_proc.communicate.side_effect = subprocess.TimeoutExpired(cmd="fake", timeout=1)
+    mock_proc.kill = MagicMock()
+    mock_proc.wait = MagicMock()
+    with patch("subprocess.Popen", return_value=mock_proc):
         try:
             res = run_cmd("fake_tool --target example.com", timeout=1)
             assert "TIMEOUT" in res or res == ""

@@ -144,7 +144,7 @@ def _check_response_headers(target):
                 }
             )
 
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return vulns
 

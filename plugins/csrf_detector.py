@@ -201,7 +201,7 @@ def _check_json_csrf(target, page):
                     "descricao": "Endpoint aceita JSON via Content-Type text/plain — JSON CSRF!",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Test sendBeacon-style (application/x-www-form-urlencoded with JSON body)
@@ -221,7 +221,7 @@ def _check_json_csrf(target, page):
                     "descricao": "Endpoint aceita JSON via form-urlencoded — sendBeacon CSRF!",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns
@@ -239,7 +239,7 @@ def _check_cors_csrf(target):
                 "severidade": "CRITICO",
                 "descricao": "CORS reflete origin evil.com com credentials — CSRF cross-origin total!",
             }
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

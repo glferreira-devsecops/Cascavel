@@ -150,7 +150,7 @@ def detect_tools_with_versions() -> dict[str, tuple[bool, str]]:
                 except (concurrent.futures.TimeoutError, Exception):
                     tool_name = futures[future]
                     results[tool_name] = (False, "")
-    except Exception:
+    except Exception as _exc:
         for tool in EXTERNAL_TOOLS:
             results[tool] = (shutil.which(tool) is not None, "")
     return results
@@ -178,16 +178,39 @@ def _stderr_log(tool_name: str, stderr_content: str) -> None:
 
 def run_cmd(cmd: str, timeout: int = 90) -> str:
     """Executa comando shell com process group kill on timeout."""
+    import shlex as _shlex
+
     proc = None
     try:
-        proc = subprocess.Popen(
-            cmd,
-            shell=True,  # nosec B602  # nosemgrep: python.lang.security.audit.subprocess-shell-true
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True,
-        )
-        stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
+        # Split command into args list to avoid shell=True
+        # Handle pipe chains by splitting on | and connecting with subprocess
+        if " | " in cmd:
+            # Pipe chain: split into individual commands
+            parts = [p.strip() for p in cmd.split(" | ")]
+            procs = []
+            for i, part in enumerate(parts):
+                args = _shlex.split(part)
+                stdin = procs[-1].stdout if procs else None
+                p = subprocess.Popen(
+                    args,
+                    stdin=stdin,
+                    stdout=subprocess.PIPE if i < len(parts) - 1 else subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                procs.append(p)
+                if stdin:
+                    stdin.close()
+            stdout_bytes, stderr_bytes = procs[-1].communicate(timeout=timeout)
+        else:
+            args = _shlex.split(cmd)
+            proc = subprocess.Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+            )
+            stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
+
         raw_out: bytes = stdout_bytes if isinstance(stdout_bytes, bytes) else b""
         raw_err: bytes = stderr_bytes if isinstance(stderr_bytes, bytes) else b""
         out: str = raw_out.decode("utf-8", errors="replace")
@@ -205,11 +228,11 @@ def run_cmd(cmd: str, timeout: int = 90) -> str:
             except (ProcessLookupError, PermissionError, OSError):
                 try:
                     proc.kill()
-                except Exception:
+                except Exception as _exc:
                     pass
             try:
                 proc.wait(timeout=3)
-            except Exception:
+            except Exception as _exc:
                 pass
         return f"[!] TIMEOUT ({timeout}s)"
     except FileNotFoundError:
@@ -298,7 +321,7 @@ def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, s
             banners[port] = raw_banner if len(raw_banner) <= 512 else raw_banner[:512]
         except (TimeoutError, ConnectionRefusedError, OSError):
             banners[port] = "N/A"
-        except Exception:
+        except Exception as _exc:
             banners[port] = "N/A"
         finally:
             if s:
@@ -308,7 +331,7 @@ def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, s
                     pass
                 try:
                     s.close()
-                except Exception:
+                except Exception as _exc:
                     pass
     return banners
 
@@ -364,7 +387,7 @@ def ensure_nuclei_templates() -> str:
                     console.print(
                         f"  [{S_YELLOW}]⚠ Nuclei {ver_match.group(1)} — CVE-2024-43405. Atualize para ≥ 3.3.2![/]"
                     )
-    except Exception:
+    except Exception as _exc:
         pass
     if not os.path.isdir(NUCLEI_TEMPLATES_PATH) or not os.listdir(NUCLEI_TEMPLATES_PATH):
         try:
@@ -373,7 +396,7 @@ def ensure_nuclei_templates() -> str:
                 check=True,
                 timeout=120,
             )
-        except Exception:
+        except Exception as _exc:
             return ""
     return str(NUCLEI_TEMPLATES_PATH)
 
@@ -455,6 +478,6 @@ def run_feroxbuster(target: str, wordlist: str, available: dict[str, bool]) -> l
                 import json
 
                 results.append(json.loads(line))
-            except Exception:
+            except Exception as _exc:
                 pass
     return results

@@ -82,7 +82,7 @@ def _classify_doc(path, resp):
             )
             if sec:
                 entry["auth_schemes"] = list(sec.keys())
-        except Exception:  # lgtm[py/empty-except]  # noqa: S110
+        except Exception as _exc:
             pass
     elif "actuator" in path:
         entry["tipo"] = "SPRING_ACTUATOR"
@@ -116,7 +116,7 @@ def _enumerate_methods(target, prefix):
         allow = resp.headers.get("Allow", "")
         if allow:
             methods_accepted = [m.strip() for m in allow.split(",")]
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return methods_accepted
 

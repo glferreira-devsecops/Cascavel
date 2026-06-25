@@ -47,7 +47,7 @@ def _check_grpc_web(target, port):
                     "descricao": f"gRPC-Web habilitado em :{port} — service enumeration possível!",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return vulns
 

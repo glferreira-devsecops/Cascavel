@@ -251,7 +251,7 @@ def _check_docker_sock():
                                     "remediao": "Remover montagem do docker.sock imediatamente.",
                                 }
                             )
-                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                    except Exception as _exc:
                         pass
 
         except Exception:
@@ -277,7 +277,7 @@ def _check_cve_2024_21626():
                     "remediao": "Atualizar runc >= 1.1.12 e container runtimes.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check runc version
@@ -303,7 +303,7 @@ def _check_cve_2024_21626():
                             "remediao": "Atualizar runc para >= 1.1.12.",
                         }
                     )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check for /proc/self/fd directory access
@@ -329,7 +329,7 @@ def _check_cve_2024_21626():
                             break
                 except (OSError, PermissionError):
                     continue
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns
@@ -380,7 +380,7 @@ def _check_namespace_access():
                     "remediao": "Remover --pid=host e usar PID namespace isolado.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns
@@ -419,7 +419,7 @@ def _check_cgroup_escape():
                             current = f.read().strip()
                         if current:
                             vulns[-1]["valor_atual"] = current
-                    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+                    except Exception as _exc:
                         pass
 
         except Exception:
@@ -436,7 +436,7 @@ def _check_cgroup_escape():
                     "remediao": "Remover --privileged ou dropar SYS_RAWIO capability.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     # Check /proc/sys writability
@@ -537,7 +537,7 @@ def _check_security_context():
                     "remediao": "Habilitar SELinux em enforcing mode.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns
@@ -671,7 +671,7 @@ def _check_remote_container_escape(target):
                     "remediao": "Habilitar --anonymous-auth=false no kubelet.",
                 }
             )
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return vulns

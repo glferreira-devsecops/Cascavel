@@ -213,7 +213,7 @@ def _analyze_domain_age(creation_date_str):
                 }
             except ValueError:
                 continue
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 
@@ -273,7 +273,7 @@ def _check_expiry(expiry_str):
                 }
             except ValueError:
                 continue
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return None
 

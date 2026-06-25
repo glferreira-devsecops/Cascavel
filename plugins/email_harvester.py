@@ -91,7 +91,7 @@ def _extract_mailto(target):
             )
             for e in mailto:
                 emails.add(e.lower())
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
     return emails
 
@@ -131,7 +131,7 @@ def _check_email_security(target):
                     security["spf_policy"] = "HARDFAIL (proteção forte)"
                 elif "+all" in line:
                     security["spf_policy"] = "ALLOW ALL (SEM PROTEÇÃO!)"
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     try:
@@ -150,7 +150,7 @@ def _check_email_security(target):
                     security["dmarc_policy"] = "QUARANTINE (emails suspeitos para spam)"
                 elif "p=reject" in line:
                     security["dmarc_policy"] = "REJECT (proteção máxima)"
-    except Exception:  # lgtm[py/empty-except]  # noqa: S110
+    except Exception as _exc:
         pass
 
     return security

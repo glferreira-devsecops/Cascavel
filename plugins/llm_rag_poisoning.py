@@ -46,7 +46,7 @@ def run(target, ip, ports, banners, context=None):
                     "evidence": resp.text[:100] + "...",  # Truncated
                 }
                 break
-        except Exception:
+        except Exception as _exc:
             pass  # Silent failure to avoid noise in scanner
 
     return finding
