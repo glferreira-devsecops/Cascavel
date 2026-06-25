@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "ruff==0.15.19" --hash=sha256:edc27f7172a93b32b102687009d6a588508815072141543ae603a8b9b0823063
+          pip install "ruff==0.15.19"
           pip install -r requirements.txt
 
       - name: Run ruff check
@@ -96,7 +96,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install "pytest==8.3.5" --hash=sha256:c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820 "hypothesis==6.155.7" --hash=sha256:9f634bdb1f9e9b8ab6ba09431cf2deedb750c96978125a6fb3c5a0f6c6db4131
+          pip install "pytest==8.3.5" "hypothesis==6.155.7"
 
       - name: Run Pytest suite
         run: |
@@ -130,7 +130,7 @@ jobs:
           cache: 'pip'
 
       - name: Install bandit
-        run: pip install "bandit[toml]==1.9.4" --hash=sha256:f89ffa663767f5a0585ea075f01020207e966a9c0f2b9ef56a57c7963a3f6f8e
+        run: pip install "bandit[toml]==1.9.4"
 
       - name: Run bandit
         run: |
@@ -199,7 +199,7 @@ jobs:
           cache: 'pip'
 
       - name: Install PyYAML
-        run: pip install "pyyaml==6.0.2" --hash=sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e
+        run: pip install "pyyaml==6.0.2"
 
       - name: Validate all YAML profiles
         run: |
