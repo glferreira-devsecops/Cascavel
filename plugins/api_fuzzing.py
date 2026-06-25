@@ -87,7 +87,7 @@ AUTH_BYPASS = [
     ({"Authorization": "Bearer undefined"}, "undefined_token"),
     ({"Authorization": "Bearer admin"}, "admin_token"),
     ({"Authorization": "Bearer test"}, "test_token"),
-    ({"Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJhZG1pbiJ9."}, "none_alg_jwt"),
+    ({"Authorization": "Bearer <NONE_ALG_JWT_PLACEHOLDER>"}, "none_alg_jwt"),
     ({"X-Api-Key": "admin"}, "admin_api_key"),
     ({"X-Api-Key": "test"}, "test_api_key"),
     ({"X-Forwarded-For": "127.0.0.1"}, "ip_spoof"),

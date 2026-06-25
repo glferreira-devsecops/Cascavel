@@ -138,7 +138,7 @@ main()
 """
         with open(target_path, "w") as f:
             f.write(wrapper)
-        os.chmod(str(target_path), 0o700)
+        os.chmod(str(target_path), 0o644)
 
         console.print(f"  [{S_GREEN}]✓ Instalado em: {target_path}[/]")
         _configure_path_export(str(scripts_dir))
