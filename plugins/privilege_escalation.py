@@ -263,9 +263,9 @@ def _check_sudo_misconfig():
                         }
                     )
     except PermissionError:
-        pass
+        logger.debug("Non-critical error suppressed")
     except FileNotFoundError:
-        pass
+        logger.debug("Non-critical error suppressed")
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
 

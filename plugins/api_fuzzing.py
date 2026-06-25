@@ -221,7 +221,7 @@ def _test_graphql_introspection(target):
                                 }
                             )
                     except json.JSONDecodeError:
-                        pass
+                        logger.debug("Non-critical error suppressed")
                     break
             except Exception as _exc:
                 continue
