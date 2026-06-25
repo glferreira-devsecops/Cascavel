@@ -102,7 +102,7 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
             elif "evil.com" in location:
                 try:
                     parsed = urllib.parse.urlparse(location)
-                    if parsed.netloc and "evil.com" in parsed.netloc:
+                    if parsed.netloc and (parsed.netloc == "evil.com" or parsed.netloc.endswith(".evil.com")):
                         is_evil = True
                     elif not parsed.scheme and location.startswith("//evil.com"):
                         is_evil = True

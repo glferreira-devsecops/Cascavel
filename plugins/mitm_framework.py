@@ -104,7 +104,7 @@ def _check_ssl_stripping(target):
                     }
                 )
     except requests.ConnectionError:
-        pass
+        logger.debug("Non-critical error suppressed")
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
 

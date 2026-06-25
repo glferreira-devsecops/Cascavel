@@ -1612,7 +1612,7 @@ def grab_banners(target: str, ports: list[int], timeout: int = 3) -> dict[int, s
                 try:
                     s.shutdown(socket.SHUT_RDWR)
                 except OSError:
-                    pass
+                    logger.debug("Non-critical error suppressed")
                 try:
                     s.close()
                 except Exception as _exc:

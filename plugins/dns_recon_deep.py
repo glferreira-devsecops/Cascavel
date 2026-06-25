@@ -442,7 +442,7 @@ def _test_cache_poisoning(target):
                                 }
                             )
                     except (ValueError, IndexError):
-                        pass
+                        logger.debug("Non-critical error suppressed")
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
 

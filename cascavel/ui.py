@@ -6,6 +6,7 @@
 """
 
 import datetime
+import logging
 import os
 import platform
 import random
@@ -14,6 +15,8 @@ import subprocess
 import sys
 import time
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from rich import box
 from rich.align import Align
@@ -470,12 +473,12 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
             subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error suppressed")
     elif shutil.which("notify-send"):
         try:
             subprocess.run(["notify-send", "--", title, message], timeout=5)
         except Exception as _exc:
-            pass
+            logger.debug("Non-critical error suppressed")
 
 
 def open_folder(path: str) -> None:

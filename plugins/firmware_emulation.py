@@ -104,7 +104,7 @@ def _check_emulation_interfaces(ip: str, ports: list[int]) -> list[dict[str, Any
                         }
                     )
         except (TimeoutError, ConnectionRefusedError, OSError):
-            pass
+            logger.debug("Non-critical error suppressed")
         except Exception as _exc:
             logger.debug("Non-critical error: %s", _exc)
     return findings

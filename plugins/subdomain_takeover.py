@@ -271,7 +271,7 @@ def _check_expired_domains(subdomain):
                     }
                 )
     except FileNotFoundError:
-        pass
+        logger.debug("Non-critical error suppressed")
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
@@ -326,7 +326,7 @@ def _check_dns_misconfiguration(subdomain):
             )
 
     except FileNotFoundError:
-        pass
+        logger.debug("Non-critical error suppressed")
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings

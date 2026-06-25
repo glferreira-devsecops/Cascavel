@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ruff>=0.3.0
+          pip install "ruff==0.15.19"
           pip install -r requirements.txt
 
       - name: Run ruff check
@@ -96,7 +96,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest==8.3.5 hypothesis
+          pip install "pytest==8.3.5" "hypothesis==6.155.7"
 
       - name: Run Pytest suite
         run: |
@@ -199,7 +199,7 @@ jobs:
           cache: 'pip'
 
       - name: Install PyYAML
-        run: pip install pyyaml>=6.0.1
+        run: pip install "pyyaml==6.0.2"
 
       - name: Validate all YAML profiles
         run: |

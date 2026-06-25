@@ -122,7 +122,7 @@ def _check_cobalt_watermark(target: str) -> list[dict[str, Any]]:
                     }
                 )
     except (TimeoutError, ConnectionRefusedError, OSError):
-        pass
+        logger.debug("Non-critical error suppressed")
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
     return findings
