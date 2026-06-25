@@ -262,10 +262,10 @@ def _check_sudo_misconfig():
                             "remediacao": "Editar /etc/sudoers com visudo. Remover configurações perigosas.",
                         }
                     )
-    except PermissionError:
-        logger.debug("Non-critical error suppressed")
-    except FileNotFoundError:
-        logger.debug("Non-critical error suppressed")
+    except PermissionError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except FileNotFoundError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     except Exception as _exc:
         logger.debug("Non-critical error: %s", _exc)
 

@@ -328,8 +328,8 @@ def _check_systemd_services():
                             "descricao": f"{len(enabled)} serviços habilitados no boot",
                         }
                     )
-            except FileNotFoundError:
-                logger.debug("Non-critical error suppressed")
+            except FileNotFoundError as _exc:
+                logger.debug("Non-critical error: %s", _exc)
             except Exception as _exc:
                 logger.debug("Non-critical error: %s", _exc)
 

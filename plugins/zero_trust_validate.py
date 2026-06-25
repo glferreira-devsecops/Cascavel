@@ -147,8 +147,8 @@ def _check_identity_access(target: str, ip: str, ports: list[int]) -> list[dict[
                             }
                         )
                 sock.close()
-        except (TimeoutError, ConnectionRefusedError, OSError):
-            logger.debug("Non-critical error suppressed")
+        except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+            logger.debug("Non-critical error: %s", _exc)
         except Exception as _exc:
             logger.debug("Non-critical error: %s", _exc)
 

@@ -244,8 +244,8 @@ def _test_blind_xxe(target, endpoint, baseline_latency):
                         }
                     )
                     break
-            except requests.exceptions.Timeout:
-                logger.debug("Non-critical error suppressed")
+            except requests.exceptions.Timeout as _exc:
+                logger.debug("Non-critical error: %s", _exc)
             except Exception as _exc:
                 continue
     return vulns
