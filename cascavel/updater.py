@@ -5,14 +5,11 @@
 """
 
 import os
-import platform
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 from rich.console import Console
-from rich.panel import Panel
 
 from .constants import S_CYAN, S_DIM, S_GREEN, S_RED, S_YELLOW, __version__
 
@@ -31,6 +28,7 @@ def check_for_update(quiet: bool = False) -> str | None:
     """Verifica se há atualizações disponíveis no GitHub."""
     try:
         import requests
+
         r = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest", timeout=5)
         if r.status_code != 200:
             return None
@@ -60,6 +58,7 @@ def self_update() -> None:
 
     try:
         import requests
+
         r = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest", timeout=10)
         if r.status_code != 200:
             console.print(f"  [{S_RED}]✗ Não foi possível verificar atualizações.[/]")
@@ -78,7 +77,10 @@ def self_update() -> None:
         base_path = Path(__file__).resolve().parent.parent
         if (base_path / ".git").is_dir():
             result = subprocess.run(
-                ["git", "pull", "origin", "main"], capture_output=True, text=True, cwd=str(base_path),
+                ["git", "pull", "origin", "main"],
+                capture_output=True,
+                text=True,
+                cwd=str(base_path),
             )
             if result.returncode == 0:
                 console.print(f"  [{S_GREEN}]✓ Atualizado via git.[/]")
@@ -115,10 +117,10 @@ def _install_global() -> None:
     console.print(f"  [{S_CYAN}]📦 Instalando Cascavel globalmente...[/]")
 
     base_path = Path(__file__).resolve().parent.parent
-    cascavel_py = base_path / "cascavel.py"
+    package_entry = base_path / "cascavel" / "__main__.py"
 
-    if not cascavel_py.exists():
-        console.print(f"  [{S_RED}]✗ cascavel.py não encontrado em {base_path}[/]")
+    if not package_entry.exists():
+        console.print(f"  [{S_RED}]✗ Pacote cascavel não encontrado em {base_path}[/]")
         return
 
     # Determine install location
@@ -131,12 +133,12 @@ def _install_global() -> None:
         wrapper = f"""#!/usr/bin/env python3
 import sys
 sys.path.insert(0, "{base_path}")
-from cascavel.cascavel import main
+from cascavel.__main__ import main
 main()
 """
         with open(target_path, "w") as f:
             f.write(wrapper)
-        os.chmod(str(target_path), 0o755)
+        os.chmod(str(target_path), 0o700)
 
         console.print(f"  [{S_GREEN}]✓ Instalado em: {target_path}[/]")
         _configure_path_export(str(scripts_dir))
@@ -154,7 +156,7 @@ def _configure_path_export(scripts_dir: str) -> None:
     else:
         return
 
-    path_export = f'export PATH="$HOME/.local/bin:$PATH"'
+    path_export = 'export PATH="$HOME/.local/bin:$PATH"'
     try:
         if rc_file.exists():
             content = rc_file.read_text()

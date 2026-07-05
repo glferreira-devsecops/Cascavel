@@ -36,7 +36,8 @@ jobs:
 
       - name: Build Standalone Executable (Linux)
         run: |
-          pyinstaller --onefile --name cascavel-linux cascavel.py
+          pyinstaller --onefile --name cascavel-linux \
+            --collect-submodules cascavel pyinstaller_entry.py
 
       - name: Build PyPI Package
         run: |

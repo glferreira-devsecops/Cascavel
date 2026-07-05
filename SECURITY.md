@@ -41,7 +41,7 @@ We aim to respond within **48 hours** and patch valid issues within **7 business
 
 This security policy covers:
 
-- `cascavel.py` — Core engine
+- `cascavel/` — Core engine package
 - All files in `plugins/` — Security plugins
 - `wordlists/` — Bundled wordlists
 - Configuration files (`pyproject.toml`, `requirements.txt`)

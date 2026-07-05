@@ -24,9 +24,9 @@ class TestAnsiSanitizer:
 
     def test_strips_osc_sequences(self):
         """OSC sequences (title change, clipboard) should be stripped."""
-        # Import the regex from cascavel.py
+        # Import the sanitizer from the cascavel package
         sys.path.insert(0, PROJECT_ROOT)
-        from cascavel import _sanitize_output
+        from cascavel.security import _sanitize_output
 
         # OSC title change
         malicious = "\x1b]0;PWNED\x07Normal text"
@@ -36,7 +36,7 @@ class TestAnsiSanitizer:
     def test_preserves_sgr_colors(self):
         """SGR color sequences (\\x1b[31m) should be preserved."""
         sys.path.insert(0, PROJECT_ROOT)
-        from cascavel import _sanitize_output
+        from cascavel.security import _sanitize_output
 
         colored = "\x1b[31mRed text\x1b[0m"
         result = _sanitize_output(colored)
@@ -46,7 +46,7 @@ class TestAnsiSanitizer:
     def test_sanitizes_nested_structures(self):
         """Dicts and lists should be recursively sanitized."""
         sys.path.insert(0, PROJECT_ROOT)
-        from cascavel import _sanitize_output
+        from cascavel.security import _sanitize_output
 
         data = {
             "key": "\x1b]0;EVIL\x07value",
@@ -62,13 +62,13 @@ class TestSarifExporter:
 
     def test_import(self):
         """SARIF exporter should be importable."""
-        from sarif_exporter import export_sarif
+        from cascavel.sarif_exporter import export_sarif
 
         assert callable(export_sarif)
 
     def test_export_creates_file(self):
         """export_sarif() should create a .sarif file."""
-        from sarif_exporter import export_sarif
+        from cascavel.sarif_exporter import export_sarif
 
         results = [
             {
@@ -95,7 +95,7 @@ class TestSarifExporter:
 
     def test_sarif_schema_compliance(self):
         """SARIF output should have required top-level keys."""
-        from sarif_exporter import export_sarif
+        from cascavel.sarif_exporter import export_sarif
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = export_sarif("test.com", "1.2.3.4", [], 1.0, output_dir=tmpdir)
@@ -112,7 +112,7 @@ class TestSarifExporter:
 
     def test_sarif_skips_error_only_results(self):
         """Results with only 'erro' and no findings should be skipped."""
-        from sarif_exporter import export_sarif
+        from cascavel.sarif_exporter import export_sarif
 
         results = [
             {"plugin": "broken", "erro": "Timeout"},

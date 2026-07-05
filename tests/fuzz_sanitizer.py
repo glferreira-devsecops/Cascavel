@@ -33,7 +33,7 @@ def fuzz_sanitize_html(data: bytes) -> None:
     (reportlab RCE via HTML injection). Any crash here means
     an attacker could bypass sanitization.
     """
-    from report_generator import _sanitize_html
+    from cascavel.report_generator import _sanitize_html
 
     fdp = atheris.FuzzedDataProvider(data)  # type: ignore
     test_input = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 10000))
@@ -51,7 +51,7 @@ def fuzz_sanitize_html(data: bytes) -> None:
 
 def fuzz_severity_lookup(data: bytes) -> None:
     """Fuzz severity classification lookup."""
-    from report_generator import SEVERITY_MAP
+    from cascavel.report_generator import SEVERITY_MAP
 
     fdp = atheris.FuzzedDataProvider(data)  # type: ignore
     severity = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 50))

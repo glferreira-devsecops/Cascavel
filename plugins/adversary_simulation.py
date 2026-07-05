@@ -280,101 +280,147 @@ def _build_attack_chains(categories: list[str]) -> list[dict[str, Any]]:
 
     # Chain 1: SSRF -> Cloud Credential Theft -> Lateral Movement
     if "ssrf" in categories:
-        chains.append({
-            "chain_id": "CHAIN-SSRF-CLOUD",
-            "severity": "CRITICO",
-            "steps": [
-                {"step": 1, "technique": "T1552.005", "action": "Probe internal services via SSRF (169.254.169.254, 127.0.0.1)"},
-                {"step": 2, "technique": "T1552", "action": "Extract cloud IAM credentials from metadata endpoint"},
-                {"step": 3, "technique": "T1098", "action": "Use stolen credentials to create backdoor IAM user"},
-                {"step": 4, "technique": "T1078", "action": "Persistent access via valid cloud account"},
-            ],
-            "mitigation": "Enforce IMDSv2, block metadata IP at network level, rotate IAM credentials regularly.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-SSRF-CLOUD",
+                "severity": "CRITICO",
+                "steps": [
+                    {
+                        "step": 1,
+                        "technique": "T1552.005",
+                        "action": "Probe internal services via SSRF (169.254.169.254, 127.0.0.1)",
+                    },
+                    {"step": 2, "technique": "T1552", "action": "Extract cloud IAM credentials from metadata endpoint"},
+                    {"step": 3, "technique": "T1098", "action": "Use stolen credentials to create backdoor IAM user"},
+                    {"step": 4, "technique": "T1078", "action": "Persistent access via valid cloud account"},
+                ],
+                "mitigation": "Enforce IMDSv2, block metadata IP at network level, rotate IAM credentials regularly.",
+            }
+        )
 
     # Chain 2: SQLi -> Database Dump -> Credential Reuse
     if "sqli" in categories:
-        chains.append({
-            "chain_id": "CHAIN-SQLI-DATA",
-            "severity": "CRITICO",
-            "steps": [
-                {"step": 1, "technique": "T1190", "action": "Exploit SQL injection on input parameter"},
-                {"step": 2, "technique": "T1213", "action": "Dump user credentials database (passwords, tokens)"},
-                {"step": 3, "technique": "T1078", "action": "Test leaked credentials on other services (credential stuffing)"},
-                {"step": 4, "technique": "T1021", "action": "Pivot to internal services with reused credentials"},
-            ],
-            "mitigation": "Parameterized queries, credential hashing (bcrypt/argon2), network segmentation.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-SQLI-DATA",
+                "severity": "CRITICO",
+                "steps": [
+                    {"step": 1, "technique": "T1190", "action": "Exploit SQL injection on input parameter"},
+                    {"step": 2, "technique": "T1213", "action": "Dump user credentials database (passwords, tokens)"},
+                    {
+                        "step": 3,
+                        "technique": "T1078",
+                        "action": "Test leaked credentials on other services (credential stuffing)",
+                    },
+                    {"step": 4, "technique": "T1021", "action": "Pivot to internal services with reused credentials"},
+                ],
+                "mitigation": "Parameterized queries, credential hashing (bcrypt/argon2), network segmentation.",
+            }
+        )
 
     # Chain 3: XSS -> Session Hijack -> Admin Access
     if "xss" in categories:
-        chains.append({
-            "chain_id": "CHAIN-XSS-HIJACK",
-            "severity": "ALTO",
-            "steps": [
-                {"step": 1, "technique": "T1189", "action": "Inject stored XSS payload in user-controlled field"},
-                {"step": 2, "technique": "T1539", "action": "Steal admin session cookie via document.cookie exfiltration"},
-                {"step": 3, "technique": "T1078", "action": "Replay admin session to access privileged functions"},
-                {"step": 4, "technique": "T1505.003", "action": "Deploy web shell via admin file upload"},
-            ],
-            "mitigation": "HttpOnly + Secure + SameSite cookies, CSP headers, output encoding.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-XSS-HIJACK",
+                "severity": "ALTO",
+                "steps": [
+                    {"step": 1, "technique": "T1189", "action": "Inject stored XSS payload in user-controlled field"},
+                    {
+                        "step": 2,
+                        "technique": "T1539",
+                        "action": "Steal admin session cookie via document.cookie exfiltration",
+                    },
+                    {"step": 3, "technique": "T1078", "action": "Replay admin session to access privileged functions"},
+                    {"step": 4, "technique": "T1505.003", "action": "Deploy web shell via admin file upload"},
+                ],
+                "mitigation": "HttpOnly + Secure + SameSite cookies, CSP headers, output encoding.",
+            }
+        )
 
     # Chain 4: LFI -> Config Leak -> Credential Extraction
     if "lfi" in categories:
-        chains.append({
-            "chain_id": "CHAIN-LFI-CONFIG",
-            "severity": "ALTO",
-            "steps": [
-                {"step": 1, "technique": "T1005", "action": "Read /etc/passwd and application config files via LFI"},
-                {"step": 2, "technique": "T1552", "action": "Extract database credentials, API keys from config"},
-                {"step": 3, "technique": "T1213", "action": "Connect directly to database with extracted credentials"},
-                {"step": 4, "technique": "T1098", "action": "Create admin account in database"},
-            ],
-            "mitigation": "Input validation, chroot environments, principle of least privilege for file access.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-LFI-CONFIG",
+                "severity": "ALTO",
+                "steps": [
+                    {
+                        "step": 1,
+                        "technique": "T1005",
+                        "action": "Read /etc/passwd and application config files via LFI",
+                    },
+                    {"step": 2, "technique": "T1552", "action": "Extract database credentials, API keys from config"},
+                    {
+                        "step": 3,
+                        "technique": "T1213",
+                        "action": "Connect directly to database with extracted credentials",
+                    },
+                    {"step": 4, "technique": "T1098", "action": "Create admin account in database"},
+                ],
+                "mitigation": "Input validation, chroot environments, principle of least privilege for file access.",
+            }
+        )
 
     # Chain 5: SSTI -> RCE -> Persistence
     if "ssti" in categories:
-        chains.append({
-            "chain_id": "CHAIN-SSTI-RCE",
-            "severity": "CRITICO",
-            "steps": [
-                {"step": 1, "technique": "T1203", "action": "Inject SSTI payload ({{config.__class__.__mro__[1].__subclasses__()}})"},
-                {"step": 2, "technique": "T1059", "action": "Achieve RCE via template engine OS command execution"},
-                {"step": 3, "technique": "T1505.003", "action": "Deploy persistent web shell"},
-                {"step": 4, "technique": "T1053", "action": "Install cron job for scheduled reverse shell"},
-            ],
-            "mitigation": "Sandboxed template rendering, input sanitization, WAF rules for template injection patterns.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-SSTI-RCE",
+                "severity": "CRITICO",
+                "steps": [
+                    {
+                        "step": 1,
+                        "technique": "T1203",
+                        "action": "Inject SSTI payload ({{config.__class__.__mro__[1].__subclasses__()}})",
+                    },
+                    {"step": 2, "technique": "T1059", "action": "Achieve RCE via template engine OS command execution"},
+                    {"step": 3, "technique": "T1505.003", "action": "Deploy persistent web shell"},
+                    {"step": 4, "technique": "T1053", "action": "Install cron job for scheduled reverse shell"},
+                ],
+                "mitigation": "Sandboxed template rendering, input sanitization, WAF rules for template injection patterns.",
+            }
+        )
 
     # Chain 6: Smuggling -> Cache Poisoning -> Mass Exploitation
     if "smuggling" in categories:
-        chains.append({
-            "chain_id": "CHAIN-SMUGGLE-CACHE",
-            "severity": "ALTO",
-            "steps": [
-                {"step": 1, "technique": "T1190", "action": "Craft CL-TE or TE-CL desync payload"},
-                {"step": 2, "technique": "T1185", "action": "Poison cache with malicious response"},
-                {"step": 3, "technique": "T1189", "action": "Deliver poisoned content to legitimate users"},
-                {"step": 4, "technique": "T1539", "action": "Harvest session tokens from poisoned responses"},
-            ],
-            "mitigation": "Normalize request parsing, disable HTTP/1.1 pipelineing, use HTTP/2 end-to-end.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-SMUGGLE-CACHE",
+                "severity": "ALTO",
+                "steps": [
+                    {"step": 1, "technique": "T1190", "action": "Craft CL-TE or TE-CL desync payload"},
+                    {"step": 2, "technique": "T1185", "action": "Poison cache with malicious response"},
+                    {"step": 3, "technique": "T1189", "action": "Deliver poisoned content to legitimate users"},
+                    {"step": 4, "technique": "T1539", "action": "Harvest session tokens from poisoned responses"},
+                ],
+                "mitigation": "Normalize request parsing, disable HTTP/1.1 pipelineing, use HTTP/2 end-to-end.",
+            }
+        )
 
     # Chain 7: JWT Forgery -> Privilege Escalation
     if "jwt" in categories:
-        chains.append({
-            "chain_id": "CHAIN-JWT-ESCALATE",
-            "severity": "CRITICO",
-            "steps": [
-                {"step": 1, "technique": "T1550.004", "action": "Identify JWT signing algorithm (HS256/RS256 confusion)"},
-                {"step": 2, "technique": "T1550.004", "action": "Forge token with alg:none or brute-force weak secret"},
-                {"step": 3, "technique": "T1078", "action": "Modify claims (role=admin, sub=target_user)"},
-                {"step": 4, "technique": "T1098", "action": "Access admin endpoints with forged token"},
-            ],
-            "mitigation": "Enforce RS256/ES256, strong secrets (256-bit+), token expiry, audience validation.",
-        })
+        chains.append(
+            {
+                "chain_id": "CHAIN-JWT-ESCALATE",
+                "severity": "CRITICO",
+                "steps": [
+                    {
+                        "step": 1,
+                        "technique": "T1550.004",
+                        "action": "Identify JWT signing algorithm (HS256/RS256 confusion)",
+                    },
+                    {
+                        "step": 2,
+                        "technique": "T1550.004",
+                        "action": "Forge token with alg:none or brute-force weak secret",
+                    },
+                    {"step": 3, "technique": "T1078", "action": "Modify claims (role=admin, sub=target_user)"},
+                    {"step": 4, "technique": "T1098", "action": "Access admin endpoints with forged token"},
+                ],
+                "mitigation": "Enforce RS256/ES256, strong secrets (256-bit+), token expiry, audience validation.",
+            }
+        )
 
     return chains
 
@@ -385,45 +431,55 @@ def _check_persistence(categories: list[str]) -> list[dict[str, Any]]:
     for check in PERSISTENCE_CHECKS:
         trigger = check["check"]
         if trigger == "default_credentials" and "default_credentials" in categories:
-            findings.append({
-                "technique": check["technique"],
-                "name": check["name"],
-                "severity": "CRITICO",
-                "description": check["description"],
-                "remediation": "Change all default credentials, enforce strong password policy, disable unused accounts.",
-            })
+            findings.append(
+                {
+                    "technique": check["technique"],
+                    "name": check["name"],
+                    "severity": "CRITICO",
+                    "description": check["description"],
+                    "remediation": "Change all default credentials, enforce strong password policy, disable unused accounts.",
+                }
+            )
         elif trigger == "upload_write" and ("rce" in categories or "ssti" in categories):
-            findings.append({
-                "technique": check["technique"],
-                "name": check["name"],
-                "severity": "ALTO",
-                "description": check["description"],
-                "remediation": "Restrict file upload types, store outside webroot, scan uploaded files.",
-            })
+            findings.append(
+                {
+                    "technique": check["technique"],
+                    "name": check["name"],
+                    "severity": "ALTO",
+                    "description": check["description"],
+                    "remediation": "Restrict file upload types, store outside webroot, scan uploaded files.",
+                }
+            )
         elif trigger == "privilege_escalation" and ("idor" in categories or "mass_assignment" in str(categories)):
-            findings.append({
-                "technique": check["technique"],
-                "name": check["name"],
-                "severity": "ALTO",
-                "description": check["description"],
-                "remediation": "Server-side authorization checks, deny-by-default for sensitive fields.",
-            })
+            findings.append(
+                {
+                    "technique": check["technique"],
+                    "name": check["name"],
+                    "severity": "ALTO",
+                    "description": check["description"],
+                    "remediation": "Server-side authorization checks, deny-by-default for sensitive fields.",
+                }
+            )
         elif trigger == "ssti_rce" and "ssti" in categories:
-            findings.append({
-                "technique": check["technique"],
-                "name": check["name"],
-                "severity": "CRITICO",
-                "description": check["description"],
-                "remediation": "Use logic-less templates, sandbox template execution, block OS-level calls.",
-            })
+            findings.append(
+                {
+                    "technique": check["technique"],
+                    "name": check["name"],
+                    "severity": "CRITICO",
+                    "description": check["description"],
+                    "remediation": "Use logic-less templates, sandbox template execution, block OS-level calls.",
+                }
+            )
         elif trigger == "cloud_metadata" and "ssrf" in categories:
-            findings.append({
-                "technique": check["technique"],
-                "name": check["name"],
-                "severity": "CRITICO",
-                "description": check["description"],
-                "remediation": "Enforce IMDSv2, use VPC endpoint policies, rotate credentials.",
-            })
+            findings.append(
+                {
+                    "technique": check["technique"],
+                    "name": check["name"],
+                    "severity": "CRITICO",
+                    "description": check["description"],
+                    "remediation": "Enforce IMDSv2, use VPC endpoint policies, rotate credentials.",
+                }
+            )
 
     return findings
 
@@ -433,15 +489,17 @@ def _check_lateral_movement(categories: list[str]) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     for path in LATERAL_MOVEMENT_PATHS:
         if path["trigger"] in categories:
-            findings.append({
-                "technique": path["technique"],
-                "name": path["name"],
-                "source": path["from"],
-                "target": path["to"],
-                "severity": "ALTO",
-                "description": path["description"],
-                "remediation": "Network segmentation, zero-trust microsegmentation, internal service authentication.",
-            })
+            findings.append(
+                {
+                    "technique": path["technique"],
+                    "name": path["name"],
+                    "source": path["from"],
+                    "target": path["to"],
+                    "severity": "ALTO",
+                    "description": path["description"],
+                    "remediation": "Network segmentation, zero-trust microsegmentation, internal service authentication.",
+                }
+            )
     return findings
 
 
@@ -451,45 +509,55 @@ def _check_defense_evasion(categories: list[str]) -> list[dict[str, Any]]:
     for evasion in DEFENSE_EVASION:
         trigger = evasion["trigger"]
         if trigger == "waf_present" and ("xss" in categories or "sqli" in categories):
-            findings.append({
-                "technique": evasion["technique"],
-                "name": evasion["name"],
-                "severity": "MEDIO",
-                "description": evasion["description"],
-                "remediation": "Layer WAF with RASP, behavioral analysis, and request normalization.",
-            })
+            findings.append(
+                {
+                    "technique": evasion["technique"],
+                    "name": evasion["name"],
+                    "severity": "MEDIO",
+                    "description": evasion["description"],
+                    "remediation": "Layer WAF with RASP, behavioral analysis, and request normalization.",
+                }
+            )
         elif trigger == "log_misconfig" and "lfi" in categories:
-            findings.append({
-                "technique": evasion["technique"],
-                "name": evasion["name"],
-                "severity": "MEDIO",
-                "description": evasion["description"],
-                "remediation": "Centralized immutable logging (SIEM), restrict log file access.",
-            })
+            findings.append(
+                {
+                    "technique": evasion["technique"],
+                    "name": evasion["name"],
+                    "severity": "MEDIO",
+                    "description": evasion["description"],
+                    "remediation": "Centralized immutable logging (SIEM), restrict log file access.",
+                }
+            )
         elif trigger == "open_redirect" and "open_redirect" in categories:
-            findings.append({
-                "technique": evasion["technique"],
-                "name": evasion["name"],
-                "severity": "BAIXO",
-                "description": evasion["description"],
-                "remediation": "Whitelist redirect destinations, use relative paths only.",
-            })
+            findings.append(
+                {
+                    "technique": evasion["technique"],
+                    "name": evasion["name"],
+                    "severity": "BAIXO",
+                    "description": evasion["description"],
+                    "remediation": "Whitelist redirect destinations, use relative paths only.",
+                }
+            )
         elif trigger == "jwt_weakness" and "jwt" in categories:
-            findings.append({
-                "technique": evasion["technique"],
-                "name": evasion["name"],
-                "severity": "ALTO",
-                "description": evasion["description"],
-                "remediation": "Strong signing algorithms (ES256), short token expiry, token revocation list.",
-            })
+            findings.append(
+                {
+                    "technique": evasion["technique"],
+                    "name": evasion["name"],
+                    "severity": "ALTO",
+                    "description": evasion["description"],
+                    "remediation": "Strong signing algorithms (ES256), short token expiry, token revocation list.",
+                }
+            )
         elif trigger == "ssrf" and "ssrf" in categories:
-            findings.append({
-                "technique": evasion["technique"],
-                "name": evasion["name"],
-                "severity": "MEDIO",
-                "description": evasion["description"],
-                "remediation": "Egress filtering, SSRF-aware URL validation, disable unnecessary protocols.",
-            })
+            findings.append(
+                {
+                    "technique": evasion["technique"],
+                    "name": evasion["name"],
+                    "severity": "MEDIO",
+                    "description": evasion["description"],
+                    "remediation": "Egress filtering, SSRF-aware URL validation, disable unnecessary protocols.",
+                }
+            )
 
     return findings
 
@@ -508,101 +576,116 @@ def run(
         categories = _classify_findings(banners, context)
 
         if not categories:
-            resultados.append({
-                "tipo": "INFO",
-                "severidade": "INFO",
-                "titulo": "No vulnerabilities to simulate",
-                "descricao": "No known vulnerability categories detected for adversary simulation. "
-                             "Run vulnerability scanners first for richer simulation output.",
-                "tecnica": "N/A",
-                "remediacao": "N/A",
-            })
+            resultados.append(
+                {
+                    "tipo": "INFO",
+                    "severidade": "INFO",
+                    "titulo": "No vulnerabilities to simulate",
+                    "descricao": "No known vulnerability categories detected for adversary simulation. "
+                    "Run vulnerability scanners first for richer simulation output.",
+                    "tecnica": "N/A",
+                    "remediacao": "N/A",
+                }
+            )
             return {"plugin": "adversary_simulation", "resultados": resultados}
 
         # 1. Vulnerability-to-Technique Mapping
         for cat in categories:
             if cat in VULN_TECHNIQUE_MAP:
                 tech = VULN_TECHNIQUE_MAP[cat]
-                resultados.append({
-                    "tipo": "ATTACK_MAPPING",
-                    "severidade": "INFO",
-                    "titulo": f"ATT&CK Mapping: {cat.upper()} -> {tech['technique']}",
-                    "descricao": f"{tech['name']} ({tech['tactic']}): {tech['description']}",
-                    "tecnica": tech["technique"],
-                    "tatica": tech["tactic"],
-                    "remediacao": "Refer to MITRE ATT&CK mitigation guidance for the mapped technique.",
-                })
+                resultados.append(
+                    {
+                        "tipo": "ATTACK_MAPPING",
+                        "severidade": "INFO",
+                        "titulo": f"ATT&CK Mapping: {cat.upper()} -> {tech['technique']}",
+                        "descricao": f"{tech['name']} ({tech['tactic']}): {tech['description']}",
+                        "tecnica": tech["technique"],
+                        "tatica": tech["tactic"],
+                        "remediacao": "Refer to MITRE ATT&CK mitigation guidance for the mapped technique.",
+                    }
+                )
 
         # 2. Attack Chains
         chains = _build_attack_chains(categories)
         for chain in chains:
-            resultados.append({
-                "tipo": "ATTACK_CHAIN",
-                "severidade": chain["severity"],
-                "titulo": f"Attack Chain: {chain['chain_id']}",
-                "descricao": f"Multi-step attack chain with {len(chain['steps'])} stages identified.",
-                "steps": chain["steps"],
-                "remediacao": chain["mitigation"],
-            })
+            resultados.append(
+                {
+                    "tipo": "ATTACK_CHAIN",
+                    "severidade": chain["severity"],
+                    "titulo": f"Attack Chain: {chain['chain_id']}",
+                    "descricao": f"Multi-step attack chain with {len(chain['steps'])} stages identified.",
+                    "steps": chain["steps"],
+                    "remediacao": chain["mitigation"],
+                }
+            )
 
         # 3. Persistence Mechanisms
         persistence = _check_persistence(categories)
         for p in persistence:
-            resultados.append({
-                "tipo": "PERSISTENCE",
-                "severidade": p["severity"],
-                "titulo": f"Persistence: {p['name']} ({p['technique']})",
-                "descricao": p["description"],
-                "tecnica": p["technique"],
-                "remediacao": p["remediation"],
-            })
+            resultados.append(
+                {
+                    "tipo": "PERSISTENCE",
+                    "severidade": p["severity"],
+                    "titulo": f"Persistence: {p['name']} ({p['technique']})",
+                    "descricao": p["description"],
+                    "tecnica": p["technique"],
+                    "remediacao": p["remediation"],
+                }
+            )
 
         # 4. Lateral Movement Paths
         lateral = _check_lateral_movement(categories)
         for lm in lateral:
-            resultados.append({
-                "tipo": "LATERAL_MOVEMENT",
-                "severidade": lm["severity"],
-                "titulo": f"Lateral Movement: {lm['source']} -> {lm['target']} ({lm['technique']})",
-                "descricao": lm["description"],
-                "tecnica": lm["technique"],
-                "origem": lm["source"],
-                "destino": lm["target"],
-                "remediacao": lm["remediation"],
-            })
+            resultados.append(
+                {
+                    "tipo": "LATERAL_MOVEMENT",
+                    "severidade": lm["severity"],
+                    "titulo": f"Lateral Movement: {lm['source']} -> {lm['target']} ({lm['technique']})",
+                    "descricao": lm["description"],
+                    "tecnica": lm["technique"],
+                    "origem": lm["source"],
+                    "destino": lm["target"],
+                    "remediacao": lm["remediation"],
+                }
+            )
 
         # 5. Defense Evasion
         evasion = _check_defense_evasion(categories)
         for ev in evasion:
-            resultados.append({
-                "tipo": "DEFENSE_EVASION",
-                "severidade": ev["severity"],
-                "titulo": f"Defense Evasion: {ev['name']} ({ev['technique']})",
-                "descricao": ev["description"],
-                "tecnica": ev["technique"],
-                "remediacao": ev["remediation"],
-            })
+            resultados.append(
+                {
+                    "tipo": "DEFENSE_EVASION",
+                    "severidade": ev["severity"],
+                    "titulo": f"Defense Evasion: {ev['name']} ({ev['technique']})",
+                    "descricao": ev["description"],
+                    "tecnica": ev["technique"],
+                    "remediacao": ev["remediation"],
+                }
+            )
 
         # Summary
         severities = [r["severidade"] for r in resultados]
         crit_count = severities.count("CRITICO")
         alto_count = severities.count("ALTO")
 
-        resultados.insert(0, {
-            "tipo": "RESUMO",
-            "severidade": "CRITICO" if crit_count > 0 else ("ALTO" if alto_count > 0 else "MEDIO"),
-            "titulo": f"Adversary Simulation Summary — {len(categories)} categories, {len(chains)} attack chains",
-            "descricao": (
-                f"Identified {len(categories)} vulnerability categories mapped to MITRE ATT&CK. "
-                f"Generated {len(chains)} multi-stage attack chains, "
-                f"{len(persistence)} persistence mechanisms, "
-                f"{len(lateral)} lateral movement paths, "
-                f"{len(evasion)} defense evasion opportunities."
-            ),
-            "categorias_detectadas": categories,
-            "total_resultados": len(resultados),
-            "remediacao": "Prioritize CRITICAL attack chains. Implement defense-in-depth: WAF + RASP + network segmentation + immutable logging.",
-        })
+        resultados.insert(
+            0,
+            {
+                "tipo": "RESUMO",
+                "severidade": "CRITICO" if crit_count > 0 else ("ALTO" if alto_count > 0 else "MEDIO"),
+                "titulo": f"Adversary Simulation Summary — {len(categories)} categories, {len(chains)} attack chains",
+                "descricao": (
+                    f"Identified {len(categories)} vulnerability categories mapped to MITRE ATT&CK. "
+                    f"Generated {len(chains)} multi-stage attack chains, "
+                    f"{len(persistence)} persistence mechanisms, "
+                    f"{len(lateral)} lateral movement paths, "
+                    f"{len(evasion)} defense evasion opportunities."
+                ),
+                "categorias_detectadas": categories,
+                "total_resultados": len(resultados),
+                "remediacao": "Prioritize CRITICAL attack chains. Implement defense-in-depth: WAF + RASP + network segmentation + immutable logging.",
+            },
+        )
 
         return {"plugin": "adversary_simulation", "resultados": resultados}
 
@@ -610,11 +693,13 @@ def run(
         logger.error(f"Adversary simulation failed for {target}: {e}")
         return {
             "plugin": "adversary_simulation",
-            "resultados": [{
-                "tipo": "ERRO",
-                "severidade": "INFO",
-                "titulo": "Simulation error",
-                "descricao": f"Adversary simulation failed: {e}",
-                "remediacao": "N/A",
-            }],
+            "resultados": [
+                {
+                    "tipo": "ERRO",
+                    "severidade": "INFO",
+                    "titulo": "Simulation error",
+                    "descricao": f"Adversary simulation failed: {e}",
+                    "remediacao": "N/A",
+                }
+            ],
         }

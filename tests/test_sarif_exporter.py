@@ -5,7 +5,7 @@ import tempfile
 from hypothesis import given
 from hypothesis import strategies as st
 
-from sarif_exporter import _SARIF_LEVEL, _result_to_sarif, export_sarif
+from cascavel.sarif_exporter import _SARIF_LEVEL, _result_to_sarif, export_sarif
 
 
 def test_result_to_sarif_basic():

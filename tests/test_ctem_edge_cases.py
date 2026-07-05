@@ -6,11 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-import ai_remediation
-import ocsf_exporter
-
 # Import the core CTEM modules
-import threat_intel
+from cascavel import ai_remediation, ocsf_exporter, threat_intel
 
 
 class MockConsole:

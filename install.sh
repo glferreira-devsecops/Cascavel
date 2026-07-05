@@ -269,25 +269,25 @@ _auto_install_git() {
 }
 
 _auto_clone_if_needed() {
-    if [ -f "cascavel.py" ]; then
+    if [ -f "cascavel/__main__.py" ]; then
         return 0
     fi
 
     # Detecta se já estamos dentro de um clone parcial/corrompido
-    if [ -d ".git" ] && [ ! -f "cascavel.py" ]; then
-        error "Repositório corrompido: .git existe mas cascavel.py não encontrado. Re-clone manualmente."
+    if [ -d ".git" ] && [ ! -f "cascavel/__main__.py" ]; then
+        error "Repositório corrompido: .git existe mas pacote cascavel/ não encontrado. Re-clone manualmente."
     fi
 
     # Não estamos no diretório do Cascavel — auto-clone
-    echo -e "\n  ${CYAN}▶${NC} ${BOLD}cascavel.py não encontrado — clonando repositório automaticamente...${NC}"
-    _log "AUTO-CLONE: cascavel.py não encontrado em $(pwd)"
+    echo -e "\n  ${CYAN}▶${NC} ${BOLD}pacote cascavel não encontrado — clonando repositório automaticamente...${NC}"
+    _log "AUTO-CLONE: pacote cascavel não encontrado em $(pwd)"
 
     local CLONE_DIR="Cascavel"
     local REPO_URL="https://github.com/devferreirag/Cascavel.git"
     local TARBALL_URL="https://github.com/devferreirag/Cascavel/archive/refs/heads/main.tar.gz"
 
     # Se o diretório Cascavel já existe, tentar entrar nele
-    if [ -d "$CLONE_DIR" ] && [ -f "$CLONE_DIR/cascavel.py" ]; then
+    if [ -d "$CLONE_DIR" ] && [ -f "$CLONE_DIR/cascavel/__main__.py" ]; then
         info "Diretório Cascavel/ encontrado — entrando."
         cd "$CLONE_DIR" || error "Falha ao entrar no diretório $CLONE_DIR"
         INSTALL_LOG="$(pwd)/install.log"
@@ -344,8 +344,8 @@ preflight_checks() {
 
     # 1. Auto-clone se não estamos no diretório correto
     _auto_clone_if_needed
-    if [ ! -f "cascavel.py" ]; then
-        error "cascavel.py não encontrado mesmo após tentativa de clone."
+    if [ ! -f "cascavel/__main__.py" ]; then
+        error "pacote cascavel não encontrado mesmo após tentativa de clone."
     fi
 
     # 2. Verificar se requirements.txt existe
@@ -1100,8 +1100,8 @@ setup_dirs() {
 harden_permissions() {
     step "Ajustando permissões de arquivos..."
 
-    # cascavel.py deve ser executável apenas pelo owner
-    chmod 700 cascavel.py 2>/dev/null || true
+    # pacote cascavel deve ser acessível apenas pelo owner
+    chmod -R go-rwx cascavel 2>/dev/null || true
 
     # plugins devem ser legíveis pelo owner
     chmod 600 plugins/*.py 2>/dev/null || true
@@ -1154,10 +1154,10 @@ verify_installation() {
     info "Plugins disponíveis: ${BOLD}${PLUGIN_COUNT}${NC}"
 
     # Quick syntax check
-    if $PYTHON_CMD -c "import py_compile; py_compile.compile('cascavel.py', doraise=True)" 2>/dev/null; then
-        info "cascavel.py — sintaxe OK"
+    if $PYTHON_CMD -m compileall -q cascavel 2>/dev/null; then
+        info "pacote cascavel — sintaxe OK"
     else
-        warn "cascavel.py — erro de sintaxe"
+        warn "pacote cascavel — erro de sintaxe"
     fi
 
     # Log summary
@@ -1168,14 +1168,14 @@ verify_installation() {
 setup_global_command() {
     step "Configurando comando global 'cascavel'..."
 
-    if [ -f "cascavel.py" ]; then
-        dimlog "Executando cascavel.py --install-global para configurar comando universal..."
+    if [ -f "cascavel/__main__.py" ]; then
+        dimlog "Executando python -m cascavel --install-global para configurar comando universal..."
         # O script python cuidará do pip install --break-system-packages e das configurações ~/.bashrc
-        $PYTHON_CMD cascavel.py --install-global || {
+        $PYTHON_CMD -m cascavel --install-global || {
             warn "Instalação global do Python falhou."
         }
     else
-        warn "cascavel.py não encontrado. Pulando instalação global."
+        warn "pacote cascavel não encontrado. Pulando instalação global."
     fi
 
     # Re-verificar
@@ -1200,7 +1200,7 @@ post_install_health_check() {
     _health_warn(){ ((HEALTH_WARN++)) || true; echo -e "    ${YELLOW}⚠${NC} $1"; }
 
     # 1. Core files exist
-    for f in cascavel.py requirements.txt install.sh pyproject.toml; do
+    for f in cascavel/__main__.py requirements.txt install.sh pyproject.toml; do
         if [ -f "$f" ]; then
             _health_ok "$f existe"
         else
@@ -1247,11 +1247,11 @@ post_install_health_check() {
         fi
     done
 
-    # 6. cascavel.py syntax check
-    if $PYTHON_CMD -c "import py_compile; py_compile.compile('cascavel.py', doraise=True)" 2>/dev/null; then
-        _health_ok "cascavel.py sintaxe válida"
+    # 6. pacote cascavel syntax check
+    if $PYTHON_CMD -m compileall -q cascavel 2>/dev/null; then
+        _health_ok "pacote cascavel sintaxe válida"
     else
-        _health_fail "cascavel.py ERRO DE SINTAXE"
+        _health_fail "pacote cascavel ERRO DE SINTAXE"
     fi
 
     # 7. Plugins count and syntax
@@ -1372,8 +1372,8 @@ first_run_wizard() {
         # Tenta executar via comando global ou diretamente
         if command -v cascavel &>/dev/null; then
             cascavel "$TARGET_INPUT" || warn "Scan finalizado com avisos."
-        elif [ -f "cascavel.py" ]; then
-            $PYTHON_CMD cascavel.py -t "$TARGET_INPUT" || warn "Scan finalizado com avisos."
+        elif [ -f "cascavel/__main__.py" ]; then
+            $PYTHON_CMD -m cascavel -t "$TARGET_INPUT" || warn "Scan finalizado com avisos."
         else
             warn "Não foi possível iniciar o scan. Execute manualmente após reiniciar o terminal."
         fi
