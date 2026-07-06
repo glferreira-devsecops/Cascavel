@@ -24,8 +24,8 @@ def check_spring_boot_actuator(url: str, session: requests.Session) -> bool:
         response = session.get(f"{url}/actuator/env", timeout=5, verify=False)
         if response.status_code == 200 and "applicationConfig" in response.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -35,8 +35,8 @@ def check_tomcat_manager(url: str, session: requests.Session) -> bool:
         response = session.get(f"{url}/manager/html", timeout=5, verify=False)
         if response.status_code in [200, 401] and "Tomcat" in response.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 

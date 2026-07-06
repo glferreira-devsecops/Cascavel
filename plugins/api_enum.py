@@ -1,7 +1,10 @@
 # plugins/api_enum.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 DOC_PATHS = [
     "/swagger.json",
     "/swagger/v1/swagger.json",
@@ -82,8 +85,8 @@ def _classify_doc(path, resp):
             )
             if sec:
                 entry["auth_schemes"] = list(sec.keys())
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     elif "actuator" in path:
         entry["tipo"] = "SPRING_ACTUATOR"
         if "env" in path or "configprops" in path:
@@ -116,8 +119,8 @@ def _enumerate_methods(target, prefix):
         allow = resp.headers.get("Allow", "")
         if allow:
             methods_accepted = [m.strip() for m in allow.split(",")]
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return methods_accepted
 
 
@@ -147,7 +150,7 @@ def _test_method_override(target, prefix):
                         "descricao": f"HTTP method override via {header} — DELETE simulado!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -173,7 +176,7 @@ def run(target, ip, open_ports, banners, context=None):
             if resp.status_code == 200 and len(resp.text) > 50:
                 entry = _classify_doc(path, resp)
                 resultado["docs_expostas"].append(entry)
-        except Exception:
+        except Exception as _exc:
             continue
 
     # API endpoint enumeration
@@ -189,7 +192,7 @@ def run(target, ip, open_ports, banners, context=None):
 
                 # Method override
                 resultado["vulns"].extend(_test_method_override(target, prefix))
-        except Exception:
+        except Exception as _exc:
             continue
 
     return {

@@ -1,8 +1,10 @@
 # plugins/cicd_exposure.py — Cascavel 2026 Intelligence
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 CICD_FILES = {
     # GitHub Actions
     "/.github/workflows": ("GITHUB_ACTIONS_DIR", "Diretório de workflows GH Actions"),
@@ -95,7 +97,7 @@ def _check_cicd_files(target):
                     vuln["severidade"] = "CRITICO"
                     vuln["descricao"] += f" — SECRETS: {', '.join(has_secrets[:3])}!"
                 vulns.append(vuln)
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -133,7 +135,7 @@ def _check_jenkins(target):
                         ),
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -154,8 +156,8 @@ def _check_github_actions_artifacts(target):
                         "descricao": f"{len(yml_files)} workflows GH Actions listáveis!",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 

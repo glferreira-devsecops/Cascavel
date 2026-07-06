@@ -27,6 +27,7 @@ SPDX-License-Identifier: MIT
 import datetime
 import html as html_mod
 import io
+import logging
 import os
 from typing import Any
 
@@ -36,6 +37,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
+
+logger = logging.getLogger(__name__)
+
 from reportlab.platypus import (
     HRFlowable,
     Image,
@@ -693,8 +697,8 @@ def generate_pdf_report(
             logo.hAlign = "CENTER"
             story.append(logo)
             story.append(Spacer(1, 8 * mm))
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     story.append(Paragraph("CASCAVEL", styles["CoverTitle"]))
     story.append(Paragraph("Advanced Security Framework", styles["CoverSub"]))
@@ -763,8 +767,8 @@ def generate_pdf_report(
                     styles["Link"],
                 )
             )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     story.append(PageBreak())
 

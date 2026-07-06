@@ -1,7 +1,10 @@
 # plugins/host_header_injection.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 PAGES = [
     "/",
     "/login",
@@ -23,8 +26,8 @@ def _verify_waf_blind_reflection(target, page, header_name):
         resp = requests.get(url, headers={header_name: test_str}, timeout=5)
         if test_str in resp.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -33,7 +36,7 @@ def _get_baseline_len(target, page):
     try:
         resp = requests.get(f"http://{target}{page}", timeout=5)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -60,8 +63,8 @@ def _test_host_reflection(target, page):
                             "descricao": "Host injetado refletido na resposta — password reset poisoning!",
                         }
                     )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # X-Forwarded-Host
     try:
@@ -78,8 +81,8 @@ def _test_host_reflection(target, page):
                             "descricao": "X-Forwarded-Host refletido — password reset poisoning via proxy!",
                         }
                     )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -120,10 +123,10 @@ def _test_host_routing_bypass(target, page):
                         }
                     )
                     break
-            except Exception:
+            except Exception as _exc:
                 continue
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -142,8 +145,8 @@ def _test_host_crlf(target, page):
                 "severidade": "CRITICO",
                 "descricao": "CRLF injection via Host header — header injection!",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -164,8 +167,8 @@ def _test_absolute_url(target, page):
                 "severidade": "ALTO",
                 "descricao": "Host header alterou Location redirect — open redirect via host!",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -185,8 +188,8 @@ def _test_duplicate_host(target, page):
                 "severidade": "ALTO",
                 "descricao": "Duplicate Host header — servidor usa XFH sobre Host!",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -218,7 +221,7 @@ def _test_password_reset_poisoning(target):
                             "descricao": "Password reset link contém Host injetado — account takeover!",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

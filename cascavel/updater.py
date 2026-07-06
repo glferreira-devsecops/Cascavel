@@ -48,7 +48,7 @@ def check_for_update(quiet: bool = False) -> str | None:
             if not quiet:
                 console.print(f"  [{S_GREEN}]✓ Cascavel v{local_ver} está atualizado.[/]")
             return None
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -165,5 +165,5 @@ def _configure_path_export(scripts_dir: str) -> None:
         with open(rc_file, "a") as f:
             f.write(f"\n# Cascavel global install\n{path_export}\n")
         console.print(f"  [{S_DIM}]Adicionado PATH em {rc_file}. Execute: source {rc_file}[/]")
-    except Exception:
+    except Exception as _exc:
         console.print(f"  [{S_YELLOW}]⚠ Adicione manualmente: {path_export}[/]")

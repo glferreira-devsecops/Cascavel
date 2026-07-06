@@ -1,9 +1,11 @@
 # plugins/nosql_scanner.py — Cascavel 2026 Intelligence
 import json as _json
+import logging
 import time
 
 import requests
 
+logger = logging.getLogger(__name__)
 ENDPOINTS = [
     "/api/login",
     "/login",
@@ -113,7 +115,7 @@ def _get_baseline_latency(target):
             start = time.time()
             requests.get(f"http://{target}/", timeout=8)
             latencies.append(time.time() - start)
-        except Exception:
+        except Exception as _exc:
             continue
     if latencies:
         return sum(latencies) / len(latencies)
@@ -125,7 +127,7 @@ def _get_404_baseline(target):
     try:
         resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -164,7 +166,7 @@ def _test_auth_bypass(target, endpoint, baseline_len):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -193,7 +195,7 @@ def _test_get_injection(target, endpoint, baseline_len):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -226,7 +228,7 @@ def _test_where_injection(target, endpoint, baseline_latency, baseline_len):
                         "diff_bytes": diff_from_baseline,
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Time-based SSJI
@@ -268,7 +270,7 @@ def _test_where_injection(target, endpoint, baseline_latency, baseline_len):
                     }
                 )
             break
-        except Exception:
+        except Exception as _exc:
             continue
 
     return vulns
@@ -339,8 +341,8 @@ def _test_blind_boolean(target, endpoint):
                 "descricao": "Blind boolean NoSQL injection detectada!",
                 "username_prefix_extraido": extracted if extracted else "não extraído",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -379,7 +381,7 @@ def _test_content_type_bypass(target, endpoint, baseline_len):
                     "descricao": f"NoSQL injection via Content-Type bypass ({ct})!",
                     "diff_bytes": diff_from_baseline,
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 

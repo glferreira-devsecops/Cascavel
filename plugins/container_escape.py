@@ -1,26 +1,12 @@
 # plugins/container_escape.py — Cascavel 2026 Intelligence
+import logging
 import os
 import re
 import subprocess
 
 import requests
 
-
-def _run_cmd(args: list[str]) -> str:
-    """Run a static command without a shell; return stdout (stderr suppressed)."""
-    try:
-        result = subprocess.run(
-            args,
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-        return result.stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        return ""
-
-
+logger = logging.getLogger(__name__)
 # ──────────── CONTAINER DETECTION INDICATORS ────────────
 CONTAINER_INDICATORS = {
     "/.dockerenv": "Docker container flag file",
@@ -162,7 +148,7 @@ def _detect_container():
         pass
 
     # Check hostname pattern (containers often have random hex hostnames)
-    hostname = _run_cmd(["hostname"])
+    hostname = subprocess.run(["hostname"], capture_output=True, text=True, timeout=5).stdout.strip()
     if hostname and len(hostname) == 12 and all(c in "0123456789abcdef" for c in hostname):
         evidence.append(f"Hostname '{hostname}' parece container ID")
 
@@ -186,7 +172,7 @@ def _check_privileged():
                         "remediao": "Remover --privileged e usar capabilities granulares.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for all capabilities
@@ -267,10 +253,10 @@ def _check_docker_sock():
                                     "remediao": "Remover montagem do docker.sock imediatamente.",
                                 }
                             )
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
 
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -293,12 +279,12 @@ def _check_cve_2024_21626():
                     "remediao": "Atualizar runc >= 1.1.12 e container runtimes.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check runc version
     try:
-        runc_version = _run_cmd(["runc", "--version"])
+        runc_version = subprocess.run(["runc", "--version"], capture_output=True, text=True, timeout=5).stdout.strip()
         if runc_version:
             version_match = re.search(r"version\s+(\d+\.\d+\.\d+)", runc_version)
             if version_match:
@@ -319,8 +305,8 @@ def _check_cve_2024_21626():
                             "remediao": "Atualizar runc para >= 1.1.12.",
                         }
                     )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for /proc/self/fd directory access
     try:
@@ -345,8 +331,8 @@ def _check_cve_2024_21626():
                             break
                 except (OSError, PermissionError):
                     continue
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -396,8 +382,8 @@ def _check_namespace_access():
                     "remediao": "Remover --pid=host e usar PID namespace isolado.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -435,10 +421,10 @@ def _check_cgroup_escape():
                             current = f.read().strip()
                         if current:
                             vulns[-1]["valor_atual"] = current
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
 
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check /proc/sysrq-trigger
@@ -452,8 +438,8 @@ def _check_cgroup_escape():
                     "remediao": "Remover --privileged ou dropar SYS_RAWIO capability.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check /proc/sys writability
     writable_sysctl = []
@@ -466,7 +452,7 @@ def _check_cgroup_escape():
         try:
             if os.access(path, os.W_OK):
                 writable_sysctl.append(path)
-        except Exception:
+        except Exception as _exc:
             continue
 
     if writable_sysctl:
@@ -543,7 +529,7 @@ def _check_security_context():
 
     # SELinux
     try:
-        selinux_status = _run_cmd(["getenforce"])
+        selinux_status = subprocess.run(["getenforce"], capture_output=True, text=True, timeout=5).stdout.strip()
         if selinux_status == "Disabled":
             vulns.append(
                 {
@@ -553,8 +539,8 @@ def _check_security_context():
                     "remediao": "Habilitar SELinux em enforcing mode.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns
 
@@ -672,7 +658,7 @@ def _check_remote_container_escape(target):
                         "remediao": "Restringir acesso à API do container runtime.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for kubelet anonymous auth
@@ -687,7 +673,7 @@ def _check_remote_container_escape(target):
                     "remediao": "Habilitar --anonymous-auth=false no kubelet.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return vulns

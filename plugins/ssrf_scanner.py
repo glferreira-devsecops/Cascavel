@@ -1,9 +1,11 @@
 # plugins/ssrf_scanner.py — Cascavel 2026 Intelligence
+import logging
 import time
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "url",
     "link",
@@ -163,7 +165,7 @@ def _get_404_baseline(target):
     try:
         resp = requests.get(f"http://{target}/cascavel_invalid_page_12345", timeout=5)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -173,7 +175,7 @@ def _get_baseline_latency(target):
         start = time.time()
         requests.get(f"http://{target}/?url=http://non_existent_cascavel_123.local/", timeout=5)
         return time.time() - start
-    except Exception:
+    except Exception as _exc:
         return 0.5
 
 
@@ -215,7 +217,7 @@ def _test_cloud_metadata(target, param):
                             }
                         )
                         break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -241,7 +243,7 @@ def _test_localhost_bypass(target, param):
                         }
                     )
                     break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -277,7 +279,7 @@ def _test_internal_services(target, param, baseline_latency):
                         "severidade": "MEDIO",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -301,7 +303,7 @@ def _test_protocol_smuggling(target, param):
                             "amostra": resp.text[:200],
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -316,7 +318,7 @@ def _test_post_ssrf(target, param):
             headers={"Content-Type": "application/json"},
         )
         baseline_len = len(baseline.text)
-    except Exception:
+    except Exception as _exc:
         baseline_len = 0
 
     for internal_url, label, indicators in CLOUD_METADATA[:3]:
@@ -340,7 +342,7 @@ def _test_post_ssrf(target, param):
                         "alvo": label,
                         "severidade": "CRITICO",
                     }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 

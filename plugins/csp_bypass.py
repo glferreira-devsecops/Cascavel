@@ -1,8 +1,10 @@
 # plugins/csp_bypass.py — Cascavel 2026 Intelligence
+import logging
 import re
 
 import requests
 
+logger = logging.getLogger(__name__)
 BYPASS_INDICATORS = {
     "'unsafe-inline'": (
         "CSP_UNSAFE_INLINE",
@@ -63,7 +65,7 @@ def _parse_csp(target):
                 "csp_ro": csp_ro,
                 "meta_csp": meta_csp[0] if meta_csp else "",
             }
-        except Exception:
+        except Exception as _exc:
             continue
     return results
 

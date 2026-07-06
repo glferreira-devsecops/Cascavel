@@ -1,6 +1,9 @@
 # plugins/docker_exposure.py — Cascavel 2026 Intelligence
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 DOCKER_PATHS = {
     "/v2/": ("REGISTRY_ROOT", "ALTO"),
     "/v2/_catalog": ("REGISTRY_CATALOG", "CRITICO"),
@@ -64,8 +67,8 @@ def _check_docker_api(target, port):
                                     ]:
                                         vuln["dangerous_mount"] = m["Source"]
                                         vuln["descricao"] += f" Mount perigoso: {m['Source']}"
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
 
                 # Analyze secrets
                 if "secrets" in path:
@@ -74,11 +77,11 @@ def _check_docker_api(target, port):
                         if isinstance(secrets, list) and len(secrets) > 0:
                             vuln["secrets_count"] = len(secrets)
                             vuln["descricao"] = f"{len(secrets)} Docker secrets expostos!"
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
 
                 vulns.append(vuln)
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -111,10 +114,10 @@ def _check_registry(target):
                             )
                             if tags_resp.status_code == 200:
                                 vuln["tags_amostra"] = tags_resp.json().get("tags", [])[:10]
-                    except Exception:
-                        pass
+                    except Exception as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
                     vulns.append(vuln)
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -148,7 +151,7 @@ def _check_compose_files(target):
                         "descricao": f"Arquivo {f} exposto — infraestrutura mapeável!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

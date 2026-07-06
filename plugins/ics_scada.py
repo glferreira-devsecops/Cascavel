@@ -6,10 +6,12 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import socket
 import struct
 from typing import Any
 
+logger = logging.getLogger(__name__)
 try:
     import requests
 
@@ -91,10 +93,10 @@ def _check_modbus(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Segmentar rede OT/IT. Implementar firewall industrial entre zonas.",
                     }
                 )
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        pass
-    except Exception:
-        pass
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -139,10 +141,10 @@ def _check_dnp3(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Restringir acesso DNP3 via firewall industrial.",
                     }
                 )
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        pass
-    except Exception:
-        pass
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -198,10 +200,10 @@ def _check_bacnet(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar Who-Is responses em dispositivos não necessários.",
                     }
                 )
-    except (TimeoutError, OSError):
-        pass
-    except Exception:
-        pass
+    except (TimeoutError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -314,12 +316,12 @@ def _check_siemens_s7(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                                 "correcao": "Implementar S7 TLS (porta 102 com CP). Isolar rede OT.",
                             }
                         )
-                except Exception:
-                    pass
-    except (TimeoutError, ConnectionRefusedError, OSError):
-        pass
-    except Exception:
-        pass
+                except Exception as _exc:
+                    logger.debug("Non-critical error: %s", _exc)
+    except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -371,8 +373,8 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                             "correcao": "Configurar SecurityMode=SignAndEncrypt. Nunca usar None em produção.",
                         }
                     )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
         # Check raw socket for Binary TCP protocol
         try:
@@ -404,10 +406,10 @@ def _check_opcua(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Restringir acesso OPC UA via rede OT isolada.",
                     }
                 )
-        except (TimeoutError, ConnectionRefusedError, OSError):
-            pass
-        except Exception:
-            pass
+        except (TimeoutError, ConnectionRefusedError, OSError) as _exc:
+            logger.debug("Non-critical error: %s", _exc)
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

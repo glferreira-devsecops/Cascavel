@@ -6,9 +6,12 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, ports, banners, context=None):
@@ -67,7 +70,7 @@ def run(target, ip, ports, banners, context=None):
                 "payload": bomb_payload["query"],
             }
             break
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     return finding

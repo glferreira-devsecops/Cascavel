@@ -1,7 +1,10 @@
 # plugins/crlf_scanner.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "url",
     "redirect",
@@ -81,7 +84,7 @@ def _verify_waf_blind_reflection(target, header_name):
         if junk_value.lower() in resp.text.lower() or junk_value.lower() in resp_headers_str:
             return True
         return False
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -95,7 +98,7 @@ def _verify_waf_blind_reflection_param(target, param):
         if junk_value.lower() in resp.text.lower() or junk_value.lower() in resp_headers_str:
             return True
         return False
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -104,7 +107,7 @@ def _get_baseline_response(url, headers=None):
     try:
         resp = requests.get(url, headers=headers or {}, timeout=6, allow_redirects=False)
         return resp.text, resp.headers
-    except Exception:
+    except Exception as _exc:
         return "", {}
 
 
@@ -135,7 +138,7 @@ def _test_crlf_get(target, param, payload, method):
     try:
         resp = requests.get(url, timeout=6, allow_redirects=False)
         return _analyze_response(resp, param, method, baseline_text, baseline_headers)
-    except Exception:
+    except Exception as _exc:
         return []
 
 
@@ -158,7 +161,7 @@ def _test_crlf_header(target, payload, method):
             vulns.extend(found)
             if found:
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -181,7 +184,7 @@ def _test_crlf_path(target, payload, method):
     try:
         resp = requests.get(f"http://{target}/{payload}", timeout=6, allow_redirects=False)
         return _analyze_response(resp, "URL_PATH", method, baseline_text, baseline_headers)
-    except Exception:
+    except Exception as _exc:
         return []
 
 

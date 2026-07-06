@@ -1,8 +1,10 @@
 # plugins/grpc_scanner.py
+import logging
 import socket
 
 import requests
 
+logger = logging.getLogger(__name__)
 GRPC_PORTS = [50051, 50052, 9090, 443]
 
 GRPC_REFLECTION_PAYLOAD = (
@@ -20,7 +22,7 @@ def _check_grpc_port(target, port):
         result = sock.connect_ex((target, port))
         sock.close()
         return result == 0
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -47,8 +49,8 @@ def _check_grpc_web(target, port):
                     "descricao": f"gRPC-Web habilitado em :{port} — service enumeration possível!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -68,7 +70,7 @@ def _check_health_endpoint(target, port):
                         "descricao": f"gRPC health endpoint exposto em :{port}{path}",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

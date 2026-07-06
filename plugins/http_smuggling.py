@@ -1,7 +1,9 @@
 # plugins/http_smuggling.py — Cascavel 2026 Intelligence
+import logging
 import socket
 import time
 
+logger = logging.getLogger(__name__)
 # ──────────── SMUGGLING PAYLOADS ────────────
 SMUGGLE_PAYLOADS = {
     "CL.TE": ("POST / HTTP/1.1\r\nHost: {target}\r\nContent-Length: 6\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nG"),
@@ -73,7 +75,7 @@ def _send_raw(target, payload, port=80, timeout=10):
         return response
     except TimeoutError:
         return "TIMEOUT"
-    except Exception:
+    except Exception as _exc:
         return ""
 
 

@@ -6,10 +6,13 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import re
 import shutil
 import subprocess
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _check_bluetooth_adapter() -> dict[str, Any] | None:
@@ -19,15 +22,15 @@ def _check_bluetooth_adapter() -> dict[str, Any] | None:
             result = subprocess.run(["hciconfig"], capture_output=True, text=True, timeout=10)
             if "hci" in result.stdout.lower():
                 return {"available": True, "tool": "hciconfig", "output": result.stdout[:500]}
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     if shutil.which("bluetoothctl"):
         try:
             result = subprocess.run(["bluetoothctl", "show"], capture_output=True, text=True, timeout=10)
             if "controller" in result.stdout.lower():
                 return {"available": True, "tool": "bluetoothctl", "output": result.stdout[:500]}
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -68,8 +71,8 @@ def _check_bluetooth_services(target: str) -> list[dict[str, Any]]:
                         "correcao": f"Desabilitar o serviço '{service}' se não necessário. Usar whitelist de dispositivos.",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -119,8 +122,8 @@ def _check_blueborne(target: str) -> list[dict[str, Any]]:
                     "correcao": "Desabilitar modo discoverable. Usar pairing manual.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -146,8 +149,8 @@ def _check_ble_misconfig(target: str) -> list[dict[str, Any]]:
                     "correcao": "Habilitar Resolvable Private Address (RPA) no dispositivo BLE.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for BLE GATT services exposed
     if shutil.which("gatttool"):
@@ -168,8 +171,8 @@ def _check_ble_misconfig(target: str) -> list[dict[str, Any]]:
                             "correcao": "Implementar autenticação BLE para características graváveis.",
                         }
                     )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -201,8 +204,8 @@ def _check_replay_attack() -> list[dict[str, Any]]:
                         "correcao": "Habilitar SSP para proteção contra MITM durante pareamento.",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -243,8 +246,8 @@ def _check_knob_vulnerability(target: str) -> list[dict[str, Any]]:
                     "correcao": "Verificar se o dispositivo suporta encryption key size mínimo de 16 bytes.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

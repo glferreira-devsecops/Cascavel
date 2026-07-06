@@ -1,7 +1,10 @@
 # plugins/api_versioning.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 API_PREFIXES = [
     "/api",
     "/v1",
@@ -96,7 +99,7 @@ def _enumerate_versions(target):
                         }
                     )
 
-        except Exception:
+        except Exception as _exc:
             continue
 
     if len(active_versions) > 3:
@@ -133,7 +136,7 @@ def _check_header_versioning(target):
                         "descricao": f"API aceita versionamento via header {header}",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -151,7 +154,7 @@ def _check_old_version_vulns(target, active_versions):
             resp = requests.get(f"http://{target}{ver['prefix']}/users", timeout=5)
             if resp.status_code == 200:
                 responses[ver["prefix"]] = len(resp.text)
-        except Exception:
+        except Exception as _exc:
             continue
 
     if responses:

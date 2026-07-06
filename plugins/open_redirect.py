@@ -1,9 +1,11 @@
 # plugins/open_redirect.py — Cascavel 2026 Intelligence
 
+import logging
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "url",
     "redirect",
@@ -78,8 +80,8 @@ def _verify_waf_blind_reflection(target, param):
         resp = requests.get(url, timeout=5, allow_redirects=False)
         if junk in resp.text:
             return True
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return False
 
 
@@ -97,15 +99,14 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
             is_evil = False
             if location.startswith("javascript:"):
                 is_evil = True
-            elif "evil.com" in location:
+            else:
                 try:
                     parsed = urllib.parse.urlparse(location)
-                    if parsed.netloc and "evil.com" in parsed.netloc:
+                    host = parsed.netloc or parsed.path.split("/")[0]
+                    if host and (host == "evil.com" or host.endswith(".evil.com")):
                         is_evil = True
-                    elif not parsed.scheme and location.startswith("//evil.com"):
-                        is_evil = True
-                except Exception:
-                    is_evil = "evil.com" in location
+                except Exception as _exc:
+                    logger.debug("URL parse error: %s", _exc)
 
             if is_evil:
                 sev = "CRITICO" if "javascript:" in location else "ALTO"
@@ -137,8 +138,8 @@ def _test_get_redirect(target, param, payload, method, reflects_blindly):
                     "parametro": param,
                     "severidade": "MEDIO",
                 }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -169,7 +170,7 @@ def _test_post_redirect(target):
                             "descricao": "Open redirect via POST body redirect parameter!",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -194,8 +195,8 @@ def _test_header_redirect(target):
                         "descricao": "Open redirect via Referer header!",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -221,7 +222,7 @@ def _test_path_redirect(target):
                             "descricao": "Open redirect via URL path!",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

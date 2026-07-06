@@ -1,9 +1,11 @@
 # plugins/sqli_scanner.py — Cascavel 2026 Intelligence
+import logging
 import time
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "id",
     "user",
@@ -163,7 +165,7 @@ def _get_baseline_latency(target):
             start = time.time()
             requests.get(f"http://{target}/", timeout=8)
             latencies.append(time.time() - start)
-        except Exception:
+        except Exception as _exc:
             continue
     if latencies:
         return sum(latencies) / len(latencies)
@@ -175,7 +177,7 @@ def _get_404_baseline(target):
     try:
         resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -256,7 +258,7 @@ def _test_error_and_union(target, param, baseline_len):
                 findings.append(vuln)
                 if "CRITICO" in vuln.get("severidade", ""):
                     break
-        except Exception:
+        except Exception as _exc:
             continue
     return findings
 
@@ -286,7 +288,7 @@ def _test_time_based(target, param, baseline_latency):
                     "severidade": "ALTO",
                     "timeout": True,
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -299,7 +301,7 @@ def _test_boolean_based(target, param):
         r_true = requests.get(f"http://{target}/?{param}=' AND 1=1--", timeout=6)
         r_false = requests.get(f"http://{target}/?{param}=' AND 1=2--", timeout=6)
         return _check_boolean_diff(len(r_true.text), len(r_false.text), len(r_base.text), param)
-    except Exception:
+    except Exception as _exc:
         return None
 
 
@@ -316,7 +318,7 @@ def _test_post_injection(target, param, baseline_len):
             vuln = _check_error_based(resp.text, f"POST_{method}", param, baseline_len)
             if vuln:
                 return vuln
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 

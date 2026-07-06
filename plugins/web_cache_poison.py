@@ -1,10 +1,12 @@
 # plugins/web_cache_poison.py — Cascavel 2026 Intelligence
+import logging
 import random
 import string
 import time
 
 import requests
 
+logger = logging.getLogger(__name__)
 CANARY = "cascavel-cache-" + "".join(random.choices(string.ascii_lowercase, k=6))
 PAGES = [
     "/",
@@ -50,7 +52,7 @@ def _verify_waf_blind_reflection(target, page):
         if junk_value in resp.text or junk_value in str(resp.headers):
             return True
         return False
-    except Exception:
+    except Exception as _exc:
         return False
 
 
@@ -96,7 +98,7 @@ def _test_unkeyed_reflection(target, page):
                         }
                     )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -131,7 +133,7 @@ def _test_cache_deception(target):
                             "descricao": "Dynamic content cacheado com extensão estática — WCD!",
                         }
                     )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -164,8 +166,8 @@ def _test_fat_get(target, page):
                 "severidade": "ALTO",
                 "descricao": "GET com body é processado — Fat GET cache poisoning possível!",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -187,8 +189,8 @@ def _test_parameter_cloaking(target, page):
                 "severidade": "ALTO",
                 "descricao": "Cache ignorou parâmetro após semicolon — parameter cloaking!",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -239,8 +241,8 @@ def _analyze_cache_headers(target, page):
                     "descricao": f"CDN cache detected: X-Cache={x_cache}, CF-Cache={cf_cache}",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 

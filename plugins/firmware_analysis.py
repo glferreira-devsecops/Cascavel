@@ -430,10 +430,14 @@ def _check_debug_interfaces(
     target: str,
     base_url: str,
     session: requests.Session,
-    ports: list[int],
-    banners: dict[str, str],
+    ports: list[int] | None = None,
+    banners: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Detect exposed debug interfaces (JTAG, UART, serial, etc.)."""
+    if ports is None:
+        ports = []
+    if banners is None:
+        banners = {}
     findings: list[dict[str, Any]] = []
 
     for path in DEBUG_INTERFACE_PATHS:

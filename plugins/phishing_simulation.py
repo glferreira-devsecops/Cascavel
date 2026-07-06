@@ -6,10 +6,13 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 import re
 import shlex
 import subprocess
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _query_dns_txt(domain: str, prefix: str = "") -> str:
@@ -19,7 +22,7 @@ def _query_dns_txt(domain: str, prefix: str = "") -> str:
     try:
         result = subprocess.run(["dig", "+short", "TXT", safe], capture_output=True, text=True, timeout=10)
         return result.stdout.strip()
-    except Exception:
+    except Exception as _exc:
         return ""
 
 
@@ -30,7 +33,7 @@ def _query_dns_mx(domain: str) -> str:
             ["dig", "+short", "MX", shlex.quote(domain)], capture_output=True, text=True, timeout=10
         )
         return result.stdout.strip()
-    except Exception:
+    except Exception as _exc:
         return ""
 
 
@@ -184,7 +187,7 @@ def _check_credential_harvesting(target: str) -> list[dict[str, Any]]:
                                 "correcao": "Implementar CSRF token, origin validation, e alertas de domínio similar.",
                             }
                         )
-            except Exception:
+            except Exception as _exc:
                 continue
     except ImportError:
         pass
@@ -224,7 +227,7 @@ def _check_oauth_phishing(target: str) -> list[dict[str, Any]]:
                                 "correcao": "Validar redirect_uri contra whitelist registrada.",
                             }
                         )
-            except Exception:
+            except Exception as _exc:
                 continue
     except ImportError:
         pass
@@ -252,7 +255,7 @@ def _check_mfa_bypass(target: str) -> list[dict[str, Any]]:
                             "correcao": "Garantir que MFA é enforced em todos os endpoints, não apenas no UI.",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
         # Check for MFA rate limiting
         for path in session_paths:
@@ -272,7 +275,7 @@ def _check_mfa_bypass(target: str) -> list[dict[str, Any]]:
                             "correcao": "Implementar rate limiting (max 5 tentativas) e lockout após falhas consecutivas.",
                         }
                     )
-            except Exception:
+            except Exception as _exc:
                 continue
     except ImportError:
         pass

@@ -1,8 +1,10 @@
 # plugins/blind_rce.py — Cascavel 2026 Intelligence
+import logging
 import time
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "cmd",
     "exec",
@@ -91,7 +93,7 @@ def _get_baseline_latency(target):
             latencies.append(time.time() - start)
         except requests.exceptions.Timeout:
             return "TIMEOUT"
-        except Exception:
+        except Exception as _exc:
             continue
     if not latencies:
         return 2.0
@@ -132,7 +134,7 @@ def _test_sleep(target, param, payload, method, threshold, baseline):
                     "descricao": f"Timeout após injection de {method} — possível RCE!",
                 }
             return None
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -149,7 +151,7 @@ def _inject_oob(target, param):
                     requests.post(f"http://{target}/", data={param: payload}, timeout=5)
                 injected.append({"tecnica": method, "http": http_method, "payload": payload[:60]})
                 break
-            except Exception:
+            except Exception as _exc:
                 continue
     if injected:
         return {
@@ -206,7 +208,7 @@ def _test_header_blind(target):
                     "severidade": "ALTO",
                 }
             return None
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 

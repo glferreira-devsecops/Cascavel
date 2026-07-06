@@ -1,8 +1,10 @@
 # plugins/lfi_scanner.py — Cascavel 2026 Intelligence
+import logging
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "file",
     "page",
@@ -146,7 +148,7 @@ def _get_404_baseline(target):
     try:
         resp = requests.get(url, timeout=6)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -208,7 +210,7 @@ def _test_lfi_get(target, param, payloads, baseline_len):
                     "descricao": desc,
                     "amostra": resp.text[:200],
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -230,7 +232,7 @@ def _test_lfi_post(target, param, baseline_len):
                     "metodo": method,
                     "severidade": "ALTO",
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -261,7 +263,7 @@ def _test_path_in_url(target, baseline_len):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 

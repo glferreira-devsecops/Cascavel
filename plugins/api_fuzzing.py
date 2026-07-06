@@ -1,8 +1,10 @@
 # plugins/api_fuzzing.py — Cascavel 2026 Intelligence
 import json
+import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 # REST API discovery paths
 REST_PATHS = [
     "/api",
@@ -87,7 +89,7 @@ AUTH_BYPASS = [
     ({"Authorization": "Bearer undefined"}, "undefined_token"),
     ({"Authorization": "Bearer admin"}, "admin_token"),
     ({"Authorization": "Bearer test"}, "test_token"),
-    ({"Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJhZG1pbiJ9."}, "none_alg_jwt"),
+    ({"Authorization": "Bearer <NONE_ALG_JWT_PLACEHOLDER>"}, "none_alg_jwt"),
     ({"X-Api-Key": "admin"}, "admin_api_key"),
     ({"X-Api-Key": "test"}, "test_api_key"),
     ({"X-Forwarded-For": "127.0.0.1"}, "ip_spoof"),
@@ -138,7 +140,7 @@ def _discover_rest_endpoints(target):
                                 finding["quantidade_items"] = len(data)
                             elif isinstance(data, dict):
                                 finding["chaves"] = list(data.keys())[:10]
-                        except Exception:
+                        except Exception as _exc:
                             finding["tipo_resposta"] = "TEXT"
 
                         if any(kw in body for kw in ["admin", "config", "internal", "debug"]):
@@ -161,7 +163,7 @@ def _discover_rest_endpoints(target):
 
                     findings.append(finding)
                     break  # Found on one scheme, skip the other
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings
@@ -219,9 +221,9 @@ def _test_graphql_introspection(target):
                                 }
                             )
                     except json.JSONDecodeError:
-                        pass
+                        logger.debug("Non-critical error suppressed")
                     break
-            except Exception:
+            except Exception as _exc:
                 continue
 
     # Test other GraphQL queries
@@ -249,7 +251,7 @@ def _test_graphql_introspection(target):
                                     "remediacao": "Implementar query depth limiting. Restringir campos sensíveis.",
                                 }
                             )
-                except Exception:
+                except Exception as _exc:
                     continue
             break
 
@@ -295,11 +297,11 @@ def _test_grpc_enumeration(target):
                             if health_resp.status_code == 200:
                                 finding["health_check"] = True
                                 finding["severidade"] = "MEDIO"
-                        except Exception:
-                            pass
+                        except Exception as _exc:
+                            logger.debug("Non-critical error: %s", _exc)
 
                     findings.append(finding)
-            except Exception:
+            except Exception as _exc:
                 continue
 
     return findings
@@ -317,7 +319,7 @@ def _test_auth_bypass(target):
             resp = requests.get(f"https://{clean}{path}", timeout=5, verify=False)
             if resp.status_code == 401:
                 protected_paths.append(path)
-        except Exception:
+        except Exception as _exc:
             continue
 
     if not protected_paths:
@@ -345,7 +347,7 @@ def _test_auth_bypass(target):
                         "remediacao": "Validar tokens server-side. Não confiar em headers customizados para autorização.",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -361,7 +363,7 @@ def _test_rate_limiting(target):
     for path in test_paths:
         try:
             responses = []
-            for _ in range(20):  # Send 20 rapid requests
+            for _i in range(20):  # Send 20 rapid requests
                 resp = requests.get(f"https://{clean}{path}", timeout=3, verify=False)
                 responses.append(resp.status_code)
                 if resp.status_code == 429:
@@ -380,19 +382,17 @@ def _test_rate_limiting(target):
                 )
             else:
                 limit_index = responses.index(429)
-                retry_after = resp.headers.get("Retry-After", "N/A")
                 findings.append(
                     {
                         "tipo": "RATE_LIMIT_ACTIVE",
                         "path": path,
                         "requests_ate_bloqueio": limit_index + 1,
-                        "retry_after": retry_after,
                         "severidade": "INFO",
                         "descricao": f"Rate limiting ativo em {path} — bloqueio após {limit_index + 1} requests",
                     }
                 )
             break  # Test one path only
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings
@@ -457,11 +457,11 @@ def _test_mass_assignment(target):
                                             }
                                         )
                                         break
-                            except Exception:
-                                pass
-                    except Exception:
+                            except Exception as _exc:
+                                logger.debug("Non-critical error: %s", _exc)
+                    except Exception as _exc:
                         continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     return findings

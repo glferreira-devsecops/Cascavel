@@ -6,7 +6,11 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, ports, banners, context=None):
@@ -46,7 +50,7 @@ def run(target, ip, ports, banners, context=None):
                     "evidence": resp.text[:100] + "...",  # Truncated
                 }
                 break
-        except Exception:
-            pass  # Silent failure to avoid noise in scanner
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)  # Silent failure to avoid noise in scanner
 
     return finding

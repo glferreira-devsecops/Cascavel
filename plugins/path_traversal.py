@@ -1,8 +1,10 @@
 # plugins/path_traversal.py — Cascavel 2026 Intelligence
+import logging
 import urllib.parse
 
 import requests
 
+logger = logging.getLogger(__name__)
 PARAMS = [
     "file",
     "path",
@@ -100,7 +102,7 @@ def _get_404_baseline(target):
     try:
         resp = requests.get(url, timeout=6)
         return len(resp.text)
-    except Exception:
+    except Exception as _exc:
         return 0
 
 
@@ -122,8 +124,8 @@ def _test_traversal(target, param, payload, indicator, method, baseline_len):
                 "descricao": f"Path traversal via {method} — file read confirmado!",
                 "amostra": resp.text[:200],
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 
@@ -151,7 +153,7 @@ def _test_download_endpoints(target, baseline_len):
                             }
                         )
                         break
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -184,7 +186,7 @@ def _test_api_path_traversal(target, baseline_len):
                     }
                 )
                 break
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -215,7 +217,7 @@ def _test_zip_slip(target):
                         "descricao": f"Upload endpoint {ep} detectado — testar Zip Slip manualmente!",
                     }
                 )
-        except Exception:
+        except Exception as _exc:
             continue
     return vulns
 
@@ -236,7 +238,7 @@ def _test_post_traversal(target, param, baseline_len):
                     "parametro": param,
                     "severidade": "CRITICO",
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 
@@ -262,7 +264,7 @@ def _test_header_traversal(target, baseline_len):
                     "severidade": "CRITICO",
                     "descricao": f"Path traversal via {header} override!",
                 }
-        except Exception:
+        except Exception as _exc:
             continue
     return None
 

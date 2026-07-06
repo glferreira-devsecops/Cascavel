@@ -1,7 +1,10 @@
 # plugins/graphql_probe.py — Cascavel 2026 Intelligence
 
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
 CT_JSON = "application/json"
 INTROSPECTION_QUERY = {"query": "{ __schema { types { name fields { name type { name } } } } }"}
 
@@ -48,7 +51,7 @@ def run(target, ip, open_ports, banners, context=None):
                 continue
             if resp.status_code != 200 and "graphql" not in resp.text.lower():
                 continue
-        except Exception:
+        except Exception as _exc:
             continue
 
         resultado["endpoints_encontrados"].append(ep)
@@ -82,8 +85,8 @@ def _test_introspection(url, ep, resultado):
                     "amostra": user_types[:20],
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_batch(url, ep, resultado):
@@ -99,8 +102,8 @@ def _test_batch(url, ep, resultado):
                     "descricao": "30 batch queries aceitas sem rate limit — DoS possível!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_alias(url, ep, resultado):
@@ -123,8 +126,8 @@ def _test_alias(url, ep, resultado):
                         "descricao": "100 aliases aceitos — DoS via alias overloading!",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_debug(url, ep, resultado):
@@ -148,8 +151,8 @@ def _test_debug(url, ep, resultado):
                         "descricao": "Tracing/debug ativo — info disclosure!",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_field_suggestion(url, ep, resultado):
@@ -165,8 +168,8 @@ def _test_field_suggestion(url, ep, resultado):
                     "amostra": resp.text[:200],
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_depth(url, ep, resultado):
@@ -182,8 +185,8 @@ def _test_depth(url, ep, resultado):
                     "descricao": "Query depth 20+ aceita — DoS potencial!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_get_introspection(url, ep, resultado):
@@ -198,8 +201,8 @@ def _test_get_introspection(url, ep, resultado):
                     "descricao": "Introspection via GET — bypass de proteção POST-only!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_persisted_query_bypass(url, ep, resultado):
@@ -227,8 +230,8 @@ def _test_persisted_query_bypass(url, ep, resultado):
                     "descricao": "Automatic Persisted Queries habilitado — hash enumeration possível!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_cswsh(target, ep, resultado):
@@ -252,8 +255,8 @@ def _test_cswsh(target, ep, resultado):
                     "descricao": "WebSocket upgrade aceita com evil origin — CSWSH!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
 
 def _test_cost_analysis(url, ep, resultado):
@@ -271,5 +274,5 @@ def _test_cost_analysis(url, ep, resultado):
                         "descricao": "Query complexa aceita sem cost/complexity analysis — DoS!",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)

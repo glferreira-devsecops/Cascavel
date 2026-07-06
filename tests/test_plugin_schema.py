@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import glob
 import importlib.util
+import logging
 import os
 import sys
 
 import pytest
 
+logger = logging.getLogger(__name__)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGINS_DIR = os.path.join(PROJECT_ROOT, "plugins")
 
@@ -106,7 +108,7 @@ class TestPluginSchema:
         assert mod is not None
         try:
             result = mod.run(mock_target, mock_ip, mock_ports, mock_banners)
-        except Exception:
+        except Exception as _exc:
             # Network errors are expected in test env — skip
             pytest.skip(f"Plugin {name} raised network error (expected in test)")
         if result is not None:
@@ -121,7 +123,7 @@ class TestPluginSchema:
         assert mod is not None
         try:
             result = mod.run(mock_target, mock_ip, mock_ports, mock_banners)
-        except Exception:
+        except Exception as _exc:
             pytest.skip(f"Plugin {name} raised network error (expected in test)")
         if result is not None:
             assert "plugin" in result, f"Plugin {name} result missing 'plugin' key"

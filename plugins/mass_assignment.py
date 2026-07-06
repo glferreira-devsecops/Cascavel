@@ -1,8 +1,10 @@
 # plugins/mass_assignment.py — Cascavel 2026 Intelligence
 import json
+import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 ENDPOINTS = [
     "/api/users",
     "/api/v1/users",
@@ -104,8 +106,8 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                         "metodo": "PATCH",
                         "descricao": f"{desc} via PATCH!",
                     }
-            except Exception:
-                pass
+            except Exception as _exc:
+                logger.debug("Non-critical error: %s", _exc)
 
         # PUT
         resp = requests.put(url, json={field: value}, timeout=8)
@@ -122,11 +124,11 @@ def _test_mass_assign(target, endpoint, field, value, severity, desc):
                         "metodo": "PUT",
                         "descricao": f"{desc} via PUT!",
                     }
-            except Exception:
-                pass
+            except Exception as _exc:
+                logger.debug("Non-critical error: %s", _exc)
 
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

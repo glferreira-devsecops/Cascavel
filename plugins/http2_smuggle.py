@@ -1,8 +1,10 @@
 # plugins/http2_smuggle.py — Cascavel 2026 Intelligence
+import logging
 import warnings
 
 import requests
 
+logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 H2_PATHS = ["/", "/api/", "/admin/", "/login", "/api/v1/", "/graphql"]
@@ -74,7 +76,7 @@ def _test_h2_headers(target, path):
                 elif resp.status_code == 400:
                     # Server rejected — good security posture
                     pass
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -115,7 +117,7 @@ def _test_h2_desync(target, path, tests, test_type):
                         }
                     )
                 break
-            except Exception:
+            except Exception as _exc:
                 continue
     return vulns
 
@@ -149,8 +151,8 @@ def _test_h2c_upgrade(target):
                     "descricao": "Servidor indica suporte a h2c upgrade!",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return vulns
 
 
@@ -172,8 +174,8 @@ def _test_websocket_h2(target):
                 "severidade": "MEDIO",
                 "descricao": "Extended CONNECT para WebSocket over HTTP/2 detectado",
             }
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
     return None
 
 

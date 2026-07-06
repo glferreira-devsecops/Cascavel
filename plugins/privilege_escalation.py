@@ -1,7 +1,9 @@
 # plugins/privilege_escalation.py — Cascavel 2026 Intelligence
+import logging
 import os
 import subprocess
 
+logger = logging.getLogger(__name__)
 # SUID/SGID binaries commonly exploitable
 SUID_EXPLOITABLE = [
     "/usr/bin/find",
@@ -260,12 +262,12 @@ def _check_sudo_misconfig():
                             "remediacao": "Editar /etc/sudoers com visudo. Remover configurações perigosas.",
                         }
                     )
-    except PermissionError:
-        pass
-    except FileNotFoundError:
-        pass
-    except Exception:
-        pass
+    except PermissionError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except FileNotFoundError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check sudoers.d directory
     try:
@@ -290,8 +292,8 @@ def _check_sudo_misconfig():
                                 )
                 except PermissionError:
                     continue
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -339,7 +341,7 @@ def _check_writable_sensitive_files():
                         )
         except PermissionError:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check for writable PATH directories
@@ -358,8 +360,8 @@ def _check_writable_sensitive_files():
                             "remediacao": f"Corrigir permissões: chmod o-w {pdir}",
                         }
                     )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -429,7 +431,7 @@ def _check_kernel_vulnerabilities():
                                 "remediacao": f"Configurar sysctl {param}={expected} em /etc/sysctl.d/",
                             }
                         )
-                except Exception:
+                except Exception as _exc:
                     continue
 
     except Exception as e:
@@ -477,8 +479,8 @@ def _check_container_escape():
                             "descricao": "Executando dentro de container (cgroup indica Docker/K8s)",
                         }
                     )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     if is_container:
         # Check for privileged mode
@@ -498,8 +500,8 @@ def _check_container_escape():
                         "remeciacao": "Remover --privileged. Usar capabilities específicas. Implementar seccomp/AppArmor.",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
         # Check for mounted Docker socket
         if os.path.exists("/var/run/docker.sock"):
@@ -553,8 +555,8 @@ def _check_container_escape():
                                 "remediacao": "Usar --cap-drop ALL e adicionar apenas capabilities necessárias.",
                             }
                         )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -612,13 +614,13 @@ def _check_cron_exploitation():
                                                     "remediacao": f"Corrigir permissões: chmod 755 {cmd}",
                                                 }
                                             )
-                                    except Exception:
-                                        pass
+                                    except Exception as _exc:
+                                        logger.debug("Non-critical error: %s", _exc)
         except PermissionError:
             continue
         except FileNotFoundError:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     # Check cron directories
@@ -639,11 +641,11 @@ def _check_cron_exploitation():
                                     "remediacao": f"Corrigir permissões: chmod 644 {filepath}",
                                 }
                             )
-                    except Exception:
+                    except Exception as _exc:
                         continue
         except PermissionError:
             continue
-        except Exception:
+        except Exception as _exc:
             continue
 
     # User crontabs
@@ -663,8 +665,8 @@ def _check_cron_exploitation():
                     "descricao": f"User crontabs encontrados: {result.stdout.strip()}",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 

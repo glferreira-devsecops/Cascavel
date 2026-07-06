@@ -6,8 +6,10 @@
 [+] Author: CASCAVEL Framework
 """
 
+import logging
 from typing import Any
 
+logger = logging.getLogger(__name__)
 try:
     import requests
 
@@ -110,10 +112,10 @@ def _check_rpc_exposure(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                                 "correcao": f"Desabilitar método '{method}' em produção. Usar --http.api whitelist.",
                             }
                         )
-                except Exception:
+                except Exception as _exc:
                     continue
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -167,8 +169,8 @@ def _check_smart_contracts(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar debug namespace em produção: --http.api=eth,net,web3",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -212,8 +214,8 @@ def _check_wallet_misconfig(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Verificar se nó de mineração deveria estar acessível publicamente.",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -261,8 +263,8 @@ def _check_defi_vulns(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                             "correcao": "Desabilitar txpool RPC em produção ou restringir acesso.",
                         }
                     )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 
@@ -303,8 +305,8 @@ def _check_mev_vectors(ip: str, ports: list[int]) -> list[dict[str, Any]]:
                         "correcao": "Desabilitar métodos de mineração em nós não-miners. Usar Flashbots para proteção MEV.",
                     }
                 )
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
     return findings
 
 

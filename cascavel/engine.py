@@ -132,7 +132,7 @@ def _exec_plugin(
 
         sig = inspect.signature(mod.run)
         has_context = "context" in sig.parameters
-    except Exception:
+    except Exception as _exc:
         has_context = False
 
     if not hasattr(mod, "run"):
@@ -235,14 +235,14 @@ def _calculate_baselines(target: str) -> dict:
             start = time.time()
             requests.get(f"http://{target}/", timeout=8)
             latencies.append(time.time() - start)
-        except Exception:
+        except Exception as _exc:
             continue
     baseline_latency = sum(latencies) / len(latencies) if latencies else 0.5
 
     try:
         resp = requests.get(f"http://{target}/cascavel_nao_existe_12345", timeout=5)
         baseline_404_len = len(resp.text)
-    except Exception:
+    except Exception as _exc:
         baseline_404_len = 0
 
     return {"baseline_latency": baseline_latency, "baseline_404_len": baseline_404_len}

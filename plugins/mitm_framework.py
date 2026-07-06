@@ -1,8 +1,10 @@
 # plugins/mitm_framework.py — Cascavel 2026 Intelligence
+import logging
 import socket
 
 import requests
 
+logger = logging.getLogger(__name__)
 # Common HTTP-only paths to test for downgrade
 HTTP_PATHS = ["/", "/login", "/admin", "/api", "/index.html"]
 
@@ -28,8 +30,8 @@ def _check_arp_spoof_opportunities(target, ip):
             results = socket.getaddrinfo(target, None)
             for r in results:
                 resolved_ips.add(r[4][0])
-        except Exception:
-            pass
+        except Exception as _exc:
+            logger.debug("Non-critical error: %s", _exc)
 
         if len(resolved_ips) > 1:
             findings.append(
@@ -101,10 +103,10 @@ def _check_ssl_stripping(target):
                         "remediacao": "Corrigir redirect para apontar sempre para HTTPS.",
                     }
                 )
-    except requests.ConnectionError:
-        pass
-    except Exception:
-        pass
+    except requests.ConnectionError as _exc:
+        logger.debug("Non-critical error: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Check for mixed content
     try:
@@ -122,8 +124,8 @@ def _check_ssl_stripping(target):
                         "remediacao": "Migrar todos os recursos para HTTPS. Usar protocol-relative URLs ou CSP upgrade-insecure-requests.",
                     }
                 )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 
@@ -189,7 +191,7 @@ def _check_hsts(target):
                         }
                     )
             break  # Only need to check once for the main page
-        except Exception:
+        except Exception as _exc:
             continue
     return findings
 
@@ -336,8 +338,8 @@ def _check_http_downgrade(target):
                     }
                 )
 
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     # Test for HTTP/2 downgrade
     try:
@@ -352,8 +354,8 @@ def _check_http_downgrade(target):
                     "remediacao": "Configurar servidor para rejeitar downgrades HTTP/2 -> HTTP/1.1 quando não suportado.",
                 }
             )
-    except Exception:
-        pass
+    except Exception as _exc:
+        logger.debug("Non-critical error: %s", _exc)
 
     return findings
 

@@ -1,5 +1,8 @@
 # plugins/smpt_enum.py
+import logging
 import smtplib
+
+logger = logging.getLogger(__name__)
 
 
 def run(target, ip, open_ports, banners, context=None):
@@ -29,7 +32,7 @@ def run(target, ip, open_ports, banners, context=None):
                                 "resposta": decoded_msg,
                             }
                         )
-                except Exception:
+                except Exception as _exc:
                     continue
             server.quit()
         except Exception as e:
