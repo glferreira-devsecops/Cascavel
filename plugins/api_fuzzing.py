@@ -220,8 +220,8 @@ def _test_graphql_introspection(target):
                                     "remediacao": "Manter introspection desabilitada. Validar queries com whitelist.",
                                 }
                             )
-                    except json.JSONDecodeError:
-                        logger.debug("Non-critical error suppressed")
+                    except json.JSONDecodeError as _exc:
+                        logger.debug("Non-critical error: %s", _exc)
                     break
             except Exception as _exc:
                 continue

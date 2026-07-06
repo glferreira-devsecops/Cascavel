@@ -18,7 +18,7 @@ from rich.panel import Panel
 from rich.rule import Rule
 from rich.text import Text
 
-from .constants import S_CYAN, S_DIM, S_GREEN, S_RED, S_YELLOW, __version__
+from .constants import REPORTS_PATH, S_CYAN, S_DIM, S_GREEN, S_RED, S_YELLOW, __version__
 from .engine import _classify, _count_plugins, _count_sev, run_plugins
 from .reporters import _sanitize_for_json, save_json_report, save_report
 from .security import setup_signals
@@ -288,7 +288,7 @@ def run_scan(
         try:
             from .sarif_exporter import export_sarif
 
-            report_path = export_sarif(target, ip, plugin_results, elapsed_total)
+            report_path = export_sarif(target, ip, plugin_results, elapsed_total, str(REPORTS_PATH))
             console.print(f"  [bold bright_green]📋 SARIF Report: {report_path}[/]")
         except ImportError:
             report_path = save_report("\n".join(report))
@@ -322,7 +322,7 @@ def run_scan(
         try:
             from .ocsf_exporter import export_ocsf
 
-            report_path = export_ocsf(target, ip, plugin_results, elapsed_total)
+            report_path = export_ocsf(target, ip, plugin_results, elapsed_total, str(REPORTS_PATH))
             console.print(f"  [bold bright_green]📋 OCSF Report: {report_path}[/]")
         except ImportError:
             report_path = save_report("\n".join(report))

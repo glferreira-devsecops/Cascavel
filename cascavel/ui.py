@@ -473,12 +473,12 @@ def send_notification(target: str, report_path: str, findings: int) -> None:
             script = f'display notification "{safe_msg}" with title "{safe_title}"'
             subprocess.run(["osascript", "-e", script], timeout=5, capture_output=True)
         except Exception as _exc:
-            logger.debug("Non-critical error suppressed")
+            logger.debug("Non-critical error: %s", _exc)
     elif shutil.which("notify-send"):
         try:
             subprocess.run(["notify-send", "--", title, message], timeout=5)
         except Exception as _exc:
-            logger.debug("Non-critical error suppressed")
+            logger.debug("Non-critical error: %s", _exc)
 
 
 def open_folder(path: str) -> None:
