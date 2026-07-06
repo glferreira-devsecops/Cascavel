@@ -72,11 +72,37 @@ class TestPluginDiscovery:
         )
 
 
+@pytest.fixture
+def _hermetic_plugin_env(monkeypatch):
+    """Force plugins onto their tool-less path so smoke tests are hermetic.
+
+    Plugin ``run()`` shells out to external binaries (nmap, ldapsearch,
+    smbclient, ...) when ``shutil.which`` finds them. That makes these smoke
+    tests depend on which tools happen to be installed on the host — fast on a
+    bare CI runner, but slow/flaky on a workstation that has them. Forcing
+    ``shutil.which`` to ``None`` pins every host to the same tool-less code
+    path (the CI runner's behaviour) while still exercising the return-value
+    contract we care about here. Socket probes are bounded to keep the smoke
+    test quick and deterministic.
+    """
+    import shutil
+    import socket
+
+    monkeypatch.setattr(shutil, "which", lambda *a, **k: None)
+    socket.setdefaulttimeout(1)
+    try:
+        yield
+    finally:
+        socket.setdefaulttimeout(None)
+
+
 class TestPluginSchema:
     """Tests for plugin return value schema compliance."""
 
     @pytest.mark.parametrize("name,path", PLUGINS[:5], ids=[p[0] for p in PLUGINS[:5]])
-    def test_plugin_returns_dict(self, name: str, path: str, mock_target, mock_ip, mock_ports, mock_banners):
+    def test_plugin_returns_dict(
+        self, name: str, path: str, _hermetic_plugin_env, mock_target, mock_ip, mock_ports, mock_banners
+    ):
         """Plugin run() should return a dict."""
         mod = _load_plugin(name, path)
         assert mod is not None
@@ -89,7 +115,9 @@ class TestPluginSchema:
             assert isinstance(result, dict), f"Plugin {name}.run() returned {type(result).__name__}, expected dict"
 
     @pytest.mark.parametrize("name,path", PLUGINS[:5], ids=[p[0] for p in PLUGINS[:5]])
-    def test_plugin_result_has_plugin_key(self, name: str, path: str, mock_target, mock_ip, mock_ports, mock_banners):
+    def test_plugin_result_has_plugin_key(
+        self, name: str, path: str, _hermetic_plugin_env, mock_target, mock_ip, mock_ports, mock_banners
+    ):
         """Plugin result dict should contain 'plugin' key."""
         mod = _load_plugin(name, path)
         assert mod is not None

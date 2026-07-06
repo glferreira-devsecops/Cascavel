@@ -19,7 +19,7 @@ This script:
   3. Cross-references pyproject.toml for version drift
   4. Checks Python version compatibility (requires-python)
   5. Detects known CVE floor violations
-  6. Verifies version sync across cascavel.py, pyproject.toml, report_generator.py
+  6. Verifies version sync across cascavel/constants.py, pyproject.toml, cascavel/report_generator.py
   7. Optionally updates requirements.txt with latest compatible versions
 
 © 2026 RET Tecnologia. All rights reserved.
@@ -96,16 +96,16 @@ def parse_requirements(path: Path) -> list[dict]:
 
 
 def check_version_sync() -> list[str]:
-    """Ensure version is consistent across cascavel.py, pyproject.toml, report_generator.py."""
+    """Ensure version is consistent across the cascavel package and pyproject.toml."""
     issues = []
     versions = {}
 
-    # cascavel.py
-    cascavel = BASE / "cascavel.py"
-    if cascavel.exists():
-        m = re.search(r'__version__\s*=\s*"([\d.]+)"', cascavel.read_text())
+    # cascavel/constants.py (canonical __version__)
+    constants = BASE / "cascavel" / "constants.py"
+    if constants.exists():
+        m = re.search(r'__version__\s*=\s*"([\d.]+)"', constants.read_text())
         if m:
-            versions["cascavel.py"] = m.group(1)
+            versions["cascavel/constants.py"] = m.group(1)
 
     # pyproject.toml
     pyproject = BASE / "pyproject.toml"
@@ -114,12 +114,12 @@ def check_version_sync() -> list[str]:
         if m:
             versions["pyproject.toml"] = m.group(1)
 
-    # report_generator.py
-    rg = BASE / "report_generator.py"
+    # cascavel/report_generator.py
+    rg = BASE / "cascavel" / "report_generator.py"
     if rg.exists():
         m = re.search(r'VERSION\s*=\s*"([\d.]+)"', rg.read_text())
         if m:
-            versions["report_generator.py"] = m.group(1)
+            versions["cascavel/report_generator.py"] = m.group(1)
 
     unique = set(versions.values())
     if len(unique) > 1:

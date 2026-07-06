@@ -73,7 +73,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir reportlab qrcode[pil]
 
 # Copy application code
-COPY cascavel.py sarif_exporter.py report_generator.py ./
+COPY cascavel/ ./cascavel/
 COPY plugins/ ./plugins/
 COPY profiles/ ./profiles/
 COPY wordlists/ ./wordlists/
@@ -91,7 +91,7 @@ USER cascavel
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --retries=1 \
-    CMD python3 cascavel.py --version || exit 1
+    CMD python3 -m cascavel --version || exit 1
 
-ENTRYPOINT ["python3", "cascavel.py"]
+ENTRYPOINT ["python3", "-m", "cascavel"]
 CMD ["--help"]

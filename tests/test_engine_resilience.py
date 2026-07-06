@@ -3,12 +3,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cascavel.engine import _exec_plugin
-from cascavel.tools import run_cmd
+from cascavel import engine, tools
 
 
 def test_engine_handles_plugin_crash():
-    """Testa se a engine (cascavel.py) sobrevive se um plugin lançar exception critica"""
+    """Testa se a engine sobrevive se um plugin lançar exception crítica."""
 
     def fake_run(target, ip, ports, banners):
         raise RuntimeError("CRASH FATAL DO PLUGIN")
@@ -24,7 +23,7 @@ def test_engine_handles_plugin_crash():
         mock_spec.return_value.loader = mock_loader
 
         try:
-            res = _exec_plugin(
+            res = engine._exec_plugin(
                 path="/fake/path.py",
                 name="fake_plugin",
                 target="example.com",
@@ -39,14 +38,14 @@ def test_engine_handles_plugin_crash():
 
 
 def test_engine_handles_tool_timeout():
-    """Testa o comportamento da engine ao receber um timeout em ferramentas externas"""
+    """Testa o comportamento da engine ao receber um timeout em ferramentas externas."""
     mock_proc = MagicMock()
+    mock_proc.pid = 2**31 - 1  # PID inexistente → killpg levanta ProcessLookupError (tratado)
     mock_proc.communicate.side_effect = subprocess.TimeoutExpired(cmd="fake", timeout=1)
-    mock_proc.kill = MagicMock()
-    mock_proc.wait = MagicMock()
-    with patch("subprocess.Popen", return_value=mock_proc):
+
+    with patch("cascavel.tools.subprocess.Popen", return_value=mock_proc):
         try:
-            res = run_cmd("fake_tool --target example.com", timeout=1)
+            res = tools.run_cmd("fake_tool --target example.com", timeout=1)
             assert "TIMEOUT" in res or res == ""
         except Exception as e:
             pytest.fail(f"Engine não tratou timeout da tool: {e}")

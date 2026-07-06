@@ -21,8 +21,8 @@
 
 3. **Verifique a instalação**:
    ```bash
-   python3 cascavel.py --check-tools   # Ferramentas externas detectadas
-   python3 cascavel.py --list-plugins  # Plugins carregados
+   python3 -m cascavel --check-tools   # Ferramentas externas detectadas
+   python3 -m cascavel --list-plugins  # Plugins carregados
    ```
 
 ## 📬 Canais de Suporte

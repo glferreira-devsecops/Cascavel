@@ -61,7 +61,7 @@ O **Cascavel AEV (Adversarial Exposure Validation)** substitui todo esse workflo
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│  $ python3 cascavel.py -t target.com -o ocsf --ai-fix --stealth-eval   │
+│  $ python3 -m cascavel -t target.com -o ocsf --ai-fix --stealth-eval   │
 │                                                                        │
 │  ┌────────────┐  ┌───────────┐  ┌────────────┐  ┌───────────────────┐  │
 │  │ DESCOBERTA │→ │ EXPOSIÇÃO │→ │  ATAQUE    │→ │ ENRIQUECIMENTO    │  │
@@ -114,19 +114,19 @@ A API do terminal foi projetada para ser simples e tática.
 
 ```bash
 # Scan CTEM Completo (Integra binários externos + plugins)
-python3 cascavel.py -t target.com
+python3 -m cascavel -t target.com
 
 # Modo Stealth: Simulação SOC/WAF bypass (Ignora binários ruidosos)
-python3 cascavel.py -t target.com --plugins-only --stealth-eval
+python3 -m cascavel -t target.com --plugins-only --stealth-eval
 
 # Workflow Automático: CISA KEV + IA Remediation + OCSF Telemetry
-python3 cascavel.py -t target.com -o ocsf --ai-fix
+python3 -m cascavel -t target.com -o ocsf --ai-fix
 
 # Workflow Executivo: Gerar Relatório PDF Legal (CVSS v4, ISO 27001)
-python3 cascavel.py -t target.com --pdf
+python3 -m cascavel -t target.com --pdf
 
 # Integração CI/CD: Modo Headless Silencioso
-python3 cascavel.py -t target.com -q -o json
+python3 -m cascavel -t target.com -q -o json
 ```
 
 ### Orquestração CI/CD (GitHub Actions)
@@ -159,7 +159,7 @@ Nossa arquitetura prioriza a ausência de falsos positivos via parseamento AST e
 
 ### Engine Core
 ```text
-cascavel.py (3000+ linhas)
+cascavel/ (pacote modular)
 ├── Engine de Stealth ──────── Hooks Requests, X-COST headers, Bypass WAF Rate-Limit
 ├── Analisador Threat Intel ── Mapeamento EPSS (FIRST) e CISA KEV Dinâmico
 ├── Módulo AI Fix ──────────── Geração Sandbox de Scripts (Bash/Python mitigations)

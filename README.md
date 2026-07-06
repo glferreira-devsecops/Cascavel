@@ -181,7 +181,7 @@ Our architecture prioritizes the absolute elimination of false positives via AST
 
 ### Core Engine
 ```text
-cascavel.py (3000+ lines)
+cascavel/ (modular package)
 ├── Stealth Engine ─────────── Requests Hooks, X-COST headers, WAF Rate-Limit Bypass
 ├── Threat Intel Analyzer ──── Dynamic EPSS (FIRST) and CISA KEV Mapping
 ├── AI Fix Module ──────────── Sandbox Generation of Mitigation Scripts (Bash/Python)

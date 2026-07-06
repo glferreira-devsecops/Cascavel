@@ -27,7 +27,7 @@ body:
       label: Passos para Reproduzir
       description: Como podemos reproduzir o problema?
       placeholder: |
-        1. Execute `python3 cascavel.py -t target.com`
+        1. Execute `python3 -m cascavel -t target.com`
         2. Aguarde o scan completar
         3. Observe o erro no terminal
     validations:
@@ -76,7 +76,7 @@ body:
     id: check-tools
     attributes:
       label: Saída de --check-tools
-      description: "Execute `python3 cascavel.py --check-tools` e cole aqui"
+      description: "Execute `python3 -m cascavel --check-tools` e cole aqui"
       render: shell
 
   - type: dropdown

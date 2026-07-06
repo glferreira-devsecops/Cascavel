@@ -138,11 +138,11 @@ go install github.com/tomnomnom/gau@latest
 
 ### Verificar Instalação
 ```bash
-python3 cascavel.py --check-tools    # Lista ferramentas detectadas
-python3 cascavel.py --list-plugins   # Lista todos os 108 plugins
-python3 cascavel.py -t target.com    # Executa scan completo
-python3 cascavel.py --plugins-only -t target.com  # Apenas plugins (sem tools externas)
-python3 cascavel.py -q -o json -t target.com      # Quiet + JSON (CI/CD)
+python3 -m cascavel --check-tools    # Lista ferramentas detectadas
+python3 -m cascavel --list-plugins   # Lista todos os 108 plugins
+python3 -m cascavel -t target.com    # Executa scan completo
+python3 -m cascavel --plugins-only -t target.com  # Apenas plugins (sem tools externas)
+python3 -m cascavel -q -o json -t target.com      # Quiet + JSON (CI/CD)
 ```
 
 ## 📜 DCO — Developer Certificate of Origin
