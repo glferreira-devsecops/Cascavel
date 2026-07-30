@@ -42,12 +42,15 @@ LABEL org.opencontainers.image.vendor="RET Tecnologia"
 # System dependencies for nmap, traceroute, whois + nikto from source
 # Versions pinned for reproducibility — captured from python:3.14-slim (Debian trixie)
 # To update: docker run --rm python:3.14-slim bash -c "apt-get update -qq && apt-cache show <pkg> | grep ^Version"
+# Note: bind9-dnsutils is intentionally unpinned — bind9-libs received a security update
+# (1:9.20.23 -> 1:9.20.26) ahead of bind9-dnsutils. Pinning to 1:9.20.23 creates an
+# unsatisfiable exact-version dependency on bind9-libs. Restore pin once suite versions align.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         nmap=7.95+dfsg-3 \
         traceroute=1:2.1.6-1 \
         whois=5.6.3 \
-        bind9-dnsutils=1:9.20.23-1~deb13u1 \
+        bind9-dnsutils \
         curl=8.14.1-2+deb13u4 \
         git=1:2.47.3-0+deb13u1 \
         perl=5.40.1-6 \
