@@ -14,8 +14,8 @@
 FROM golang:bookworm AS go-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    libpcap-dev \
+    git=1:2.39.5-0+deb12u3 \
+    libpcap-dev=1.10.3-1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Go-based security tools
@@ -40,18 +40,20 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.vendor="RET Tecnologia"
 
 # System dependencies for nmap, traceroute, whois + nikto from source
+# Versions pinned for reproducibility — captured from python:3.14-slim (Debian trixie)
+# To update: docker run --rm python:3.14-slim bash -c "apt-get update -qq && apt-cache show <pkg> | grep ^Version"
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        nmap \
-        traceroute \
-        whois \
-        dnsutils \
-        curl \
-        git \
-        perl \
-        libnet-ssleay-perl \
-        libpcap-dev \
-        ca-certificates && \
+        nmap=7.95+dfsg-3 \
+        traceroute=1:2.1.6-1 \
+        whois=5.6.3 \
+        bind9-dnsutils=1:9.20.23-1~deb13u1 \
+        curl=8.14.1-2+deb13u4 \
+        git=1:2.47.3-0+deb13u1 \
+        perl=5.40.1-6 \
+        libnet-ssleay-perl=1.94-3 \
+        libpcap-dev=1.10.5-2 \
+        ca-certificates=20250419 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
